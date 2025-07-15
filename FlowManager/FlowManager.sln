@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36221.1 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowManager", "FlowManager\FlowManager.csproj", "{BD78480D-815D-41DE-83AF-3A8010BF26C0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowManager", "FlowManager.csproj", "{19585AAD-563A-49B6-AC4F-5FB027F914DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BD78480D-815D-41DE-83AF-3A8010BF26C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BD78480D-815D-41DE-83AF-3A8010BF26C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BD78480D-815D-41DE-83AF-3A8010BF26C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BD78480D-815D-41DE-83AF-3A8010BF26C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19585AAD-563A-49B6-AC4F-5FB027F914DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19585AAD-563A-49B6-AC4F-5FB027F914DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19585AAD-563A-49B6-AC4F-5FB027F914DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19585AAD-563A-49B6-AC4F-5FB027F914DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {146AF44A-6A5A-4F4A-88FD-425BB0B7A71E}
+		SolutionGuid = {B865BC72-6027-4F77-8E4D-2358287E824C}
 	EndGlobalSection
 EndGlobal
