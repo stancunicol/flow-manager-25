@@ -4,6 +4,37 @@
     flex-direction: column;
 }
 
+.topnav {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: #000028;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+#logo{
+    height:10%;
+    width:10%;
+}
+
+/* Change the color of links on hover */
+.topnav a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+/* Add a color to the active/current link */
+.topnav a.active {
+    background-color: #04AA6D;
+    color: white;
+}
+
+.footer{
+    display: flex;
+    justify-content: center;
+    color: #f3f3f0;
+}
+
 main {
     flex: 1;
     width: 100%;
