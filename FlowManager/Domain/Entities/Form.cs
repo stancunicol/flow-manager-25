@@ -8,10 +8,10 @@
     }
     public class Form
     {
-        public Guid Id { get; set; }
-        public Guid LastStepId { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid LastStepId { get; set; } 
         public FormStatus Status { get; set; } = FormStatus.Submitted;
-        public string Comment { get; set; }
+        public string Comment { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public Guid FlowId { get; set; }
