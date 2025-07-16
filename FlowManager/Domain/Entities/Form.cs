@@ -1,4 +1,6 @@
-﻿namespace FlowManager.Domain.Entities
+using System;
+
+namespace FlowManager.Domain.Entities
 {
     public enum FormStatus
     {
@@ -6,6 +8,7 @@
         Approved,
         Rejected
     }
+    
     public class Form
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -16,5 +19,9 @@
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public Guid FlowId { get; set; }
         public Guid UserId { get; set; }
+        
+        public virtual Flow Flow { get; set; } = null!;
+        public virtual User User { get; set; } = null!;
+        public virtual Step LastStep { get; set; } = null!;
     }
 }
