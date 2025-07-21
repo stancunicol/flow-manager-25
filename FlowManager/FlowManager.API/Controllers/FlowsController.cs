@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 
 namespace FlowManager.API.Controllers
@@ -8,99 +8,55 @@ namespace FlowManager.API.Controllers
     [ApiController]
     public class FlowsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IFlowService _flowService;
 
-        public FlowsController(AppDbContext context)
+        public FlowsController(IFlowService flowService)
         {
-            _context = context;
+            _flowService = flowService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Flow>>> GetFlows()
         {
-            return await _context.Flows
-                .Include(f => f.Steps)
-                .Include(f => f.Forms)
-                .ToListAsync();
+            var flows = await _flowService.GetAllFlowsAsync();
+            return Ok(flows);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Flow>> GetFlow(Guid id)
         {
-            var flow = await _context.Flows
-                .Include(f => f.Steps)
-                .Include(f => f.Forms)
-                .FirstOrDefaultAsync(f => f.Id == id);
-
+            var flow = await _flowService.GetFlowByIdAsync(id);
             if (flow == null)
-            {
                 return NotFound();
-            }
 
-            return flow;
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutFlow(Guid id, Flow flow)
-        {
-            if (id != flow.Id)
-            {
-                return BadRequest();
-            }
-
-            flow.UpdatedAt = DateTime.UtcNow;
-            _context.Entry(flow).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!FlowExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return Ok(flow);
         }
 
         [HttpPost]
         public async Task<ActionResult<Flow>> PostFlow(Flow flow)
         {
-            flow.Id = Guid.NewGuid();
-            flow.CreatedAt = DateTime.UtcNow;
-            flow.UpdatedAt = DateTime.UtcNow;
-            
-            _context.Flows.Add(flow);
-            await _context.SaveChangesAsync();
+            var created = await _flowService.CreateFlowAsync(flow);
+            return CreatedAtAction(nameof(GetFlow), new { id = created.Id }, created);
+        }
 
-            return CreatedAtAction("GetFlow", new { id = flow.Id }, flow);
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutFlow(Guid id, Flow flow)
+        {
+            var updated = await _flowService.UpdateFlowAsync(id, flow);
+            if (!updated)
+                return NotFound();
+
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFlow(Guid id)
         {
-            var flow = await _context.Flows.FindAsync(id);
-            if (flow == null)
-            {
+            var deleted = await _flowService.DeleteFlowAsync(id);
+            if (!deleted)
                 return NotFound();
-            }
-
-            _context.Flows.Remove(flow);
-            await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool FlowExists(Guid id)
-        {
-            return _context.Flows.Any(e => e.Id == id);
         }
     }
 }
