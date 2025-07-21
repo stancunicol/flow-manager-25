@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 
 namespace FlowManager.API.Controllers
@@ -8,123 +8,69 @@ namespace FlowManager.API.Controllers
     [ApiController]
     public class FormsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IFormService _formService;
 
-        public FormsController(AppDbContext context)
+        public FormsController(IFormService formService)
         {
-            _context = context;
+            _formService = formService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Form>>> GetForms()
         {
-            return await _context.Forms
-                .Include(f => f.Flow)
-                .Include(f => f.User)
-                .Include(f => f.LastStep)
-                .ToListAsync();
+            var forms = await _formService.GetAllFormsAsync();
+            return Ok(forms);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Form>> GetForm(Guid id)
         {
-            var form = await _context.Forms
-                .Include(f => f.Flow)
-                .Include(f => f.User)
-                .Include(f => f.LastStep)
-                .FirstOrDefaultAsync(f => f.Id == id);
-
+            var form = await _formService.GetFormByIdAsync(id);
             if (form == null)
-            {
                 return NotFound();
-            }
 
-            return form;
+            return Ok(form);
         }
 
         [HttpGet("flow/{flowId}")]
         public async Task<ActionResult<IEnumerable<Form>>> GetFormsByFlow(Guid flowId)
         {
-            return await _context.Forms
-                .Include(f => f.Flow)
-                .Include(f => f.User)
-                .Include(f => f.LastStep)
-                .Where(f => f.FlowId == flowId)
-                .ToListAsync();
+            var forms = await _formService.GetFormsByFlowAsync(flowId);
+            return Ok(forms);
         }
 
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<Form>>> GetFormsByUser(Guid userId)
         {
-            return await _context.Forms
-                .Include(f => f.Flow)
-                .Include(f => f.User)
-                .Include(f => f.LastStep)
-                .Where(f => f.UserId == userId)
-                .ToListAsync();
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutForm(Guid id, Form form)
-        {
-            if (id != form.Id)
-            {
-                return BadRequest();
-            }
-
-            form.UpdatedAt = DateTime.UtcNow;
-            _context.Entry(form).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!FormExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            var forms = await _formService.GetFormsByUserAsync(userId);
+            return Ok(forms);
         }
 
         [HttpPost]
         public async Task<ActionResult<Form>> PostForm(Form form)
         {
-            form.Id = Guid.NewGuid();
-            form.CreatedAt = DateTime.UtcNow;
-            form.UpdatedAt = DateTime.UtcNow;
-            
-            _context.Forms.Add(form);
-            await _context.SaveChangesAsync();
+            var createdForm = await _formService.CreateFormAsync(form);
+            return CreatedAtAction(nameof(GetForm), new { id = createdForm.Id }, createdForm);
+        }
 
-            return CreatedAtAction("GetForm", new { id = form.Id }, form);
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutForm(Guid id, Form form)
+        {
+            var updated = await _formService.UpdateFormAsync(id, form);
+            if (!updated)
+                return NotFound();
+
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteForm(Guid id)
         {
-            var form = await _context.Forms.FindAsync(id);
-            if (form == null)
-            {
+            var deleted = await _formService.DeleteFormAsync(id);
+            if (!deleted)
                 return NotFound();
-            }
-
-            _context.Forms.Remove(form);
-            await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool FormExists(Guid id)
-        {
-            return _context.Forms.Any(e => e.Id == id);
         }
     }
 }
