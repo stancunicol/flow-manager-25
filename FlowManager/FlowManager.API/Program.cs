@@ -2,7 +2,13 @@ using FlowManager.Application;
 using FlowManager.Domain.Entities;
 using FlowManager.Infrastructure;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,8 +56,15 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapIdentityApi<User>();
+//app.MapIdentityApi<User>(options =>
+//{
+//    options.MapLogin = false;     
+//    options.MapLogout = false;
+//    options.MapUserInfo = true;   
+//    options.MapRegister = true;   
+//});
 
+app.MapIdentityApi<User>();
 
 app.MapControllers();
 
