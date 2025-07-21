@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 
 
@@ -35,7 +36,7 @@ public static class DependencyInjection
         // services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddIdentity<User, IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<AppDbContext>()
