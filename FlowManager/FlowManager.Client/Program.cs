@@ -13,10 +13,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 var app = builder.Build();
 
 
-// Added services for FormService and FlowService
-builder.Services.AddScoped<IFlowService, FlowService>();
-builder.Services.AddScoped<IFormService, FormService>();
-
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 

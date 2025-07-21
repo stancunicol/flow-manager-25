@@ -14,6 +14,8 @@ namespace FlowManager.Application.Interfaces
         Task<User?> GetUserByEmail(string email);
         Task<User?> CreateUser(User user);
         Task<bool> UpdateUser(Guid id, User user);
+
+        Task<bool> UpdateUserProfile(Guid id, string name, string username, string email);
         Task<bool> DeleteUser(Guid id);
     }
 }

@@ -55,6 +55,16 @@ namespace FlowManager.Controllers
             return updated ? NoContent() : NotFound();
         }
 
+        [HttpPut("{id}/name/{name}/username/{username}/email/{email}")]
+        public async Task<IActionResult> UpdateUserProfile(Guid id, string name, string username, string email)
+        {
+            var updated = await _service.UpdateUserProfile(id, name, username, email);
+            return updated
+                ? NoContent()
+                : BadRequest("Email is already used by another user");
+        }
+
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {

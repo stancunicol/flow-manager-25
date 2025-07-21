@@ -46,10 +46,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapIdentityApi<User>();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapIdentityApi<User>();
+
 
 app.MapControllers();
 
