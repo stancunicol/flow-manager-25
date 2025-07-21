@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace FlowManager.Domain.Entities
 {
+   
     public class UserRole : IdentityUserRole<Guid>
     {
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
