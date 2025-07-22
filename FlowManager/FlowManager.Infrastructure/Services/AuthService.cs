@@ -27,6 +27,8 @@ namespace FlowManager.Infrastructure.Services
             return true;
         }
 
+
+
         public async Task Logout()
         {
             await _signInManager.SignOutAsync();

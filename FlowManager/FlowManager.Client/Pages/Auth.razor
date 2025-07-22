@@ -3,11 +3,16 @@
 
     <div class="form-container">
         <!-- Sign In Form -->
-        <form id="signin-form" class="form active">
+        <form id="signin-form" class="form active" @onsubmit="HandleLogin">
             <h2 class="h2-form">Welcome Back</h2>
-            <input type="email" placeholder="Email" required />
-            <input type="password" placeholder="Password" required />
+            <input type="email" placeholder="Email" @bind="email" required />
+            <input type="password" placeholder="Password" @bind="password" required />
             <button type="submit">Sign In</button>
+
+             @if(!string.IsNullOrEmpty(errorMessage))
+            {
+                <p style="color: red">@errorMessage</p>
+            }
         </form>
 
     </div>

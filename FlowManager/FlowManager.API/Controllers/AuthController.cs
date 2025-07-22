@@ -14,10 +14,25 @@ namespace FlowManager.API.Controllers
             _authService = authService;
         }
 
+        //[HttpPost("login")]
+        //public async Task<IActionResult>Login([FromForm]string email, [FromForm]string password)
+        //{
+        //    var success=await _authService.Login(email, password);
+        //    return success ? Ok("Login successful") : Unauthorized("Invalid credentials");
+        //}
+
         [HttpPost("login")]
-        public async Task<IActionResult>Login([FromForm]string email, [FromForm]string password)
+        public async Task<IActionResult> Login([FromBody] Dictionary<string, string> body)
         {
-            var success=await _authService.Login(email, password);
+            var email = body.GetValueOrDefault("email");
+            var password = body.GetValueOrDefault("password");
+
+            Console.WriteLine($"[DEBUG] Email: {email}, Password: {password}");
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return BadRequest("Email and password are required");
+
+            var success = await _authService.Login(email, password);
             return success ? Ok("Login successful") : Unauthorized("Invalid credentials");
         }
 
