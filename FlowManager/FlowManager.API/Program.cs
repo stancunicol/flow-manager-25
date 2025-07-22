@@ -12,7 +12,14 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policyBuilder =>
+    {
+        policyBuilder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+    });
+});
 
 // Add layer dependencies
 builder.Services.AddApplication();
@@ -52,6 +59,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+//Use CORS
+
+app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
