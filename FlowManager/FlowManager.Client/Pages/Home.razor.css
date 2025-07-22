@@ -2,7 +2,7 @@
     display: flex;
     justify-content: space-between;
 }
-.newRequestButton{
+button{
     background: #00d7a0;
     color: white;
     padding: 12px;
@@ -13,7 +13,7 @@
     animation: fadein 0.4s ease-out forwards;
     transition: background 0.3s;
 }
-.newRequestButton:hover{
+button:hover{
     background: #00b37a;
 }
 #rank{

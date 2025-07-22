@@ -8,16 +8,27 @@
     <h2>Flow Manager</h2>
     <h4>Welcome back {user}</h4>
     <div class="topBar">
-        <select id="rank">
+        <select id="rank" @bind="selectedRole">
             <option value="basic">Basic User</option>
             <option value="moderator">Moderator</option>
             <option value="admin">Admin</option>
         </select>
 
-        <button @onclick="() => showFormModal = true" class="newRequestButton">New request</button>
+        @if (selectedRole == "admin")
+        {
+            <div class="adminButtons">
+                <button class="adminNewFlowButton">New Flow</button>
+                <button @onclick="() => showUserModal = true" class="adminNewUserButton">New User</button>
+            </div>
+        }
+        
+        @if (selectedRole == "basic")
+        {
+            <button @onclick="() => showFormModal = true" class="newRequestButton">New request</button>
+        }
+        
     </div>
     
-    @* Here should be either the requests sent by the basic user or the request to moderate by the moderator *@
     
 </div>
 
@@ -26,6 +37,9 @@
               AvailableFlows="flows"
               CurrentUserId="@currentUserId"
               OnSubmit="HandleFormSubmit" />
+
+<NewUserModal IsOpen="@showUserModal"
+              IsOpenChanged="@(value => showUserModal = value)" />
 
 @if (userForms.Any())
 {
@@ -55,12 +69,13 @@
 }
 else
 {
-    <p style="margin-top: 2rem;">No requests submitted yet.</p>
+    <p style="margin-top: 2rem; align-content: center; text-align: center;">No requests submitted yet.</p>
 }
 
 
 
 @code {
+    // TEST FLOW AND DATA
     Flow flow = new()
     {
         Name = "Test Flow",
@@ -74,9 +89,12 @@ else
         }
     };
     
+    private string selectedRole = "basic";
+    
     private string userName = "John Doe";
     private Guid currentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private bool showFormModal = false;
+    private bool showUserModal = false;
 
     private List<Flow> flows = new();
     private List<Form> userForms = new();
@@ -84,19 +102,18 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Se pot înlocui cu date reale din API
         flows = new List<Flow>
         {
             new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
             new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
         };
 
-        userForms = new List<Form>(); // goale inițial
+        userForms = new List<Form>();
     }
 
     private void HandleFormSubmit(Form form)
     {
-        userForms.Insert(0, form); // îl adaugă sus în listă
+        userForms.Insert(0, form);
         StateHasChanged();
     }
 
@@ -109,4 +126,5 @@ else
     {
         return flows.FirstOrDefault(f => f.Id == flowId)?.Name ?? "Unknown Flow";
     }
+    
 }
