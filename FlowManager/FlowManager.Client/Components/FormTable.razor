@@ -1,0 +1,130 @@
+@using FlowManager.Domain.Entities
+
+<div class="request-table-container">
+    <table class="request-table">
+        <thead>
+            <tr id="topTr">
+                <th>#</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Created By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var request in FilteredRequests)
+        {
+            <tr @onclick="() => ToggleExpanded(request.Id)">
+                <td>@request.Id.ToString().Substring(0, 6)...</td>
+                <td>@request.Flow?.Name</td>
+                <td>@request.Status</td>
+                <td>@request.CreatedAt.ToShortDateString()</td>
+                <td>@request.User?.Name</td>
+                <td>
+                    @if (Role == "BasicUser" && request.UserId == CurrentUser.Id)
+                    {
+                        <button @onclick="@(() => DeleteRequest(request.Id))">Delete</button>
+                    }
+                    @if (Role == "Moderator" && UserCanApprove(request))
+                    {
+                        <button @onclick="@(() => ApproveStep(request.Id))">Approve</button>
+                        <button @onclick="@(() => RejectStep(request.Id))">Reject</button>
+                    }
+                    @if (Role == "Admin")
+                    {
+                        <button @onclick="@(() => ForceStep(request.Id))">Force</button>
+                        <button @onclick="@(() => EditFlow(request.Flow.Id))">Edit Flow</button>
+                    }
+                </td>
+            </tr>
+
+            @if (ExpandedRequests.Contains(request.Id))
+            {
+                <tr class="expanded-row">
+                    <td colspan="6">
+                        <FlowTracking Steps="@request.Flow?.Steps?.ToList() ?? new()"
+                                      CurrentStepIndex="@GetStepIndex(request)" />
+
+                        <p><strong>Comment:</strong> @request.Comment</p>
+                        <p><strong>Logs:</strong> (todo - listă aprobare per step)</p>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+
+
+@code {
+    [Parameter] public string Role { get; set; } = "BasicUser";
+    [Parameter] public User CurrentUser { get; set; } = new();
+    [Parameter] public List<Form> AllRequests { get; set; } = new();
+
+    private List<Guid> ExpandedRequests = new();
+
+    private IEnumerable<Form> FilteredRequests =>
+        Role switch
+        {
+            "BasicUser" => AllRequests.Where(r => r.UserId == CurrentUser.Id),
+            "Moderator" => AllRequests.Where(UserCanApprove),
+            "Admin" => AllRequests,
+            _ => Enumerable.Empty<Form>()
+        };
+    
+    protected override async Task OnInitializedAsync()
+    {
+        //AllRequests = await FormsController.GetForms();
+    }
+    
+    private void ToggleExpanded(Guid requestId)
+    {
+        if (ExpandedRequests.Contains(requestId))
+            ExpandedRequests.Remove(requestId);
+        else
+            ExpandedRequests.Add(requestId);
+    }
+
+    private bool UserCanApprove(Form request)
+    {
+        var step = request.LastStep;// MODIFICAT
+        return true;
+    }
+
+    private int GetStepIndex(Form request)
+    {
+        var steps = request.Flow?.Steps?.ToList();
+        if (steps == null || request.LastStepId == Guid.Empty)
+            return 0;
+
+        var index = steps.FindIndex(s => s.Id == request.LastStepId);
+        return index >= 0 ? index : 0;
+    }
+
+    private void DeleteRequest(Guid requestId)
+    {
+        // TODO: Implement logic
+    }
+
+    private void ApproveStep(Guid requestId)
+    {
+        // TODO: Implement logic
+    }
+
+    private void RejectStep(Guid requestId)
+    {
+        // TODO: Implement logic
+    }
+
+    private void ForceStep(Guid requestId)
+    {
+        // TODO: Implement logic
+    }
+
+    private void EditFlow(Guid flowId)
+    {
+        // TODO: Implement navigation / logic
+    }
+}
