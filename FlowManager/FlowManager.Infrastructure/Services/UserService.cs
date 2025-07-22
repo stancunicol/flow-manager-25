@@ -1,6 +1,7 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using FlowManager.Infrastructure;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -9,11 +10,14 @@ namespace FlowManager.Infrastructure.Services
     public class UserService : IUserService
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public UserService(AppDbContext context)
+        public UserService(AppDbContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
+
 
         public async Task<IEnumerable<User>> GetAllUsers()
         {
@@ -77,6 +81,26 @@ namespace FlowManager.Infrastructure.Services
             {
                 return await _context.Users.AnyAsync(u => u.Id == id);
             }
+        }
+
+        public async Task<bool> UpdateUserProfile(Guid id, string name, string username, string email)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (user == null) return false;
+
+            var emailTaken = await _userManager.Users
+                .AnyAsync(u => u.Email == email && u.Id != id);
+
+            if (emailTaken) return false;
+
+            user.Name = name;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _userManager.SetUserNameAsync(user, username);
+            await _userManager.SetEmailAsync(user, email);
+
+            var result = await _userManager.UpdateAsync(user);
+            return result.Succeeded;
         }
 
         public async Task<bool> DeleteUser(Guid id)

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FlowManager.API.Controllers
 {
@@ -32,13 +33,15 @@ namespace FlowManager.API.Controllers
             return Ok(flow);
         }
 
+        [Authorize (Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<Flow>> PostFlow(Flow flow)
         {
             var created = await _flowService.CreateFlowAsync(flow);
             return CreatedAtAction(nameof(GetFlow), new { id = created.Id }, created);
         }
-
+        
+        [Authorize (Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutFlow(Guid id, Flow flow)
         {
@@ -48,7 +51,8 @@ namespace FlowManager.API.Controllers
 
             return NoContent();
         }
-
+        
+        [Authorize (Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFlow(Guid id)
         {
