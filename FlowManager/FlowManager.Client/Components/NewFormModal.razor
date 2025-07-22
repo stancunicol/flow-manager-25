@@ -8,6 +8,7 @@
 
             <label>Select Flow:</label>
             <select @bind="form.FlowId" class="popup-input">
+                <option value="" disabled selected>Select your option</option>
                 @foreach (var flow in AvailableFlows)
                 {
                     <option value="@flow.Id">@flow.Name</option>
