@@ -1,0 +1,51 @@
+@using FlowManager.Domain.Entities
+
+@if (IsOpen)
+{
+    <div class="popup-backdrop">
+        <div class="popup-container">
+            <h3>Submit New Request</h3>
+
+            <label>Select Flow:</label>
+            <select @bind="form.FlowId" class="popup-input">
+                <option value="" disabled selected>Select your option</option>
+                @foreach (var flow in AvailableFlows)
+                {
+                    <option value="@flow.Id">@flow.Name</option>
+                }
+            </select>
+
+            <label>Comment:</label>
+            <textarea @bind="form.Comment" class="popup-input" rows="4" placeholder="Optional comment..."></textarea>
+
+            <div class="popup-actions">
+                <button @onclick="Submit" class="popup-send">Send</button>
+                <button @onclick="Close" class="popup-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    [Parameter] public List<Flow> AvailableFlows { get; set; } = new();
+    [Parameter] public Guid CurrentUserId { get; set; }
+    [Parameter] public EventCallback<Form> OnSubmit { get; set; }
+
+    private Form form = new();
+
+    private async Task Submit()
+    {
+        form.UserId = CurrentUserId;
+        form.CreatedAt = DateTime.UtcNow;
+        form.UpdatedAt = DateTime.UtcNow;
+
+        await OnSubmit.InvokeAsync(form);
+        form = new(); // reset
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private Task Close() => IsOpenChanged.InvokeAsync(false);
+}
