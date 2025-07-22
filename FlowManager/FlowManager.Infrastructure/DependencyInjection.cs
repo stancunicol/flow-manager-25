@@ -1,5 +1,14 @@
-using Microsoft.Extensions.DependencyInjection;
+using FlowManager.Application.Interfaces;
+using FlowManager.Domain.Entities;
+using FlowManager.Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
+
+
+
 
 namespace FlowManager.Infrastructure;
 
@@ -25,6 +34,22 @@ public static class DependencyInjection
         // Add Infrastructure Services
         // services.AddScoped<IDateTime, DateTimeService>();
         // services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.AddDbContext<AppDbContext>(options =>
+                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddIdentity<User, IdentityRole<Guid>>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IUserRoleService, UserRoleService>();
+        services.AddScoped<IFlowService, FlowService>();
+        services.AddScoped<IFormService, FormService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IStepService, StepService>();
+        services.AddScoped<IStepUpdateHistoryService, StepUpdateHistoryService>();
+        services.AddScoped<IStepUserService, StepUserService>();
 
         return services;
     }
