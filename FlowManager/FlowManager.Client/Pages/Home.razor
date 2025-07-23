@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@* @page "/"
 @using FlowManager.Domain.Entities
 @using FlowManager.Client.Components
 
@@ -17,7 +17,7 @@
         @if (selectedRole == "admin")
         {
             <div class="adminButtons">
-                <button class="adminNewFlowButton">New Flow</button>
+                <button @onclick="() => showFlowModal = true" class="adminNewFlowButton">New Flow</button>
                 <button @onclick="() => showUserModal = true" class="adminNewUserButton">New User</button>
             </div>
         }
@@ -40,6 +40,12 @@
 
 <NewUserModal IsOpen="@showUserModal"
               IsOpenChanged="@(value => showUserModal = value)" />
+
+
+<NewFlowModal IsOpen="@showFlowModal"
+              IsOpenChanged="@(value => showFlowModal = value)"
+              OnSubmit="HandleFlowSubmit" />
+
 
 @if (userForms.Any())
 {
@@ -75,7 +81,7 @@ else
 
 
 @code {
-    // TEST FLOW AND DATA
+        // TEST FLOW AND DATA
     Flow flow = new()
     {
         Name = "Test Flow",
@@ -88,13 +94,14 @@ else
             new() { Name = "Finance" }
         }
     };
-    
+
     private string selectedRole = "basic";
-    
+
     private string userName = "John Doe";
     private Guid currentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private bool showFormModal = false;
     private bool showUserModal = false;
+    private bool showFlowModal = false;
 
     private List<Flow> flows = new();
     private List<Form> userForms = new();
@@ -127,4 +134,156 @@ else
         return flows.FirstOrDefault(f => f.Id == flowId)?.Name ?? "Unknown Flow";
     }
     
+
+
+} *@
+
+
+@page "/"
+@using FlowManager.Domain.Entities
+@using FlowManager.Client.Components
+
+<PageTitle>FlowManager</PageTitle>
+
+<div class="text-center">
+    <h2>Flow Manager</h2>
+    <h4>Welcome back @userName</h4>
+    <div class="topBar">
+        <select id="rank" @bind="selectedRole">
+            <option value="basic">Basic User</option>
+            <option value="moderator">Moderator</option>
+            <option value="admin">Admin</option>
+        </select>
+
+        @if (selectedRole == "admin")
+        {
+            <div class="adminButtons">
+                <button @onclick="() => showFlowModal = true" class="adminNewFlowButton">New Flow</button>
+                <button @onclick="() => showUserModal = true" class="adminNewUserButton">New User</button>
+            </div>
+        }
+
+        @if (selectedRole == "basic")
+        {
+            <button @onclick="() => showFormModal = true" class="newRequestButton">New request</button>
+        }
+    </div>
+</div>
+
+<NewFormModal IsOpen="@showFormModal"
+              IsOpenChanged="@(value => showFormModal = value)"
+              AvailableFlows="flows"
+              CurrentUserId="@currentUserId"
+              OnSubmit="HandleFormSubmit" />
+
+<NewUserModal IsOpen="@showUserModal"
+              IsOpenChanged="@(value => showUserModal = value)" />
+
+<NewFlowModal IsOpen="@showFlowModal"
+              IsOpenChanged="@(value => showFlowModal = value)"
+              OnSubmit="HandleFlowSubmit"
+              AvailableSteps="allSteps" />
+
+@if (userForms.Any())
+{
+    <div class="form-list">
+        @foreach (var form in userForms)
+        {
+            var isExpanded = expandedFormId == form.Id;
+            <div class="form-entry" @onclick="() => ToggleExpand(form.Id)">
+                <div class="form-summary">
+                    <strong>@GetFlowName(form.FlowId)</strong>
+                    <span class="status @form.Status">@form.Status</span>
+                    <span>@form.CreatedAt.ToLocalTime().ToString("g")</span>
+                </div>
+                @if (isExpanded)
+                {
+                    <div class="form-details">
+                        <p><strong>Comment:</strong> @form.Comment</p>
+                        <p><strong>Last Step:</strong> @(form.LastStep?.Name ?? "Not started")</p>
+                        <p><strong>Status:</strong> @form.Status</p>
+                        <p><strong>Updated:</strong> @form.UpdatedAt.ToLocalTime().ToString("g")</p>
+                    </div>
+                    <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="2" />
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p style="margin-top: 2rem; align-content: center; text-align: center;">No requests submitted yet.</p>
+}
+
+@code {
+    private string selectedRole = "basic";
+    private string userName = "John Doe";
+    private Guid currentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    private bool showFormModal = false;
+    private bool showUserModal = false;
+    private bool showFlowModal = false;
+
+    private List<Flow> flows = new();
+    private List<Form> userForms = new();
+    private List<Step> allSteps = new();
+    private Guid? expandedFormId = null;
+
+    Flow flow = new()
+    {
+        Name = "Test Flow",
+        Steps = new List<Step>
+        {
+            new() { Name = "Created" },
+            new() { Name = "Team Leader" },
+            new() { Name = "HR" },
+            new() { Name = "IT" },
+            new() { Name = "Finance" }
+        }
+    };
+
+    protected override Task OnInitializedAsync()
+    {
+    
+        allSteps = new List<Step>
+        {
+            new() { Id = Guid.NewGuid(), Name = "Created", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "Team Leader", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "HR", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "IT", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "Finance", CreatedAt = DateTime.UtcNow }
+        };
+
+        flows = new List<Flow>
+        {
+            new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
+            new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
+        };
+
+        userForms = new List<Form>();
+        return Task.CompletedTask;
+    }
+
+    private void HandleFormSubmit(Form form)
+    {
+        userForms.Insert(0, form);
+        StateHasChanged();
+    }
+
+    private void HandleFlowSubmit(Flow flow)
+    {
+        flows.Add(flow);            
+        showFlowModal = false;      
+        StateHasChanged();          
+    }
+
+    private void ToggleExpand(Guid formId)
+    {
+        expandedFormId = expandedFormId == formId ? null : formId;
+    }
+
+    private string GetFlowName(Guid flowId)
+    {
+        return flows.FirstOrDefault(f => f.Id == flowId)?.Name ?? "Unknown Flow";
+    }
 }
