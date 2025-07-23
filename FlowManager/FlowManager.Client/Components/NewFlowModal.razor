@@ -32,9 +32,11 @@
                 {
                     <li @key="step.Id">
                         <strong>#@(index + 1)</strong> @step.Name
-                        <button @onclick="() => MoveStepUp(index)" disabled="@(index == 0)">↑</button>
-                        <button @onclick="() => MoveStepDown(index)" disabled="@(index == Steps.Count - 1)">↓</button>
-                        <button @onclick="() => RemoveStep(index)">✕</button>
+                        <div class="buttons">
+                            <button @onclick="() => MoveStepUp(index)" disabled="@(index == 0)">↑</button>
+                            <button @onclick="() => MoveStepDown(index)" disabled="@(index == Steps.Count - 1)">↓</button>
+                            <button @onclick="() => RemoveStep(index)">✕</button>
+                        </div>
                     </li>
                 }
 

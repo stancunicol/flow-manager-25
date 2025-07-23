@@ -80,9 +80,11 @@
 .step-input button:hover {
      background: #00b37a;
 }
-
-
-
+.buttons{
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
 ul {
     list-style: none;
     padding: 0;
