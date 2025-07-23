@@ -1,0 +1,167 @@
+﻿.popup-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 40, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    animation: fadein 0.3s ease-out forwards;
+}
+
+.popup-container {
+    background: #000028;
+    border: 2px solid #00d7a0;
+    border-radius: 12px;
+    padding: 24px;
+    width: 400px;
+    color: white;
+    box-shadow: 0 0 20px #00d7a060;
+}
+
+.popup-container h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #00d7a0;
+    text-align: center;
+}
+
+.popup-input,
+.popup-textare,
+.form-control {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    border: 1px solid #00d7a0;
+    border-radius: 6px;
+    background: #000040;
+    color: white;
+}
+
+.popup-textare {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.step-input {
+    display: flex;
+    align-items: flex-start; 
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+
+.step-input select {
+    flex: 1;
+    height: 38px;
+    padding: 8px;
+    border-radius: 6px;
+    background: #000040;
+    border: 1px solid #00d7a0;
+    color: white;
+ }
+
+.step-input button {
+    background: #00d7a0;
+    color: white;
+    padding: 8px 16px;
+    height: 42px; 
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+ }
+
+.step-input button:hover {
+     background: #00b37a;
+}
+
+
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 16px;
+}
+ul li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #000040;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    border: 1px solid #00d7a0;
+    color: white;
+    }
+
+ ul li strong {
+   margin-right: 8px;
+   color: #00d7a0;
+}
+
+ul li button {
+     margin-left: 6px;
+     background: #001050;
+     color: #00d7a0;
+     border: none;
+     border-radius: 4px;
+     padding: 4px 8px;
+     cursor: pointer;
+     transition: background 0.2s;
+ }
+
+ul li button:hover {
+      background: #002070;
+ }
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-actions button {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-actions button:first-child {
+     background: #00d7a0;
+     border: none;
+     color: white;
+
+}
+
+ .modal-actions button:first-child:hover {
+     background: #00b37a;
+ }
+
+ .modal-actions button:last-child {
+     background: transparent;
+     border: 1px solid #00d7a0;
+     color: white;
+     }
+
+ .modal-actions button:last-child:hover {
+      background: #001050;
+ }
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
