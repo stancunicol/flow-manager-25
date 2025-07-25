@@ -1,25 +1,25 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using FlowManager.Client;
-using Microsoft.AspNetCore.Identity;
 using FlowManager.Infrastructure.Services;
 using FlowManager.Application.Interfaces;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
 
-var app = builder.Build();
+builder.Services.AddApiAuthorization();
 
-
-//builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:7195/") 
+    BaseAddress = new Uri("http://localhost:5000/")
 });
-
-
 
 await builder.Build().RunAsync();
