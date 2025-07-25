@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -7,33 +8,39 @@ namespace FlowManager.Client.Pages
 {
     public partial class Auth : ComponentBase
     {
-        private string email = string.Empty;
-        private string password = string.Empty;
-        private string? errorMessage;
+        protected string email = string.Empty;
+        protected string password = string.Empty;
+        protected string? errorMessage;
 
-        [Inject]
-        private HttpClient Http { get; set; }
+        [Inject] 
+        protected HttpClient Http { get; set; }
 
-        private async Task HandleLogin()
+        [Inject] 
+        protected NavigationManager Navigation { get; set; }
+
+        [Inject] 
+        protected AuthenticationStateProvider AuthProvider { get; set; }
+
+        protected async Task HandleLogin()
         {
-            var body = new Dictionary<string, string>
-                    {
-                        { "email", email },
-                        { "password", password }
-                    };
+            var loginData = new { Email = email, Password = password };
+            var request = new HttpRequestMessage(HttpMethod.Post, "login")
+            {
+                Content = JsonContent.Create(loginData)
+            };
+            request.Headers.Add("Accept", "application/json");
 
-            var response = await Http.PostAsJsonAsync("api/auth/login", body);
+            var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             if (response.IsSuccessStatusCode)
             {
-                errorMessage = "You are logged in";
-                
+                (AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication(email);
+                Navigation.NavigateTo("/");
             }
             else
             {
-                errorMessage = "Invalid email or password";
+                errorMessage = "Login failed. Please check credentials.";
             }
         }
-
     }
 }

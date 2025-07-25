@@ -143,13 +143,23 @@ else
 @using FlowManager.Domain.Entities
 @using FlowManager.Client.Components
 @using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
 
 @attribute [Authorize]
 <PageTitle>FlowManager</PageTitle>
 
 <div class="text-center">
     <h2>Flow Manager</h2>
-    <h4>Welcome back @userName</h4>
+    @if (!string.IsNullOrEmpty(userName))
+    {
+        <h4>Welcome back @userName</h4>
+    }
+    else
+    {
+        <h4>Welcome back</h4>
+    }
+
     <div class="topBar">
         <select id="rank" @bind="selectedRole">
             <option value="basic">Basic User</option>
@@ -248,9 +258,11 @@ else if (selectedRole == "moderator")
     
 }
 
+@inject ApiAuthenticationStateProvider AuthProvider
+
 @code {
     private string selectedRole = "basic";
-    private string userName = "Clientu Gusti";
+    private string userName = "";
     private Guid currentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     private bool showFormModal = false;
@@ -275,27 +287,38 @@ else if (selectedRole == "moderator")
         }
     };
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-    
-        allSteps = new List<Step>
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
         {
-            new() { Id = Guid.NewGuid(), Name = "Created", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "Team Leader", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "HR", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "IT", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "Finance", CreatedAt = DateTime.UtcNow }
-        };
+            var name = user.FindFirst(c => c.Type == ClaimTypes.Name)?.Value;
+            var email = user.FindFirst(c => c.Type == ClaimTypes.Email)?.Value;
+
+            userName = !string.IsNullOrWhiteSpace(name) ? name : email ?? "Utilizator";
+        }
+
+        allSteps = new List<Step>
+    {
+        new() { Id = Guid.NewGuid(), Name = "Created", CreatedAt = DateTime.UtcNow },
+        new() { Id = Guid.NewGuid(), Name = "Team Leader", CreatedAt = DateTime.UtcNow },
+        new() { Id = Guid.NewGuid(), Name = "HR", CreatedAt = DateTime.UtcNow },
+        new() { Id = Guid.NewGuid(), Name = "IT", CreatedAt = DateTime.UtcNow },
+        new() { Id = Guid.NewGuid(), Name = "Finance", CreatedAt = DateTime.UtcNow }
+    };
 
         flows = new List<Flow>
-        {
-            new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
-            new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
-        };
+    {
+        new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
+        new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
+    };
 
         userForms = new List<Form>();
-        return Task.CompletedTask;
     }
+
 
     private void HandleFormSubmit(Form form)
     {

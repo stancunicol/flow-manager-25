@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Identity;
+using System.Text.Json.Serialization;
 
 namespace FlowManager.Domain.Entities
 {
     public class User : IdentityUser<Guid>
     {
+        [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
         public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

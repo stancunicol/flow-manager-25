@@ -10,7 +10,7 @@
 
     <div class="form-container">    
         <!-- Sign In Form -->
-        <form id="signin-form" class="form active" @onsubmit="HandlewLogin">
+        <form id="signin-form" class="form active" @onsubmit="HandleLogin">
             <h2 class="h2-form">Welcome Back</h2>
             <input type="email" placeholder="Email" @bind="email" required />
             <input type="password" placeholder="Password" @bind="password" required />
@@ -26,34 +26,3 @@
     </div>
 </div>
 
-@inject HttpClient HttpClient
-@inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthProvider
-
-@code {
-    // private string email;
-    // private string password;
-    // private string errorMessage;
-
-    public async Task HandlewLogin()
-    {
-        var loginData = new { Email = email, Password = password };
-        var request = new HttpRequestMessage(HttpMethod.Post, "login")
-        {
-            Content = JsonContent.Create(loginData)
-        };
-        request.Headers.Add("Accept", "application/json");
-
-        var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-
-        if (response.IsSuccessStatusCode)
-        {
-            (AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication(loginData.Email);
-            Navigation.NavigateTo("/");
-        }
-        else
-        {
-            errorMessage = "Login failed. Please check credentials.";
-        }
-    }
-}

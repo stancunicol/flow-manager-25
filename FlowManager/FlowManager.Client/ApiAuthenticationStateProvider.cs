@@ -31,17 +31,22 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
             var user = await response.Content.ReadFromJsonAsync<User>();
             Console.WriteLine(user.Email);
 
-            if (user == null || string.IsNullOrEmpty(user.UserName))
+
+            if (user == null || string.IsNullOrEmpty(user.Email))
             {
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            // Creează o identitate cu cereri (claims) folosind informațiile utilizatorului
+
             var identity = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.Name, user.UserName),
-                // Adaugă cereri suplimentare după necesitate, de exemplu, roluri, email, etc.
+              
+                new Claim(ClaimTypes.Name, user.Name ?? ""),
+                new Claim(ClaimTypes.Email, user.Email)
             }, "apiauth");
+
+         
+            
 
             return new AuthenticationState(new ClaimsPrincipal(identity));
         }
