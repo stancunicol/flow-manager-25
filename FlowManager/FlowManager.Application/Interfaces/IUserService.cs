@@ -17,5 +17,6 @@ namespace FlowManager.Application.Interfaces
 
         Task<bool> UpdateUserProfile(Guid id, string name, string username, string email);
         Task<bool> DeleteUser(Guid id);
+
     }
 }

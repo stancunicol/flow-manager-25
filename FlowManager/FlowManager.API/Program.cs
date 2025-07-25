@@ -12,11 +12,16 @@ var builder = WebApplication.CreateBuilder(args);
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", policyBuilder =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        policyBuilder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+        policy.WithOrigins("https://localhost:7082") 
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); 
     });
 });
+
+
 
 // Add layer dependencies
 builder.Services.AddApplication();
@@ -33,6 +38,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultScheme = IdentityConstants.BearerScheme;
 })
 .AddBearerToken(IdentityConstants.BearerScheme);
+
 
 builder.Services.AddAuthorization();
 

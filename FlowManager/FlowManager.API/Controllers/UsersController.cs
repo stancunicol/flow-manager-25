@@ -1,6 +1,8 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FlowManager.Controllers
 {
@@ -71,5 +73,29 @@ namespace FlowManager.Controllers
             var deleted = await _service.DeleteUser(id);
             return deleted ? NoContent() : NotFound();
         }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var user = await _service.GetUserById(Guid.Parse(userId));
+            if (user == null)
+                return NotFound();
+
+            var dto = new UserProfileDto
+            {
+                Name = user.Name,
+                Email = user.Email,
+                UserName = user.UserName
+            };
+
+            return Ok(dto);
+        }
+
+
     }
 }
