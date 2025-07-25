@@ -143,23 +143,15 @@ else
 @using FlowManager.Domain.Entities
 @using FlowManager.Client.Components
 @using Microsoft.AspNetCore.Authorization
-@using System.Security.Claims
-
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @attribute [Authorize]
 <PageTitle>FlowManager</PageTitle>
 
 <div class="text-center">
     <h2>Flow Manager</h2>
-    @if (!string.IsNullOrEmpty(userName))
-    {
-        <h4>Welcome back @userName</h4>
-    }
-    else
-    {
-        <h4>Welcome back</h4>
-    }
-
+    <h4>Welcome back @userName</h4>
     <div class="topBar">
         <select id="rank" @bind="selectedRole">
             <option value="basic">Basic User</option>
@@ -218,7 +210,7 @@ else
                             <p><strong>Status:</strong> @form.Status</p>
                             <p><strong>Updated:</strong> @form.UpdatedAt.ToLocalTime().ToString("g")</p>
                         </div>
-                        <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="2" />
+                        <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@currentStep" />
                     }
                 </div>
             }
@@ -255,10 +247,39 @@ else if (selectedRole == "admin")
 }
 else if (selectedRole == "moderator")
 {
-    
+    @if (userForms.Any())
+    {
+        <div class="form-list">
+            @foreach (var form in userForms)
+            {
+                var isExpanded = expandedFormId == form.Id;
+                <div class="form-entry" @onclick="() => ToggleExpand(form.Id)">
+                    <div class="form-summary">
+                        <strong>@GetFlowName(form.FlowId)</strong>
+                        <span class="status @form.Status">@form.Status</span>
+                        <span>@form.CreatedAt.ToLocalTime().ToString("g")</span>
+                    </div>
+                    @if (isExpanded)
+                    {
+                        <div class="form-details">
+                            <p><strong>Comment:</strong> @form.Comment</p>
+                        </div>
+                        <div class="moderatorButtons">
+                            <button class="approveButton" @onclick="ApproveStep">Approve</button>
+                            <button class="rejectButton" @onclick="RejectStep">Reject</button>
+                        </div>
+                        <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@currentStep" />
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p style="margin-top: 2rem; align-content: center; text-align: center;">No requests for you yet.</p>
+    }
 }
 
-@inject ApiAuthenticationStateProvider AuthProvider
 
 @code {
     private string selectedRole = "basic";
@@ -273,6 +294,8 @@ else if (selectedRole == "moderator")
     private List<Form> userForms = new();
     private List<Step> allSteps = new();
     private Guid? expandedFormId = null;
+    
+    int currentStep = 0;
 
     Flow flow = new()
     {
@@ -289,36 +312,33 @@ else if (selectedRole == "moderator")
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        if (user.Identity is { IsAuthenticated: true })
         {
-            var name = user.FindFirst(c => c.Type == ClaimTypes.Name)?.Value;
-            var email = user.FindFirst(c => c.Type == ClaimTypes.Email)?.Value;
-
-            userName = !string.IsNullOrWhiteSpace(name) ? name : email ?? "Utilizator";
+            userName = user.Identity.Name;
+            
         }
-
+        
         allSteps = new List<Step>
-    {
-        new() { Id = Guid.NewGuid(), Name = "Created", CreatedAt = DateTime.UtcNow },
-        new() { Id = Guid.NewGuid(), Name = "Team Leader", CreatedAt = DateTime.UtcNow },
-        new() { Id = Guid.NewGuid(), Name = "HR", CreatedAt = DateTime.UtcNow },
-        new() { Id = Guid.NewGuid(), Name = "IT", CreatedAt = DateTime.UtcNow },
-        new() { Id = Guid.NewGuid(), Name = "Finance", CreatedAt = DateTime.UtcNow }
-    };
+        {
+            new() { Id = Guid.NewGuid(), Name = "Created", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "Team Leader", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "HR", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "IT", CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Name = "Finance", CreatedAt = DateTime.UtcNow }
+        };
 
         flows = new List<Flow>
-    {
-        new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
-        new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
-    };
+        {
+            new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
+            new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
+        };
 
         userForms = new List<Form>();
+        //jreturn Task.CompletedTask;
     }
-
 
     private void HandleFormSubmit(Form form)
     {
@@ -342,4 +362,16 @@ else if (selectedRole == "moderator")
     {
         return flows.FirstOrDefault(f => f.Id == flowId)?.Name ?? "Unknown Flow";
     }
+    public void ApproveStep()
+    {
+        currentStep++;
+        Console.WriteLine("Step approved");
+    }
+
+    public void RejectStep()
+    {
+        // Logic to reject the step
+        Console.WriteLine("Step rejected");
+    }
+
 }
