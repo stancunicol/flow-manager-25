@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 {
     private readonly HttpClient _httpClient;
-   private string _email; 
+    private string _email; 
 
     public ApiAuthenticationStateProvider(HttpClient httpClient)
     {

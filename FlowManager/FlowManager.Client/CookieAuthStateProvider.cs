@@ -6,31 +6,35 @@ using FlowManager.Domain.Entities;
 public class CookieAuthStateProvider : AuthenticationStateProvider
 {
     private readonly HttpClient _httpClient;
+    private string _email;
 
     public CookieAuthStateProvider(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
-
+    public void SetEmail(string email)
+    {
+        _email = email;
+    }
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         try
         {
-            var response = await _httpClient.GetAsync("api/auth/me");
-            // if (!response.IsSuccessStatusCode)
-            // {
-            //     Console.WriteLine("0");
-            //     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            // }
+            var response = await _httpClient.GetAsync("api/Users/me?useCookies=true&useSessionCookies=true");
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("0");
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            }
                 
 
             var user = await response.Content.ReadFromJsonAsync<User>();
 
-            // if (user == null || string.IsNullOrWhiteSpace(user.Email))
-            // {
-            //     Console.WriteLine("1");
-            //     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            // }
+            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            {
+                Console.WriteLine("1");
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            }
 
             var identity = new ClaimsIdentity(new[]
             {
@@ -49,8 +53,9 @@ public class CookieAuthStateProvider : AuthenticationStateProvider
         }
     }
 
-    public void NotifyUserAuthentication()
+    public void NotifyUserAuthentication(string _email)
     {
+        SetEmail(_email);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 

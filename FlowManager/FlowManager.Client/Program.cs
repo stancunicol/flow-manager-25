@@ -12,17 +12,17 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddAuthorizationCore();
-builder.Services.AddScoped<ApiAuthenticationStateProvider>();
+builder.Services.AddScoped<CookieAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
-    provider.GetRequiredService<ApiAuthenticationStateProvider>());
+    provider.GetRequiredService<CookieAuthStateProvider>());
 
+builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddApiAuthorization();
 
-
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:7195/")
+    BaseAddress = new Uri("http://localhost:5290/")
 });
 
 

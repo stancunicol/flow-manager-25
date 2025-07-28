@@ -20,11 +20,14 @@ namespace FlowManager.Client.Pages
 
         [Inject] 
         protected AuthenticationStateProvider AuthProvider { get; set; }
+        
+        [Inject]
+        protected CookieAuthStateProvider CookieAuthStateProvider { get; set; }
 
         protected async Task HandleLogin()
         {
             var loginData = new { Email = email, Password = password };
-            var request = new HttpRequestMessage(HttpMethod.Post, "login")
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/login?useCookies=true&useSessionCookies=true")
             {
                 Content = JsonContent.Create(loginData)
             };
@@ -34,9 +37,9 @@ namespace FlowManager.Client.Pages
 
             if (response.IsSuccessStatusCode)
             {
-                (AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication(email);
+                //(AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication(email);
                 //(AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication();
-
+                (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication(email);
                 Navigation.NavigateTo("/");
             }
             else

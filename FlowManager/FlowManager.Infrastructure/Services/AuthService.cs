@@ -18,12 +18,14 @@ namespace FlowManager.Infrastructure.Services
         public async Task<bool> Login(string email, string password)
         {
             var user = await _userManager.FindByEmailAsync(email);
+            Console.WriteLine("NU E BINE");
             if (user == null) return false;
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
             if (!result.Succeeded) return false;
 
             await _signInManager.SignInAsync(user, isPersistent: true);
+            Console.WriteLine("E BINE");
             return true;
         }
 
