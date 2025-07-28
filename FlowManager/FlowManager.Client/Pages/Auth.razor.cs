@@ -34,8 +34,8 @@ namespace FlowManager.Client.Pages
 
             if (response.IsSuccessStatusCode)
             {
-                //(AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication(email);
-                (AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication();
+                (AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication(email);
+                //(AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication();
 
                 Navigation.NavigateTo("/");
             }

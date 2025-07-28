@@ -33,5 +33,10 @@ namespace FlowManager.Infrastructure.Services
         {
             await _signInManager.SignOutAsync();
         }
+        
+        public async Task<User?> GetUserByEmail(string email)
+        {
+            return await _userManager.FindByEmailAsync(email);
+        }
     }
 }
