@@ -41,7 +41,7 @@
             [HttpPost("logout")]
             public async Task<IActionResult>Logout()
             {
-                await _authService.Logout();
+                await _authService.Logout();    
                 return Ok("Logged out");
             }
             [Authorize]
@@ -69,7 +69,7 @@
                     return NotFound("User not found");
                 }
 
-                return Ok(foundUser); // Returnezi direct entitatea User
+                return Ok(foundUser); 
             }
 
 

@@ -1,4 +1,5 @@
-﻿using FlowManager.Application;
+﻿using FlowManager.API;
+using FlowManager.Application;
 using FlowManager.Domain.Entities;
 using FlowManager.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,14 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "YourAppCookie";
+    options.LoginPath = "/api/auth/login";
+    options.AccessDeniedPath = "/access-denied";
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
 
 
 // Add layer dependencies
@@ -33,43 +42,14 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = IdentityConstants.BearerScheme;
-})
-.AddBearerToken(IdentityConstants.BearerScheme);
-
-
 builder.Services.AddAuthorization();
-
-// Configurarea cookie-urilor de autentificare
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/api/auth/login";
-    options.ExpireTimeSpan = TimeSpan.FromDays(30);
-});
-
-builder.Services.Configure<IdentityOptions>(options =>
-{
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequiredUniqueChars = 1;
-    
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.AllowedForNewUsers = true;
-    
-    options.User.AllowedUserNameCharacters =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-    options.User.RequireUniqueEmail = false;
-});
 
 builder.Services.AddIdentityCore<User>()
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddApiEndpoints();
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender>();
 
 var app = builder.Build();
 

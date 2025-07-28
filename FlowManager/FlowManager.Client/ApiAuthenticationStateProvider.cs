@@ -23,6 +23,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
         try
         {
             var response = await _httpClient.GetAsync($"/api/Users/email/{_email}");
+            
             if (!response.IsSuccessStatusCode)
             {
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));

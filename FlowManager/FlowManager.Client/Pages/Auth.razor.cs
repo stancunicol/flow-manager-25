@@ -32,7 +32,9 @@ namespace FlowManager.Client.Pages
                 Content = JsonContent.Create(loginData)
             };
             request.Headers.Add("Accept", "application/json");
-
+            //request.Headers.Add("credential", "include");
+            request.Headers.Add("Origin", "https://localhost:7195");
+            
             var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             if (response.IsSuccessStatusCode)

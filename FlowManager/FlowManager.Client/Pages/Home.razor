@@ -146,13 +146,13 @@ else
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-@attribute [Authorize]
+
 <PageTitle>FlowManager</PageTitle>
-<AuthorizeView>
+
 
 <div class="text-center">
     <h2>Flow Manager</h2>
-    <h4>Welcome back @context.User.Identity.Name</h4>
+    <h4>Welcome back</h4>
     <div class="topBar">
         <select id="rank" @bind="selectedRole">
             <option value="basic">Basic User</option>
@@ -281,7 +281,7 @@ else if (selectedRole == "moderator")
     }
 }
 
-</AuthorizeView>
+
 @code {
     private string selectedRole = "basic";
     private string userName = "";

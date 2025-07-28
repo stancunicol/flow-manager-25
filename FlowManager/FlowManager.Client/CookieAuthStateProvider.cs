@@ -20,21 +20,25 @@ public class CookieAuthStateProvider : AuthenticationStateProvider
     {
         try
         {
-            var response = await _httpClient.GetAsync("api/Users/me?useCookies=true&useSessionCookies=true");
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine("0");
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            }
+            //var response = await _httpClient.GetAsync("api/Users/me?useCookies=true&useSessionCookies=true");
+            var request = new HttpRequestMessage(HttpMethod.Get, "/api/Users/me");
+            
+            var response = await _httpClient.SendAsync(request);
+            
+            // if (!response.IsSuccessStatusCode)
+            // {
+            //     Console.WriteLine("0");
+            //     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            // }
                 
 
             var user = await response.Content.ReadFromJsonAsync<User>();
 
-            if (user == null || string.IsNullOrWhiteSpace(user.Email))
-            {
-                Console.WriteLine("1");
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            }
+            // if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            // {
+            //     Console.WriteLine("1");
+            //     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            // }
 
             var identity = new ClaimsIdentity(new[]
             {
