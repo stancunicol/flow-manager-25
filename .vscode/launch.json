@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-api",
+      "program": "${workspaceFolder}/FlowManager/FlowManager.API/bin/Debug/net9.0/FlowManager.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/FlowManager/FlowManager.API",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": "Launch Client",
+      "type": "blazorwasm",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/FlowManager/FlowManager.Client",
+      "browser": "chrome"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch API + Client",
+      "configurations": ["Launch API", "Launch Client"],
+      "stopAll": true
+    }
+  ]
+}

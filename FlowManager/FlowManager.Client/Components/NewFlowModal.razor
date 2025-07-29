@@ -1,0 +1,185 @@
+﻿@using FlowManager.Domain.Entities
+@using FlowManager.Client.Services
+@inject FlowService FlowService
+@inject StepService StepService
+@if(IsOpen)
+{
+    <div class="popup-backdrop">
+        <div class="popup-container">
+            <h3>Create a new flow</h3>
+
+            <label>Name: </label>
+            <input @bind="_name"  type="text" class="popup-input" name="name"/>
+
+
+            <label>Description</label>
+            <textarea @bind="_description" class="popup-textare" name="description"/>
+
+
+            <hr/>
+
+            <label>Add Step</label>
+            <div class="step-input">
+                <select @bind="selectedStepId" class="form-control">
+                    <option value="">-- Select a step --</option>
+                    @foreach (var step in GetAvailableStepsToAdd())
+                    {
+                        <option value="@step.Id.ToString()">@step.Name</option>
+                    }
+                </select>
+                <button @onclick="AddStepFromDropdown" disabled="@string.IsNullOrEmpty(selectedStepId)">Add</button>
+            </div>
+
+            <ul>
+                @foreach (var (step, index) in Steps.Select((s, i) => (s, i)))
+                {
+                    <li @key="step.Id">
+                        <strong>#@(index + 1)</strong> @step.Name
+                        <div class="buttons">
+                            <button @onclick="() => MoveStepUp(index)" disabled="@(index == 0)">↑</button>
+                            <button @onclick="() => MoveStepDown(index)" disabled="@(index == Steps.Count - 1)">↓</button>
+                            <button @onclick="() => RemoveStep(index)">✕</button>
+                        </div>
+                    </li>
+                }
+
+
+            </ul>
+
+            <div class="modal-actions">
+                <button @onclick="CreateFlow" disabled="@(!IsFormValid || _isCreating)">
+                    @if (_isCreating)
+                    {
+                        <span>Creating...</span>
+                    }
+                    else
+                    {
+                        <span>Create</span>
+                    }
+                </button>
+                <button @onclick="Close" disabled="@_isCreating">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    [Parameter] public EventCallback<Flow> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnFlowCreated { get; set; }
+
+    [Parameter] public List<Step> AvailableSteps { get; set; } = new();
+
+    private string _name = string.Empty;
+    private string _description = string.Empty;
+    private string selectedStepId = string.Empty;
+
+   
+    private List<Step> Steps { get; set; } = new();
+
+    private List<Step> GetAvailableStepsToAdd()
+    {
+        var addedIds = Steps.Select(s => s.Id).ToHashSet();
+        return AvailableSteps.Where(s => !addedIds.Contains(s.Id)).ToList();
+    }
+
+    private void AddStepFromDropdown()
+    {
+        if (Guid.TryParse(selectedStepId, out var stepId))
+        {
+            var stepToAdd = AvailableSteps.FirstOrDefault(s => s.Id == stepId);
+            if (stepToAdd is not null)
+            {
+                Steps.Add(new Step
+                {
+                    Id = stepToAdd.Id,
+                    Name = stepToAdd.Name,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                selectedStepId = string.Empty;
+            }
+        }
+    }
+
+    private void RemoveStep(int index)
+    {
+        if (index >= 0 && index < Steps.Count)
+        {
+            Steps.RemoveAt(index);
+        }
+    }
+
+    private void MoveStepUp(int index)
+    {
+        if (index > 0 && index < Steps.Count)
+        {
+            (Steps[index - 1], Steps[index]) = (Steps[index], Steps[index - 1]);
+        }
+    }
+
+    private void MoveStepDown(int index)
+    {
+        if (index >= 0 && index < Steps.Count - 1)
+        {
+            (Steps[index + 1], Steps[index]) = (Steps[index], Steps[index + 1]);
+        }
+    }
+
+
+    private bool _isCreating = false;
+
+    private async Task CreateFlow()
+    {
+        if (_isCreating) return;
+        
+        _isCreating = true;
+        try
+        {
+            var newFlow = new Flow
+            {
+                Name = _name,
+                Description = _description,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Create the flow first
+            var createdFlow = await FlowService.CreateFlowAsync(newFlow);
+            if (createdFlow != null)
+            {
+                // Then assign steps to the flow
+                for (int i = 0; i < Steps.Count; i++)
+                {
+                    await StepService.AddStepToFlowAsync(Steps[i].Id, createdFlow.Id, i);
+                }
+
+                await OnSubmit.InvokeAsync(createdFlow);
+                await OnFlowCreated.InvokeAsync();
+                await Close();
+            }
+        }
+        finally
+        {
+            _isCreating = false;
+        }
+    }
+
+    private async Task Close()
+    {
+        await IsOpenChanged.InvokeAsync(false);
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _name = string.Empty;
+        _description = string.Empty;
+        selectedStepId = string.Empty;
+        Steps = new List<Step>();
+    }
+
+    private bool IsFormValid => !string.IsNullOrWhiteSpace(_name) && Steps.Count > 0;
+}

@@ -1,0 +1,38 @@
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using FlowManager.Client;
+using FlowManager.Client.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
+
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<CookieAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<CookieAuthStateProvider>());
+
+builder.Services.AddCascadingAuthenticationState();
+
+builder.Services.AddApiAuthorization();
+
+builder.Services.AddScoped(sp => 
+{
+    var httpClient = new HttpClient()
+    {
+        BaseAddress = new Uri("https://localhost:7195/")
+    };
+    
+    // Ensure credentials (cookies) are sent with requests
+    httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+    
+    return httpClient;
+});
+
+// Register services
+builder.Services.AddScoped<FlowService>();
+builder.Services.AddScoped<StepService>();
+
+await builder.Build().RunAsync();
