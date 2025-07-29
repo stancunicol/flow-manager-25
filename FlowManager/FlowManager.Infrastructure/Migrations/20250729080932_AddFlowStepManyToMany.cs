@@ -11,16 +11,19 @@ namespace FlowManager.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            try
-            {
-                migrationBuilder.DropForeignKey(
-                    name: "FK_Steps_Flows_FlowId",
-                    table: "Steps");
-            }
-            catch
-            {
-                // Ignore if constraint doesn't exist
-            }
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN 
+                    IF EXISTS (
+                        SELECT 1 
+                        FROM information_schema.table_constraints 
+                        WHERE constraint_name = 'FK_Steps_Flows_FlowId' 
+                        AND table_name = 'Steps'
+                    ) THEN
+                        ALTER TABLE ""Steps"" DROP CONSTRAINT ""FK_Steps_Flows_FlowId"";
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.AlterColumn<Guid>(
                 name: "FlowId",
