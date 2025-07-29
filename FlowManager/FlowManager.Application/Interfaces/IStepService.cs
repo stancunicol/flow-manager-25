@@ -17,8 +17,8 @@ namespace FlowManager.Application.Interfaces
         Task<bool> DeleteStep(Guid id);
         Task<bool> AssignUserToStep(Guid id, Guid userId);
         Task<bool> UnassignUserFromStep(Guid id, Guid userId);
-
-
+        Task<bool> AddStepToFlow(Guid stepId, Guid flowId, int order = 0);
+        Task<bool> RemoveStepFromFlow(Guid stepId, Guid flowId);
 
 
 

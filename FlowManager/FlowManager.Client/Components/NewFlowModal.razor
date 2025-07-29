@@ -1,4 +1,7 @@
 ﻿@using FlowManager.Domain.Entities
+@using FlowManager.Client.Services
+@inject FlowService FlowService
+@inject StepService StepService
 @if(IsOpen)
 {
     <div class="popup-backdrop">
@@ -44,8 +47,17 @@
             </ul>
 
             <div class="modal-actions">
-                <button @onclick="CreateFlow" disabled="@(!IsFormValid)">Create</button>
-                <button @onclick="Close">Cancel</button>
+                <button @onclick="CreateFlow" disabled="@(!IsFormValid || _isCreating)">
+                    @if (_isCreating)
+                    {
+                        <span>Creating...</span>
+                    }
+                    else
+                    {
+                        <span>Create</span>
+                    }
+                </button>
+                <button @onclick="Close" disabled="@_isCreating">Cancel</button>
             </div>
         </div>
     </div>
@@ -56,6 +68,7 @@
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
 
     [Parameter] public EventCallback<Flow> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnFlowCreated { get; set; }
 
     [Parameter] public List<Step> AvailableSteps { get; set; } = new();
 
@@ -116,20 +129,42 @@
     }
 
 
+    private bool _isCreating = false;
+
     private async Task CreateFlow()
     {
-        var newFlow = new Flow
+        if (_isCreating) return;
+        
+        _isCreating = true;
+        try
         {
-            Id = Guid.NewGuid(),
-            Name = _name,
-            Description = _description,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            Steps = new List<Step>(Steps)
-        };
+            var newFlow = new Flow
+            {
+                Name = _name,
+                Description = _description,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-        await OnSubmit.InvokeAsync(newFlow);
-        await Close();
+            // Create the flow first
+            var createdFlow = await FlowService.CreateFlowAsync(newFlow);
+            if (createdFlow != null)
+            {
+                // Then assign steps to the flow
+                for (int i = 0; i < Steps.Count; i++)
+                {
+                    await StepService.AddStepToFlowAsync(Steps[i].Id, createdFlow.Id, i);
+                }
+
+                await OnSubmit.InvokeAsync(createdFlow);
+                await OnFlowCreated.InvokeAsync();
+                await Close();
+            }
+        }
+        finally
+        {
+            _isCreating = false;
+        }
     }
 
     private async Task Close()

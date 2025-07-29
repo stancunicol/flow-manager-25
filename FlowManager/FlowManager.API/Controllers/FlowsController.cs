@@ -62,5 +62,15 @@ namespace FlowManager.API.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("{id}/steps")]
+        public async Task<ActionResult<IEnumerable<Step>>> GetFlowSteps(Guid id)
+        {
+            var flow = await _flowService.GetFlowByIdAsync(id);
+            if (flow == null)
+                return NotFound();
+
+            return Ok(flow.Steps.OrderBy(s => s.CreatedAt));
+        }
     }
 }

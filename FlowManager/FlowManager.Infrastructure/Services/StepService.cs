@@ -16,7 +16,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<IEnumerable<Step>> GetSteps()
         {
             return await _context.Steps
-                .Include(s => s.Flow)
+                .Include(s => s.FlowSteps).ThenInclude(fs => fs.Flow)
                 .Include(s => s.StepUsers).ThenInclude(su => su.User)
                 .Include(s => s.UpdateHistories)
                 .ToListAsync();
@@ -25,7 +25,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<Step?> GetStep(Guid id)
         {
             return await _context.Steps
-                .Include(s => s.Flow)
+                .Include(s => s.FlowSteps).ThenInclude(fs => fs.Flow)
                 .Include(s => s.StepUsers).ThenInclude(su => su.User)
                 .Include(s => s.UpdateHistories)
                 .FirstOrDefaultAsync(s => s.Id == id);
@@ -34,10 +34,10 @@ namespace FlowManager.Infrastructure.Services
         public async Task<IEnumerable<Step>> GetStepsByFlow(Guid flowId)
         {
             return await _context.Steps
-                .Include(s => s.Flow)
+                .Include(s => s.FlowSteps).ThenInclude(fs => fs.Flow)
                 .Include(s => s.StepUsers).ThenInclude(su => su.User)
                 .Include(s => s.UpdateHistories)
-                .Where(s => s.FlowId == flowId)
+                .Where(s => s.FlowSteps.Any(fs => fs.FlowId == flowId))
                 .ToListAsync();
         }
 
@@ -124,6 +124,46 @@ namespace FlowManager.Infrastructure.Services
                 await _context.SaveChangesAsync();
             }
 
+            return true;
+        }
+
+        public async Task<bool> AddStepToFlow(Guid stepId, Guid flowId, int order = 0)
+        {
+            var step = await _context.Steps.FindAsync(stepId);
+            var flow = await _context.Flows.FindAsync(flowId);
+
+            if (step == null || flow == null)
+                return false;
+
+            var existingFlowStep = await _context.FlowSteps
+                .FirstOrDefaultAsync(fs => fs.StepId == stepId && fs.FlowId == flowId);
+
+            if (existingFlowStep != null)
+                return false; // Already exists
+
+            var flowStep = new FlowStep
+            {
+                StepId = stepId,
+                FlowId = flowId,
+                Order = order,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.FlowSteps.Add(flowStep);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RemoveStepFromFlow(Guid stepId, Guid flowId)
+        {
+            var flowStep = await _context.FlowSteps
+                .FirstOrDefaultAsync(fs => fs.StepId == stepId && fs.FlowId == flowId);
+
+            if (flowStep == null)
+                return false;
+
+            _context.FlowSteps.Remove(flowStep);
+            await _context.SaveChangesAsync();
             return true;
         }
     }

@@ -3,6 +3,7 @@ using System;
 using FlowManager.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowManager.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250729082111_RemoveFlowIdFromSteps")]
+    partial class RemoveFlowIdFromSteps
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,7 +47,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Flows", (string)null);
+                    b.ToTable("Flows");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStep", b =>
@@ -65,7 +68,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("StepId");
 
-                    b.ToTable("FlowSteps", (string)null);
+                    b.ToTable("FlowSteps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Form", b =>
@@ -104,7 +107,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Forms", (string)null);
+                    b.ToTable("Forms");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>
@@ -130,7 +133,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("FlowId");
 
-                    b.ToTable("Steps", (string)null);
+                    b.ToTable("Steps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.StepUpdateHistory", b =>
@@ -157,7 +160,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("StepUpdateHistories", (string)null);
+                    b.ToTable("StepUpdateHistories");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.StepUser", b =>
@@ -175,7 +178,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("StepUsers", (string)null);
+                    b.ToTable("StepUsers");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>

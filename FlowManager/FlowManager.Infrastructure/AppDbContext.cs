@@ -14,6 +14,7 @@ namespace FlowManager.Infrastructure
         public DbSet<Flow> Flows => Set<Flow>();
         public DbSet<Form> Forms => Set<Form>();
         public DbSet<Step> Steps => Set<Step>();
+        public DbSet<FlowStep> FlowSteps => Set<FlowStep>();
         public DbSet<StepUser> StepUsers => Set<StepUser>();
         public DbSet<StepUpdateHistory> StepUpdateHistories => Set<StepUpdateHistory>();
         public new DbSet<UserRole> UserRoles => Set<UserRole>();
@@ -22,7 +23,19 @@ namespace FlowManager.Infrastructure
         {
             base.OnModelCreating(builder);
 
-            
+            builder.Entity<FlowStep>()
+                .HasKey(fs => new { fs.FlowId, fs.StepId });
+
+            builder.Entity<FlowStep>()
+                .HasOne(fs => fs.Flow)
+                .WithMany(f => f.FlowSteps)
+                .HasForeignKey(fs => fs.FlowId);
+
+            builder.Entity<FlowStep>()
+                .HasOne(fs => fs.Step)
+                .WithMany(s => s.FlowSteps)
+                .HasForeignKey(fs => fs.StepId);
+
             builder.Entity<StepUser>()
                 .HasKey(su => new { su.StepId, su.UserId });
 

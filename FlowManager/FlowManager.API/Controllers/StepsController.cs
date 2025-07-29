@@ -79,5 +79,19 @@ namespace FlowManager.API.Controllers
             var success = await _stepService.UnassignUserFromStep(id, userId);
             return success ? NoContent() : NotFound();
         }
+
+        [HttpPost("{stepId}/add-to-flow/{flowId}")]
+        public async Task<IActionResult> AddStepToFlow(Guid stepId, Guid flowId, [FromQuery] int order = 0)
+        {
+            var success = await _stepService.AddStepToFlow(stepId, flowId, order);
+            return success ? NoContent() : NotFound();
+        }
+
+        [HttpDelete("{stepId}/remove-from-flow/{flowId}")]
+        public async Task<IActionResult> RemoveStepFromFlow(Guid stepId, Guid flowId)
+        {
+            var success = await _stepService.RemoveStepFromFlow(stepId, flowId);
+            return success ? NoContent() : NotFound();
+        }
     }
 }

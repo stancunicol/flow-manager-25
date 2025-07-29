@@ -15,7 +15,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<IEnumerable<Flow>> GetAllFlowsAsync()
         {
             return await _context.Flows
-                .Include(f => f.Steps)
+                .Include(f => f.FlowSteps).ThenInclude(fs => fs.Step)
                 .Include(f => f.Forms)
                 .ToListAsync();
         }
@@ -23,7 +23,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<Flow?> GetFlowByIdAsync(Guid id)
         {
             return await _context.Flows
-                .Include(f => f.Steps)
+                .Include(f => f.FlowSteps).ThenInclude(fs => fs.Step)
                 .Include(f => f.Forms)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }

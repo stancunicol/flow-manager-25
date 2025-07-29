@@ -84,15 +84,7 @@ else
         // TEST FLOW AND DATA
     Flow flow = new()
     {
-        Name = "Test Flow",
-        Steps = new List<Step>
-        {
-            new() { Name = "Created" },
-            new() { Name = "Team Leader" },
-            new() { Name = "HR" },
-            new() { Name = "IT" },
-            new() { Name = "Finance" }
-        }
+        Name = "Test Flow"
     };
 
     private string selectedRole = "basic";
@@ -107,16 +99,7 @@ else
     private List<Form> userForms = new();
     private Guid? expandedFormId = null;
 
-    protected override async Task OnInitializedAsync()
-    {
-        flows = new List<Flow>
-        {
-            new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
-            new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
-        };
-
-        userForms = new List<Form>();
-    }
+    // This will be handled in the main OnInitializedAsync below
 
     private void HandleFormSubmit(Form form)
     {
@@ -142,11 +125,14 @@ else
 @page "/"
 @using FlowManager.Domain.Entities
 @using FlowManager.Client.Components
+@using FlowManager.Client.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
+@inject FlowService FlowService
+@inject StepService StepService
 
 @attribute [Authorize]
 <PageTitle>FlowManager</PageTitle>
@@ -180,6 +166,7 @@ else
             <div class="adminButtons">
                 <button @onclick="() => showFlowModal = true" class="adminNewFlowButton">New Flow</button>
                 <button @onclick="() => showUserModal = true" class="adminNewUserButton">New User</button>
+                <button @onclick="() => showStepModal = true" class="adminNewStepButton">Add Step</button>
             </div>
         }
 
@@ -202,7 +189,12 @@ else
 <NewFlowModal IsOpen="@showFlowModal"
               IsOpenChanged="@(value => showFlowModal = value)"
               OnSubmit="HandleFlowSubmit"
+              OnFlowCreated="LoadFlows"
               AvailableSteps="allSteps" />
+
+<StepAddModal IsOpen="@showStepModal"
+              IsOpenChanged="@(value => showStepModal = value)"
+              OnSubmit="HandleStepSubmit" />
 
 @if (selectedRole == "basic")
 {
@@ -305,6 +297,7 @@ else if (selectedRole == "moderator")
     private bool showFormModal = false;
     private bool showUserModal = false;
     private bool showFlowModal = false;
+    private bool showStepModal = false;
 
     private List<Flow> flows = new();
     private List<Form> userForms = new();
@@ -317,15 +310,7 @@ else if (selectedRole == "moderator")
 
     Flow flow = new()
     {
-        Name = "Test Flow",
-        Steps = new List<Step>
-        {
-            new() { Name = "Created" },
-            new() { Name = "Team Leader" },
-            new() { Name = "HR" },
-            new() { Name = "IT" },
-            new() { Name = "Finance" }
-        }
+        Name = "Test Flow"
     };
 
     protected override async Task OnInitializedAsync()
@@ -360,23 +345,11 @@ else if (selectedRole == "moderator")
             isLoadingRoles = false;
         }
         
-        allSteps = new List<Step>
-        {
-            new() { Id = Guid.NewGuid(), Name = "Created", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "Team Leader", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "HR", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "IT", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Name = "Finance", CreatedAt = DateTime.UtcNow }
-        };
-
-        flows = new List<Flow>
-        {
-            new() { Id = Guid.NewGuid(), Name = "Hiring Process" },
-            new() { Id = Guid.NewGuid(), Name = "Equipment Request" }
-        };
-
+        // Load data from APIs
+        await LoadSteps();
+        await LoadFlows();
+        
         userForms = new List<Form>();
-        //jreturn Task.CompletedTask;
     }
 
 
@@ -391,6 +364,29 @@ else if (selectedRole == "moderator")
         flows.Add(flow);            
         showFlowModal = false;      
         StateHasChanged();          
+    }
+
+    private async void HandleStepSubmit(Step step)
+    {
+        var createdStep = await StepService.CreateStepAsync(step);
+        if (createdStep != null)
+        {
+            allSteps.Add(createdStep);
+        }
+        showStepModal = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadSteps()
+    {
+        allSteps = await StepService.GetStepsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadFlows()
+    {
+        flows = await FlowService.GetFlowsAsync();
+        StateHasChanged();
     }
 
     private void ToggleExpand(Guid formId)
