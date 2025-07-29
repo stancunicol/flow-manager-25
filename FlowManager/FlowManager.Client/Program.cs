@@ -1,10 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using FlowManager.Client;
-using FlowManager.Infrastructure.Services;
-using FlowManager.Application.Interfaces;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -23,11 +19,7 @@ builder.Services.AddApiAuthorization();
 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:7195/"),
-    DefaultRequestHeaders = {
-        { "Accept", "*/*" },
-    },
-    
+    BaseAddress = new Uri("https://localhost:7195/")
 });
 
 

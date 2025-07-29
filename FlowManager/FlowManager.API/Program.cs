@@ -15,7 +15,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.WithOrigins("https://localhost:7082") 
+        policy.WithOrigins("https://localhost:7082", "http://localhost:5223") 
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); 
@@ -24,11 +24,22 @@ builder.Services.AddCors(options =>
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.Name = "YourAppCookie";
+    options.Cookie.Name = "FlowManagerAuth";
     options.LoginPath = "/api/auth/login";
     options.AccessDeniedPath = "/access-denied";
     options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.HttpOnly = false; // Must be false for Blazor WASM to access
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = 401;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = 403;
+        return Task.CompletedTask;
+    };
 });
 
 

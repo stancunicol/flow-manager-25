@@ -26,26 +26,24 @@ namespace FlowManager.Client.Pages
 
         protected async Task HandleLogin()
         {
-            var loginData = new { Email = email, Password = password };
-            var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/login?useCookies=true&useSessionCookies=true")
+            var loginData = new { email = email, password = password };
+            
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/login")
             {
                 Content = JsonContent.Create(loginData)
             };
-            request.Headers.Add("Accept", "application/json");
-            //request.Headers.Add("credential", "include");
-            request.Headers.Add("Origin", "https://localhost:7195");
             
-            var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            var response = await Http.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
-                //(AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication(email);
-                //(AuthProvider as ApiAuthenticationStateProvider)?.NotifyUserAuthentication();
+                Console.WriteLine("[Auth] Login successful, notifying authentication state");
                 (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication(email);
                 Navigation.NavigateTo("/");
             }
             else
             {
+                Console.WriteLine($"[Auth] Login failed with status: {response.StatusCode}");
                 errorMessage = "Login failed. Please check credentials.";
             }
         }

@@ -20,25 +20,35 @@ public class CookieAuthStateProvider : AuthenticationStateProvider
     {
         try
         {
-            //var response = await _httpClient.GetAsync("api/Users/me?useCookies=true&useSessionCookies=true");
-            var request = new HttpRequestMessage(HttpMethod.Get, "/api/Users/me");
+            Console.WriteLine("[AuthState] Attempting to get authentication state...");
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, "/api/auth/me");
             
             var response = await _httpClient.SendAsync(request);
             
-            // if (!response.IsSuccessStatusCode)
-            // {
-            //     Console.WriteLine("0");
-            //     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            // }
-                
+            Console.WriteLine($"[AuthState] Response status: {response.StatusCode}");
+            Console.WriteLine($"[AuthState] Response headers: {string.Join(", ", response.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"))}");
+            
+            if (response.Headers.Contains("Set-Cookie"))
+            {
+                Console.WriteLine($"[AuthState] Set-Cookie headers: {string.Join(", ", response.Headers.GetValues("Set-Cookie"))}");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[AuthState] Authentication failed with status: {response.StatusCode}");
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            }
 
             var user = await response.Content.ReadFromJsonAsync<User>();
 
-            // if (user == null || string.IsNullOrWhiteSpace(user.Email))
-            // {
-            //     Console.WriteLine("1");
-            //     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            // }
+            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            {
+                Console.WriteLine("[AuthState] User data is null or invalid");
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            }
+
+            Console.WriteLine($"[AuthState] Successfully authenticated user: {user.Email}");
 
             var identity = new ClaimsIdentity(new[]
             {
@@ -47,12 +57,11 @@ public class CookieAuthStateProvider : AuthenticationStateProvider
             }, "Cookies");
 
             var principal = new ClaimsPrincipal(identity);
-            Console.WriteLine("OK");
             return new AuthenticationState(principal);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[AuthState] Eroare la GetAuthenticationStateAsync: {ex.Message}");
+            Console.WriteLine($"[AuthState] Error in GetAuthenticationStateAsync: {ex.Message}");
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
     }

@@ -17,15 +17,24 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<bool> Login(string email, string password)
         {
+            Console.WriteLine($"[AuthService] Attempting login for email: {email}");
+            
             var user = await _userManager.FindByEmailAsync(email);
-            Console.WriteLine("NU E BINE");
-            if (user == null) return false;
+            if (user == null) 
+            {
+                Console.WriteLine("[AuthService] User not found");
+                return false;
+            }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
-            if (!result.Succeeded) return false;
+            if (!result.Succeeded) 
+            {
+                Console.WriteLine($"[AuthService] Password check failed: {result}");
+                return false;
+            }
 
             await _signInManager.SignInAsync(user, isPersistent: true);
-            Console.WriteLine("E BINE");
+            Console.WriteLine($"[AuthService] User {email} signed in successfully with persistent cookie");
             return true;
         }
 
