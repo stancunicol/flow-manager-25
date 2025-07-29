@@ -25,13 +25,19 @@ namespace FlowManager.Infrastructure.Migrations
                 END $$;
             ");
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "FlowId",
-                table: "Steps",
-                type: "uuid",
-                nullable: true,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN 
+                    IF EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'Steps' 
+                        AND column_name = 'FlowId'
+                    ) THEN
+                        ALTER TABLE ""Steps"" ALTER COLUMN ""FlowId"" DROP NOT NULL;
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.CreateTable(
                 name: "FlowSteps",
@@ -64,12 +70,20 @@ namespace FlowManager.Infrastructure.Migrations
                 table: "FlowSteps",
                 column: "StepId");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Steps_Flows_FlowId",
-                table: "Steps",
-                column: "FlowId",
-                principalTable: "Flows",
-                principalColumn: "Id");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN 
+                    IF EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'Steps' 
+                        AND column_name = 'FlowId'
+                    ) THEN
+                        ALTER TABLE ""Steps"" ADD CONSTRAINT ""FK_Steps_Flows_FlowId"" 
+                        FOREIGN KEY (""FlowId"") REFERENCES ""Flows""(""Id"");
+                    END IF;
+                END $$;
+            ");
         }
 
         /// <inheritdoc />
