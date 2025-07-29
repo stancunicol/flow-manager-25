@@ -39,36 +39,28 @@ namespace FlowManager.Infrastructure.Migrations
                 END $$;
             ");
 
-            migrationBuilder.CreateTable(
-                name: "FlowSteps",
-                columns: table => new
-                {
-                    FlowId = table.Column<Guid>(type: "uuid", nullable: false),
-                    StepId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Order = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FlowSteps", x => new { x.FlowId, x.StepId });
-                    table.ForeignKey(
-                        name: "FK_FlowSteps_Flows_FlowId",
-                        column: x => x.FlowId,
-                        principalTable: "Flows",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_FlowSteps_Steps_StepId",
-                        column: x => x.StepId,
-                        principalTable: "Steps",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_FlowSteps_StepId",
-                table: "FlowSteps",
-                column: "StepId");
+            migrationBuilder.Sql(@"
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (
+                        SELECT 1 
+                        FROM information_schema.tables 
+                        WHERE table_name = 'FlowSteps'
+                    ) THEN
+                        CREATE TABLE ""FlowSteps"" (
+                            ""FlowId"" uuid NOT NULL,
+                            ""StepId"" uuid NOT NULL,
+                            ""Order"" integer NOT NULL,
+                            ""CreatedAt"" timestamp with time zone NOT NULL,
+                            CONSTRAINT ""PK_FlowSteps"" PRIMARY KEY (""FlowId"", ""StepId""),
+                            CONSTRAINT ""FK_FlowSteps_Flows_FlowId"" FOREIGN KEY (""FlowId"") REFERENCES ""Flows""(""Id"") ON DELETE CASCADE,
+                            CONSTRAINT ""FK_FlowSteps_Steps_StepId"" FOREIGN KEY (""StepId"") REFERENCES ""Steps""(""Id"") ON DELETE CASCADE
+                        );
+                        
+                        CREATE INDEX ""IX_FlowSteps_StepId"" ON ""FlowSteps"" (""StepId"");
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.Sql(@"
                 DO $$ 
