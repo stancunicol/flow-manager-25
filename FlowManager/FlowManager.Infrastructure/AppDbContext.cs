@@ -16,7 +16,7 @@ namespace FlowManager.Infrastructure
         public DbSet<Step> Steps => Set<Step>();
         public DbSet<StepUser> StepUsers => Set<StepUser>();
         public DbSet<StepUpdateHistory> StepUpdateHistories => Set<StepUpdateHistory>();
-        public DbSet<UserRole> UserRoles => Set<UserRole>();
+        public new DbSet<UserRole> UserRoles => Set<UserRole>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

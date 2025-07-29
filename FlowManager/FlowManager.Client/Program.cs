@@ -17,9 +17,17 @@ builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddApiAuthorization();
 
-builder.Services.AddScoped(sp => new HttpClient
+builder.Services.AddScoped(sp => 
 {
-    BaseAddress = new Uri("https://localhost:7195/")
+    var httpClient = new HttpClient()
+    {
+        BaseAddress = new Uri("https://localhost:7195/")
+    };
+    
+    // Ensure credentials (cookies) are sent with requests
+    httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+    
+    return httpClient;
 });
 
 

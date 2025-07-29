@@ -40,21 +40,31 @@ public class CookieAuthStateProvider : AuthenticationStateProvider
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            var user = await response.Content.ReadFromJsonAsync<User>();
+            var userDto = await response.Content.ReadFromJsonAsync<UserProfileDto>();
 
-            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            if (userDto == null || string.IsNullOrWhiteSpace(userDto.Email))
             {
                 Console.WriteLine("[AuthState] User data is null or invalid");
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            Console.WriteLine($"[AuthState] Successfully authenticated user: {user.Email}");
+            Console.WriteLine($"[AuthState] Successfully authenticated user: {userDto.Email}");
+            Console.WriteLine($"[AuthState] User roles: {string.Join(", ", userDto.UserRoles)}");
 
-            var identity = new ClaimsIdentity(new[]
+            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(user.Name) ? user.Email : user.Name),
-                new Claim(ClaimTypes.Email, user.Email)
-            }, "Cookies");
+                new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(userDto.Name) ? userDto.Email : userDto.Name),
+                new Claim(ClaimTypes.Email, userDto.Email),
+                new Claim(ClaimTypes.NameIdentifier, userDto.UserName ?? userDto.Email)
+            };
+
+            // Add role claims
+            foreach (var role in userDto.UserRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var identity = new ClaimsIdentity(claims, "Cookies");
 
             var principal = new ClaimsPrincipal(identity);
             return new AuthenticationState(principal);

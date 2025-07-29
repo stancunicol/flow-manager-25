@@ -1,8 +1,9 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowManager.Controllers
+namespace FlowManager.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -15,59 +16,54 @@ namespace FlowManager.Controllers
             _service = service;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetUserRoles()
+        [HttpGet("roles")]
+        public async Task<IActionResult> GetAllRoles()
         {
-            var roles = await _service.GetAllUserRoles();
+            var roles = await _service.GetAllRoles();
             return Ok(roles);
         }
 
-        [HttpGet("user/{userId}/role/{roleId}")]
-        public async Task<IActionResult> GetUserRole(Guid userId, Guid roleId)
+        [HttpGet("test")]
+        public IActionResult Test()
         {
-            var role = await _service.GetUserRole(userId, roleId);
-            if (role == null) return NotFound();
-            return Ok(role);
+            return Ok("UserRoles controller is working");
         }
 
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetRolesByUser(Guid userId)
         {
+            Console.WriteLine($"[DEBUG] GetRolesByUser called with userId: {userId}");
             var roles = await _service.GetRolesByUser(userId);
+            Console.WriteLine($"[DEBUG] Found {roles.Count} roles for user {userId}");
             return Ok(roles);
         }
 
-        [HttpGet("role-name/{roleName}")]
+        [HttpGet("role/{roleName}/users")]
         public async Task<IActionResult> GetUsersByRole(string roleName)
         {
             var users = await _service.GetUsersByRole(roleName);
             return Ok(users);
         }
 
-        [HttpPut("user/{userId}/role/{roleId}")]
-        public async Task<IActionResult> UpdateUserRole(Guid userId, Guid roleId, [FromBody] UserRole userRole)
+        [HttpPost("user/{userId}/role/{roleName}")]
+        public async Task<IActionResult> AddUserToRole(Guid userId, string roleName)
         {
-            var updated = await _service.UpdateUserRole(userId, roleId, userRole);
-            return updated ? NoContent() : NotFound();
+            var success = await _service.AddUserToRole(userId, roleName);
+            return success ? Ok() : BadRequest("Failed to add user to role");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PostUserRole([FromBody] UserRole userRole)
+        [HttpDelete("user/{userId}/role/{roleName}")]
+        public async Task<IActionResult> RemoveUserFromRole(Guid userId, string roleName)
         {
-            var created = await _service.CreateUserRole(userRole);
-            if (created == null)
-            {
-                return BadRequest("User already has this role");
-            }
-
-            return CreatedAtAction(nameof(GetUserRole), new { userId = created.UserId, roleId = created.RoleId }, created);
+            var success = await _service.RemoveUserFromRole(userId, roleName);
+            return success ? Ok() : BadRequest("Failed to remove user from role");
         }
 
-        [HttpDelete("user/{userId}/role/{roleId}")]
-        public async Task<IActionResult> DeleteUserRole(Guid userId, Guid roleId)
+        [HttpGet("user/{userId}/role/{roleName}/check")]
+        public async Task<IActionResult> IsUserInRole(Guid userId, string roleName)
         {
-            var deleted = await _service.DeleteUserRole(userId, roleId);
-            return deleted ? NoContent() : NotFound();
+            var isInRole = await _service.IsUserInRole(userId, roleName);
+            return Ok(new { isInRole });
         }
     }
 }

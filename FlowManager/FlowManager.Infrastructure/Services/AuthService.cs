@@ -1,6 +1,8 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using FlowManager.Infrastructure;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -8,11 +10,13 @@ namespace FlowManager.Infrastructure.Services
     {
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
+        private readonly AppDbContext _context;
 
-        public AuthService(SignInManager<User> signInManager, UserManager<User> userManager)
+        public AuthService(SignInManager<User> signInManager, UserManager<User> userManager, AppDbContext context)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _context = context;
         }
 
         public async Task<bool> Login(string email, string password)
@@ -47,7 +51,13 @@ namespace FlowManager.Infrastructure.Services
         
         public async Task<User?> GetUserByEmail(string email)
         {
-            return await _userManager.FindByEmailAsync(email);
+            return await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.Forms)
+                .Include(u => u.StepUsers)
+                .Include(u => u.UpdateHistories)
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
     }
 }

@@ -144,7 +144,9 @@ else
 @using FlowManager.Client.Components
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient HttpClient
 
 @attribute [Authorize]
 <PageTitle>FlowManager</PageTitle>
@@ -154,10 +156,23 @@ else
     <h2>Flow Manager</h2>
     <h4>Welcome back @context.User.Identity.Name</h4>
     <div class="topBar">
-        <select id="rank" @bind="selectedRole">
-            <option value="basic">Basic User</option>
-            <option value="moderator">Moderator</option>
-            <option value="admin">Admin</option>
+        <select id="rank" @bind="selectedRole" disabled="@isLoadingRoles">
+            @if (isLoadingRoles)
+            {
+                <option value="">Loading roles...</option>
+            }
+            else if (userRoles.Any())
+            {
+                @foreach (var roleName in userRoles)
+                {
+                    var lowerRoleName = roleName.ToLower();
+                    <option value="@lowerRoleName">@roleName</option>
+                }
+            }
+            else
+            {
+                <option value="basic">Basic User</option>
+            }
         </select>
 
         @if (selectedRole == "admin")
@@ -294,7 +309,9 @@ else if (selectedRole == "moderator")
     private List<Flow> flows = new();
     private List<Form> userForms = new();
     private List<Step> allSteps = new();
+    private List<string> userRoles = new();
     private Guid? expandedFormId = null;
+    private bool isLoadingRoles = true;
     
     int currentStep = 0;
 
@@ -320,6 +337,27 @@ else if (selectedRole == "moderator")
         {
             userName = user.Identity.Name;
             
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userIdClaim, out var userId))
+            {
+                currentUserId = userId;
+            }
+            
+            // Get roles from authentication claims instead of API call
+            userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            Console.WriteLine($"[DEBUG] Loaded roles from claims: {string.Join(", ", userRoles)}");
+            
+            if (userRoles.Any())
+            {
+                selectedRole = userRoles.First().ToLower();
+            }
+            else
+            {
+                Console.WriteLine($"[INFO] User has no roles assigned. Defaulting to 'basic' role.");
+                selectedRole = "basic";
+            }
+            
+            isLoadingRoles = false;
         }
         
         allSteps = new List<Step>
@@ -340,6 +378,7 @@ else if (selectedRole == "moderator")
         userForms = new List<Form>();
         //jreturn Task.CompletedTask;
     }
+
 
     private void HandleFormSubmit(Form form)
     {

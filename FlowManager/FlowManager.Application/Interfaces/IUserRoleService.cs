@@ -1,4 +1,5 @@
 ﻿using FlowManager.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +10,11 @@ namespace FlowManager.Application.Interfaces
 {
     public interface IUserRoleService
     {
-        Task<IEnumerable<UserRole>> GetAllUserRoles();
-        Task<UserRole?> GetUserRole(Guid userId, Guid roleId);
-        Task<IEnumerable<UserRole>> GetRolesByUser(Guid userId);
-        Task<IEnumerable<UserRole>> GetUsersByRole(string roleName);
-        Task<bool> UpdateUserRole(Guid userId, Guid roleId, UserRole userRole);
-        Task<UserRole?> CreateUserRole(UserRole userRole);
-        Task<bool> DeleteUserRole(Guid userId, Guid roleId);
+        Task<IList<string>> GetRolesByUser(Guid userId);
+        Task<IEnumerable<User>> GetUsersByRole(string roleName);
+        Task<bool> AddUserToRole(Guid userId, string roleName);
+        Task<bool> RemoveUserFromRole(Guid userId, string roleName);
+        Task<bool> IsUserInRole(Guid userId, string roleName);
+        Task<IEnumerable<IdentityRole<Guid>>> GetAllRoles();
     }
 }

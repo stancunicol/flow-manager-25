@@ -1,6 +1,6 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
-using FlowManager.Infrastructure;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -8,84 +8,60 @@ namespace FlowManager.Infrastructure.Services
 {
     public class UserRoleService : IUserRoleService
     {
-        private readonly AppDbContext _context;
+        private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
 
-        public UserRoleService(AppDbContext context)
+        public UserRoleService(UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager)
         {
-            _context = context;
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
 
-        public async Task<IEnumerable<UserRole>> GetAllUserRoles()
+        public async Task<IList<string>> GetRolesByUser(Guid userId)
         {
-            return await _context.UserRoles
-                .Include(ur => ur.User)
-                .Include(ur => ur.Role)
-                .ToListAsync();
-        }
-
-        public async Task<UserRole?> GetUserRole(Guid userId, Guid roleId)
-        {
-            return await _context.UserRoles
-                .Include(ur => ur.User)
-                .Include(ur => ur.Role)
-                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
-        }
-
-        public async Task<IEnumerable<UserRole>> GetRolesByUser(Guid userId)
-        {
-            return await _context.UserRoles
-                .Include(ur => ur.User)
-                .Include(ur => ur.Role)
-                .Where(ur => ur.UserId == userId)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<UserRole>> GetUsersByRole(string roleName)
-        {
-            return await _context.UserRoles
-                .Include(ur => ur.User)
-                .Include(ur => ur.Role)
-                .Where(ur => ur.Role.Name == roleName)
-                .ToListAsync();
-        }
-
-        public async Task<bool> UpdateUserRole(Guid userId, Guid roleId, UserRole updatedRole)
-        {
-            var existing = await _context.UserRoles
-                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
-
-            if (existing == null) return false;
-
-            existing.AssignedAt = updatedRole.AssignedAt;
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<UserRole?> CreateUserRole(UserRole userRole)
-        {
-            if (await _context.UserRoles.AnyAsync(ur => ur.UserId == userRole.UserId && ur.RoleId == userRole.RoleId))
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
             {
-                return null;
+                return new List<string>();
             }
 
-            userRole.AssignedAt = DateTime.UtcNow;
-
-            _context.UserRoles.Add(userRole);
-            await _context.SaveChangesAsync();
-
-            return userRole;
+            return await _userManager.GetRolesAsync(user);
         }
 
-        public async Task<bool> DeleteUserRole(Guid userId, Guid roleId)
+        public async Task<IEnumerable<User>> GetUsersByRole(string roleName)
         {
-            var userRole = await _context.UserRoles
-                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
+            return await _userManager.GetUsersInRoleAsync(roleName);
+        }
 
-            if (userRole == null) return false;
+        public async Task<bool> AddUserToRole(Guid userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return false;
 
-            _context.UserRoles.Remove(userRole);
-            await _context.SaveChangesAsync();
-            return true;
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+            return result.Succeeded;
+        }
+
+        public async Task<bool> RemoveUserFromRole(Guid userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return false;
+
+            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+            return result.Succeeded;
+        }
+
+        public async Task<bool> IsUserInRole(Guid userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return false;
+
+            return await _userManager.IsInRoleAsync(user, roleName);
+        }
+
+        public async Task<IEnumerable<IdentityRole<Guid>>> GetAllRoles()
+        {
+            return await _roleManager.Roles.ToListAsync();
         }
     }
 }

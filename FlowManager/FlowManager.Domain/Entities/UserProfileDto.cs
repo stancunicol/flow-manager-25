@@ -11,5 +11,6 @@ namespace FlowManager.Domain.Entities
         public string Name { get; set; }
         public string Email { get; set; }
         public string UserName { get; set; }
+        public List<string> UserRoles { get; set; } = new List<string>();
     }
 }

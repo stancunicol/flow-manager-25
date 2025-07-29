@@ -1,5 +1,6 @@
 ﻿    using System.Security.Claims;
     using FlowManager.Application.Interfaces;
+    using FlowManager.Domain.Entities;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
@@ -69,7 +70,15 @@
                     return NotFound("User not found");
                 }
 
-                return Ok(foundUser); 
+                var dto = new UserProfileDto
+                {
+                    Name = foundUser.Name,
+                    Email = foundUser.Email,
+                    UserName = foundUser.UserName,
+                    UserRoles = foundUser.UserRoles?.Select(ur => ur.Role.Name).ToList() ?? new List<string>()
+                };
+
+                return Ok(dto); 
             }
 
 
