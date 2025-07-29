@@ -44,7 +44,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Flows", (string)null);
+                    b.ToTable("Flows");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStep", b =>
@@ -65,7 +65,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("StepId");
 
-                    b.ToTable("FlowSteps", (string)null);
+                    b.ToTable("FlowSteps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Form", b =>
@@ -104,7 +104,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Forms", (string)null);
+                    b.ToTable("Forms");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>
@@ -116,9 +116,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("FlowId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -128,9 +125,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FlowId");
-
-                    b.ToTable("Steps", (string)null);
+                    b.ToTable("Steps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.StepUpdateHistory", b =>
@@ -157,7 +152,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("StepUpdateHistories", (string)null);
+                    b.ToTable("StepUpdateHistories");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.StepUser", b =>
@@ -175,7 +170,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("StepUsers", (string)null);
+                    b.ToTable("StepUsers");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
@@ -431,13 +426,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>
-                {
-                    b.HasOne("FlowManager.Domain.Entities.Flow", null)
-                        .WithMany("Steps")
-                        .HasForeignKey("FlowId");
-                });
-
             modelBuilder.Entity("FlowManager.Domain.Entities.StepUpdateHistory", b =>
                 {
                     b.HasOne("FlowManager.Domain.Entities.Step", "Step")
@@ -536,8 +524,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("FlowSteps");
 
                     b.Navigation("Forms");
-
-                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>

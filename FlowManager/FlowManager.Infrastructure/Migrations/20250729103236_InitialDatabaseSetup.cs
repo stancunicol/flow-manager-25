@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowManager.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMig : Migration
+    public partial class InitialDatabaseSetup : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -67,6 +67,20 @@ namespace FlowManager.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Flows", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Steps",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Steps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -177,22 +191,27 @@ namespace FlowManager.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Steps",
+                name: "FlowSteps",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
                     FlowId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    StepId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Order = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Steps", x => x.Id);
+                    table.PrimaryKey("PK_FlowSteps", x => new { x.FlowId, x.StepId });
                     table.ForeignKey(
-                        name: "FK_Steps_Flows_FlowId",
+                        name: "FK_FlowSteps_Flows_FlowId",
                         column: x => x.FlowId,
                         principalTable: "Flows",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FlowSteps_Steps_StepId",
+                        column: x => x.StepId,
+                        principalTable: "Steps",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -322,6 +341,11 @@ namespace FlowManager.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_FlowSteps_StepId",
+                table: "FlowSteps",
+                column: "StepId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Forms_FlowId",
                 table: "Forms",
                 column: "FlowId");
@@ -335,11 +359,6 @@ namespace FlowManager.Infrastructure.Migrations
                 name: "IX_Forms_UserId",
                 table: "Forms",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Steps_FlowId",
-                table: "Steps",
-                column: "FlowId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StepUpdateHistories_StepId",
@@ -376,6 +395,9 @@ namespace FlowManager.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "FlowSteps");
+
+            migrationBuilder.DropTable(
                 name: "Forms");
 
             migrationBuilder.DropTable(
@@ -388,13 +410,13 @@ namespace FlowManager.Infrastructure.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
+                name: "Flows");
+
+            migrationBuilder.DropTable(
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Steps");
-
-            migrationBuilder.DropTable(
-                name: "Flows");
         }
     }
 }

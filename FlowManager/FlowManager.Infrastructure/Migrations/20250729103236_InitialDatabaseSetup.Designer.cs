@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowManager.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250729080932_AddFlowStepManyToMany")]
-    partial class AddFlowStepManyToMany
+    [Migration("20250729103236_InitialDatabaseSetup")]
+    partial class InitialDatabaseSetup
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -119,9 +119,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("FlowId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -130,8 +127,6 @@ namespace FlowManager.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FlowId");
 
                     b.ToTable("Steps");
                 });
@@ -434,13 +429,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>
-                {
-                    b.HasOne("FlowManager.Domain.Entities.Flow", null)
-                        .WithMany("Steps")
-                        .HasForeignKey("FlowId");
-                });
-
             modelBuilder.Entity("FlowManager.Domain.Entities.StepUpdateHistory", b =>
                 {
                     b.HasOne("FlowManager.Domain.Entities.Step", "Step")
@@ -539,8 +527,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("FlowSteps");
 
                     b.Navigation("Forms");
-
-                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>
