@@ -11,9 +11,16 @@ namespace FlowManager.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Steps_Flows_FlowId",
-                table: "Steps");
+            try
+            {
+                migrationBuilder.DropForeignKey(
+                    name: "FK_Steps_Flows_FlowId",
+                    table: "Steps");
+            }
+            catch
+            {
+                // Ignore if constraint doesn't exist
+            }
 
             migrationBuilder.AlterColumn<Guid>(
                 name: "FlowId",
