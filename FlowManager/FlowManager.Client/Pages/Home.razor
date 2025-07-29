@@ -196,6 +196,13 @@ else
               IsOpenChanged="@(value => showStepModal = value)"
               OnSubmit="HandleStepSubmit" />
 
+<EditFlowModal IsOpen="@showEditFlowModal"
+               IsOpenChanged="@(value => showEditFlowModal = value)"
+               FlowToEdit="@flowToEdit"
+               OnSubmit="HandleFlowUpdate"
+               OnFlowUpdated="LoadFlows"
+               AvailableSteps="allSteps" />
+
 @if (selectedRole == "basic")
 {
     @if (userForms.Any())
@@ -247,6 +254,9 @@ else if (selectedRole == "admin")
                         {
                             <p><strong>Step:</strong> @step.Name</p>
                         }
+                        <div class="flow-actions">
+                            <button @onclick="() => OpenEditFlowModal(flow)" class="editFlowButton">Edit Flow</button>
+                        </div>
                     </div>
                 }
             </div>
@@ -298,6 +308,7 @@ else if (selectedRole == "moderator")
     private bool showUserModal = false;
     private bool showFlowModal = false;
     private bool showStepModal = false;
+    private bool showEditFlowModal = false;
 
     private List<Flow> flows = new();
     private List<Form> userForms = new();
@@ -305,6 +316,7 @@ else if (selectedRole == "moderator")
     private List<string> userRoles = new();
     private Guid? expandedFormId = null;
     private bool isLoadingRoles = true;
+    private Flow? flowToEdit = null;
     
     int currentStep = 0;
 
@@ -408,6 +420,25 @@ else if (selectedRole == "moderator")
     {
         // Logic to reject the step
         Console.WriteLine("Step rejected");
+    }
+
+    private void OpenEditFlowModal(Flow flow)
+    {
+        flowToEdit = flow;
+        showEditFlowModal = true;
+        StateHasChanged();
+    }
+
+    private void HandleFlowUpdate(Flow flow)
+    {
+        var existingFlow = flows.FirstOrDefault(f => f.Id == flow.Id);
+        if (existingFlow != null)
+        {
+            var index = flows.IndexOf(existingFlow);
+            flows[index] = flow;
+        }
+        showEditFlowModal = false;
+        StateHasChanged();
     }
 
 }

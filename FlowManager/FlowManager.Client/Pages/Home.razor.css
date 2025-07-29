@@ -86,6 +86,29 @@ button:hover{
     color: #ccc;
 }
 
+.flow-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.editFlowButton {
+    background: #00d7a0;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.editFlowButton:hover {
+    background: #00b37a;
+}
+
 @keyframes fadein {
     from {
         opacity: 0;
