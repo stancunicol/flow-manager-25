@@ -13,6 +13,7 @@ namespace FlowManager.Application.Interfaces
             Task<bool> Login(string email, string password);
             Task Logout();
             Task<User?> GetUserByEmail(string email);
+            Task<(bool Success, string Message)> Register(string name, string email, string password, string role);
         }
     
 

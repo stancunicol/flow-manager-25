@@ -81,6 +81,32 @@
                 return Ok(dto); 
             }
 
+            [HttpPost("register")]
+            public async Task<IActionResult> Register([FromBody] Dictionary<string, string> body)
+            {
+                var name = body.GetValueOrDefault("name");
+                var email = body.GetValueOrDefault("email");
+                var password = body.GetValueOrDefault("password");
+                var role = body.GetValueOrDefault("role", "basic"); // Default to basic if not provided
+
+                Console.WriteLine($"[DEBUG] Registration attempt - Name: {name}, Email: {email}, Role: {role}");
+
+                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                {
+                    return BadRequest("Name, email, and password are required");
+                }
+
+                var (success, message) = await _authService.Register(name, email, password, role);
+                
+                if (success)
+                {
+                    return Ok(new { message });
+                }
+                else
+                {
+                    return BadRequest(new { message });
+                }
+            }
 
         }
     }
