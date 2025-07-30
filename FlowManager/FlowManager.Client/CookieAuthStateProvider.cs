@@ -6,15 +6,10 @@ using FlowManager.Domain.Entities;
 public class CookieAuthStateProvider : AuthenticationStateProvider
 {
     private readonly HttpClient _httpClient;
-    private string _email;
 
     public CookieAuthStateProvider(HttpClient httpClient)
     {
         _httpClient = httpClient;
-    }
-    public void SetEmail(string email)
-    {
-        _email = email;
     }
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
@@ -76,9 +71,8 @@ public class CookieAuthStateProvider : AuthenticationStateProvider
         }
     }
 
-    public void NotifyUserAuthentication(string _email)
+    public void NotifyUserAuthentication()
     {
-        SetEmail(_email);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
