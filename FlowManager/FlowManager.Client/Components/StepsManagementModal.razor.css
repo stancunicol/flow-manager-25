@@ -1,0 +1,280 @@
+.popup-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 40, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    animation: fadein 0.3s ease-out forwards;
+}
+
+.steps-management-container {
+    background: #000028;
+    border: 2px solid #00d7a0;
+    border-radius: 12px;
+    width: 800px;
+    max-width: 90vw;
+    max-height: 90vh;
+    color: white;
+    box-shadow: 0 0 20px #00d7a060;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid #00d7a0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #00d7a0;
+}
+
+.close-btn {
+    background: transparent;
+    color: #00d7a0;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.close-btn:hover {
+    background: #001050;
+}
+
+.modal-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.steps-actions {
+    margin-bottom: 20px;
+}
+
+.add-step-btn {
+    background: #00d7a0;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.add-step-btn:hover {
+    background: #00b37a;
+}
+
+.steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.step-entry {
+    background: #000040;
+    border: 1px solid #00d7a0;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.step-entry:hover {
+    background: #001050;
+}
+
+.step-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.step-summary strong {
+    color: #00d7a0;
+    font-size: 16px;
+}
+
+.step-date {
+    color: #aaa;
+    font-size: 14px;
+}
+
+.step-details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #00d7a0;
+}
+
+.step-details p {
+    margin: 8px 0;
+    color: #ccc;
+}
+
+.step-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+}
+
+.edit-step-btn {
+    background: #007bff;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.edit-step-btn:hover {
+    background: #0056b3;
+}
+
+.delete-step-btn {
+    background: #dc3545;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.delete-step-btn:hover {
+    background: #c82333;
+}
+
+.no-steps {
+    text-align: center;
+    color: #aaa;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+/* User Assignment Styles */
+.assigned-users-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #00d7a0;
+}
+
+.assigned-users-section h4 {
+    color: #00d7a0;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.assigned-users-list {
+    margin-bottom: 16px;
+}
+
+.assigned-user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #001050;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    border: 1px solid #00d7a0;
+}
+
+.user-name {
+    color: #ccc;
+    font-size: 14px;
+}
+
+.unassign-btn {
+    background: #dc3545;
+    color: white;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.unassign-btn:hover {
+    background: #c82333;
+}
+
+.no-assignments,
+.no-moderators {
+    color: #aaa;
+    font-style: italic;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.user-assignment {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-select {
+    flex: 1;
+    padding: 8px;
+    background: #000040;
+    color: white;
+    border: 1px solid #00d7a0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.user-select:focus {
+    outline: none;
+    border-color: #00b37a;
+    box-shadow: 0 0 0 2px rgba(0, 215, 160, 0.25);
+}
+
+.assign-btn {
+    background: #28a745;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.assign-btn:hover:not(:disabled) {
+    background: #218838;
+}
+
+.assign-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

@@ -15,11 +15,14 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<IEnumerable<Form>> GetAllFormsAsync()
         {
-            return await _context.Forms
+            Console.WriteLine("[DEBUG] FormService.GetAllFormsAsync called");
+            var forms = await _context.Forms
                 .Include(f => f.Flow)
                 .Include(f => f.User)
                 .Include(f => f.LastStep)
                 .ToListAsync();
+            Console.WriteLine($"[DEBUG] FormService.GetAllFormsAsync returning {forms.Count()} forms");
+            return forms;
         }
 
         public async Task<Form?> GetFormByIdAsync(Guid id)
@@ -57,9 +60,20 @@ namespace FlowManager.Infrastructure.Services
             form.CreatedAt = DateTime.UtcNow;
             form.UpdatedAt = DateTime.UtcNow;
 
+            // Clear navigation properties to avoid EF tracking issues
+            form.Flow = null!;
+            form.User = null!;
+            form.LastStep = null;
+
             _context.Forms.Add(form);
             await _context.SaveChangesAsync();
-            return form;
+
+            // Return the form with navigation properties loaded
+            return await _context.Forms
+                .Include(f => f.Flow)
+                .Include(f => f.User)
+                .Include(f => f.LastStep)
+                .FirstAsync(f => f.Id == form.Id);
         }
 
         public async Task<bool> UpdateFormAsync(Guid id, Form form)

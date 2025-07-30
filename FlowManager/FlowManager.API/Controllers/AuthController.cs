@@ -72,6 +72,7 @@
 
                 var dto = new UserProfileDto
                 {
+                    Id = foundUser.Id,
                     Name = foundUser.Name,
                     Email = foundUser.Email,
                     UserName = foundUser.UserName,

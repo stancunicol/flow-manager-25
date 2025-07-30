@@ -1,0 +1,65 @@
+@using FlowManager.Domain.Entities
+
+@if (IsOpen)
+{
+    <div class="popup-backdrop">
+        <div class="popup-container">
+            <h3>Edit Step</h3>
+
+            <label>Step Name:</label>
+            <input @bind="_name" type="text" class="popup-input" placeholder="Enter step name..." />
+
+            <div class="modal-actions">
+                <button @onclick="UpdateStep" disabled="@(!IsFormValid)" class="popup-send">Update</button>
+                <button @onclick="Close" class="popup-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback<Step> OnSubmit { get; set; }
+    [Parameter] public Step? StepToEdit { get; set; }
+
+    private string _name = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (StepToEdit != null)
+        {
+            _name = StepToEdit.Name;
+        }
+    }
+
+    private async Task UpdateStep()
+    {
+        if (StepToEdit != null)
+        {
+            var updatedStep = new Step
+            {
+                Id = StepToEdit.Id,
+                Name = _name,
+                CreatedAt = StepToEdit.CreatedAt,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await OnSubmit.InvokeAsync(updatedStep);
+            await Close();
+        }
+    }
+
+    private async Task Close()
+    {
+        await IsOpenChanged.InvokeAsync(false);
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _name = string.Empty;
+    }
+
+    private bool IsFormValid => !string.IsNullOrWhiteSpace(_name);
+}

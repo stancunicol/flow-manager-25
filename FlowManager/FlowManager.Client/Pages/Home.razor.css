@@ -55,6 +55,18 @@ button:hover{
     justify-content: space-between;
     align-items: center;
     font-size: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.current-step {
+    background: #004080;
+    color: #00d7a0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #00d7a0;
 }
 
 .status {
