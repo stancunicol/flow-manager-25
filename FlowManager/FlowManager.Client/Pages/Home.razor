@@ -167,6 +167,11 @@ else
         {
             <div class="adminButtons">
                 <button @onclick="() => showFlowModal = true" class="adminNewFlowButton">New Flow</button>
+                <button @onclick="() => showStepModal = true" class="adminNewStepButton">Add Step</button>
+                <button @onclick="() => showUserManagementModal = true" class="adminViewUsersButton">Users</button>
+
+
+
                 <button @onclick="() => showUserModal = true" class="adminNewUserButton">New User</button>
                 <button @onclick="() => showStepsManagementModal = true" class="adminManageStepsButton">Manage Steps</button>
             </div>
@@ -187,8 +192,7 @@ else
               IsSubmitting="@isSubmittingForm"
               ErrorMessage="@formSubmissionError" />
 
-<NewUserModal IsOpen="@showUserModal"
-              IsOpenChanged="@(value => showUserModal = value)" />
+
 
 <NewFlowModal IsOpen="@showFlowModal"
               IsOpenChanged="@(value => showFlowModal = value)"
@@ -207,6 +211,14 @@ else
                OnSubmit="HandleFlowUpdate"
                OnFlowUpdated="LoadFlows"
                AvailableSteps="allSteps" />
+ 
+
+<UserManagement IsOpen="@showUserManagementModal"
+                     IsOpenChanged="@OnUserManagementModalChanged"
+                     CurrentUserEmail="@currentUserEmail" />
+
+
+
 
 @if (selectedRole == "basic")
 {
@@ -243,6 +255,28 @@ else
 }
 else if (selectedRole == "admin")
 {
+    <div class="form-list">
+        @foreach (var flow in flows)
+        {
+            var isExpanded = expandedFormId == flow.Id;
+            <div class="form-entry" @onclick="() => ToggleExpand(flow.Id)">
+                <div class="form-summary">
+                    <strong>@flow.Name</strong>
+                </div>
+                @if (isExpanded)
+                {
+                    <div class="form-details">
+                        <p><strong>Description:</strong> @flow.Description</p>
+                        @foreach (var step in flow.Steps)
+                        {
+                            <p><strong>Step:</strong> @step.Name</p>
+                        }
+                        <div class="flow-actions">
+                            <button @onclick="() => OpenEditFlowModal(flow)" class="editFlowButton">Edit Flow</button>
+                            
+
+                        </div>
+
     <div class="admin-sections">
         <h3>Flows Management</h3>
         <div class="form-list">
@@ -252,6 +286,7 @@ else if (selectedRole == "admin")
                 <div class="form-entry" @onclick="() => ToggleExpand(flow.Id)">
                     <div class="form-summary">
                         <strong>@flow.Name</strong>
+
                     </div>
                     @if (isExpanded)
                     {
@@ -313,12 +348,17 @@ else if (selectedRole == "moderator")
 @code {
     private string selectedRole = "basic";
     private string userName = "";
+    private string currentUserEmail = "";
+    private Guid currentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private bool showUserManagementModal = false;
     private Guid currentUserId = Guid.Empty;
 
     private bool showFormModal = false;
     private bool showUserModal = false;
     private bool showFlowModal = false;
     private bool showEditFlowModal = false;
+    private bool showUserListModal = false;
+
     private bool showStepsManagementModal = false;
     private bool isSubmittingForm = false;
     private string? formSubmissionError = null;
@@ -339,6 +379,7 @@ else if (selectedRole == "moderator")
         Name = "Test Flow"
     };
 
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -348,6 +389,8 @@ else if (selectedRole == "moderator")
         {
             userName = user.Identity.Name;
             
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
             // Debug: Print all claims to see what's available
             Console.WriteLine($"[DEBUG] All user claims:");
             foreach (var claim in user.Claims)
@@ -413,6 +456,13 @@ else if (selectedRole == "moderator")
         }
     }
 
+    private Task OnUserManagementModalChanged(bool value)
+    {
+        showUserManagementModal = value;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
 
     private async Task HandleFormSubmit(Form form)
     {
@@ -449,7 +499,7 @@ else if (selectedRole == "moderator")
             StateHasChanged();
         }
     }
-
+    
     private void HandleFlowSubmit(Flow flow)
     {
         flows.Add(flow);            
