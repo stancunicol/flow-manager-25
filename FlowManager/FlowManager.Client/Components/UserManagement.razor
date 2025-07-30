@@ -163,25 +163,44 @@
             role = _rank
         };
 
+        Console.WriteLine($"[DEBUG] Starting user registration...");
+        Console.WriteLine($"[DEBUG] Payload: Name='{_name}', Email='{_email}', Role='{_rank}', PasswordLength={_password?.Length ?? 0}");
+        Console.WriteLine($"[DEBUG] HttpClient BaseAddress: {Http.BaseAddress}");
+        Console.WriteLine($"[DEBUG] Full URL will be: {Http.BaseAddress}api/auth/register");
+
         try
         {
-            var response = await Http.PostAsJsonAsync("auth/api/register", payload);
+            Console.WriteLine($"[DEBUG] Sending POST request to api/auth/register...");
+            var response = await Http.PostAsJsonAsync("api/auth/register", payload);
 
+            Console.WriteLine($"[DEBUG] Response received - Status Code: {response.StatusCode}");
+            Console.WriteLine($"[DEBUG] Response Headers: {string.Join(", ", response.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"))}");
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"[DEBUG] Response Body: {responseBody}");
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("User registered successfully.");
+                Console.WriteLine("[SUCCESS] User registered successfully.");
                 showAddForm = false;
                 await LoadUsers();
             }
             else
             {
-                Console.WriteLine($"Failed to register user: {response.StatusCode}");
+                Console.WriteLine($"[ERROR] Failed to register user: {response.StatusCode}");
+                Console.WriteLine($"[ERROR] Response body: {responseBody}");
             }
+        }
+        catch (HttpRequestException httpEx)
+        {
+            Console.WriteLine($"[ERROR] HTTP Request Exception: {httpEx.Message}");
+            Console.WriteLine($"[ERROR] HTTP Exception Details: {httpEx}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Exception: {ex.Message}");
+            Console.WriteLine($"[ERROR] General Exception: {ex.Message}");
+            Console.WriteLine($"[ERROR] Exception Details: {ex}");
+            Console.WriteLine($"[ERROR] Stack Trace: {ex.StackTrace}");
         }
     }
 
