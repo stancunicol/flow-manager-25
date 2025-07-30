@@ -1,0 +1,109 @@
+﻿@using System.Net.Http.Json
+@using FlowManager.Application.DTOs;
+@inject HttpClient Http
+
+@if (IsOpen)
+{
+    <div class="popup-backdrop">
+        <div class="popup-container">
+            <h3>Users</h3>
+            
+
+            @if (users.Any())
+            {
+                <ul>
+                    @foreach (var user in users)
+                    {
+                        <li>
+                            <span><strong>@user.Name</strong> (@user.Email)</span>
+
+                            @if (user.Id != CurrentUserId)
+                            {
+                                <button @onclick="() => ConfirmDelete(user.Id, user.Name)">Delete</button>
+                            }
+                        </li>
+                    }
+                </ul>
+
+            }
+            else
+            {
+                <p>No users found.</p>
+            }
+
+            <div class="modal-actions">
+                <button @onclick="Close">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showConfirm)
+{
+    <div class="popup-backdrop">
+        <div class="popup-container">
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete <strong>@userNameToDelete</strong>?</p>
+            <div class="modal-actions">
+                <button @onclick="DeleteUser">Yes, Delete</button>
+                <button @onclick="CancelDelete">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public Guid CurrentUserId { get; set; }
+    [Parameter] public string CurrentUserEmail { get; set; } = "";
+
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private List<UserDto> users = new();
+    private Guid userIdToDelete;
+    private string userNameToDelete = "";
+    private bool showConfirm = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen)
+        {
+            var allUsers = await Http.GetFromJsonAsync<List<UserDto>>("api/users");
+            users = allUsers
+            .Where(u => !string.Equals(u.Email, CurrentUserEmail, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        }
+    }
+
+
+    private void ConfirmDelete(Guid id, string name)
+    {
+        userIdToDelete = id;
+        userNameToDelete = name;
+        showConfirm = true;
+    }
+
+    private async Task DeleteUser()
+    {
+        await Http.DeleteAsync($"api/users/{userIdToDelete}");
+        users = users.Where(u => u.Id != userIdToDelete).ToList();
+        showConfirm = false;
+        userIdToDelete = Guid.Empty;
+        userNameToDelete = "";
+    }
+
+    private void CancelDelete()
+    {
+        showConfirm = false;
+        userIdToDelete = Guid.Empty;
+        userNameToDelete = "";
+    }
+
+    private async Task Close()
+    {
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+   
+}

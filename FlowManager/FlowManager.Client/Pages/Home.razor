@@ -167,6 +167,8 @@ else
                 <button @onclick="() => showFlowModal = true" class="adminNewFlowButton">New Flow</button>
                 <button @onclick="() => showUserModal = true" class="adminNewUserButton">New User</button>
                 <button @onclick="() => showStepModal = true" class="adminNewStepButton">Add Step</button>
+                <button @onclick="() => showUserListModal = true" class="adminViewUsersButton">View Users</button>
+
             </div>
         }
 
@@ -202,6 +204,11 @@ else
                OnSubmit="HandleFlowUpdate"
                OnFlowUpdated="LoadFlows"
                AvailableSteps="allSteps" />
+ <UserListModal IsOpen="@showUserListModal"
+                IsOpenChanged="@(v => showUserListModal = v)"
+                CurrentUserEmail="@currentUserEmail" />
+
+
 
 @if (selectedRole == "basic")
 {
@@ -256,6 +263,8 @@ else if (selectedRole == "admin")
                         }
                         <div class="flow-actions">
                             <button @onclick="() => OpenEditFlowModal(flow)" class="editFlowButton">Edit Flow</button>
+                            
+
                         </div>
                     </div>
                 }
@@ -302,6 +311,7 @@ else if (selectedRole == "moderator")
 @code {
     private string selectedRole = "basic";
     private string userName = "";
+    private string currentUserEmail = "";
     private Guid currentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     private bool showFormModal = false;
@@ -309,6 +319,8 @@ else if (selectedRole == "moderator")
     private bool showFlowModal = false;
     private bool showStepModal = false;
     private bool showEditFlowModal = false;
+    private bool showUserListModal = false;
+
 
     private List<Flow> flows = new();
     private List<Form> userForms = new();
@@ -335,6 +347,7 @@ else if (selectedRole == "moderator")
             userName = user.Identity.Name;
             
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
             if (Guid.TryParse(userIdClaim, out var userId))
             {
                 currentUserId = userId;
