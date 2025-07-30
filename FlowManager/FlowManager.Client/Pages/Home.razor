@@ -139,10 +139,11 @@ else
 @attribute [Authorize]
 <PageTitle>FlowManager</PageTitle>
 <AuthorizeView>
+    <Authorized Context="authContext">
 
 <div class="text-center">
     <h2>Flow Manager</h2>
-    <h4>Welcome back @context.User.Identity.Name</h4>
+    <h4>Welcome back @authContext.User.Identity.Name</h4>
     <div class="topBar">
         <select id="rank" @bind="selectedRole" @bind:after="OnRoleChanged" disabled="@isLoadingRoles">
             @if (isLoadingRoles)
@@ -273,37 +274,11 @@ else if (selectedRole == "admin")
                         }
                         <div class="flow-actions">
                             <button @onclick="() => OpenEditFlowModal(flow)" class="editFlowButton">Edit Flow</button>
-                            
-
                         </div>
-
-    <div class="admin-sections">
-        <h3>Flows Management</h3>
-        <div class="form-list">
-            @foreach (var flow in flows)
-            {
-                var isExpanded = expandedFormId == flow.Id;
-                <div class="form-entry" @onclick="() => ToggleExpand(flow.Id)">
-                    <div class="form-summary">
-                        <strong>@flow.Name</strong>
-
                     </div>
-                    @if (isExpanded)
-                    {
-                        <div class="form-details">
-                            <p><strong>Description:</strong> @flow.Description</p>
-                            @foreach (var step in flow.Steps)
-                            {
-                                <p><strong>Step:</strong> @step.Name</p>
-                            }
-                            <div class="flow-actions">
-                                <button @onclick="() => OpenEditFlowModal(flow)" class="editFlowButton">Edit Flow</button>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
     </div>
 }
 else if (selectedRole == "moderator")
@@ -343,22 +318,24 @@ else if (selectedRole == "moderator")
         <p style="margin-top: 2rem; align-content: center; text-align: center;">No requests assigned to you yet.</p>
     }
 }
-
+    </Authorized>
+    <NotAuthorized>
+        <p>You are not authorized to access this page.</p>
+    </NotAuthorized>
 </AuthorizeView>
 @code {
     private string selectedRole = "basic";
     private string userName = "";
     private string currentUserEmail = "";
-    private Guid currentUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-    private bool showUserManagementModal = false;
     private Guid currentUserId = Guid.Empty;
+    private bool showUserManagementModal = false;
 
     private bool showFormModal = false;
     private bool showUserModal = false;
     private bool showFlowModal = false;
     private bool showEditFlowModal = false;
     private bool showUserListModal = false;
-
+    private bool showStepModal = false;
     private bool showStepsManagementModal = false;
     private bool isSubmittingForm = false;
     private string? formSubmissionError = null;
@@ -389,7 +366,6 @@ else if (selectedRole == "moderator")
         {
             userName = user.Identity.Name;
             
-            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
             // Debug: Print all claims to see what's available
             Console.WriteLine($"[DEBUG] All user claims:");

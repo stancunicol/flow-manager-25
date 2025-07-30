@@ -43,7 +43,7 @@
             {
                 <tr class="expanded-row">
                     <td colspan="6">
-                        <FlowTracking Steps="@request.Flow?.Steps?.ToList() ?? new()"
+                        <FlowTracker Steps="@(request.Flow?.Steps?.ToList() ?? new List<Step>())"
                                       CurrentStepIndex="@GetStepIndex(request)" />
 
                         <p><strong>Comment:</strong> @request.Comment</p>
