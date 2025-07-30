@@ -23,6 +23,7 @@ namespace FlowManager.Infrastructure.Services
         {
             return await _context.Users
                 .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .Include(u => u.Forms)
                 .Include(u => u.StepUsers)
                 .Include(u => u.UpdateHistories)
@@ -33,6 +34,7 @@ namespace FlowManager.Infrastructure.Services
         {
             return await _context.Users
                 .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .Include(u => u.Forms)
                 .Include(u => u.StepUsers)
                 .Include(u => u.UpdateHistories)
@@ -43,6 +45,7 @@ namespace FlowManager.Infrastructure.Services
         {
             return await _context.Users
                 .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .Include(u => u.Forms)
                 .Include(u => u.StepUsers)
                 .Include(u => u.UpdateHistories)

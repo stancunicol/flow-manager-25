@@ -9,10 +9,12 @@ namespace FlowManager.API.Controllers
     public class FormsController : ControllerBase
     {
         private readonly IFormService _formService;
+        private readonly IFlowService _flowService;
 
-        public FormsController(IFormService formService)
+        public FormsController(IFormService formService, IFlowService flowService)
         {
             _formService = formService;
+            _flowService = flowService;
         }
 
         [HttpGet]
@@ -47,8 +49,30 @@ namespace FlowManager.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Form>> PostForm(Form form)
+        public async Task<ActionResult<Form>> PostForm(CreateFormDto createFormDto)
         {
+            // Get the flow to find the first step
+            var flow = await _flowService.GetFlowByIdAsync(createFormDto.FlowId);
+            if (flow == null)
+            {
+                return BadRequest("Invalid FlowId: Flow not found");
+            }
+
+            // Find the first step (ordered by CreatedAt)
+            var firstStep = flow.Steps.OrderBy(s => s.CreatedAt).FirstOrDefault();
+
+            // Convert DTO to entity
+            var form = new Form
+            {
+                FlowId = createFormDto.FlowId,
+                UserId = createFormDto.UserId,
+                Comment = createFormDto.Comment,
+                Status = FormStatus.Submitted,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                LastStepId = firstStep?.Id // Initialize with first step
+            };
+
             var createdForm = await _formService.CreateFormAsync(form);
             return CreatedAtAction(nameof(GetForm), new { id = createdForm.Id }, createdForm);
         }

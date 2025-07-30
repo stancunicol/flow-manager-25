@@ -34,5 +34,7 @@ builder.Services.AddScoped(sp =>
 // Register services
 builder.Services.AddScoped<FlowService>();
 builder.Services.AddScoped<StepService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<FormService>();
 
 await builder.Build().RunAsync();

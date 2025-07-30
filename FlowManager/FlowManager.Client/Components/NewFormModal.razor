@@ -18,9 +18,25 @@
             <label>Comment:</label>
             <textarea @bind="form.Comment" class="popup-input" rows="4" placeholder="Optional comment..."></textarea>
 
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="error-message" style="color: red; margin: 10px 0;">
+                    @ErrorMessage
+                </div>
+            }
+
             <div class="popup-actions">
-                <button @onclick="Submit" class="popup-send">Send</button>
-                <button @onclick="Close" class="popup-cancel">Cancel</button>
+                <button @onclick="Submit" class="popup-send" disabled="@IsSubmitting">
+                    @if (IsSubmitting)
+                    {
+                        <span>Submitting...</span>
+                    }
+                    else
+                    {
+                        <span>Send</span>
+                    }
+                </button>
+                <button @onclick="Close" class="popup-cancel" disabled="@IsSubmitting">Cancel</button>
             </div>
         </div>
     </div>
@@ -33,6 +49,8 @@
     [Parameter] public List<Flow> AvailableFlows { get; set; } = new();
     [Parameter] public Guid CurrentUserId { get; set; }
     [Parameter] public EventCallback<Form> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
 
     private Form form = new();
 
