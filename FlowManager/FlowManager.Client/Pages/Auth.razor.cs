@@ -38,7 +38,7 @@ namespace FlowManager.Client.Pages
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("[Auth] Login successful, notifying authentication state");
-                (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication(email);
+                (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication();
                 Navigation.NavigateTo("/");
             }
             else
