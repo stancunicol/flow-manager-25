@@ -1,8 +1,11 @@
-﻿using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.DTOs;
+using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using FlowManager.Application.DTOs;
 
 namespace FlowManager.Controllers
 {
@@ -11,6 +14,7 @@ namespace FlowManager.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _service;
+        private readonly UserManager<User> _userManager;
 
         public UsersController(IUserService service)
         {
@@ -20,8 +24,24 @@ namespace FlowManager.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _service.GetAllUsers();
-            return Ok(users);
+            var users = await _service.GetAllUsers(); // 👈 folosești serviciul tău
+
+            var result = users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                //UserName = u.UserName,
+                UserRoles = u.UserRoles.Select(ur => new UserRoleDto
+                {
+                    Role = new RoleDto
+                    {
+                        Name = ur.Role?.Name ?? ""
+                    }
+                }).ToList()
+            });
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -57,15 +77,23 @@ namespace FlowManager.Controllers
             return updated ? NoContent() : NotFound();
         }
 
-        [HttpPut("{id}/name/{name}/username/{username}/email/{email}")]
-        public async Task<IActionResult> UpdateUserProfile(Guid id, string name, string username, string email)
+        //[HttpPut("{id}/name/{name}/username/{username}/email/{email}")]
+        //public async Task<IActionResult> UpdateUserProfile(Guid id, string name, string username, string email)
+        //{
+        //    var updated = await _service.UpdateUserProfile(id, name, username, email);
+        //    return updated
+        //        ? NoContent()
+        //        : BadRequest("Email is already used by another user");
+        //}
+
+        [HttpPut("{id}/name/{name}/email/{email}")]
+        public async Task<IActionResult> UpdateUserProfile(Guid id, string name,string email)
         {
-            var updated = await _service.UpdateUserProfile(id, name, username, email);
+            var updated = await _service.UpdateUserProfile(id, name, email);
             return updated
                 ? NoContent()
                 : BadRequest("Email is already used by another user");
         }
-
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)

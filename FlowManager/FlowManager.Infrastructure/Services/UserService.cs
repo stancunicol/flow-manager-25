@@ -22,7 +22,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<IEnumerable<User>> GetAllUsers()
         {
             return await _context.Users
-                .Include(u => u.UserRoles)
+                .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
                 .Include(u => u.Forms)
                 .Include(u => u.StepUsers)
                 .Include(u => u.UpdateHistories)
@@ -83,7 +83,7 @@ namespace FlowManager.Infrastructure.Services
             }
         }
 
-        public async Task<bool> UpdateUserProfile(Guid id, string name, string username, string email)
+        public async Task<bool> UpdateUserProfile(Guid id, string name, string email)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null) return false;
@@ -96,7 +96,7 @@ namespace FlowManager.Infrastructure.Services
             user.Name = name;
             user.UpdatedAt = DateTime.UtcNow;
 
-            await _userManager.SetUserNameAsync(user, username);
+           // await _userManager.SetUserNameAsync(user, username);
             await _userManager.SetEmailAsync(user, email);
 
             var result = await _userManager.UpdateAsync(user);
