@@ -96,5 +96,20 @@ namespace FlowManager.API.Controllers
 
             return NoContent();
         }
+
+        [HttpPut("{id}/approve")]
+        public async Task<IActionResult> ApproveFormStep(Guid id, [FromBody] ApproveFormRequest request)
+        {
+            var approved = await _formService.ApproveFormStepAsync(id, request.ModeratorId);
+            if (!approved)
+                return BadRequest("Failed to approve form step. Form may not exist or may already be completed.");
+
+            return Ok();
+        }
+    }
+
+    public class ApproveFormRequest
+    {
+        public Guid ModeratorId { get; set; }
     }
 }

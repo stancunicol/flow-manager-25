@@ -127,5 +127,31 @@ namespace FlowManager.Client.Services
                 return false;
             }
         }
+
+        public async Task<bool> ApproveFormStepAsync(Guid formId, Guid moderatorId)
+        {
+            try
+            {
+                var request = new { ModeratorId = moderatorId };
+                var response = await _httpClient.PutAsJsonAsync($"api/forms/{formId}/approve", request);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"[DEBUG] Form {formId} approved successfully");
+                    return true;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[ERROR] Failed to approve form {formId}: {response.StatusCode} - {errorContent}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Exception approving form {formId}: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

@@ -105,5 +105,69 @@ namespace FlowManager.Infrastructure.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> ApproveFormStepAsync(Guid formId, Guid moderatorId)
+        {
+            try
+            {
+                var form = await _context.Forms
+                    .Include(f => f.Flow)
+                        .ThenInclude(flow => flow.FlowSteps)
+                        .ThenInclude(fs => fs.Step)
+                    .FirstOrDefaultAsync(f => f.Id == formId);
+
+                if (form == null)
+                {
+                    Console.WriteLine($"[ERROR] Form with ID {formId} not found");
+                    return false;
+                }
+
+                var orderedFlowSteps = form.Flow.FlowSteps.OrderBy(fs => fs.Step.CreatedAt).ToList();
+                
+                if (!orderedFlowSteps.Any())
+                {
+                    Console.WriteLine($"[ERROR] No steps found for flow {form.FlowId}");
+                    return false;
+                }
+
+                // Find current step index
+                var currentStepIndex = -1;
+                if (form.LastStepId.HasValue)
+                {
+                    currentStepIndex = orderedFlowSteps.FindIndex(fs => fs.StepId == form.LastStepId.Value);
+                }
+                
+                // If current step not found, assume we're at the first step
+                if (currentStepIndex == -1)
+                {
+                    currentStepIndex = 0;
+                }
+
+                // Check if this is the last step
+                if (currentStepIndex >= orderedFlowSteps.Count - 1)
+                {
+                    // This is the final step, mark form as approved
+                    form.Status = FormStatus.Approved;
+                    form.UpdatedAt = DateTime.UtcNow;
+                    Console.WriteLine($"[INFO] Form {formId} approved at final step");
+                }
+                else
+                {
+                    // Move to next step
+                    var nextStep = orderedFlowSteps[currentStepIndex + 1];
+                    form.LastStepId = nextStep.StepId;
+                    form.UpdatedAt = DateTime.UtcNow;
+                    Console.WriteLine($"[INFO] Form {formId} moved to next step: {nextStep.Step.Name}");
+                }
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to approve form step: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

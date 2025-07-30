@@ -304,8 +304,8 @@ else if (selectedRole == "moderator")
                             <p><strong>Current Step:</strong> @(currentStep?.Name ?? "Unknown")</p>
                         </div>
                         <div class="moderatorButtons">
-                            <button class="approveButton" @onclick="ApproveStep">Approve</button>
-                            <button class="rejectButton" @onclick="RejectStep">Reject</button>
+                            <button class="approveButton" @onclick="() => ApproveStep(form)">Approve</button>
+                            <button class="rejectButton" @onclick="() => RejectStep(form)">Reject</button>
                         </div>
                         <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@GetCurrentStepIndex(form)" />
                     }
@@ -557,18 +557,35 @@ else if (selectedRole == "moderator")
     {
         return flows.FirstOrDefault(f => f.Id == flowId)?.Name ?? "Unknown Flow";
     }
-    public void ApproveStep()
+    public async Task ApproveStep(Form form)
     {
-        // TODO: Implement proper step approval logic with API call
-        // This should update the form's LastStepId to the next step
-        currentStep++;
-        Console.WriteLine("Step approved");
+        try
+        {
+            Console.WriteLine($"[DEBUG] Approving step for form {form.Id}");
+            var success = await FormService.ApproveFormStepAsync(form.Id, currentUserId);
+            
+            if (success)
+            {
+                Console.WriteLine($"[DEBUG] Form {form.Id} approved successfully");
+                // Refresh the assigned forms to show updated status
+                await LoadAssignedForms();
+                StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine($"[ERROR] Failed to approve form {form.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Exception approving form {form.Id}: {ex.Message}");
+        }
     }
 
-    public void RejectStep()
+    public async Task RejectStep(Form form)
     {
-        // Logic to reject the step
-        Console.WriteLine("Step rejected");
+        // TODO: Implement reject logic when rejection functionality is added
+        Console.WriteLine($"Step rejected for form {form.Id}");
     }
 
     private void OpenEditFlowModal(Flow flow)
@@ -625,6 +642,15 @@ else if (selectedRole == "moderator")
         catch
         {
             return false;
+        }
+    }
+
+    private async Task LoadAssignedForms()
+    {
+        if (selectedRole == "moderator")
+        {
+            assignedForms = await GetFormsAssignedToModerator(currentUserId);
+            StateHasChanged();
         }
     }
 

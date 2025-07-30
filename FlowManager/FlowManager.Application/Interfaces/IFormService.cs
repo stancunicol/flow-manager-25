@@ -11,5 +11,6 @@ namespace FlowManager.Application.Interfaces
         Task<Form> CreateFormAsync(Form form);
         Task<bool> UpdateFormAsync(Guid id, Form form);
         Task<bool> DeleteFormAsync(Guid id);
+        Task<bool> ApproveFormStepAsync(Guid formId, Guid moderatorId);
     }
 }
