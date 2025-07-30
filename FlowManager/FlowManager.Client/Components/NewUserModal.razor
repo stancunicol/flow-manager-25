@@ -46,16 +46,17 @@
     
     private async Task Submit()
     {
-
         var payload = new
         {
+            name = _name,
             email = _email,
-            password = _password
+            password = _password,
+            role = _rank
         };
 
         try
         {
-            var response = await Http.PostAsJsonAsync("http://localhost:5000/register", payload);
+            var response = await Http.PostAsJsonAsync("api/auth/register", payload);
 
             if (response.IsSuccessStatusCode)
             {
@@ -63,7 +64,8 @@
             }
             else
             {
-                Console.WriteLine($"Failed to register user: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Failed to register user: {response.StatusCode} - {errorContent}");
             }
         }
         catch (Exception ex)
@@ -72,7 +74,6 @@
         }
 
         await IsOpenChanged.InvokeAsync(false);
-
     }
 
     private Task Close() => IsOpenChanged.InvokeAsync(false);

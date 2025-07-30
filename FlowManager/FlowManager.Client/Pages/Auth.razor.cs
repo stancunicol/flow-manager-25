@@ -24,6 +24,15 @@ namespace FlowManager.Client.Pages
         [Inject]
         protected CookieAuthStateProvider CookieAuthStateProvider { get; set; }
 
+        protected override async Task OnInitializedAsync()
+        {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity is { IsAuthenticated: true })
+            {
+                Navigation.NavigateTo("/");
+            }
+        }
+
         protected async Task HandleLogin()
         {
             var loginData = new { email = email, password = password };

@@ -64,6 +64,7 @@ builder.Services.AddIdentityCore<User>()
     .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager()
+    .AddRoleManager<RoleManager<IdentityRole<Guid>>>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender>();

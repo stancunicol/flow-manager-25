@@ -22,7 +22,7 @@ builder.Services.AddScoped(sp =>
 {
     var httpClient = new HttpClient()
     {
-        BaseAddress = new Uri("https://localhost:7195/")
+        BaseAddress = new Uri("https://localhost:5000/")
     };
     
     // Ensure credentials (cookies) are sent with requests
