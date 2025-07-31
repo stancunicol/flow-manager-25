@@ -32,7 +32,7 @@
     flex: 1;
     background-color: #ccc;
     z-index: 0;
-    margin-inline: -120px;
+    margin-inline: 0px;
     margin-bottom: 43px;
 }
 
@@ -52,7 +52,7 @@
     position: relative;
     text-align: center;
     z-index: 1;
-    flex: 1 0 auto;
+    /*flex: 1 0 auto;*/
     min-width: 80px;
 }
 
