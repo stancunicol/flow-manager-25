@@ -241,7 +241,8 @@ else
                             <p><strong>Status:</strong> @form.Status</p>
                             <p><strong>Updated:</strong> @form.UpdatedAt.ToLocalTime().ToString("g")</p>
                         </div>
-                        <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@GetCurrentStepIndex(form)" />
+                        //<FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@GetCurrentStepIndex(form)" />
+                        <FlowTracker flow="@form.Flow" CurrentStepIndex="@GetCurrentStepIndex(form)" />
                     }
                 </div>
             }
@@ -305,7 +306,7 @@ else if (selectedRole == "moderator")
                             <button class="approveButton" @onclick="() => ApproveStep(form)">Approve</button>
                             <button class="rejectButton" @onclick="() => RejectStep(form)">Reject</button>
                         </div>
-                        <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@GetCurrentStepIndex(form)" />
+                        <FlowTracker flow="@form.Flow" CurrentStepIndex="@GetCurrentStepIndex(form)" />
                     }
                 </div>
             }
@@ -322,7 +323,7 @@ else if (selectedRole == "moderator")
     </NotAuthorized>
 </AuthorizeView>
 @code {
-    private string selectedRole = "basic";
+    private string selectedRole = "Basic";
     private string userName = "";
     private string currentUserEmail = "";
     private Guid currentUserId = Guid.Empty;
