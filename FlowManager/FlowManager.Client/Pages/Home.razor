@@ -306,7 +306,7 @@ else if (selectedRole == "moderator")
                             <button class="approveButton" @onclick="() => ApproveStep(form)">Approve</button>
                             <button class="rejectButton" @onclick="() => RejectStep(form)">Reject</button>
                         </div>
-                        <FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@GetCurrentStepIndex(form)" />
+                        <FlowTracker flow="@form.Flow" CurrentStepIndex="@GetCurrentStepIndex(form)" />
                     }
                 </div>
             }
