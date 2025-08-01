@@ -12,22 +12,17 @@ button{
     font-size: 16px;
     animation: fadein 0.4s ease-out forwards;
     transition: background 0.3s;
+    filter: "drop-shadow(0 0 8px rgba(255, 0, 0, 0.4))";   
+}
+.newRequestButton{
+    display: flex;
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    margin-top: 10px;
 }
 button:hover{
     background: #00b37a;
-}
-#rank{
-    background: #000028;
-    color: white;
-    padding: 12px;
-    border-width: 2px;
-    border-color: #00d7a0;
-    border-radius: 6px;
-    animation: fadein 0.4s ease-out forwards;
-    transition: background 0.3s;
-}
-#rank:hover{
-    border-color: #00b37a;
 }
 .form-list {
     margin-top: 2rem;
@@ -58,7 +53,12 @@ button:hover{
     flex-wrap: wrap;
     gap: 10px;
 }
-
+.flowName{
+    width: 200px;
+}
+.formSubmitTime{
+    width: 200px;
+}
 .current-step {
     background: #004080;
     color: #00d7a0;
@@ -70,9 +70,13 @@ button:hover{
 }
 
 .status {
+    /*position: absolute;*/
+    /*right: 46.5%;*/
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 14px;
+    text-align: center;
+    width: 110px;
     font-weight: bold;
     text-transform: uppercase;
 }
@@ -103,22 +107,6 @@ button:hover{
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-}
-
-.editFlowButton {
-    background: #00d7a0;
-    color: white;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    transition: background 0.3s;
-}
-
-.editFlowButton:hover {
-    background: #00b37a;
 }
 
 @keyframes fadein {
