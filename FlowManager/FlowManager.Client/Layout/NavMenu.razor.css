@@ -1,0 +1,115 @@
+.flow-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #000028;
+    color: white;
+    padding: 16px;
+    width: 250px;
+    justify-content: space-between;
+    border-right:2px solid #00d7a0 ;
+}
+
+.flow-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flow-nav-link .linkDiv{
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.flow-nav-link:hover .linkDiv {
+    background-color: #001050;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-top: 1px solid #00d7a040;
+    margin-top: auto;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #00d7a0;
+}
+
+.user-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+}
+
+.user-name {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.user-email {
+    color: #cccccc;
+    font-size: 0.75rem;
+}
+
+.user-menu {
+    font-size: 1.2rem;
+    color: #888;
+    cursor: pointer;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.logo-icon {
+    width: auto;
+    height: 30px;
+}
+
+.logo-text {
+    color: white;
+}
+
+.section-title {
+    color: #00d7a0;
+    font-size: 0.75rem;
+    margin-top: 16px;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.flow-nav-link .linkDiv {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.flow-nav-link:hover .linkDiv {
+    background-color: #001050;
+}
+.flow-nav-link{
+    text-decoration: none;
+}
+

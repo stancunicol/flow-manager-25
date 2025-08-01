@@ -1,0 +1,110 @@
+@implements IDisposable
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="flow-sidebar">
+    <div>
+        <div class="logo">
+            <img src="lib/siemens-logo.png" alt="Logo" class="logo-icon" />
+            @* <span class="logo-text">FlowUI</span> *@
+        </div>
+
+        <AuthorizeView>
+            <Authorized Context="authContext">
+                @{
+                    var user = authContext.User;
+                    var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+                    bool isAdmin = roles.Contains("Admin");
+                    bool isModerator = roles.Contains("Moderator");
+                }
+
+                <nav class="flow-nav">
+                    <div class="section-title">GENERAL</div>
+                    <NavLink href="/" Match="NavLinkMatch.All" class="flow-nav-link">
+                        <div class="linkDiv"><i class="bi bi-house-door"></i> Home</div>
+                    </NavLink>
+
+                    @if (isModerator || isAdmin)
+                    {
+                        <NavLink href="/moderation" class="flow-nav-link">
+                            <div class="linkDiv"><i class="bi bi-check2-square"></i> Moderation</div>
+                        </NavLink>
+                        
+                        <div class="section-title">FINANCE</div>
+                        <NavLink href="/invoices" class="flow-nav-link">
+                            <div class="linkDiv"><i class="bi bi-receipt"></i> Invoices</div>
+                        </NavLink>
+                        <NavLink href="/payments" class="flow-nav-link">
+                            <div class="linkDiv"><i class="bi bi-credit-card-2-front"></i> Payments</div>
+                        </NavLink>
+                    }
+
+                    @if (isAdmin)
+                    {
+                        <div class="section-title">OVERVIEW</div>
+                        <NavLink href="/dashboard" class="flow-nav-link">
+                            <div class="linkDiv"><i class="bi bi-graph-up"></i> Dashboard</div>
+                        </NavLink>
+                        <NavLink href="/organization" class="flow-nav-link">
+                            <div class="linkDiv"><i class="bi bi-building"></i> Organization</div>
+                        </NavLink>
+                        
+                        <div class="section-title">TEAM</div>
+                        <NavLink href="/members" class="flow-nav-link">
+                            <div class="linkDiv"><i class="bi bi-people"></i> Members</div>
+                        </NavLink>
+                        <NavLink href="/permissions" class="flow-nav-link">
+                            <div class="linkDiv"><i class="bi bi-shield-lock"></i> Permissions</div>
+                        </NavLink>
+                        
+                    }
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+
+    <div>
+        <NavLink href="/settings" class="flow-nav-link">
+            <div class="linkDiv"><i class="bi bi-gear"></i> Settings</div>
+        </NavLink>
+
+        <AuthorizeView>
+            <Authorized Context="authContext">
+                <div class="user-info">
+                    <img src="lib/avatar.png" alt="User avatar" class="user-avatar" />
+                    <div class="user-details">
+                        <div class="user-name">@authContext.User.Identity?.Name</div>
+                        <div class="user-email">EMAIL@EMAIL.COM</div>
+                    </div>
+                    <div class="user-menu">
+                        <span class="bi bi-three-dots-vertical"></span>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
