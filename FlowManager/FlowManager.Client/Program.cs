@@ -37,4 +37,6 @@ builder.Services.AddScoped<StepService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<FormService>();
 
+builder.Services.AddBlazorBootstrap();
+
 await builder.Build().RunAsync();
