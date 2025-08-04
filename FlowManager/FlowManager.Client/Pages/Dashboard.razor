@@ -14,9 +14,8 @@
 
 @attribute [Authorize(Roles = "Admin")]
 <div class="adminButtons">
-    <button @onclick="() => showFlowModal = true" class="adminNewFlowButton">New Flow</button>
-    <button @onclick="() => showUserManagementModal = true" class="adminViewUsersButton">Manage Users</button>
-    <button @onclick="() => showStepsManagementModal = true" class="adminManageStepsButton">Manage Steps</button>
+    <button @onclick="() => showFlowModal = true" class="adminNewFlowButton newFlowButton">New Flow</button>
+    <button @onclick="() => showStepsManagementModal = true" class="adminManageStepsButton manageStepsButton">Manage Steps</button>
 </div>
 
 <div class="form-list">
@@ -61,18 +60,12 @@
                OnSubmit="HandleFlowUpdate"
                OnFlowUpdated="LoadFlows"
                AvailableSteps="allSteps" />
- 
-
-<UserManagement IsOpen="@showUserManagementModal"
-                IsOpenChanged="@OnUserManagementModalChanged"
-                CurrentUserEmail="@currentUserEmail" />
                 
-                @code {
+@code {
     private string selectedRole = "Basic";
     private string userName = "";
     private string currentUserEmail = "";
     private Guid currentUserId = Guid.Empty;
-    private bool showUserManagementModal = false;
 
     private bool showFormModal = false;
     private bool showUserModal = false;
@@ -175,50 +168,7 @@
             assignedForms = await GetFormsAssignedToModerator(currentUserId);
         }
     }
-
-    private Task OnUserManagementModalChanged(bool value)
-    {
-        showUserManagementModal = value;
-        StateHasChanged();
-        return Task.CompletedTask;
-    }
-
-
-    private async Task HandleFormSubmit(Form form)
-    {
-        isSubmittingForm = true;
-        formSubmissionError = null;
-        StateHasChanged();
-        
-        try
-        {
-            Console.WriteLine($"[DEBUG] Submitting form to API - FlowId: {form.FlowId}, UserId: {form.UserId}");
-            var createdForm = await FormService.CreateFormAsync(form);
-            
-            if (createdForm != null)
-            {
-                Console.WriteLine($"[DEBUG] Form created successfully with ID: {createdForm.Id}");
-                userForms.Insert(0, createdForm);
-                showFormModal = false;
-                StateHasChanged();
-            }
-            else
-            {
-                Console.WriteLine("[ERROR] Failed to create form - API returned null");
-                formSubmissionError = "Failed to create form. Please try again.";
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[ERROR] Exception while creating form: {ex.Message}");
-            formSubmissionError = $"Error creating form: {ex.Message}";
-        }
-        finally
-        {
-            isSubmittingForm = false;
-            StateHasChanged();
-        }
-    }
+    
     
     private void HandleFlowSubmit(Flow flow)
     {
