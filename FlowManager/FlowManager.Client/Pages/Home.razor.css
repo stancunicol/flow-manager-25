@@ -1,7 +1,3 @@
-.topBar{
-    display: flex;
-    justify-content: space-between;
-}
 button{
     background: #00d7a0;
     color: white;
