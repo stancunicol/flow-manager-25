@@ -11,6 +11,9 @@ namespace FlowManager.Client.Pages
         protected string email = string.Empty;
         protected string password = string.Empty;
         protected string? errorMessage;
+        
+        private bool animateLeft = false;
+        private bool animateRight = false;
 
         [Inject] 
         protected HttpClient Http { get; set; }
@@ -47,6 +50,12 @@ namespace FlowManager.Client.Pages
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("[Auth] Login successful, notifying authentication state");
+                
+                animateLeft = true;
+                animateRight = true;
+                StateHasChanged();
+                await Task.Delay(850);
+                
                 (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication();
                 Navigation.NavigateTo("/");
             }
