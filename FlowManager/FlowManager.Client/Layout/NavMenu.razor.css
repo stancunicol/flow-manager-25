@@ -1,0 +1,231 @@
+.flow-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    padding: 16px;
+    width: 250px;
+    justify-content: space-between;
+    border-right:2px solid var(--secondary) ;
+}
+
+.flow-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flow-nav-link .linkDiv{
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.flow-nav-link:hover .linkDiv {
+    background-color: var(--background-color2);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-top: 1px solid #00d7a040;
+    margin-top: auto;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-color);
+}
+
+.user-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+}
+
+.user-name {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.user-email {
+    color: var(--text-color);
+    font-size: 0.75rem;
+}
+
+.user-menu {
+    font-size: 1.2rem;
+    color: #888;
+    cursor: pointer;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    gap: 10px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.logo-icon {
+    width: auto;
+    height: 30px;
+}
+
+.logo-text {
+    color: var(--text-color);
+}
+
+.section-title {
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    margin-top: 16px;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.flow-nav-link .linkDiv {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.flow-nav-link:hover .linkDiv {
+    background-color: var(--background-color2);
+}
+.flow-nav-link{
+    text-decoration: none;
+}
+.user-info {
+    position: relative;
+}
+
+.user-menu-popup {
+    position: absolute;
+    bottom: 100%;
+    width: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: var(--background-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 215, 160, 0.3);
+    z-index: 100;
+    transform-origin: bottom right;
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+    animation: popupUp 0.2s ease-out forwards;
+}
+
+.user-menu-popup button {
+    background: var(--primary-color);
+    color: var(--text-color);
+    margin: 6px;
+    padding: 4px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    animation: fadein 0.4s ease-out forwards;
+    transition: background 0.3s;
+    filter: "drop-shadow(0 0 8px rgba(255, 0, 0, 0.4))";
+}
+
+.user-menu-popup button:hover {
+    background-color: #00b37a;
+}
+
+@keyframes popupUp {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+/* The switch - the box around the slider */
+.themeDiv{
+    margin: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+.switch {
+    margin-top: 3px;
+    position: relative;
+    display: flex;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 15px;
+    width: 15px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary-color);
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(18px);
+    -ms-transform: translateX(18px);
+    transform: translateX(18px);
+}
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}

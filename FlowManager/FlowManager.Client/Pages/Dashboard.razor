@@ -1,0 +1,412 @@
+﻿@page "/dashboard"
+@using FlowManager.Domain.Entities
+@using FlowManager.Client.Components
+@using FlowManager.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient HttpClient
+@inject FlowService FlowService
+@inject StepService StepService
+@inject UserService UserService
+@inject FormService FormService
+
+@attribute [Authorize(Roles = "Admin")]
+<div class="adminButtons">
+    <button @onclick="() => showFlowModal = true" class="adminNewFlowButton newFlowButton">New Flow</button>
+    <button @onclick="() => showStepsManagementModal = true" class="adminManageStepsButton manageStepsButton">Manage Steps</button>
+</div>
+
+<div class="form-list">
+    @foreach (var flow in flows)
+    {
+        var isExpanded = expandedFormId == flow.Id;
+        <div class="form-entry" @onclick="() => ToggleExpand(flow.Id)">
+            <div class="form-summary">
+                <strong>@flow.Name</strong>
+            </div>
+            @if (isExpanded)
+            {
+                <div class="form-details">
+                    <p><strong>Description:</strong> @flow.Description</p>
+                    @foreach (var step in flow.Steps)
+                    {
+                        <p><strong>Step:</strong> @step.Name</p>
+                    }
+                    <div class="flow-actions">
+                        <button @onclick="() => OpenEditFlowModal(flow)" class="editFlowButton">Edit Flow</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<NewFlowModal IsOpen="@showFlowModal"
+              IsOpenChanged="@(value => showFlowModal = value)"
+              OnSubmit="HandleFlowSubmit"
+              OnFlowCreated="LoadFlows"
+              AvailableSteps="allSteps" />
+
+<StepsManagementModal IsOpen="@showStepsManagementModal"
+                      IsOpenChanged="@(value => showStepsManagementModal = value)"
+                      AllSteps="allSteps"
+                      OnStepsChanged="LoadSteps" />
+
+<EditFlowModal IsOpen="@showEditFlowModal"
+               IsOpenChanged="@(value => showEditFlowModal = value)"
+               FlowToEdit="@flowToEdit"
+               OnSubmit="HandleFlowUpdate"
+               OnFlowUpdated="LoadFlows"
+               AvailableSteps="allSteps" />
+                
+@code {
+    private string selectedRole = "Basic";
+    private string userName = "";
+    private string currentUserEmail = "";
+    private Guid currentUserId = Guid.Empty;
+
+    private bool showFormModal = false;
+    private bool showUserModal = false;
+    private bool showFlowModal = false;
+    private bool showEditFlowModal = false;
+    private bool showUserListModal = false;
+    private bool showStepModal = false;
+    private bool showStepsManagementModal = false;
+    private bool isSubmittingForm = false;
+    private string? formSubmissionError = null;
+
+    private List<Flow> flows = new();
+    private List<Form> userForms = new();
+    private List<Form> assignedForms = new();
+    private List<Step> allSteps = new();
+    private List<string> userRoles = new();
+    private Guid? expandedFormId = null;
+    private bool isLoadingRoles = true;
+    private Flow? flowToEdit = null;
+    
+    int currentStep = 0;
+
+    Flow flow = new()
+    {
+        Name = "Test Flow"
+    };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is { IsAuthenticated: true })
+        {
+            userName = user.Identity.Name;
+            
+            currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+            // Debug: Print all claims to see what's available
+            Console.WriteLine($"[DEBUG] All user claims:");
+            foreach (var claim in user.Claims)
+            {
+                Console.WriteLine($"[DEBUG] Claim Type: {claim.Type}, Value: {claim.Value}");
+            }
+            
+            // Try multiple possible claim types for user ID
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                           ?? user.FindFirst("sub")?.Value 
+                           ?? user.FindFirst("id")?.Value
+                           ?? user.FindFirst("userId")?.Value;
+                           
+            Console.WriteLine($"[DEBUG] User ID claim from JWT: {userIdClaim}");
+            
+            if (Guid.TryParse(userIdClaim, out var userId))
+            {
+                currentUserId = userId;
+                Console.WriteLine($"[DEBUG] Set currentUserId to: {currentUserId}");
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Failed to parse user ID from claim: {userIdClaim}");
+                // If we can't get user ID from claims, try to get it from API
+                await LoadCurrentUserFromApi();
+            }
+            
+            // Get roles from authentication claims instead of API call
+            userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            Console.WriteLine($"[DEBUG] Loaded roles from claims: {string.Join(", ", userRoles)}");
+            
+            if (userRoles.Any())
+            {
+                selectedRole = userRoles.First().ToLower();
+            }
+            else
+            {
+                Console.WriteLine($"[INFO] User has no roles assigned. Defaulting to 'basic' role.");
+                selectedRole = "basic";
+            }
+            
+            isLoadingRoles = false;
+        }
+        
+        // Ensure we have a valid user ID before proceeding
+        if (currentUserId == Guid.Empty)
+        {
+            Console.WriteLine("[ERROR] No valid user ID found. Cannot load user-specific data.");
+            return;
+        }
+        
+        Console.WriteLine($"[DEBUG] Final currentUserId: {currentUserId}");
+        
+        // Load data from APIs
+        await LoadSteps();
+        await LoadFlows();
+        await LoadForms();
+        
+        // Load assigned forms for moderators
+        if (selectedRole == "moderator")
+        {
+            assignedForms = await GetFormsAssignedToModerator(currentUserId);
+        }
+    }
+    
+    
+    private void HandleFlowSubmit(Flow flow)
+    {
+        flows.Add(flow);            
+        showFlowModal = false;      
+        StateHasChanged();          
+    }
+
+
+    private async Task LoadSteps()
+    {
+        allSteps = await StepService.GetStepsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadFlows()
+    {
+        flows = await FlowService.GetFlowsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadForms()
+    {
+        Console.WriteLine("[DEBUG] Starting to load forms...");
+        userForms = await FormService.GetAllFormsAsync();
+        Console.WriteLine($"[DEBUG] Loaded {userForms.Count} forms from API");
+        StateHasChanged();
+    }
+
+    private async Task OnRoleChanged()
+    {
+        // Load assigned forms when role changes to moderator
+        if (selectedRole == "moderator")
+        {
+            assignedForms = await GetFormsAssignedToModerator(currentUserId);
+            StateHasChanged();
+        }
+        else
+        {
+            assignedForms.Clear();
+        }
+    }
+
+    private async Task LoadCurrentUserFromApi()
+    {
+        try
+        {
+            Console.WriteLine("[DEBUG] Attempting to load user from API...");
+            var response = await HttpClient.GetAsync("api/auth/me");
+            if (response.IsSuccessStatusCode)
+            {
+                var userInfo = await response.Content.ReadFromJsonAsync<UserProfileDto>();
+                if (userInfo != null && userInfo.Id != Guid.Empty)
+                {
+                    currentUserId = userInfo.Id;
+                    Console.WriteLine($"[DEBUG] Set currentUserId from API to: {currentUserId}");
+                }
+                else
+                {
+                    Console.WriteLine("[DEBUG] UserProfileDto returned but Id is empty");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Failed to load user from API. Status: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] Exception loading user from API: {ex.Message}");
+        }
+    }
+
+    private void ToggleExpand(Guid formId)
+    {
+        expandedFormId = expandedFormId == formId ? null : formId;
+    }
+
+    private string GetFlowName(Guid flowId)
+    {
+        return flows.FirstOrDefault(f => f.Id == flowId)?.Name ?? "Unknown Flow";
+    }
+    public async Task ApproveStep(Form form)
+    {
+        try
+        {
+            Console.WriteLine($"[DEBUG] Approving step for form {form.Id}");
+            var success = await FormService.ApproveFormStepAsync(form.Id, currentUserId);
+            
+            if (success)
+            {
+                Console.WriteLine($"[DEBUG] Form {form.Id} approved successfully");
+                // Refresh the assigned forms to show updated status
+                await LoadAssignedForms();
+                StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine($"[ERROR] Failed to approve form {form.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Exception approving form {form.Id}: {ex.Message}");
+        }
+    }
+
+    public async Task RejectStep(Form form)
+    {
+        // TODO: Implement reject logic when rejection functionality is added
+        Console.WriteLine($"Step rejected for form {form.Id}");
+    }
+
+    private void OpenEditFlowModal(Flow flow)
+    {
+        flowToEdit = flow;
+        showEditFlowModal = true;
+        StateHasChanged();
+    }
+
+    private void HandleFlowUpdate(Flow flow)
+    {
+        var existingFlow = flows.FirstOrDefault(f => f.Id == flow.Id);
+        if (existingFlow != null)
+        {
+            var index = flows.IndexOf(existingFlow);
+            flows[index] = flow;
+        }
+        showEditFlowModal = false;
+        StateHasChanged();
+    }
+
+    private Step? GetCurrentStepForForm(Form form)
+    {
+        var flow = flows.FirstOrDefault(f => f.Id == form.FlowId);
+        if (flow == null || !flow.Steps.Any()) return null;
+
+        var orderedSteps = flow.Steps.OrderBy(s => s.CreatedAt).ToList();
+        
+        // If no step has been processed yet (legacy forms), return the first step
+        if (form.LastStepId == null)
+        {
+            return orderedSteps.FirstOrDefault();
+        }
+
+        // If form is on the first step (newly created forms), return the first step as current
+        var currentStepIndex = orderedSteps.FindIndex(s => s.Id == form.LastStepId);
+        if (currentStepIndex >= 0)
+        {
+            // Return the current step (for forms that are active on a step)
+            return orderedSteps[currentStepIndex];
+        }
+
+        // If we can't find the step, return the first step as fallback
+        return orderedSteps.FirstOrDefault();
+    }
+
+    private async Task<bool> IsUserAssignedToStep(Guid userId, Guid stepId)
+    {
+        try
+        {
+            var assignedUsers = await UserService.GetUsersByStepAsync(stepId);
+            return assignedUsers.Any(u => u.Id == userId);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task LoadAssignedForms()
+    {
+        if (selectedRole == "moderator")
+        {
+            assignedForms = await GetFormsAssignedToModerator(currentUserId);
+            StateHasChanged();
+        }
+    }
+
+    private async Task<List<Form>> GetFormsAssignedToModerator(Guid moderatorId)
+    {
+        var assignedForms = new List<Form>();
+        
+        Console.WriteLine($"[DEBUG] Checking forms for moderator {moderatorId}");
+        Console.WriteLine($"[DEBUG] Total forms loaded: {userForms.Count}");
+        
+        foreach (var form in userForms)
+        {
+            Console.WriteLine($"[DEBUG] Form {form.Id} - Status: {form.Status}");
+            
+            if (form.Status != FormStatus.Submitted) 
+            {
+                Console.WriteLine($"[DEBUG] Skipping form {form.Id} - not submitted");
+                continue; // Only show submitted forms
+            }
+            
+            var currentStep = GetCurrentStepForForm(form);
+            Console.WriteLine($"[DEBUG] Form {form.Id} - Current step: {currentStep?.Name ?? "NULL"}");
+            
+            if (currentStep != null)
+            {
+                var isAssigned = await IsUserAssignedToStep(moderatorId, currentStep.Id);
+                Console.WriteLine($"[DEBUG] Form {form.Id} - Is moderator assigned to step: {isAssigned}");
+                
+                if (isAssigned)
+                {
+                    assignedForms.Add(form);
+                    Console.WriteLine($"[DEBUG] Added form {form.Id} to assigned forms");
+                }
+            }
+        }
+        
+        Console.WriteLine($"[DEBUG] Total assigned forms: {assignedForms.Count}");
+        return assignedForms;
+    }
+
+    private int GetCurrentStepIndex(Form form)
+    {
+        var flow = flows.FirstOrDefault(f => f.Id == form.FlowId);
+        if (flow == null || !flow.Steps.Any()) return 0;
+
+        var orderedSteps = flow.Steps.OrderBy(s => s.CreatedAt).ToList();
+        
+        // If no step has been processed yet (legacy forms), current step is 0 (first step)
+        if (form.LastStepId == null)
+        {
+            return 0;
+        }
+
+        // Find the index of the current active step
+        var currentStepIndex = orderedSteps.FindIndex(s => s.Id == form.LastStepId);
+        if (currentStepIndex >= 0)
+        {
+            // Return the current step index (forms are now active on the LastStepId)
+            return currentStepIndex;
+        }
+
+        return 0; // Default to first step
+    }
+
+}

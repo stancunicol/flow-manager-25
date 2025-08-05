@@ -1,0 +1,173 @@
+@implements IDisposable
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using FlowManager.Client.Services
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject HttpClient Http
+
+<AuthorizeView>
+    <Authorized>
+        <div class="flow-sidebar">
+            <div>
+                <div class="logo">
+                    <img src="lib/siemens-logo.png" alt="Logo" class="logo-icon"/>
+                </div>
+
+                <AuthorizeView>
+                    <Authorized Context="authContext">
+                        @{
+                            var user = authContext.User;
+                            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+                            bool isAdmin = roles.Contains("Admin");
+                            bool isModerator = roles.Contains("Moderator");
+                        }
+
+                        <nav class="flow-nav">
+                            <div class="section-title">GENERAL</div>
+                            <NavLink href="/" Match="NavLinkMatch.All" class="flow-nav-link">
+                                <div class="linkDiv"><i class="bi bi-house-door"></i> Home</div>
+                            </NavLink>
+
+                            @if (isModerator || isAdmin)
+                            {
+                                <NavLink href="/moderation" class="flow-nav-link">
+                                    <div class="linkDiv"><i class="bi bi-check2-square"></i> Moderation</div>
+                                </NavLink>
+
+                                <div class="section-title">FINANCE</div>
+                                <NavLink href="/invoices" class="flow-nav-link">
+                                    <div class="linkDiv"><i class="bi bi-receipt"></i> Invoices</div>
+                                </NavLink>
+                                <NavLink href="/payments" class="flow-nav-link">
+                                    <div class="linkDiv"><i class="bi bi-credit-card-2-front"></i> Payments</div>
+                                </NavLink>
+                            }
+
+                            @if (isAdmin)
+                            {
+                                <div class="section-title">OVERVIEW</div>
+                                <NavLink href="/dashboard" class="flow-nav-link">
+                                    <div class="linkDiv"><i class="bi bi-graph-up"></i> Dashboard</div>
+                                </NavLink>
+                                <NavLink href="/organization" class="flow-nav-link">
+                                    <div class="linkDiv"><i class="bi bi-building"></i> Organization</div>
+                                </NavLink>
+
+                                <div class="section-title">TEAM</div>
+                                <NavLink href="/members" class="flow-nav-link">
+                                    <div class="linkDiv"><i class="bi bi-people"></i> Members</div>
+                                </NavLink>
+                                <NavLink href="/permissions" class="flow-nav-link">
+                                    <div class="linkDiv"><i class="bi bi-shield-lock"></i> Permissions</div>
+                                </NavLink>
+                            }
+                        </nav>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+
+            <div>
+                <NavLink href="/settings" class="flow-nav-link">
+                    <div class="linkDiv"><i class="bi bi-gear"></i> Settings</div>
+                </NavLink>
+
+                <AuthorizeView>
+                    <Authorized Context="authContext">
+                        <div class="user-info" @onclick:stopPropagation="true">
+                            <img src="lib/avatar.png" alt="User avatar" class="user-avatar" />
+                            <div class="user-details">
+                                <div class="user-name">@authContext.User.Identity?.Name</div>
+                                <div class="user-email">EMAIL@EMAIL.COM</div>
+                            </div>
+                            <div class="user-menu" @onclick="ToggleUserMenu">
+                                <span class="bi bi-three-dots-vertical"></span>
+                            </div>
+
+                            @if (showUserMenu)
+                            {
+                                <div class="user-menu-popup animate-popup-up">
+                                    <div class="themeDiv">
+                                        <span>Light theme: </span>
+                                        <label class="switch">
+                                            <input type="checkbox" @onclick="ToggleTheme">
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                    <button @onclick="Logout">Logout</button>
+                                </div>
+                            }
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    [Inject] 
+    protected NavigationManager Navigation { get; set; }
+    private string? currentUrl;
+    private bool showUserMenu = false;
+
+    private bool isDarkTheme = true;
+    
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+    
+    private async void ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+        var themeClass = isDarkTheme ? "dark-theme" : "light-theme";
+        await JS.InvokeVoidAsync("setThemeClass", themeClass);
+    }
+    
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+    private void ToggleUserMenu()
+    {
+        showUserMenu = !showUserMenu;
+    }
+    private async Task Logout()
+    {
+        var response = await Http.PostAsync("api/auth/logout", null);
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/auth", forceLoad: true);
+        }
+        else
+        {
+            Console.WriteLine("Logout failed: " + response.StatusCode);
+        }
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ = JS.InvokeVoidAsync("addOutsideClickHandler", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    
+    [JSInvokable]
+    public void CloseUserMenu()
+    {
+        showUserMenu = false;
+        StateHasChanged();
+    }
+}

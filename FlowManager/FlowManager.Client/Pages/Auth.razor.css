@@ -1,55 +1,186 @@
-﻿.container {
-    background-color: #05053a;
-    border-radius: 16px;
-    padding: 40px 30px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
-}
-.h2-form {
-    color: #f3f3f0 !important;
-}
-.form-container {
-    position: relative;
-}
-.form {
+﻿.fullAuth{
     display: flex;
+    height: 99vh;
+    align-items: center;
+    justify-content: center;
+}
+.auth-page {
+    display: flex;
+    align-self: center;
+    justify-self: center;
+    position: relative;
+    max-height: 50vh;
+    /*background: linear-gradient(to bottom right, #0d0d2b, #00d7a0);*/
+    border-radius: 16px;
+    overflow: hidden;
+    filter: drop-shadow(5px 5px 5px var(--primary-color));
+    font-family: 'Segoe UI', sans-serif;
+    animation: slide-in-left 1s ease-out forwards;
+}
+.auth-right {
+    flex: 1;
+    background-color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 40px;
+    z-index: 10;
+    transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+}
+.auth-left {
+    flex: 1;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    padding: 60px 40px;
+    display: flex;
+    height: auto;
+    transform: translateX(100%);
     flex-direction: column;
-    animation: fadeIn 0.5s ease-in-out;
+    justify-content: center;
+    align-items: flex-start;
+    position: relative;
+    animation: slide-in-left 0.7s ease-out forwards;
+    animation-delay: 1s;
+    
 }
-.form h2 {
-    text-align: center;
+.left-animation{
+    display: flex;
+    transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+}
+
+.slide-left-out {
+    transform: translateX(-200%);
+    opacity: 0;
+}
+
+.slide-right-out {
+    transform: translateX(100%);
+    opacity: 0;
+}
+@keyframes slide-in-left {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.siemens-logo {
+    max-width: 160px;
+    margin-bottom: 30px;
+}
+
+.auth-left h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.auth-underline {
+    width: 50px;
+    height: 3px;
+    background-color: var(--primary-color);
     margin-bottom: 20px;
-    color: #f3f3f0;
+    position: relative;
+    animation: move-right 5s infinite alternate ease-in-out;
 }
-.form input {
-    margin-bottom: 15px;
+
+@keyframes move-right {
+    0% {
+        left: 0;
+    }
+    100% {
+        left: 60%;
+    }
+}
+
+.auth-motto {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.auth-desc {
+    font-size: 14px;
+    color: #c0c0c0;
+    max-width: 300px;
+}
+
+
+
+.auth-form {
+    max-width: 320px;
+    width: 100%;
+}
+
+.auth-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 10px;
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.auth-form input {
+    width: 100%;
     padding: 12px;
+    margin-bottom: 16px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    outline: none;
-    font-size: 15px;
+    font-size: 14px;
 }
-.form button {
-    background: #00d7a0;
-    color: white;
+
+.auth-form button {
+    width: 100%;
     padding: 12px;
+    background: linear-gradient(to right, #00d7a0, #66fbcf);
+    color: white;
     border: none;
     border-radius: 6px;
-    cursor: pointer;
     font-size: 16px;
-    transition: background 0.3s;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
 }
-.form button:hover {
-    background: #01af83;
+
+.auth-form button:hover {
+    background: linear-gradient(to right, #00a87c, #4dd8b4);
 }
-@keyframes fadeIn {
-    from {
+
+.forgot-password {
+    display: block;
+    text-align: right;
+    font-size: 13px;
+    margin-top: 10px;
+    color: #666;
+    text-decoration: none;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.auth-error {
+    margin-top: 10px;
+    color: #e53935;
+    font-size: 13px;
+}
+@keyframes fadein {
+    0% {
         opacity: 0;
-        transform: translateY(15px);
     }
-    to {
+    100% {
         opacity: 1;
-        transform: translateY(0);
+    }
+}
+@keyframes rotate {
+    100% {
+        transform: rotate(1turn);
     }
 }

@@ -1,28 +1,35 @@
 ﻿@page "/auth"
-@using System.Reflection.Metadata
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Identity
-@using FlowManager.Domain.Entities
-@using Microsoft.AspNetCore.Components.Authorization
+<div class="fullAuth">
 
+    <div class="auth-page">
+        <div class="left-animation @(animateLeft ? "slide-left-out" : "")">
+            <div class="auth-left">
+                <img src="lib/siemens-logo.png" alt="Siemens Logo" class="siemens-logo"/>
 
-<div class="container">
+                <h1>Flow Simulator</h1>
+                <div class="auth-underline"></div>
+                <h2 class="auth-motto">Approve, optimize, evolve – all in one place.</h2>
+                <p class="auth-desc">Empower your teams with structured, fast, and transparent approvals.</p>
+            </div>
+        </div>
 
-    <div class="form-container">    
-        <!-- Sign In Form -->
-        <form id="signin-form" class="form active" @onsubmit="HandleLogin">
-            <h2 class="h2-form">Welcome Back</h2>
-            <input type="email" placeholder="Email" @bind="email" required />
-            <input type="password" placeholder="Password" @bind="password" required />
-            
-            <button type="submit">Sign In</button>
+        <div class="auth-right @(animateRight ? "slide-right-out" : "")">
+            <form class="auth-form" @onsubmit="HandleLogin">
+                <h2 class="auth-title">Login</h2>
+                <p class="auth-subtitle">Access your account</p>
 
-            @if(!string.IsNullOrEmpty(errorMessage))
-            {
-                <p style="color: red">@errorMessage</p>
-            }
-        </form>
+                <input type="email" placeholder="Enter your email" @bind="email" required/>
+                <input type="password" placeholder="Enter your password" @bind="password" required/>
 
+                <button type="submit">Sign In</button>
+                <a href="#" class="forgot-password">Reset Password?</a>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <p class="auth-error">@errorMessage</p>
+                }
+            </form>
+        </div>
     </div>
 </div>
 

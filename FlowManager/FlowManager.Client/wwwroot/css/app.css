@@ -1,12 +1,57 @@
+:root{
+    --background-color: #010104;
+    --background-color2: #1e1e1e;
+    --card-background-color: #1a1a1a;
+    --secondary: #444444;
+    --text-color: #ffffff;
+    --primary-color: #00d7a0;
+    --siemens-blue: #009999;
+    --siemens-light-blue: #66fbcf;
+}
+.dark-theme {
+    --background-color: rgba(8, 14, 12, 0.75);
+    --background-color2: rgba(13, 25, 23, 0.82);
+    --card-background-color: #1a1a1a;
+    --secondary: #323232;
+    --text-color: #E0E0E0;
+    --primary-color: #00d7a0;
+    --siemens-blue: #009999;
+    --siemens-light-blue: #66fbcf;
+}
+
+.light-theme {
+    --background-color: #f3f3f3;
+    --background-color2: #e4e5f1;
+    --card-background-color: #1a1a1a;
+    --secondary: #d2d3db;
+    --text-color: #000000;
+    --primary-color: #00d7a0;
+    --siemens-blue: #009999;
+    --siemens-light-blue: #66fbcf;
+}
+.old-theme{
+    --background-color: #000028;
+}
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background-color: #000028;
+    background-color: var(--background-color);
     color: #f3f3f0;
 }
 
+@keyframes gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
 a, .btn-link {
     color: #006bb7;
 }
@@ -64,3 +109,29 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.spinner-overlay {
+    background-color: #000028;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner {
+    border: 8px solid #e0e0e0;
+    border-top: 8px solid #00d7a0;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+

@@ -1,6 +1,15 @@
+﻿.topBar{
+    display: flex;
+    justify-content: space-between;
+}
+.moderatorButtons{
+    display: flex;
+    margin-top:10px;
+    justify-content: center;
+}
 button{
     background: var(--primary-color);
-    color: white;
+    color: var(--text-color);
     padding: 12px;
     border: none;
     border-radius: 6px;
@@ -8,17 +17,34 @@ button{
     font-size: 16px;
     animation: fadein 0.4s ease-out forwards;
     transition: background 0.3s;
-    filter: "drop-shadow(0 0 8px rgba(255, 0, 0, 0.4))";   
+    filter: "drop-shadow(0 0 8px rgba(255, 0, 0, 0.4))";
 }
-.newRequestButton{
-    display: flex;
-    width: 100%;
-    text-align: center;
-    justify-content: center;
-    margin-top: 10px;
+.flowName{
+    color: var(--text-color);
+}
+.approveButton{
+    width: 100px;
+    margin-right: 10px;
+}
+.rejectButton{
+    width: 100px;
+    margin-left: 10px;
 }
 button:hover{
     background: #00b37a;
+}
+#rank{
+    background: var(--background-color);
+    color: var(--text-color);
+    padding: 12px;
+    border-width: 2px;
+    border-color: var(--secondary);
+    border-radius: 6px;
+    animation: fadein 0.4s ease-out forwards;
+    transition: background 0.3s;
+}
+#rank:hover{
+    border-color: #00b37a;
 }
 .form-list {
     margin-top: 2rem;
@@ -49,16 +75,9 @@ button:hover{
     flex-wrap: wrap;
     gap: 10px;
 }
-.flowName{
-    color: var(--text-color);
-    width: 200px;
-}
-.formSubmitTime{
-    color: var(--text-color);
-    width: 200px;
-}
+
 .current-step {
-    background: #004080;
+    background: var(--background-color);
     color: var(--primary-color);
     padding: 4px 8px;
     border-radius: 4px;
@@ -68,27 +87,23 @@ button:hover{
 }
 
 .status {
-    /*position: absolute;*/
-    /*right: 46.5%;*/
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 14px;
-    text-align: center;
-    width: 110px;
     font-weight: bold;
     text-transform: uppercase;
 }
 .status.Submitted {
     background: #005aff;
-    color: white;
+    color: var(--text-color);
 }
 .status.Approved {
-    background: #00d7a0;
+    background: var(--primary-color);
     color: black;
 }
 .status.Rejected {
     background: #ff4b4b;
-    color: white;
+    color: var(--text-color);
 }
 
 .form-details {
@@ -105,6 +120,22 @@ button:hover{
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+.editFlowButton {
+    background: var(--primary-color);
+    color: var(--text-color);
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.editFlowButton:hover {
+    background: #00b37a;
 }
 
 @keyframes fadein {
