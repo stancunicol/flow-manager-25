@@ -24,7 +24,7 @@
             var currentStep = GetCurrentStepForForm(form);
             <div class="form-entry" @onclick="() => ToggleExpand(form.Id)">
                 <div class="form-summary">
-                    <strong>@GetFlowName(form.FlowId)</strong>
+                    <strong class="flowName">@GetFlowName(form.FlowId)</strong>
                     <span class="status @form.Status">@form.Status</span>
                     <span>@form.CreatedAt.ToLocalTime().ToString("g")</span>
                     <span class="current-step">Current Step: @(currentStep?.Name ?? "Unknown")</span>

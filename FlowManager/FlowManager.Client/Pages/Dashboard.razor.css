@@ -4,7 +4,7 @@
     justify-content: space-between;
 }
 button{
-    background: #00d7a0;
+    background: var(--primary-color);
     display: flex;
     color: white;
     padding: 12px;
@@ -24,11 +24,11 @@ button:hover{
     background: #00b37a;
 }
 #rank{
-    background: #000028;
+    background: var(--background-color);
     color: white;
     padding: 12px;
     border-width: 2px;
-    border-color: #00d7a0;
+    border-color: var(--primary-color);
     border-radius: 6px;
     animation: fadein 0.4s ease-out forwards;
     transition: background 0.3s;
@@ -45,15 +45,15 @@ button:hover{
 }
 
 .form-entry {
-    background: #000028;
-    border: 2px solid #00d7a0;
+    background: var(--background-color);
+    border: 2px solid var(--primary-color);
     border-radius: 10px;
     padding: 1rem;
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
 }
 .form-entry:hover {
-    background: #001050;
+    background: var(--background-color2);
     transform: scale(1.01);
 }
 
@@ -68,12 +68,12 @@ button:hover{
 
 .current-step {
     background: #004080;
-    color: #00d7a0;
+    color: var(--primary-color);
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: bold;
-    border: 1px solid #00d7a0;
+    border: 1px solid var(--primary-color);
 }
 
 .status {
@@ -88,7 +88,7 @@ button:hover{
     color: white;
 }
 .status.Approved {
-    background: #00d7a0;
+    background: var(--primary-color);
     color: black;
 }
 .status.Rejected {
@@ -98,11 +98,11 @@ button:hover{
 
 .form-details {
     margin-top: 1rem;
-    background: #000030;
+    background: var(--background-color);
     padding: 1rem;
     border-radius: 6px;
     font-size: 14px;
-    color: #ccc;
+    color: var(--text-color);
 }
 
 .flow-actions {
@@ -113,8 +113,8 @@ button:hover{
 }
 
 .editFlowButton {
-    background: #00d7a0;
-    color: white;
+    background: var(--primary-color);
+    color: var(--text-color);
     padding: 8px 16px;
     border: none;
     border-radius: 6px;

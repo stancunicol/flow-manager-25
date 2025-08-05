@@ -91,7 +91,7 @@
                                     <div class="themeDiv">
                                         <span>Light theme: </span>
                                         <label class="switch">
-                                            <input type="checkbox">
+                                            <input type="checkbox" @onclick="ToggleTheme">
                                             <span class="slider round"></span>
                                         </label>
                                     </div>
@@ -113,12 +113,21 @@
     private string? currentUrl;
     private bool showUserMenu = false;
 
+    private bool isDarkTheme = true;
+    
     protected override void OnInitialized()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
     }
-
+    
+    private async void ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+        var themeClass = isDarkTheme ? "dark-theme" : "light-theme";
+        await JS.InvokeVoidAsync("setThemeClass", themeClass);
+    }
+    
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
