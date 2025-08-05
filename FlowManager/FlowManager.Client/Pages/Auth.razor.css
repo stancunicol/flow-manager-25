@@ -13,13 +13,13 @@
     /*background: linear-gradient(to bottom right, #0d0d2b, #00d7a0);*/
     border-radius: 16px;
     overflow: hidden;
-    filter: drop-shadow(5px 5px 5px #00d7a0);
+    filter: drop-shadow(5px 5px 5px var(--primary-color));
     font-family: 'Segoe UI', sans-serif;
     animation: slide-in-left 1s ease-out forwards;
 }
 .auth-right {
     flex: 1;
-    background-color: #f3f3f0;
+    background-color: var(--text-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -29,8 +29,8 @@
 }
 .auth-left {
     flex: 1;
-    background-color: #030326;
-    color: white;
+    background-color: var(--background-color);
+    color: var(--text-color);
     padding: 60px 40px;
     display: flex;
     height: auto;
@@ -81,7 +81,7 @@
 .auth-underline {
     width: 50px;
     height: 3px;
-    background-color: #00d7a0;
+    background-color: var(--primary-color);
     margin-bottom: 20px;
     position: relative;
     animation: move-right 5s infinite alternate ease-in-out;

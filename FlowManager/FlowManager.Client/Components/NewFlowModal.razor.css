@@ -1,7 +1,7 @@
 ﻿.popup-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 40, 0.85);
+    background-color: var(--background-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -10,19 +10,19 @@
 }
 
 .popup-container {
-    background: #000028;
-    border: 2px solid #00d7a0;
+    background: var(--background-color);
+    border: 2px solid var(--primary-color);
     border-radius: 12px;
     padding: 24px;
     width: 400px;
-    color: white;
+    color: var(--text-color);
     box-shadow: 0 0 20px #00d7a060;
 }
 
 .popup-container h3 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: #00d7a0;
+    color: var(--primary-color);
     text-align: center;
 }
 
@@ -33,10 +33,10 @@
     padding: 10px;
     margin-top: 6px;
     margin-bottom: 16px;
-    border: 1px solid #00d7a0;
+    border: 1px solid var(--primary-color);
     border-radius: 6px;
-    background: #000040;
-    color: white;
+    background: var(--background-color);
+    color: var(--text-color);
 }
 
 .popup-textare {
@@ -57,14 +57,14 @@
     height: 38px;
     padding: 8px;
     border-radius: 6px;
-    background: #000040;
-    border: 1px solid #00d7a0;
-    color: white;
+    background: var(--background-color);
+    border: 1px solid var(--primary-color);
+    color: var(--text-color);
  }
 
 .step-input button {
-    background: #00d7a0;
-    color: white;
+    background: var(--primary-color);
+    color: var(--text-color);
     padding: 8px 16px;
     height: 42px; 
     border: none;
@@ -94,23 +94,23 @@ ul li {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #000040;
+    background: var(--background-color);
     padding: 8px 12px;
     margin-bottom: 6px;
     border-radius: 6px;
-    border: 1px solid #00d7a0;
-    color: white;
+    border: 1px solid var(--primary-color);
+    color: var(--text-color);
     }
 
  ul li strong {
    margin-right: 8px;
-   color: #00d7a0;
+   color: var(--primary-color);
 }
 
 ul li button {
      margin-left: 6px;
-     background: #001050;
-     color: #00d7a0;
+     background: var(--background-color2);
+     color: var(--primary-color);
      border: none;
      border-radius: 4px;
      padding: 4px 8px;
@@ -119,7 +119,7 @@ ul li button {
  }
 
 ul li button:hover {
-      background: #002070;
+      background: var(--background-color2);
  }
 
 .modal-actions {
@@ -136,9 +136,9 @@ ul li button:hover {
 }
 
 .modal-actions button:first-child {
-     background: #00d7a0;
+     background: var(--primary-color);
      border: none;
-     color: white;
+     color: var(--text-color);
 
 }
 
@@ -148,12 +148,12 @@ ul li button:hover {
 
  .modal-actions button:last-child {
      background: transparent;
-     border: 1px solid #00d7a0;
-     color: white;
+     border: 1px solid var(--primary-color);
+     color: var(--text-color);
      }
 
  .modal-actions button:last-child:hover {
-      background: #001050;
+      background: var(--background-color2);
  }
 
 @keyframes fadein {
