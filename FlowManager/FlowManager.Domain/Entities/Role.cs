@@ -1,16 +1,15 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace FlowManager.Domain.Entities
 {
-    public class User : IdentityUser<Guid>
-    {   
-        public string Name { get; set; } = string.Empty;
-        
-        public virtual ICollection<FormResponse> FormResponses { get; set; } = new List<FormResponse>();
+    public class Role : IdentityRole<Guid>
+    {
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

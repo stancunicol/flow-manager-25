@@ -7,21 +7,20 @@ using System.Threading.Tasks;
 
 namespace FlowManager.Domain.Entities
 {
-    public class Flow
+    public class FormTemplate
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
         [MaxLength(50)]
         public string Name { get; set; }
+        [MaxLength(1000)]
+        public string Content { get; set; }
 
         // navigation properties
-        public virtual FormTemplate FormTemplate { get; set; }
-        public virtual Guid FormTemplateId { get; set; }
-
-        public virtual ICollection<Step> Steps { get; set; } = new List<Step>();
+        public virtual ICollection<FormTemplateComponent> Components { get; set; } = new List<FormTemplateComponent>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
-        public DateTime? DeletedAt { get; set; } 
+        public DateTime? DeletedAt { get; set; }
     }
 }

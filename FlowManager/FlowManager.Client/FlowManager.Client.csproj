@@ -9,10 +9,14 @@
 
 
   <ItemGroup>
+    <PackageReference Include="Blazor.Bootstrap" Version="3.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="9.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.7" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.7" />
+    <PackageReference Include="Microsoft.NET.Sdk.WebAssembly.Pack" Version="9.0.7" />
+    <PackageReference Include="MudBlazor" Version="8.11.0" />
     <ProjectReference Include="..\FlowManager.Application\FlowManager.Application.csproj" />
     <ProjectReference Include="..\FlowManager.Infrastructure\FlowManager.Infrastructure.csproj" />
   </ItemGroup>

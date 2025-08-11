@@ -9,12 +9,12 @@ namespace FlowManager.Application.Interfaces
 {
     public interface IStepUpdateHistoryService
     {
-        Task<IEnumerable<StepUpdateHistory>> GetStepUpdateHistories();
-        Task<StepUpdateHistory?> GetStepUpdateHistory(Guid id);
-        Task<IEnumerable<StepUpdateHistory>> GetHistoriesByStep(Guid stepId);
-        Task<IEnumerable<StepUpdateHistory>> GetHistoriesByUser(Guid userId);
-        Task<StepUpdateHistory> PostStepUpdateHistory(StepUpdateHistory stepUpdateHistory);
-        Task<bool> PutStepUpdateHistory(Guid id, StepUpdateHistory stepUpdateHistory);
-        Task<bool> DeleteStepUpdateHistory(Guid id);
+        //Task<IEnumerable<StepUpdateHistory>> GetStepUpdateHistories();
+        //Task<StepUpdateHistory?> GetStepUpdateHistory(Guid id);
+        //Task<IEnumerable<StepUpdateHistory>> GetHistoriesByStep(Guid stepId);
+        //Task<IEnumerable<StepUpdateHistory>> GetHistoriesByUser(Guid userId);
+        //Task<StepUpdateHistory> PostStepUpdateHistory(StepUpdateHistory stepUpdateHistory);
+        //Task<bool> PutStepUpdateHistory(Guid id, StepUpdateHistory stepUpdateHistory);
+        //Task<bool> DeleteStepUpdateHistory(Guid id);
     }
 }
