@@ -4,6 +4,7 @@ using FlowManager.Application.DTOs.Responses.FormTemplate;
 using FlowManager.Application.DTOs.Responses.FormTemplateComponent;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
+using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Utils;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,16 +17,16 @@ namespace FlowManager.Infrastructure.Services
 {
     public class FormTemplateService : IFormTemplateService
     {
-        private readonly AppDbContext _dbContext;
+        private readonly IFormTemplateRepository _formTemplateRepository;
         
-        public FormTemplateService(AppDbContext dbContext)
+        public FormTemplateService(IFormTemplateRepository formTemplateRepository)
         {
-            _dbContext = dbContext;
+            _formTemplateRepository = formTemplateRepository;
         }
 
         public async Task<FormTemplateResponseDto?> DeleteFormTemplateAsync(Guid id)
         {
-            FormTemplate? formTemplateToDelete = await _dbContext.FormTemplates.FirstOrDefaultAsync(ft => ft.Id == id);
+            FormTemplate? formTemplateToDelete = await _formTemplateRepository.GetFormTemplateByIdAsync(id);
 
             if(formTemplateToDelete == null)
             {
@@ -33,7 +34,7 @@ namespace FlowManager.Infrastructure.Services
             }
             
             formTemplateToDelete.DeletedAt = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync();
+            await _formTemplateRepository.SaveChangesAsync();
 
             return new FormTemplateResponseDto
             {
@@ -48,18 +49,11 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<PagedResponseDto<FormTemplateResponseDto>> GetAllFormTemplatesQueriedAsync(QueriedFormTemplateRequestDto payload)
         {
-            IQueryable<FormTemplate> query = _dbContext.FormTemplates
-                                                       .Where(ft => ft.DeletedAt == null)
-                                                       .Include(ft => ft.Components);
+            (List<FormTemplate> data, int totalCount) = await _formTemplateRepository.GetAllFormTemplatesQueriedAsync(payload.Name,payload.QueryParams.ToQueryParams());
 
-            if(payload.Name != null)
-                query = query.Where(ft => ft.Name.Contains(payload.Name));
-
-            int totalCount = await query.CountAsync();
-
-            if (payload.QueryParams == null)
+            return new PagedResponseDto<FormTemplateResponseDto>
             {
-                var data = await query.Select(ft => new FormTemplateResponseDto
+                Data = data.Select(ft => new FormTemplateResponseDto
                 {
                     Id = ft.Id,
                     Name = ft.Name,
@@ -75,92 +69,19 @@ namespace FlowManager.Infrastructure.Services
                     CreatedAt = ft.CreatedAt,
                     UpdatedAt = ft.UpdatedAt,
                     DeletedAt = ft.DeletedAt
-                }).ToListAsync();
-
-                var pagedResponse = new PagedResponseDto<FormTemplateResponseDto>
-                {
-                    Data = data,
-                    TotalCount = totalCount,
-                    Page = 1,
-                    PageSize = totalCount
-                };
-
-                return pagedResponse;
-            }
-
-            if (payload.QueryParams.SortBy != null)
-            { 
-                if(payload.QueryParams.SortDescending is bool SortDesc)
-                    query = query.ApplySorting<FormTemplate>(payload.QueryParams.SortBy, SortDesc);
-                else
-                    query = query.ApplySorting<FormTemplate>(payload.QueryParams.SortBy, false);
-            }
-
-            if(payload.QueryParams.Page == null ||  payload.QueryParams.Page < 0 || 
-                payload.QueryParams.PageSize == null || payload.QueryParams.PageSize < 0)
-            {
-                List<FormTemplate> data = await query.ToListAsync();
-                return new PagedResponseDto<FormTemplateResponseDto>
-                {
-                    Data = data.Select(ft => new FormTemplateResponseDto
-                    {
-                        Id = ft.Id,
-                        Name = ft.Name,
-                        Content = ft.Content,
-                        Components = ft.Components.Select(ftc => new FormTemplateComponentResponseDto
-                        {
-                            Id = ftc.Id,
-                            Label = ftc.Label,
-                            Type = ftc.Type,
-                            Required = ftc.Required,
-                            Properties = ftc.Properties ?? new Dictionary<string, object>()
-                        }).ToList(),
-                        CreatedAt = ft.CreatedAt,
-                        UpdatedAt = ft.UpdatedAt,
-                        DeletedAt = ft.DeletedAt
-                    }).ToList(),
-                    TotalCount = totalCount,
-                    Page = 1,
-                    PageSize = totalCount,
-                };
-            }
-            else
-            {
-                List<FormTemplate> data = await query.Skip((int)payload.QueryParams.PageSize * ((int)payload.QueryParams.Page - 1))
-                    .Take((int)payload.QueryParams.PageSize).ToListAsync();
-                return new PagedResponseDto<FormTemplateResponseDto>
-                {
-                    Data = data.Select(ft => new FormTemplateResponseDto
-                    {
-                        Id = ft.Id,
-                        Name = ft.Name,
-                        Content = ft.Content,
-                        Components = ft.Components.Select(ftc => new FormTemplateComponentResponseDto
-                        {
-                            Id = ftc.Id,
-                            Label = ftc.Label,
-                            Type = ftc.Type,
-                            Required = ftc.Required,
-                            Properties = ftc.Properties ?? new Dictionary<string, object>()
-                        }).ToList(),
-                        CreatedAt = ft.CreatedAt,
-                        UpdatedAt = ft.UpdatedAt,
-                        DeletedAt = ft.DeletedAt
-                    }).ToList(),
-                    TotalCount = totalCount,
-                    Page = payload.QueryParams.Page ?? 1,
-                    PageSize = payload.QueryParams.PageSize ?? totalCount,
-                };
-            }
+                }).ToList(),
+                TotalCount = totalCount,
+                Page = payload.QueryParams.Page ?? 1,
+                PageSize = payload.QueryParams.PageSize ?? totalCount,
+            };
         }
+        
 
         public async Task<FormTemplateResponseDto?> GetFormTemplateByIdAsync(Guid id)
         {
-            FormTemplate? formTemplate = await _dbContext.FormTemplates
-                .Include(ft => ft.Components)
-                .FirstOrDefaultAsync(ft => ft.Id == id && ft.DeletedAt == null);
+            FormTemplate? formTemplate = await _formTemplateRepository.GetFormTemplateByIdAsync(id);
 
-            if(formTemplate == null)
+            if (formTemplate == null)
             {
                 return null; // middleware exception later
             }
@@ -186,8 +107,9 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<FormTemplateResponseDto?> PatchFormTemplateAsync(PatchFormTemplateRequestDto payload)
         {
-            var formTemplateToPatch = await _dbContext.FormTemplates.FirstOrDefaultAsync(ft => ft.Id == payload.Id && ft.DeletedAt == null);
-            if(formTemplateToPatch == null)
+            var formTemplateToPatch = await _formTemplateRepository.GetFormTemplateByIdAsync(payload.Id);
+
+            if (formTemplateToPatch == null)
             {
                 return null; // middleware exception later
             }
@@ -195,7 +117,7 @@ namespace FlowManager.Infrastructure.Services
             PatchHelper.PatchFrom<PatchFormTemplateRequestDto, FormTemplate>(formTemplateToPatch, payload);
             formTemplateToPatch.UpdatedAt = DateTime.UtcNow;
 
-            await _dbContext.SaveChangesAsync();
+            await _formTemplateRepository.SaveChangesAsync();
 
             return new FormTemplateResponseDto
             {
@@ -214,7 +136,7 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<FormTemplateResponseDto> PostFormTemplateAsync(PostFormTemplateRequestDto payload)
         {
-            if(await _dbContext.FormTemplates.FirstOrDefaultAsync(ft => ft.Name == payload.Name) != null)
+            if(await _formTemplateRepository.GetFormTemplateByNameAsync(payload.Name) != null)
             {
                 return null; // middleware exception later
             }
@@ -231,8 +153,9 @@ namespace FlowManager.Infrastructure.Services
                     Id = Guid.NewGuid()
                 }).ToList()
             };
-            _dbContext.FormTemplates.Add(newFormTemplate);
-            await _dbContext.SaveChangesAsync();
+
+            await _formTemplateRepository.AddAsync(newFormTemplate);
+
             return new FormTemplateResponseDto
             {
                 Id = newFormTemplate.Id,

@@ -7,13 +7,13 @@ using System.Text;
 
 public class PasswordResetService : IPasswordResetService
 {
-    private readonly AppDbContext _context;
+    private readonly IUserService _userService;
     private readonly IMemoryCache _cache;
     private readonly IEmailService _emailService;
 
-    public PasswordResetService(AppDbContext context, IMemoryCache cache, IEmailService emailService)
+    public PasswordResetService(IUserService userService, IMemoryCache cache, IEmailService emailService)
     {
-        _context = context;
+        _userService = userService;
         _cache = cache;
         _emailService = emailService;
     }
@@ -32,7 +32,7 @@ public class PasswordResetService : IPasswordResetService
 
     public async Task SendResetCodeAsync(string email)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await _userService.GetUserByEmailAsync(email);
         if (user == null) throw new Exception("User not found");
 
         var code = GenerateRandomCode(6);
@@ -71,11 +71,10 @@ The Siemens FMST Team";
         if (!_cache.TryGetValue($"reset_{email}", out string? cachedCode) || cachedCode != code)
             return false;
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await _userService.GetUserByEmailAsync(email);   
         if (user == null) return false;
 
-        user.PasswordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(newPassword)));
-        await _context.SaveChangesAsync();
+        await _userService.ResetPassword(user.Id, newPassword);
 
         _cache.Remove($"reset_{email}");
         return true;

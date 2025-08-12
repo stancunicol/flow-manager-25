@@ -21,7 +21,7 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllFormTemplatesAsync([FromQuery] QueriedFormTemplateRequestDto payload)
+        public async Task<IActionResult> GetFormTemplatesQueriedAsync([FromQuery] QueriedFormTemplateRequestDto payload)
         {
             var result = await _formTemplateService.GetAllFormTemplatesQueriedAsync(payload);
 
@@ -58,7 +58,7 @@ namespace FlowManager.API.Controllers
         {
             var result = await _formTemplateService.PostFormTemplateAsync(payload);
 
-            return Ok(new
+            return Created($"/api/formTemplates/{result.Id}",new
             {
                 Result = result,
                 Success = true,

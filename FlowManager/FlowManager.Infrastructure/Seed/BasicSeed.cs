@@ -5,8 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FlowManager.Infrastructure.Context;
 
-namespace FlowManager.Infrastructure.Utils
+namespace FlowManager.Application.Utils
 {
     public static class BasicSeed
     {

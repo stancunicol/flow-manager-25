@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
 using System.Text.Json;
 
-namespace FlowManager.Infrastructure
+namespace FlowManager.Infrastructure.Context
 {
     public class AppDbContext : IdentityDbContext<User, Role, Guid,
         IdentityUserClaim<Guid>, UserRole, IdentityUserLogin<Guid>,

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FlowManager.Domain.Dtos;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,5 +13,16 @@ namespace FlowManager.Application.DTOs.Requests
         public string? SortBy { get; set; } = null;
         public int? Page { get; set; }
         public int? PageSize { get; set; }
+
+        public QueryParams ToQueryParams()
+        {
+            return new QueryParams
+            {
+                SortDescending = SortDescending,
+                SortBy = SortBy,
+                Page = Page,
+                PageSize = PageSize
+            };
+        }
     }
 }

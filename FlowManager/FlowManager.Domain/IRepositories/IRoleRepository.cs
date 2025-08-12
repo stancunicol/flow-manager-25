@@ -5,11 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FlowManager.Application.Interfaces
+namespace FlowManager.Domain.IRepositories
 {
-    public interface IRoleService
+    public interface IRoleRepository
     {
         Task<List<Role>?> GetAllRolesAsync();
         Task<Role?> GetRoleByIdAsync(Guid id);
+        Task SaveChangesAsync();
     }
 }

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FlowManager.Infrastructure
+namespace FlowManager.Infrastructure.Context
 {
     public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     {
