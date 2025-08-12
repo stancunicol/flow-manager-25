@@ -12,10 +12,10 @@ namespace FlowManager.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
 
         [MaxLength(50)]
-        public string Name { get; set; }
+        public string Name { get; set; } = "";
 
         // navigation properties
-        public virtual FormTemplate FormTemplate { get; set; }
+        public virtual FormTemplate FormTemplate { get; set; } = new FormTemplate();
         public virtual Guid FormTemplateId { get; set; }
 
         public virtual ICollection<Step> Steps { get; set; } = new List<Step>();
