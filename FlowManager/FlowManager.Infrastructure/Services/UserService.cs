@@ -2,7 +2,6 @@
 using FlowManager.Application.DTOs;
 using FlowManager.Domain.Entities;
 using FlowManager.Infrastructure;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,89 +11,81 @@ namespace FlowManager.Infrastructure.Services
     public class UserService : IUserService
     {
         private readonly AppDbContext _context;
-        private readonly UserManager<User> _userManager;
 
-        public UserService(AppDbContext context, UserManager<User> userManager)
+        public UserService(AppDbContext context)
         {
             _context = context;
-            _userManager = userManager;
         }
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
                 .Where(u => u.DeletedAt == null)
                 .ToListAsync();
 
-            var userDtos = new List<UserDto>();
-
-            foreach (var user in users)
+            return users.Select(u => new UserDto
             {
-                var roles = await _userManager.GetRolesAsync(user);
-                userDtos.Add(new UserDto
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    UserName = user.UserName,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    DeletedAt = user.DeletedAt,
-                    Roles = roles.ToList()
-                });
-            }
-            return userDtos;
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
         }
 
         public async Task<IEnumerable<UserDto>> GetAllModeratorsAsync()
         {
-            var moderators = await _userManager.GetUsersInRoleAsync("Moderator");
-            var result = new List<UserDto>();
+            var moderators = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .Where(u => u.DeletedAt == null && u.Roles.Any(r => r.Role.Name == "Moderator"))
+                .ToListAsync();
 
-            foreach (var user in moderators.Where(u => u.DeletedAt == null))
+            return moderators.Select(u => new UserDto
             {
-                var roles = await _userManager.GetRolesAsync(user);
-                result.Add(new UserDto
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    UserName = user.UserName,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    DeletedAt = user.DeletedAt,
-                    Roles = roles.ToList()
-                });
-            }
-            return result;
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
         }
 
         public async Task<IEnumerable<UserDto>> GetAllAdminsAsync()
         {
-            var admins = await _userManager.GetUsersInRoleAsync("Admin");
-            var result = new List<UserDto>();
+            var admins = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .Where(u => u.DeletedAt == null && u.Roles.Any(r => r.Role.Name == "Admin"))
+                .ToListAsync();
 
-            foreach (var user in admins.Where(u => u.DeletedAt == null))
+            return admins.Select(u => new UserDto
             {
-                var roles = await _userManager.GetRolesAsync(user);
-                result.Add(new UserDto
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    UserName = user.UserName,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    DeletedAt = user.DeletedAt,
-                    Roles = roles.ToList()
-                });
-            }
-            return result;
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
         }
 
         public async Task<IEnumerable<UserDto>> GetAllUsersFilteredAsync(string? searchTerm = null, string? role = null)
         {
-            var query = _context.Users.Where(u => u.DeletedAt == null);
+            var query = _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .Where(u => u.DeletedAt == null);
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -103,37 +94,35 @@ namespace FlowManager.Infrastructure.Services
                                        u.UserName.Contains(searchTerm));
             }
 
-            var users = await query.ToListAsync();
-            var result = new List<UserDto>();
-
-            foreach (var user in users)
+            if (!string.IsNullOrEmpty(role))
             {
-                var roles = await _userManager.GetRolesAsync(user);
-
-                if (!string.IsNullOrEmpty(role) && !roles.Contains(role))
-                    continue;
-
-                result.Add(new UserDto
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    UserName = user.UserName,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    DeletedAt = user.DeletedAt,
-                    Roles = roles.ToList()
-                });
+                query = query.Where(u => u.Roles.Any(r => r.Role.Name == role));
             }
-            return result;
+
+            var users = await query.ToListAsync();
+
+            return users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
         }
 
         public async Task<UserDto?> GetUserByIdAsync(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt == null);
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt == null);
+
             if (user == null) return null;
 
-            var roles = await _userManager.GetRolesAsync(user);
             return new UserDto
             {
                 Id = user.Id,
@@ -143,7 +132,7 @@ namespace FlowManager.Infrastructure.Services
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 DeletedAt = user.DeletedAt,
-                Roles = roles.ToList()
+                Roles = user.Roles.Select(r => r.Role.Name).ToList()
             };
         }
 
@@ -154,17 +143,24 @@ namespace FlowManager.Infrastructure.Services
                 Name = createUserDto.Name,
                 Email = createUserDto.Email,
                 UserName = createUserDto.UserName,
-                PasswordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(createUserDto.Password))),
+                PasswordHash = null,
                 CreatedAt = DateTime.UtcNow
             };
 
-            var result = await _userManager.CreateAsync(user);
-            if (!result.Succeeded) return null;
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-            if (createUserDto.Roles.Any())
+            foreach (var roleName in createUserDto.Roles)
             {
-                await _userManager.AddToRolesAsync(user, createUserDto.Roles);
+                var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+                if (role != null)
+                {
+                    _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+                }
             }
+            await _context.SaveChangesAsync();
+
+            //TO DO: Trimite email ul de creare cont
 
             return new UserDto
             {
@@ -181,7 +177,10 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<bool> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt == null);
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt == null);
+
             if (user == null) return false;
 
             if (!string.IsNullOrEmpty(updateUserDto.Name))
@@ -197,9 +196,16 @@ namespace FlowManager.Infrastructure.Services
 
             if (updateUserDto.Roles != null)
             {
-                var currentRoles = await _userManager.GetRolesAsync(user);
-                await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                await _userManager.AddToRolesAsync(user, updateUserDto.Roles);
+                _context.UserRoles.RemoveRange(user.Roles);
+
+                foreach (var roleName in updateUserDto.Roles)
+                {
+                    var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+                    if (role != null)
+                    {
+                        _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
