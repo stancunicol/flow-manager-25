@@ -17,10 +17,10 @@ namespace FlowManager.Infrastructure
         public DbSet<Component> Components => Set<Component>();
         public DbSet<Step> Steps => Set<Step>();
         public DbSet<FlowStep> FlowSteps => Set<FlowStep>();
-        public DbSet<FormTemplate> FormTemplates => Set<FormTemplate>();    
+        public DbSet<FormTemplate> FormTemplates => Set<FormTemplate>();
         public DbSet<FormResponse> FormResponses => Set<FormResponse>();
         public DbSet<FormTemplateComponent> FormTemplateComponents => Set<FormTemplateComponent>();
-        public DbSet<User> Users => Set<User>();    
+        public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
 
@@ -28,6 +28,16 @@ namespace FlowManager.Infrastructure
         {
             base.OnModelCreating(builder);
 
+            UniqueUserEmailConstraintConfiguration(builder);
+            UniqueRolenameConstraintConfiguration(builder);
+
+            UserRoleRelationshipConfiguration(builder);
+
+            JSONBConfiguration(builder);
+        }
+
+        private void UserRoleRelationshipConfiguration(ModelBuilder builder)
+        {
             builder.Entity<User>(entity =>
             {
                 entity.ToTable("AspNetUsers");
@@ -48,7 +58,10 @@ namespace FlowManager.Infrastructure
                       .HasForeignKey(ur => ur.RoleId)
                       .IsRequired();
             });
+        }
 
+        private void JSONBConfiguration(ModelBuilder builder)
+        {
             builder.Entity<Component>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -56,7 +69,7 @@ namespace FlowManager.Infrastructure
                 entity.Property(e => e.Properties)
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                          v => JsonSerializer.Deserialize<Dictionary<string,object>>(v, (JsonSerializerOptions)null))
+                          v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null))
                       .HasColumnType("jsonb"); // PostgreSQL jsonb type
             });
 
@@ -81,6 +94,31 @@ namespace FlowManager.Infrastructure
                           v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
                       .HasColumnType("jsonb"); // PostgreSQL jsonb type
             });
+        }
+
+        private void UniqueRolenameConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<Role>()
+                    .HasIndex(r => r.Name)
+                    .IsUnique()
+                    .HasDatabaseName("IX_AspNetRoles_Name");
+            builder.Entity<Role>()
+                    .HasIndex(r => r.NormalizedName)
+                    .IsUnique()
+                    .HasDatabaseName("IX_AspNetRoles_NormalizedName");
+        }
+
+        private void UniqueUserEmailConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<User>()
+                    .HasIndex(u => u.Email)
+                    .IsUnique()
+                    .HasDatabaseName("IX_AspNetUsers_Email");
+
+            builder.Entity<User>()
+                    .HasIndex(u => u.NormalizedEmail)
+                    .IsUnique()
+                    .HasDatabaseName("IX_AspNetUsers_NormalizedEmail");
         }
     }
 }

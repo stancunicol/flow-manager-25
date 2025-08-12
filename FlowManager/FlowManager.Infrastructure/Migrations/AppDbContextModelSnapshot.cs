@@ -267,9 +267,13 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AspNetRoles_Name");
+
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
+                        .HasDatabaseName("IX_AspNetRoles_NormalizedName");
 
                     b.ToTable("AspNetRoles", (string)null);
                 });
@@ -375,8 +379,13 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AspNetUsers_Email");
+
                     b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                        .IsUnique()
+                        .HasDatabaseName("IX_AspNetUsers_NormalizedEmail");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
