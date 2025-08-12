@@ -401,22 +401,12 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("RoleId1")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId1")
-                        .HasColumnType("uuid");
 
                     b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("RoleId1");
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
@@ -601,27 +591,15 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.UserRole", b =>
                 {
-                    b.HasOne("FlowManager.Domain.Entities.Role", null)
-                        .WithMany()
+                    b.HasOne("FlowManager.Domain.Entities.Role", "Role")
+                        .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FlowManager.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("FlowManager.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId1")
+                        .WithMany("Roles")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -681,6 +659,11 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("Components");
                 });
 
+            modelBuilder.Entity("FlowManager.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("Users");
+                });
+
             modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>
                 {
                     b.Navigation("Users");
@@ -689,6 +672,8 @@ namespace FlowManager.Infrastructure.Migrations
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
                 {
                     b.Navigation("FormResponses");
+
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

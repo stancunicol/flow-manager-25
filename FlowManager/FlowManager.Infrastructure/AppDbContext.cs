@@ -28,6 +28,27 @@ namespace FlowManager.Infrastructure
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<User>(entity =>
+            {
+                entity.ToTable("AspNetUsers");
+
+
+                entity.HasMany(u => u.Roles)
+                      .WithOne(ur => ur.User)
+                      .HasForeignKey(ur => ur.UserId)
+                      .IsRequired();
+            });
+
+            builder.Entity<Role>(entity =>
+            {
+                entity.ToTable("AspNetRoles");
+
+                entity.HasMany(r => r.Users)
+                      .WithOne(ur => ur.Role)
+                      .HasForeignKey(ur => ur.RoleId)
+                      .IsRequired();
+            });
+
             builder.Entity<Component>(entity =>
             {
                 entity.HasKey(e => e.Id);
