@@ -1,129 +1,189 @@
 ﻿using FlowManager.Application.DTOs;
 using FlowManager.Application.Interfaces;
-using FlowManager.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using FlowManager.Application.DTOs;
 
-namespace FlowManager.Controllers
+namespace FlowManager.API.Controllers
 {
-    //[Route("api/[controller]")]
-    //[ApiController]
-    //public class UsersController : ControllerBase
-    //{
-    //    private readonly IUserService _service;
-    //    private readonly UserManager<User> _userManager;
+    [Route("api/[controller]")]
+    [ApiController] 
+    public class UsersController : ControllerBase
+    {
+        private readonly IUserService _userService;
 
-    //    public UsersController(IUserService service)
-    //    {
-    //        _service = service;
-    //    }
+        public UsersController(IUserService userService)
+        {
+            _userService = userService;
+        }
 
-    //    [HttpGet]
-    //    public async Task<IActionResult> GetUsers()
-    //    {
-    //        var users = await _service.GetAllUsers(); // 👈 folosești serviciul tău
+        
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersAsync();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //        var result = users.Select(u => new UserDto
-    //        {
-    //            Id = u.Id,
-    //            Name = u.Name,
-    //            Email = u.Email,
-    //            //UserName = u.UserName,
-    //            UserRoles = u.UserRoles.Select(ur => new UserRoleDto
-    //            {
-    //                Role = new RoleDto
-    //                {
-    //                    Name = ur.Role?.Name ?? ""
-    //                }
-    //            }).ToList()
-    //        });
+        
+        [HttpGet("moderators")]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllModerators()
+        {
+            try
+            {
+                var moderators = await _userService.GetAllModeratorsAsync();
+                return Ok(moderators);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //        return Ok(result);
-    //    }
+        
+        [HttpGet("admins")]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllAdmins()
+        {
+            try
+            {
+                var admins = await _userService.GetAllAdminsAsync();
+                return Ok(admins);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //    [HttpGet("{id}")]
-    //    public async Task<IActionResult> GetUser(Guid id)
-    //    {
-    //        var user = await _service.GetUserById(id);
-    //        if (user == null) return NotFound();
-    //        return Ok(user);
-    //    }
+        
+        [HttpGet("filtered")]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsersFiltered(
+            [FromQuery] string? searchTerm = null,
+            [FromQuery] string? role = null)
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersFilteredAsync(searchTerm, role);
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //    [HttpGet("email/{email}")]
-    //    public async Task<IActionResult> GetUserByEmail(string email)
-    //    {
-    //        var user = await _service.GetUserByEmail(email);
-    //        if (user == null) return NotFound();
-    //        return Ok(user);
-    //    }
+        
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserDto>> GetUserById(Guid id)
+        {
+            try
+            {
+                var user = await _userService.GetUserByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound($"User with ID {id} not found");
+                }
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //    [HttpPost]
-    //    public async Task<IActionResult> PostUser([FromBody] User user)
-    //    {
-    //        var created = await _service.CreateUser(user);
-    //        if (created == null)
-    //            return BadRequest("User with this email already exists");
+        
+        [HttpPost]
+        public async Task<ActionResult<UserDto>> AddUser([FromBody] CreateUserDto createUserDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-    //        return CreatedAtAction(nameof(GetUser), new { id = created.Id }, created);
-    //    }
+                var user = await _userService.AddUserAsync(createUserDto);
+                if (user == null)
+                {
+                    return BadRequest("Failed to create user");
+                }
 
-    //    [HttpPut("{id}")]
-    //    public async Task<IActionResult> PutUser(Guid id, [FromBody] User user)
-    //    {
-    //        var updated = await _service.UpdateUser(id, user);
-    //        return updated ? NoContent() : NotFound();
-    //    }
+                return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //    //[HttpPut("{id}/name/{name}/username/{username}/email/{email}")]
-    //    //public async Task<IActionResult> UpdateUserProfile(Guid id, string name, string username, string email)
-    //    //{
-    //    //    var updated = await _service.UpdateUserProfile(id, name, username, email);
-    //    //    return updated
-    //    //        ? NoContent()
-    //    //        : BadRequest("Email is already used by another user");
-    //    //}
+        
+        [HttpPatch("{id}")]
+        public async Task<ActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-    //    [HttpPut("{id}/name/{name}/email/{email}")]
-    //    public async Task<IActionResult> UpdateUserProfile(Guid id, string name,string email)
-    //    {
-    //        var updated = await _service.UpdateUserProfile(id, name, email);
-    //        return updated
-    //            ? NoContent()
-    //            : BadRequest("Email is already used by another user");
-    //    }
+                var result = await _userService.UpdateUserAsync(id, updateUserDto);
+                if (!result)
+                {
+                    return NotFound($"User with ID {id} not found");
+                }
 
-    //    [HttpDelete("{id}")]
-    //    public async Task<IActionResult> DeleteUser(Guid id)
-    //    {
-    //        var deleted = await _service.DeleteUser(id);
-    //        return deleted ? NoContent() : NotFound();
-    //    }
+                return NoContent(); 
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //    [Authorize]
-    //    [HttpGet("me")]
-    //    public async Task<IActionResult> GetCurrentUser()
-    //    {
-    //        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    //        if (string.IsNullOrEmpty(userId))
-    //            return Unauthorized();
+        
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteUser(Guid id)
+        {
+            try
+            {
+                var result = await _userService.DeleteUserAsync(id);
+                if (!result)
+                {
+                    return NotFound($"User with ID {id} not found");
+                }
 
-    //        var user = await _service.GetUserById(Guid.Parse(userId));
-    //        if (user == null)
-    //            return NotFound();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
 
-    //        var dto = new UserProfileDto
-    //        {
-    //            Name = user.Name,
-    //            Email = user.Email,
-    //            UserName = user.UserName
-    //        };
+        [HttpPatch("{id}/restore")]
+        public async Task<ActionResult> RestoreUser(Guid id)
+        {
+            try
+            {
+                var result = await _userService.RestoreUserAsync(id);
+                if (!result)
+                {
+                    return NotFound($"Deleted user with ID {id} not found");
+                }
 
-    //        return Ok(dto);
-    //    }
-
-
-    //}
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
+    }
 }

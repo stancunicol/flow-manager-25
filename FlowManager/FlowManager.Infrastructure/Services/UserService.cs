@@ -1,120 +1,239 @@
 ﻿using FlowManager.Application.Interfaces;
+using FlowManager.Application.DTOs;
 using FlowManager.Domain.Entities;
 using FlowManager.Infrastructure;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace FlowManager.Infrastructure.Services
 {
-    //public class UserService : IUserService
-    //{
-    //    private readonly AppDbContext _context;
-    //    private readonly UserManager<User> _userManager;
+    public class UserService : IUserService
+    {
+        private readonly AppDbContext _context;
 
-    //    public UserService(AppDbContext context, UserManager<User> userManager)
-    //    {
-    //        _context = context;
-    //        _userManager = userManager;
-    //    }
+        public UserService(AppDbContext context)
+        {
+            _context = context;
+        }
 
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+        {
+            var users = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .Where(u => u.DeletedAt == null)
+                .ToListAsync();
 
-    //    public async Task<IEnumerable<User>> GetAllUsers()
-    //    {
-    //        return await _context.Users
-    //            .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
-    //            .Include(u => u.Forms)
-    //            .Include(u => u.StepUsers)
-    //            .Include(u => u.UpdateHistories)
-    //            .ToListAsync();
-    //    }
+            return users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
+        }
 
-    //    public async Task<User?> GetUserById(Guid id)
-    //    {
-    //        return await _context.Users
-    //            .Include(u => u.UserRoles)
-    //                .ThenInclude(ur => ur.Role)
-    //            .Include(u => u.Forms)
-    //            .Include(u => u.StepUsers)
-    //            .Include(u => u.UpdateHistories)
-    //            .FirstOrDefaultAsync(u => u.Id == id);
-    //    }
+        public async Task<IEnumerable<UserDto>> GetAllModeratorsAsync()
+        {
+            var moderators = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .Where(u => u.DeletedAt == null && u.Roles.Any(r => r.Role.Name == "Moderator"))
+                .ToListAsync();
 
-    //    public async Task<User?> GetUserByEmail(string email)
-    //    {
-    //        return await _context.Users
-    //            .Include(u => u.UserRoles)
-    //                .ThenInclude(ur => ur.Role)
-    //            .Include(u => u.Forms)
-    //            .Include(u => u.StepUsers)
-    //            .Include(u => u.UpdateHistories)
-    //            .FirstOrDefaultAsync(u => u.Email == email);
-    //    }
+            return moderators.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
+        }
 
-    //    public async Task<User?> CreateUser(User user)
-    //    {
-    //        if (await _context.Users.AnyAsync(u => u.Email == user.Email))
-    //        {
-    //            return null;
-    //        }
+        public async Task<IEnumerable<UserDto>> GetAllAdminsAsync()
+        {
+            var admins = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .Where(u => u.DeletedAt == null && u.Roles.Any(r => r.Role.Name == "Admin"))
+                .ToListAsync();
 
-    //        user.Id = Guid.NewGuid();
-    //        user.CreatedAt = DateTime.UtcNow;
-    //        user.UpdatedAt = DateTime.UtcNow;
+            return admins.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
+        }
 
-    //        _context.Users.Add(user);
-    //        await _context.SaveChangesAsync();
-    //        return user;
-    //    }
+        public async Task<IEnumerable<UserDto>> GetAllUsersFilteredAsync(string? searchTerm = null, string? role = null)
+        {
+            var query = _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .Where(u => u.DeletedAt == null);
 
-    //    public async Task<bool> UpdateUser(Guid id, User user)
-    //    {
-    //        if (id != user.Id) return false;
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(u => u.Name.Contains(searchTerm) ||
+                                       u.Email.Contains(searchTerm) ||
+                                       u.UserName.Contains(searchTerm));
+            }
 
-    //        user.UpdatedAt = DateTime.UtcNow;
-    //        _context.Entry(user).State = EntityState.Modified;
+            if (!string.IsNullOrEmpty(role))
+            {
+                query = query.Where(u => u.Roles.Any(r => r.Role.Name == role));
+            }
 
-    //        try
-    //        {
-    //            await _context.SaveChangesAsync();
-    //            return true;
-    //        }
-    //        catch (DbUpdateConcurrencyException)
-    //        {
-    //            return await _context.Users.AnyAsync(u => u.Id == id);
-    //        }
-    //    }
+            var users = await query.ToListAsync();
 
-    //    public async Task<bool> UpdateUserProfile(Guid id, string name, string email)
-    //    {
-    //        var user = await _userManager.FindByIdAsync(id.ToString());
-    //        if (user == null) return false;
+            return users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
+        }
 
-    //        var emailTaken = await _userManager.Users
-    //            .AnyAsync(u => u.Email == email && u.Id != id);
+        public async Task<UserDto?> GetUserByIdAsync(Guid id)
+        {
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt == null);
 
-    //        if (emailTaken) return false;
+            if (user == null) return null;
 
-    //        user.Name = name;
-    //        user.UpdatedAt = DateTime.UtcNow;
+            return new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                UserName = user.UserName,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                DeletedAt = user.DeletedAt,
+                Roles = user.Roles.Select(r => r.Role.Name).ToList()
+            };
+        }
 
-    //       // await _userManager.SetUserNameAsync(user, username);
-    //        await _userManager.SetEmailAsync(user, email);
+        public async Task<UserDto?> AddUserAsync(CreateUserDto createUserDto)
+        {
+            var user = new User
+            {
+                Name = createUserDto.Name,
+                Email = createUserDto.Email,
+                UserName = createUserDto.UserName,
+                PasswordHash = null,
+                CreatedAt = DateTime.UtcNow
+            };
 
-    //        var result = await _userManager.UpdateAsync(user);
-    //        return result.Succeeded;
-    //    }
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-    //    public async Task<bool> DeleteUser(Guid id)
-    //    {
-    //        var user = await _context.Users.FindAsync(id);
-    //        if (user == null) return false;
+            foreach (var roleName in createUserDto.Roles)
+            {
+                var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+                if (role != null)
+                {
+                    _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+                }
+            }
+            await _context.SaveChangesAsync();
 
-    //        _context.Users.Remove(user);
-    //        await _context.SaveChangesAsync();
-    //        return true;
-    //    }
+            //TO DO: Trimite email ul de creare cont
 
+            return new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                UserName = user.UserName,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                DeletedAt = user.DeletedAt,
+                Roles = createUserDto.Roles
+            };
+        }
 
-    //}
+        public async Task<bool> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto)
+        {
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt == null);
+
+            if (user == null) return false;
+
+            if (!string.IsNullOrEmpty(updateUserDto.Name))
+                user.Name = updateUserDto.Name;
+
+            if (!string.IsNullOrEmpty(updateUserDto.Email))
+                user.Email = updateUserDto.Email;
+
+            if (!string.IsNullOrEmpty(updateUserDto.UserName))
+                user.UserName = updateUserDto.UserName;
+
+            user.UpdatedAt = DateTime.UtcNow;
+
+            if (updateUserDto.Roles != null)
+            {
+                _context.UserRoles.RemoveRange(user.Roles);
+
+                foreach (var roleName in updateUserDto.Roles)
+                {
+                    var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+                    if (role != null)
+                    {
+                        _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteUserAsync(Guid id)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt == null);
+            if (user == null) return false;
+
+            user.DeletedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RestoreUserAsync(Guid id)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.DeletedAt != null);
+            if (user == null) return false;
+
+            user.DeletedAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+    }
 }

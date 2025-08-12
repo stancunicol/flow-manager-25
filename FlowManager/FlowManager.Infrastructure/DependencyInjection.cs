@@ -42,7 +42,14 @@ public static class DependencyInjection
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
 
-        //services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
+
+        services.AddMemoryCache();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
+        
+        services.AddScoped<IEmailService, EmailService>();
+
+        services.AddScoped<IUserService, UserService>();
         //services.AddScoped<IUserRoleService, UserRoleService>();
         //services.AddScoped<IFlowService, FlowService>();
         //services.AddScoped<IFormService, FormService>();
