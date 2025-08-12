@@ -2,65 +2,85 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
+using System.Text.Json;
 
 namespace FlowManager.Infrastructure
 {
-    public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid,
+    public class AppDbContext : IdentityDbContext<User, Role, Guid,
         IdentityUserClaim<Guid>, UserRole, IdentityUserLogin<Guid>,
         IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Flow> Flows => Set<Flow>();
-        public DbSet<Form> Forms => Set<Form>();
+        public DbSet<Component> Components => Set<Component>();
         public DbSet<Step> Steps => Set<Step>();
         public DbSet<FlowStep> FlowSteps => Set<FlowStep>();
-        public DbSet<StepUser> StepUsers => Set<StepUser>();
-        public DbSet<StepUpdateHistory> StepUpdateHistories => Set<StepUpdateHistory>();
-        public new DbSet<UserRole> UserRoles => Set<UserRole>();
+        public DbSet<FormTemplate> FormTemplates => Set<FormTemplate>();    
+        public DbSet<FormResponse> FormResponses => Set<FormResponse>();
+        public DbSet<FormTemplateComponent> FormTemplateComponents => Set<FormTemplateComponent>();
+        public DbSet<User> Users => Set<User>();    
+        public DbSet<Role> Roles => Set<Role>();
+        public DbSet<UserRole> UserRoles => Set<UserRole>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<FlowStep>()
-                .HasKey(fs => new { fs.FlowId, fs.StepId });
+            builder.Entity<User>(entity =>
+            {
+                entity.ToTable("AspNetUsers");
 
-            builder.Entity<FlowStep>()
-                .HasOne(fs => fs.Flow)
-                .WithMany(f => f.FlowSteps)
-                .HasForeignKey(fs => fs.FlowId);
 
-            builder.Entity<FlowStep>()
-                .HasOne(fs => fs.Step)
-                .WithMany(s => s.FlowSteps)
-                .HasForeignKey(fs => fs.StepId);
+                entity.HasMany(u => u.Roles)
+                      .WithOne(ur => ur.User)
+                      .HasForeignKey(ur => ur.UserId)
+                      .IsRequired();
+            });
 
-            builder.Entity<StepUser>()
-                .HasKey(su => new { su.StepId, su.UserId });
+            builder.Entity<Role>(entity =>
+            {
+                entity.ToTable("AspNetRoles");
 
-            builder.Entity<StepUser>()
-                .HasOne(su => su.Step)
-                .WithMany(s => s.StepUsers)
-                .HasForeignKey(su => su.StepId);
+                entity.HasMany(r => r.Users)
+                      .WithOne(ur => ur.Role)
+                      .HasForeignKey(ur => ur.RoleId)
+                      .IsRequired();
+            });
 
-            builder.Entity<StepUser>()
-                .HasOne(su => su.User)
-                .WithMany(u => u.StepUsers)
-                .HasForeignKey(su => su.UserId);
+            builder.Entity<Component>(entity =>
+            {
+                entity.HasKey(e => e.Id);
 
-            builder.Entity<UserRole>()
-                .HasKey(ur => new { ur.UserId, ur.RoleId });
+                entity.Property(e => e.Properties)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                          v => JsonSerializer.Deserialize<Dictionary<string,object>>(v, (JsonSerializerOptions)null))
+                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
+            });
 
-            builder.Entity<UserRole>()
-                .HasOne(ur => ur.User)
-                .WithMany(u => u.UserRoles)
-                .HasForeignKey(ur => ur.UserId);
+            builder.Entity<FormTemplateComponent>(entity =>
+            {
+                entity.HasKey(e => e.Id);
 
-            builder.Entity<UserRole>()
-                .HasOne(ur => ur.Role)
-                .WithMany()
-                .HasForeignKey(ur => ur.RoleId);
+                entity.Property(e => e.Properties)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                          v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null))
+                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
+            });
+
+            builder.Entity<FormResponse>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.ResponseFields)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                          v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
+                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
+            });
         }
     }
 }

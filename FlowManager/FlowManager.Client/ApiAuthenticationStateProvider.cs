@@ -104,7 +104,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
     // }
 
 
-    public void NotifyUserLogout()
+    public void NotifyUserLogout()  
     {
         var anonymous = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         NotifyAuthenticationStateChanged(Task.FromResult(anonymous));

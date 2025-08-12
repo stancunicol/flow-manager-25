@@ -3,6 +3,7 @@ using System;
 using FlowManager.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowManager.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250811120059_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -401,12 +404,22 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("RoleId1")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId1")
+                        .HasColumnType("uuid");
 
                     b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
+
+                    b.HasIndex("RoleId1");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
@@ -591,15 +604,27 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.UserRole", b =>
                 {
-                    b.HasOne("FlowManager.Domain.Entities.Role", "Role")
-                        .WithMany("Users")
+                    b.HasOne("FlowManager.Domain.Entities.Role", null)
+                        .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.User", "User")
-                        .WithMany("Roles")
+                    b.HasOne("FlowManager.Domain.Entities.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FlowManager.Domain.Entities.User", null)
+                        .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FlowManager.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -659,11 +684,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("Components");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.Role", b =>
-                {
-                    b.Navigation("Users");
-                });
-
             modelBuilder.Entity("FlowManager.Domain.Entities.Step", b =>
                 {
                     b.Navigation("Users");
@@ -672,8 +692,6 @@ namespace FlowManager.Infrastructure.Migrations
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
                 {
                     b.Navigation("FormResponses");
-
-                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

@@ -47,11 +47,11 @@
               IsOpenChanged="@(value => showFlowModal = value)"
               OnSubmit="HandleFlowSubmit"
               OnFlowCreated="LoadFlows"
-              AvailableSteps="allSteps" />
+              AvailableSteps="@allSteps"/>
 
 <StepsManagementModal IsOpen="@showStepsManagementModal"
                       IsOpenChanged="@(value => showStepsManagementModal = value)"
-                      AllSteps="allSteps"
+                      AllSteps="@allSteps"
                       OnStepsChanged="LoadSteps" />
 
 <EditFlowModal IsOpen="@showEditFlowModal"
@@ -59,7 +59,7 @@
                FlowToEdit="@flowToEdit"
                OnSubmit="HandleFlowUpdate"
                OnFlowUpdated="LoadFlows"
-               AvailableSteps="allSteps" />
+               AvailableSteps="@allSteps" />
                 
 @code {
     private string selectedRole = "Basic";

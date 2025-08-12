@@ -1,16 +1,25 @@
-using System;
-using System.Text.Json.Serialization;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace FlowManager.Domain.Entities
 {
     public class FlowStep
     {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public bool? IsApproved { get; set; } = null;
+
+        // navigation properties
+        public virtual Flow Flow { get; set; }
         public Guid FlowId { get; set; }
+
+        public virtual Step Step { get; set; }
         public Guid StepId { get; set; }
-        public int Order { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        
-        public virtual Flow Flow { get; set; } = null!;
-        public virtual Step Step { get; set; } = null!;
+        public DateTime? UpdatedAt { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

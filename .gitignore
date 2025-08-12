@@ -417,3 +417,4 @@ FlowManager/appsettings.Development.json
 FlowManager/appsettings.json
 /FlowManager/FlowManager.API/appsettings.Development.json
 /FlowManager/FlowManager.API/appsettings.json
+/FlowManager/FlowManager.Infrastructure/Migrations   
