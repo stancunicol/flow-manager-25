@@ -1,0 +1,279 @@
+﻿using FlowManager.Application.Interfaces;
+using FlowManager.Application.DTOs;
+using FlowManager.Domain.Entities;
+using FlowManager.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
+using FlowManager.Domain.IRepositories;
+using FlowManager.Application.DTOs.Responses;
+using FlowManager.Application.DTOs.Responses.User;
+using FlowManager.Application.DTOs.Requests.User;
+using FlowManager.Infrastructure.Utils;
+
+namespace FlowManager.Infrastructure.Services
+{
+    public class UserService : IUserService
+    {
+        private readonly IUserRepository _userRepository;
+
+        public UserService(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
+        public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
+        {
+            var users = await _userRepository.GetAllUsersAsync();
+
+            return users.Select(u => new UserResponseDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
+        }
+
+        public async Task<IEnumerable<UserResponseDto>> GetAllModeratorsAsync()
+        {
+            var moderators = await _userRepository.GetAllModeratorsAsync();
+
+            return moderators.Select(u => new UserResponseDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
+        }
+
+        public async Task<IEnumerable<UserResponseDto>> GetAllAdminsAsync()
+        {
+            var admins = await _userRepository.GetAllAdminsAsync();
+
+            return admins.Select(u => new UserResponseDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                UserName = u.UserName,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt,
+                DeletedAt = u.DeletedAt,
+                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+            });
+        }
+
+        public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersFilteredAsync(QueriedUserRequestDto payload)
+        {
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersFilteredAsync(payload.Email, payload.QueryParams.ToQueryParams());
+
+            return new PagedResponseDto<UserResponseDto>
+            {
+                Data = result.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    UserName = u.UserName,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt,
+                    DeletedAt = u.DeletedAt,
+                    Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                }),
+                Page = payload.QueryParams.Page ?? 1,
+                PageSize = payload.QueryParams.PageSize ?? totalCount,
+                TotalCount = totalCount
+            };
+        }
+
+        public async Task<UserResponseDto?> GetUserByIdAsync(Guid id)
+        {
+            var user = await _userRepository.GetUserByIdAsync(id);
+
+            if (user == null) 
+                return null;
+
+            return new UserResponseDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                UserName = user.UserName,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                DeletedAt = user.DeletedAt,
+                Roles = user.Roles.Select(r => r.Role.Name).ToList()
+            };
+        }
+
+        public async Task<UserResponseDto?> AddUserAsync(PostUserRequestDto payload)
+        {
+            User userToAdd = new User
+            {
+                UserName = payload.Username,
+                NormalizedUserName = payload.Username.ToUpper(),
+                Name = payload.Name,
+                NormalizedEmail = payload.Name.ToUpper(),
+                Email = payload.Email,
+                EmailConfirmed = true
+            };
+            
+            foreach(Guid roleId in payload.Roles)
+            {
+                UserRole userRole = new UserRole
+                {
+                    UserId = userToAdd.Id,
+                    RoleId = roleId
+                };
+                userToAdd.Roles.Add(userRole);
+            }
+
+            var result = await _userRepository.AddUserAsync(userToAdd);
+
+            return new UserResponseDto
+            {
+                Id = result.Id,
+                Name = result.Name,
+                Email = result.Email,
+                UserName = result.UserName,
+                CreatedAt = result.CreatedAt,
+                UpdatedAt = result.UpdatedAt,
+                DeletedAt = result.DeletedAt,
+            };
+        }
+
+        public async Task<UserResponseDto?> UpdateUserAsync(Guid id, PatchUserRequestDto payload)
+        {
+            var userToUpdate = await _userRepository.GetUserByIdAsync(id);
+
+            if (userToUpdate == null)
+                return null;
+
+            PatchHelper.PatchFrom<PatchUserRequestDto, User>(userToUpdate, payload);
+            userToUpdate.UpdatedAt = DateTime.UtcNow;
+
+            if (payload.Roles != null)
+            {
+                foreach(UserRole userRole in userToUpdate.Roles)
+                {
+                    userRole.DeletedAt = DateTime.UtcNow;
+                }
+
+                foreach (Guid roleId in payload.Roles)
+                {
+                    UserRole userRoleToUpdate = userToUpdate.Roles.FirstOrDefault(ur => ur.RoleId == roleId);
+                    if (userRoleToUpdate != null)
+                    {
+                        userRoleToUpdate.DeletedAt = null; 
+                    }
+                    else
+                    {
+                        UserRole userRoleToAdd = new UserRole
+                        {
+                            RoleId = roleId,
+                            UserId = userToUpdate.Id
+                        };
+                        userToUpdate.Roles.Add(userRoleToAdd);
+                    }
+                }
+            }
+
+            await _userRepository.SaveChangesAsync();
+            return new UserResponseDto
+            {
+                Id = userToUpdate.Id,
+                Name = userToUpdate.Name,
+                Email = userToUpdate.Email,
+                UserName = userToUpdate.UserName,
+                CreatedAt = userToUpdate.CreatedAt,
+                UpdatedAt = userToUpdate.UpdatedAt,
+                DeletedAt = userToUpdate.DeletedAt,
+            };
+        }
+
+        public async Task<UserResponseDto?> DeleteUserAsync(Guid id)
+        {
+            var userToDelete = await _userRepository.GetUserByIdAsync(id);
+
+            if (userToDelete == null) 
+                return null;
+
+            userToDelete.DeletedAt = DateTime.UtcNow;
+
+            await _userRepository.SaveChangesAsync();
+            return new UserResponseDto
+            {
+                Id = userToDelete.Id,
+                Name = userToDelete.Name,
+                Email = userToDelete.Email,
+                UserName = userToDelete.UserName,
+                CreatedAt = userToDelete.CreatedAt,
+                UpdatedAt = userToDelete.UpdatedAt,
+                DeletedAt = userToDelete.DeletedAt,
+            };
+        }
+
+        public async Task<UserResponseDto?> RestoreUserAsync(Guid id)
+        {
+            var userToRestore = await _userRepository.GetUserByIdAsync(id, includeDeleted: true);
+
+            if (userToRestore == null)
+                return null;
+
+            userToRestore.DeletedAt = null;
+
+            await _userRepository.SaveChangesAsync();
+            return new UserResponseDto
+            {
+                Id = userToRestore.Id,
+                Name = userToRestore.Name,
+                Email = userToRestore.Email,
+                UserName = userToRestore.UserName,
+                CreatedAt = userToRestore.CreatedAt,
+                UpdatedAt = userToRestore.UpdatedAt,
+                DeletedAt = userToRestore.DeletedAt,
+            };
+        }
+
+        public async Task<UserResponseDto?> GetUserByEmailAsync(string email)
+        {
+            User? user = await _userRepository.GetUserByEmailAsync(email);
+
+            if (user == null)
+                return null;
+
+            return new UserResponseDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                UserName = user.UserName,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+                DeletedAt = user.DeletedAt,
+            };
+        }
+
+        public async Task<bool> ResetPassword(Guid id, string newPassword)
+        {
+            User? user = await _userRepository.GetUserByIdAsync(id);
+            
+            if(user == null)
+                return false; 
+            
+            user.PasswordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(newPassword)));
+            await _userRepository.SaveChangesAsync();
+            return true;    
+        }
+    }
+}

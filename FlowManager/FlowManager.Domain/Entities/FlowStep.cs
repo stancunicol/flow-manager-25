@@ -12,10 +12,10 @@ namespace FlowManager.Domain.Entities
         public bool? IsApproved { get; set; } = null;
 
         // navigation properties
-        public virtual Flow Flow { get; set; }
+        public virtual Flow Flow { get; set; } = new Flow();
         public Guid FlowId { get; set; }
 
-        public virtual Step Step { get; set; }
+        public virtual Step Step { get; set; } = new Step();
         public Guid StepId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

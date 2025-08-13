@@ -1,4 +1,6 @@
 ﻿using FlowManager.Application.DTOs;
+using FlowManager.Application.DTOs.Requests.User;
+using FlowManager.Application.DTOs.Responses.User;
 using FlowManager.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,9 +18,8 @@ namespace FlowManager.API.Controllers
             _userService = userService;
         }
 
-        
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllUsers()
         {
             try
             {
@@ -33,7 +34,7 @@ namespace FlowManager.API.Controllers
 
         
         [HttpGet("moderators")]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllModerators()
+        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllModerators()
         {
             try
             {
@@ -48,7 +49,7 @@ namespace FlowManager.API.Controllers
 
         
         [HttpGet("admins")]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllAdmins()
+        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllAdmins()
         {
             try
             {
@@ -63,13 +64,12 @@ namespace FlowManager.API.Controllers
 
         
         [HttpGet("filtered")]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsersFiltered(
-            [FromQuery] string? searchTerm = null,
-            [FromQuery] string? role = null)
+        public async Task<IActionResult> GetAllUsersFiltered(
+            [FromQuery] QueriedUserRequestDto payload)
         {
             try
             {
-                var users = await _userService.GetAllUsersFilteredAsync(searchTerm, role);
+                var users = await _userService.GetAllUsersFilteredAsync(payload);
                 return Ok(users);
             }
             catch (Exception ex)
@@ -80,7 +80,7 @@ namespace FlowManager.API.Controllers
 
         
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserDto>> GetUserById(Guid id)
+        public async Task<IActionResult> GetUserById(Guid id)
         {
             try
             {
@@ -99,7 +99,7 @@ namespace FlowManager.API.Controllers
 
         
         [HttpPost]
-        public async Task<ActionResult<UserDto>> AddUser([FromBody] CreateUserDto createUserDto)
+        public async Task<IActionResult> AddUser([FromBody] PostUserRequestDto payload)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace FlowManager.API.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var user = await _userService.AddUserAsync(createUserDto);
+                var user = await _userService.AddUserAsync(payload);
                 if (user == null)
                 {
                     return BadRequest("Failed to create user");
@@ -124,7 +124,7 @@ namespace FlowManager.API.Controllers
 
         
         [HttpPatch("{id}")]
-        public async Task<ActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDto updateUserDto)
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] PatchUserRequestDto payload)
         {
             try
             {
@@ -133,8 +133,8 @@ namespace FlowManager.API.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var result = await _userService.UpdateUserAsync(id, updateUserDto);
-                if (!result)
+                var result = await _userService.UpdateUserAsync(id, payload);
+                if (result == null)
                 {
                     return NotFound($"User with ID {id} not found");
                 }
@@ -154,7 +154,7 @@ namespace FlowManager.API.Controllers
             try
             {
                 var result = await _userService.DeleteUserAsync(id);
-                if (!result)
+                if (result == null)
                 {
                     return NotFound($"User with ID {id} not found");
                 }
@@ -173,7 +173,7 @@ namespace FlowManager.API.Controllers
             try
             {
                 var result = await _userService.RestoreUserAsync(id);
-                if (!result)
+                if (result == null)
                 {
                     return NotFound($"Deleted user with ID {id} not found");
                 }

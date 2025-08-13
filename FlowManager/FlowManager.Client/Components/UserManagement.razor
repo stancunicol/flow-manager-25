@@ -1,5 +1,6 @@
 ﻿@using System.Net.Http.Json
 @using FlowManager.Application.DTOs;
+@using FlowManager.Application.DTOs.Responses.User
 @inject HttpClient Http
 
 @if (IsOpen)
@@ -138,8 +139,8 @@
     private bool showAddForm = false;
 
 
-    private List<UserDto> users = new();
-    private UserDto newUser = new();
+    private List<UserResponseDto> users = new();
+    private UserResponseDto newUser = new();
     private Guid userIdToDelete;
     private string userNameToDelete = "";
     private bool showConfirm = false;
@@ -148,7 +149,7 @@
     private string _password = "";
     private string _rank = "";
     private bool showEditForm = false;
-    private UserDto selectedUser = new();
+    private UserResponseDto selectedUser = new();
     private string selectedRole = "";
     private List<string> availableRoles = new() { "basic", "moderator", "admin" };
 
@@ -215,7 +216,7 @@
 
     private async Task LoadUsers()
     {
-        var allUsers = await Http.GetFromJsonAsync<List<UserDto>>("api/users");
+        var allUsers = await Http.GetFromJsonAsync<List<UserResponseDto>>("api/users");
         users = allUsers
             .Where(u => !string.Equals(u.Email, CurrentUserEmail, StringComparison.OrdinalIgnoreCase))
             .ToList();
@@ -226,7 +227,7 @@
         var response = await Http.PostAsJsonAsync("api/users", newUser);
         if (response.IsSuccessStatusCode)
         {
-            var created = await response.Content.ReadFromJsonAsync<UserDto>();
+            var created = await response.Content.ReadFromJsonAsync<UserResponseDto>();
             users.Add(created!);
             newUser = new();
             showAddForm = false;
@@ -257,9 +258,9 @@
     {
         await IsOpenChanged.InvokeAsync(false);
     }
-    private void OpenEditUser(UserDto user)
+    private void OpenEditUser(UserResponseDto user)
     {
-        selectedUser = new UserDto
+        selectedUser = new UserResponseDto
         {
             Id = user.Id,
             Name = user.Name,

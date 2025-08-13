@@ -1,6 +1,7 @@
 ﻿@page "/members"
 @using System.Net.Http.Json
 @using FlowManager.Application.DTOs
+@using FlowManager.Application.DTOs.Responses.User
 @inject HttpClient Http
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
@@ -125,7 +126,7 @@ else
 }
 
 @code {
-    private List<UserDto> users = new();
+    private List<UserResponseDto> users = new();
     private Guid userIdToDelete;
     private string userNameToDelete = "";
     private bool showConfirm = false;
@@ -139,7 +140,7 @@ else
     private string selectedRole = "";
 
     private List<string> availableRoles = new() { "basic", "moderator", "admin" };
-    private UserDto selectedUser = new();
+    private UserResponseDto selectedUser = new();
 
     private Guid CurrentUserId = Guid.Empty;
     private string CurrentUserEmail = "";
@@ -151,7 +152,7 @@ else
 
     private async Task LoadUsers()
     {
-        var allUsers = await Http.GetFromJsonAsync<List<UserDto>>("api/users");
+        var allUsers = await Http.GetFromJsonAsync<List<UserResponseDto>>("api/users");
         users = allUsers.Where(u => u.Email != CurrentUserEmail).ToList();
     }
 
@@ -185,9 +186,9 @@ else
         showConfirm = false;
     }
 
-    private void OpenEditUser(UserDto user)
+    private void OpenEditUser(UserResponseDto user)
     {
-        selectedUser = new UserDto
+        selectedUser = new UserResponseDto
         {
             Id = user.Id,
             Name = user.Name,
