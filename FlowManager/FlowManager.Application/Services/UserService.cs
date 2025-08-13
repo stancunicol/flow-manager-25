@@ -73,6 +73,29 @@ namespace FlowManager.Infrastructure.Services
             });
         }
 
+        public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersQueriedAsync(QueriedUserRequestDto payload)
+        {
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams.ToQueryParams());
+
+            return new PagedResponseDto<UserResponseDto>
+            {
+                Data = result.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    UserName = u.UserName,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt,
+                    DeletedAt = u.DeletedAt,
+                    Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                }),
+                Page = payload.QueryParams.Page ?? 1,
+                PageSize = payload.QueryParams.PageSize ?? totalCount,
+                TotalCount = totalCount
+            };
+        }
+
         public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersFilteredAsync(QueriedUserRequestDto payload)
         {
             (List<User> result, int totalCount) = await _userRepository.GetAllUsersFilteredAsync(payload.Email, payload.QueryParams.ToQueryParams());
@@ -100,7 +123,7 @@ namespace FlowManager.Infrastructure.Services
         {
             var user = await _userRepository.GetUserByIdAsync(id);
 
-            if (user == null) 
+            if (user == null)
                 return null;
 
             return new UserResponseDto
@@ -127,8 +150,8 @@ namespace FlowManager.Infrastructure.Services
                 Email = payload.Email,
                 EmailConfirmed = true
             };
-            
-            foreach(Guid roleId in payload.Roles)
+
+            foreach (Guid roleId in payload.Roles)
             {
                 UserRole userRole = new UserRole
                 {
@@ -164,7 +187,7 @@ namespace FlowManager.Infrastructure.Services
 
             if (payload.Roles != null)
             {
-                foreach(UserRole userRole in userToUpdate.Roles)
+                foreach (UserRole userRole in userToUpdate.Roles)
                 {
                     userRole.DeletedAt = DateTime.UtcNow;
                 }
@@ -174,7 +197,7 @@ namespace FlowManager.Infrastructure.Services
                     UserRole userRoleToUpdate = userToUpdate.Roles.FirstOrDefault(ur => ur.RoleId == roleId);
                     if (userRoleToUpdate != null)
                     {
-                        userRoleToUpdate.DeletedAt = null; 
+                        userRoleToUpdate.DeletedAt = null;
                     }
                     else
                     {
@@ -205,7 +228,7 @@ namespace FlowManager.Infrastructure.Services
         {
             var userToDelete = await _userRepository.GetUserByIdAsync(id);
 
-            if (userToDelete == null) 
+            if (userToDelete == null)
                 return null;
 
             userToDelete.DeletedAt = DateTime.UtcNow;
@@ -267,13 +290,13 @@ namespace FlowManager.Infrastructure.Services
         public async Task<bool> ResetPassword(Guid id, string newPassword)
         {
             User? user = await _userRepository.GetUserByIdAsync(id);
-            
-            if(user == null)
-                return false; 
-            
+
+            if (user == null)
+                return false;
+
             user.PasswordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(newPassword)));
             await _userRepository.SaveChangesAsync();
-            return true;    
+            return true;
         }
     }
 }

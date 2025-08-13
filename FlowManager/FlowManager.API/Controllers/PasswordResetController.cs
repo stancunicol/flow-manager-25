@@ -2,35 +2,70 @@
 using FlowManager.Application.Interfaces;
 using FlowManager.Application.DTOs;
 
-[ApiController]
-[Route("api/[controller]")]
-public class PasswordResetController : ControllerBase
+namespace FlowManager.API.Controllers
 {
-    private readonly IPasswordResetService _service;
-
-    public PasswordResetController(IPasswordResetService service)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class PasswordResetController : ControllerBase
     {
-        _service = service;
-    }
+        private readonly IPasswordResetService _passwordResetService;
+        private readonly ILogger<PasswordResetController> _logger;
 
-    [HttpPost("request")]
-    public async Task<IActionResult> RequestReset([FromBody] string email)
-    {
-        await _service.SendResetCodeAsync(email);
-        return Ok();
-    }
+        public PasswordResetController(IPasswordResetService passwordResetService, ILogger<PasswordResetController> logger)
+        {
+            _passwordResetService = passwordResetService ?? throw new ArgumentNullException(nameof(passwordResetService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
 
-    [HttpPost("verify")]
-    public async Task<IActionResult> VerifyCode([FromBody] VerifyCodeDto dto)
-    {
-        var valid = await _service.VerifyResetCodeAsync(dto.Email, dto.Code);
-        return valid ? Ok() : BadRequest("Invalid code");
-    }
+        [HttpPost("request")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RequestResetAsync([FromBody] string email)
+        {
+            await _passwordResetService.SendResetCodeAsync(email);
 
-    [HttpPost("confirm")]
-    public async Task<IActionResult> ConfirmReset([FromBody] ConfirmResetDto dto)
-    {
-        var result = await _service.ResetPasswordAsync(dto.Email, dto.Code, dto.NewPassword);
-        return result ? Ok() : BadRequest("Invalid code or password");
+            return Ok(new
+            {
+                Result = "Reset code sent",
+                Success = true,
+                Message = "Password reset code sent successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        [HttpPost("verify")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> VerifyCodeAsync([FromBody] VerifyCodeDto dto)
+        {
+            var result = await _passwordResetService.VerifyResetCodeAsync(dto.Email, dto.Code);
+
+            return Ok(new
+            {
+                Result = result,
+                Success = result,
+                Message = result ? "Code verified successfully." : "Invalid verification code.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        [HttpPost("confirm")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ConfirmResetAsync([FromBody] ConfirmResetDto dto)
+        {
+            var result = await _passwordResetService.ResetPasswordAsync(dto.Email, dto.Code, dto.NewPassword);
+
+            return Ok(new
+            {
+                Result = result,
+                Success = result,
+                Message = result ? "Password reset successfully." : "Invalid code or password reset failed.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
     }
 }
