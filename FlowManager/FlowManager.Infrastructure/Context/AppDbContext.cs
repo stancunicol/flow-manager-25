@@ -30,6 +30,7 @@ namespace FlowManager.Infrastructure.Context
 
             UniqueUserEmailConstraintConfiguration(builder);
             UniqueRolenameConstraintConfiguration(builder);
+            UniqueFormTemplateConstraintConfiguration(builder);
 
             UserRoleRelationshipConfiguration(builder);
 
@@ -108,6 +109,14 @@ namespace FlowManager.Infrastructure.Context
                     .HasIndex(u => u.NormalizedEmail)
                     .IsUnique()
                     .HasDatabaseName("IX_AspNetUsers_NormalizedEmail");
+        }
+
+        private void UniqueFormTemplateConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FormTemplate>()
+                .HasIndex(ft => ft.Name)
+                .IsUnique()
+                .HasDatabaseName("IX_FormTemplates_Name");
         }
     }
 }

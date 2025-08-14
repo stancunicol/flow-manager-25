@@ -10,16 +10,20 @@ using FlowManager.Application.DTOs.Responses;
 using FlowManager.Application.DTOs.Responses.User;
 using FlowManager.Application.DTOs.Requests.User;
 using FlowManager.Infrastructure.Utils;
+using FlowManager.Domain.Exceptions;
+using FlowManager.Domain.Dtos;
 
 namespace FlowManager.Infrastructure.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IRoleRepository roleRepository)
         {
             _userRepository = userRepository;
+            _roleRepository = roleRepository;
         }
 
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
@@ -75,7 +79,8 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersFilteredAsync(QueriedUserRequestDto payload)
         {
-            (List<User> result, int totalCount) = await _userRepository.GetAllUsersFilteredAsync(payload.Email, payload.QueryParams.ToQueryParams());
+            QueryParams? parameters = payload.QueryParams?.ToQueryParams();
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersFilteredAsync(payload.Email, parameters);
 
             return new PagedResponseDto<UserResponseDto>
             {
@@ -90,18 +95,20 @@ namespace FlowManager.Infrastructure.Services
                     DeletedAt = u.DeletedAt,
                     Roles = u.Roles.Select(r => r.Role.Name).ToList()
                 }),
-                Page = payload.QueryParams.Page ?? 1,
-                PageSize = payload.QueryParams.PageSize ?? totalCount,
+                Page = payload.QueryParams?.Page ?? 1,
+                PageSize = payload.QueryParams?.PageSize ?? totalCount,
                 TotalCount = totalCount
             };
         }
 
-        public async Task<UserResponseDto?> GetUserByIdAsync(Guid id)
+        public async Task<UserResponseDto> GetUserByIdAsync(Guid id)
         {
             var user = await _userRepository.GetUserByIdAsync(id);
 
-            if (user == null) 
-                return null;
+            if (user == null)
+            {
+                throw new EntryNotFoundException($"User with id {id} was not found.");
+            }
 
             return new UserResponseDto
             {
@@ -118,6 +125,11 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<UserResponseDto?> AddUserAsync(PostUserRequestDto payload)
         {
+            if(_userRepository.GetUserByEmailAsync(payload.Email) != null)
+            {
+                throw new UniqueConstraintViolationException($"User with email {payload.Email} already exists.");
+            }
+
             User userToAdd = new User
             {
                 UserName = payload.Username,
@@ -130,6 +142,11 @@ namespace FlowManager.Infrastructure.Services
             
             foreach(Guid roleId in payload.Roles)
             {
+                if (_roleRepository.GetRoleByIdAsync(roleId) == null)
+                {
+                    throw new EntryNotFoundException($"Role with id {roleId} was not found (trying to create a user).");
+                }
+
                 UserRole userRole = new UserRole
                 {
                     UserId = userToAdd.Id,
@@ -152,12 +169,14 @@ namespace FlowManager.Infrastructure.Services
             };
         }
 
-        public async Task<UserResponseDto?> UpdateUserAsync(Guid id, PatchUserRequestDto payload)
+        public async Task<UserResponseDto> UpdateUserAsync(Guid id, PatchUserRequestDto payload)
         {
             var userToUpdate = await _userRepository.GetUserByIdAsync(id);
 
             if (userToUpdate == null)
-                return null;
+            {
+                throw new EntryNotFoundException($"User with id {id} was not found.");
+            }
 
             PatchHelper.PatchFrom<PatchUserRequestDto, User>(userToUpdate, payload);
             userToUpdate.UpdatedAt = DateTime.UtcNow;
@@ -171,6 +190,11 @@ namespace FlowManager.Infrastructure.Services
 
                 foreach (Guid roleId in payload.Roles)
                 {
+                    if(_roleRepository.GetRoleByIdAsync(roleId) == null)
+                    {
+                        throw new EntryNotFoundException($"Role with id {roleId} was not found (trying to create a user).");
+                    }
+
                     UserRole userRoleToUpdate = userToUpdate.Roles.FirstOrDefault(ur => ur.RoleId == roleId);
                     if (userRoleToUpdate != null)
                     {
@@ -201,12 +225,14 @@ namespace FlowManager.Infrastructure.Services
             };
         }
 
-        public async Task<UserResponseDto?> DeleteUserAsync(Guid id)
+        public async Task<UserResponseDto> DeleteUserAsync(Guid id)
         {
             var userToDelete = await _userRepository.GetUserByIdAsync(id);
 
-            if (userToDelete == null) 
-                return null;
+            if (userToDelete == null)
+            {
+                throw new EntryNotFoundException($"User with id {id} was not found.");
+            }
 
             userToDelete.DeletedAt = DateTime.UtcNow;
 
@@ -223,12 +249,14 @@ namespace FlowManager.Infrastructure.Services
             };
         }
 
-        public async Task<UserResponseDto?> RestoreUserAsync(Guid id)
+        public async Task<UserResponseDto> RestoreUserAsync(Guid id)
         {
             var userToRestore = await _userRepository.GetUserByIdAsync(id, includeDeleted: true);
 
             if (userToRestore == null)
-                return null;
+            {
+                throw new EntryNotFoundException($"User with id {id} was not found.");
+            }
 
             userToRestore.DeletedAt = null;
 
@@ -245,12 +273,14 @@ namespace FlowManager.Infrastructure.Services
             };
         }
 
-        public async Task<UserResponseDto?> GetUserByEmailAsync(string email)
+        public async Task<UserResponseDto> GetUserByEmailAsync(string email)
         {
             User? user = await _userRepository.GetUserByEmailAsync(email);
 
             if (user == null)
-                return null;
+            { 
+                throw new EntryNotFoundException($"User with email {email} was not found."); 
+            }
 
             return new UserResponseDto
             {
@@ -269,8 +299,10 @@ namespace FlowManager.Infrastructure.Services
             User? user = await _userRepository.GetUserByIdAsync(id);
             
             if(user == null)
-                return false; 
-            
+            {
+                throw new EntryNotFoundException($"User with id {id} was not found.");
+            }  
+             
             user.PasswordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(newPassword)));
             await _userRepository.SaveChangesAsync();
             return true;    

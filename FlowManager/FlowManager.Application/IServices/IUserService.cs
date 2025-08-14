@@ -18,12 +18,12 @@ namespace FlowManager.Application.Interfaces
         Task<IEnumerable<UserResponseDto>> GetAllModeratorsAsync();
         Task<IEnumerable<UserResponseDto>> GetAllAdminsAsync();
         Task<PagedResponseDto<UserResponseDto>> GetAllUsersFilteredAsync(QueriedUserRequestDto payload);
-        Task<UserResponseDto?> GetUserByIdAsync(Guid id);
-        Task<UserResponseDto?> AddUserAsync(PostUserRequestDto payload);
-        Task<UserResponseDto?> GetUserByEmailAsync(string email);
-        Task<UserResponseDto?> UpdateUserAsync(Guid id, PatchUserRequestDto payload);
-        Task<UserResponseDto?> DeleteUserAsync(Guid id);
-        Task<UserResponseDto?> RestoreUserAsync(Guid id);
+        Task<UserResponseDto> GetUserByIdAsync(Guid id);
+        Task<UserResponseDto> AddUserAsync(PostUserRequestDto payload);
+        Task<UserResponseDto> GetUserByEmailAsync(string email);
+        Task<UserResponseDto> UpdateUserAsync(Guid id, PatchUserRequestDto payload);
+        Task<UserResponseDto> DeleteUserAsync(Guid id);
+        Task<UserResponseDto> RestoreUserAsync(Guid id);
         Task<bool> ResetPassword(Guid id, string newPassword);
     }
 }

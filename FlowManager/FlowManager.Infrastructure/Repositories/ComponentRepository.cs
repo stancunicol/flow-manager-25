@@ -27,7 +27,7 @@ namespace FlowManager.Infrastructure.Repositories
             await SaveChangesAsync();
         }
 
-        public async Task<(List<Component> Data, int TotalCount)> GetAllComponentsQueriedAsync(string? type, string? label, QueryParams parameters)
+        public async Task<(List<Component> Data, int TotalCount)> GetAllComponentsQueriedAsync(string? type, string? label, QueryParams? parameters)
         {
             IQueryable<Component> query = _context.Components.Where(c => c.DeletedAt == null);
 

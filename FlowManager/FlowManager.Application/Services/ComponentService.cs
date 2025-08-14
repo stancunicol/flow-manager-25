@@ -5,6 +5,7 @@ using FlowManager.Application.DTOs.Responses.Component;
 using FlowManager.Application.IServices;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
+using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Utils;
 using System;
@@ -25,13 +26,13 @@ namespace FlowManager.Application.Services
             _componentRepository = componentRepository;
         }
 
-        public async Task<ComponentResponseDto?> DeleteComponentAsync(Guid id)
+        public async Task<ComponentResponseDto> DeleteComponentAsync(Guid id)
         {
             Component? component = await _componentRepository.GetComponentByIdAsync(id);
 
             if (component == null)
             {
-                return null;
+                throw new EntryNotFoundException($"Component with id {id} was not found.");
             }
 
             component.DeletedAt = DateTime.UtcNow;
@@ -74,13 +75,13 @@ namespace FlowManager.Application.Services
             };
         }
 
-        public async Task<ComponentResponseDto?> GetComponentByIdAsync(Guid id)
+        public async Task<ComponentResponseDto> GetComponentByIdAsync(Guid id)
         {
             Component? result = await _componentRepository.GetComponentByIdAsync(id);
 
             if (result == null)
             {
-                return null; // middleware
+                throw new EntryNotFoundException($"Component with id {id} was not found.");
             }
 
             return new ComponentResponseDto
@@ -96,13 +97,13 @@ namespace FlowManager.Application.Services
             };
         }
 
-        public async Task<ComponentResponseDto?> PatchComponentAsync(Guid id,PatchComponentRequestDto payload)
+        public async Task<ComponentResponseDto> PatchComponentAsync(Guid id,PatchComponentRequestDto payload)
         {
             Component? componentToPatch = _componentRepository.GetComponentByIdAsync(id).Result;
 
             if(componentToPatch == null)
             {
-                return null; // middleware
+                throw new EntryNotFoundException($"Component with id {id} was not found.");
             }
 
             PatchHelper.PatchFrom<PatchComponentRequestDto, Component>(componentToPatch, payload);    

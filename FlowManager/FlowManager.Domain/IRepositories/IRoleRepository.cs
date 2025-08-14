@@ -9,7 +9,7 @@ namespace FlowManager.Domain.IRepositories
 {
     public interface IRoleRepository
     {
-        Task<List<Role>?> GetAllRolesAsync();
+        Task<List<Role>> GetAllRolesAsync();
         Task<Role?> GetRoleByIdAsync(Guid id);
         Task SaveChangesAsync();
     }
