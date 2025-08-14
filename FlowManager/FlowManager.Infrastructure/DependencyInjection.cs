@@ -16,7 +16,7 @@ namespace FlowManager.Infrastructure
             services.AddDbContext<AppDbContext>(options =>
                      options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<User, IdentityRole<Guid>>()
+            services.AddIdentity<User, Role>()
                     .AddEntityFrameworkStores<AppDbContext>()
                     .AddDefaultTokenProviders();
 
