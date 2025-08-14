@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
+using FlowManager.Application.DTOs.Responses.Flow;
+using FlowManager.Application.DTOs.Responses.Step;
 
 namespace FlowManager.API.Controllers
 {
@@ -17,60 +19,108 @@ namespace FlowManager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Flow>>> GetFlows()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<FlowResponseDto>>> GetFlows()
         {
-            var flows = await _flowService.GetAllFlowsAsync();
-            return Ok(flows);
+            var result = await _flowService.GetAllFlowsAsync();
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flows retreived succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Flow>> GetFlow(Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<FlowResponseDto>> GetFlow(Guid id)
         {
-            var flow = await _flowService.GetFlowByIdAsync(id);
-            if (flow == null)
-                return NotFound();
-
-            return Ok(flow);
+            var result = await _flowService.GetFlowByIdAsync(id);
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flow retreived succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<ActionResult<Flow>> PostFlow(Flow flow)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<FlowResponseDto>> PostFlow(Flow flow)
         {
-            var created = await _flowService.CreateFlowAsync(flow);
-            return CreatedAtAction(nameof(GetFlow), new { id = created.Id }, created);
+            var result = await _flowService.CreateFlowAsync(flow);
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flow created succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PutFlow(Guid id, Flow flow)
         {
-            var updated = await _flowService.UpdateFlowAsync(id, flow);
-            if (!updated)
-                return NotFound();
-
-            return NoContent();
+            var result = await _flowService.UpdateFlowAsync(id, flow);
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flow updated succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteFlow(Guid id)
         {
-            var deleted = await _flowService.DeleteFlowAsync(id);
-            if (!deleted)
-                return NotFound();
-
-            return NoContent();
+            var result = await _flowService.DeleteFlowAsync(id);
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flow deleted succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
         [HttpGet("{id}/steps")]
-        public async Task<ActionResult<IEnumerable<Step>>> GetFlowSteps(Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<StepResponseDto>>> GetFlowSteps(Guid id)
         {
-            var flow = await _flowService.GetFlowByIdAsync(id);
-            if (flow == null)
-                return NotFound();
-
-            return Ok(flow.Steps.OrderBy(s => s.CreatedAt));
+            var result = await _flowService.GetFlowByIdAsync(id);
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Steps retreived succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
     }
 }

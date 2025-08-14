@@ -30,9 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IFormResponseService, FormResponseService>();
         // services.AddScoped<IFormService, FormSer>();
         // services.AddScoped<IAuth, AuthService>();
-        // services.AddScoped<IStepService, StepSer>();
-        //services.AddScoped<IStepUpdateHistoryService, StepUpdateHistoryService>();
-        //services.AddScoped<IStepUserService, StepUserService>();
+        services.AddScoped<IStepService, StepService>();
 
         return services;
     }

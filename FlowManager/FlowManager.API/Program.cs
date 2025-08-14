@@ -11,6 +11,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using FlowManager.Infrastructure.Utils;
+using FlowManager.Infrastructure.Context;
+using FlowManager.Application.Utils;
+using FlowManager.Application.Interfaces;
+using FlowManager.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,6 +101,7 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 
 // Use CORS
+app.UseRouting();
 app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
