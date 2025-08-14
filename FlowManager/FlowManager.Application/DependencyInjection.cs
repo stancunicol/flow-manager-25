@@ -27,11 +27,10 @@ public static class DependencyInjection
         services.AddScoped<IComponentService, ComponentService>();
         services.AddScoped<IFlowService, FlowService>();
         services.AddScoped<IFormTemplateService, FormTemplateService>();
+        services.AddScoped<IRoleService, RoleService>();
         // services.AddScoped<IFormService, FormSer>();
         // services.AddScoped<IAuth, AuthService>();
-        // services.AddScoped<IStepService, StepSer>();
-        //services.AddScoped<IStepUpdateHistoryService, StepUpdateHistoryService>();
-        //services.AddScoped<IStepUserService, StepUserService>();
+        services.AddScoped<IStepService, StepService>();
 
         return services;
     }
