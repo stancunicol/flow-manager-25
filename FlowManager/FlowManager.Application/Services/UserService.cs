@@ -1,7 +1,6 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Application.DTOs;
 using FlowManager.Domain.Entities;
-using FlowManager.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -77,6 +76,29 @@ namespace FlowManager.Infrastructure.Services
             });
         }
 
+        public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersQueriedAsync(QueriedUserRequestDto payload)
+        {
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams.ToQueryParams());
+
+            return new PagedResponseDto<UserResponseDto>
+            {
+                Data = result.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    UserName = u.UserName,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt,
+                    DeletedAt = u.DeletedAt,
+                    Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                }),
+                Page = payload.QueryParams.Page ?? 1,
+                PageSize = payload.QueryParams.PageSize ?? totalCount,
+                TotalCount = totalCount
+            };
+        }
+
         public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersFilteredAsync(QueriedUserRequestDto payload)
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
@@ -135,12 +157,12 @@ namespace FlowManager.Infrastructure.Services
                 UserName = payload.Username,
                 NormalizedUserName = payload.Username.ToUpper(),
                 Name = payload.Name,
-                NormalizedEmail = payload.Name.ToUpper(),
+                NormalizedEmail = payload.Email.ToUpper(),
                 Email = payload.Email,
                 EmailConfirmed = true
             };
-            
-            foreach(Guid roleId in payload.Roles)
+
+            foreach (Guid roleId in payload.Roles)
             {
                 if (_roleRepository.GetRoleByIdAsync(roleId) == null)
                 {
@@ -156,6 +178,19 @@ namespace FlowManager.Infrastructure.Services
             }
 
             var result = await _userRepository.AddUserAsync(userToAdd);
+
+            // Send welcome email
+            try
+            {
+                Console.WriteLine($"Attempting to send welcome email to: {result.Email}");
+                await _emailService.SendWelcomeEmailAsync(result.Email, result.Name);
+                Console.WriteLine($"Welcome email sent successfully to: {result.Email}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending welcome email: {ex.Message}");
+                // Don't throw - just log the error so user creation still succeeds
+            }
 
             return new UserResponseDto
             {
@@ -183,7 +218,7 @@ namespace FlowManager.Infrastructure.Services
 
             if (payload.Roles != null)
             {
-                foreach(UserRole userRole in userToUpdate.Roles)
+                foreach (UserRole userRole in userToUpdate.Roles)
                 {
                     userRole.DeletedAt = DateTime.UtcNow;
                 }
@@ -198,7 +233,7 @@ namespace FlowManager.Infrastructure.Services
                     UserRole userRoleToUpdate = userToUpdate.Roles.FirstOrDefault(ur => ur.RoleId == roleId);
                     if (userRoleToUpdate != null)
                     {
-                        userRoleToUpdate.DeletedAt = null; 
+                        userRoleToUpdate.DeletedAt = null;
                     }
                     else
                     {
@@ -305,7 +340,7 @@ namespace FlowManager.Infrastructure.Services
              
             user.PasswordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(newPassword)));
             await _userRepository.SaveChangesAsync();
-            return true;    
+            return true;
         }
     }
 }
