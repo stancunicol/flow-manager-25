@@ -14,29 +14,29 @@ namespace FlowManager.Infrastructure.Services
             _flowRepository = flowRepository;   
         }
 
-        public Task<Flow> CreateFlowAsync(Flow flow)
+        public async Task<IEnumerable<Flow>> GetAllFlowsAsync()
         {
-            throw new NotImplementedException();
+            return await _flowRepository.GetAllFlowsAsync();
         }
 
-        public Task<bool> DeleteFlowAsync(Guid id)
+        public async Task<Flow?> GetFlowByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            return await _flowRepository.GetFlowByIdAsync(id);
         }
 
-        public Task<IEnumerable<Flow>> GetAllFlowsAsync()
+        public async Task<Flow> CreateFlowAsync(Flow flow)
         {
-            throw new NotImplementedException();
+            return await _flowRepository.CreateFlowAsync(flow);
         }
 
-        public Task<Flow?> GetFlowByIdAsync(Guid id)
+        public async Task<bool> UpdateFlowAsync(Guid id, Flow flow)
         {
-            throw new NotImplementedException();
+            return await _flowRepository.UpdateFlowAsync(id, flow);
         }
 
-        public Task<bool> UpdateFlowAsync(Guid id, Flow flow)
+        public async Task<bool> DeleteFlowAsync(Guid id)
         {
-            throw new NotImplementedException();
+            return await _flowRepository.DeleteFlowAsync(id);
         }
     }
 }

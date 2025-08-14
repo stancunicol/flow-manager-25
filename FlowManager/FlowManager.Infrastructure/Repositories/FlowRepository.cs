@@ -33,5 +33,35 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(f => f.FormTemplate)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
+
+        public async Task<Flow> CreateFlowAsync(Flow flow)
+        {
+            flow.Id = Guid.NewGuid();
+            flow.CreatedAt = DateTime.UtcNow;
+            flow.UpdatedAt = DateTime.UtcNow;
+            _context.Flows.Add(flow);
+            await _context.SaveChangesAsync();
+            return flow;
+        }
+
+        public async Task<bool> UpdateFlowAsync(Guid id, Flow flow)
+        {
+            if (id != flow.Id)
+                return false;
+            flow.UpdatedAt = DateTime.UtcNow;
+            _context.Entry(flow).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteFlowAsync(Guid id)
+        {
+            var flow = await _context.Flows.FindAsync(id);
+            if (flow == null)
+                return false;
+            _context.Flows.Remove(flow);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

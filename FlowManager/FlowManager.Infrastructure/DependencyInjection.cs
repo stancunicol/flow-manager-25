@@ -35,7 +35,7 @@ public static class DependencyInjection
         // services.AddScoped<IFormRepository, FormRepository>();
         services.AddScoped<IFormTemplateRepository, FormTemplateRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
-        //services.AddScoped<IStepRepository, StepRepository>();
+        services.AddScoped<IStepRepository, StepRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
 
