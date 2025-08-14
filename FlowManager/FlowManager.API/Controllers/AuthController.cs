@@ -149,27 +149,25 @@ namespace FlowManager.API.Controllers
             var roleEntity = await _roleManager.FindByNameAsync(normalizedRole);
 
             if (roleEntity == null)
-            {
+            {   
                 roleEntity = new Role
                 {
+                    Id = Guid.NewGuid(),
                     Name = normalizedRole,
-                    NormalizedName = normalizedRole,
-                    CreatedAt = DateTime.UtcNow
+                    NormalizedName = normalizedRole
                 };
                 await _roleManager.CreateAsync(roleEntity);
                 Console.WriteLine($"[DEBUG] Created new role: {normalizedRole}");
             }
 
-            // Add user to role using UserRole entity
-            var userRole = new UserRole
+            // Add user to role using ASP.NET Core Identity
+            var roleResult = await _userManager.AddToRoleAsync(user, normalizedRole);
+            if (!roleResult.Succeeded)
             {
-                UserId = user.Id,
-                RoleId = roleEntity.Id,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.UserRoles.Add(userRole);
-            await _context.SaveChangesAsync();
+                var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                Console.WriteLine($"[DEBUG] Role assignment failed: {roleErrors}");
+                return BadRequest($"Role assignment failed: {roleErrors}");
+            }
 
             Console.WriteLine($"[DEBUG] User {request.Email} registered successfully with role {normalizedRole}");
             return Ok(new { message = "User registered successfully" });

@@ -32,6 +32,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "FlowManagerAuth";
@@ -71,10 +73,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddAuthorization();
 
 builder.Services.AddIdentityCore<User>()
-    .AddRoles<IdentityRole<Guid>>()
+    .AddRoles<Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager()
-    .AddRoleManager<RoleManager<IdentityRole<Guid>>>()
+    .AddRoleManager<RoleManager<Role>>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender>();

@@ -18,6 +18,7 @@ namespace FlowManager.Application.Interfaces
         Task<IEnumerable<UserResponseDto>> GetAllModeratorsAsync();
         Task<IEnumerable<UserResponseDto>> GetAllAdminsAsync();
         Task<PagedResponseDto<UserResponseDto>> GetAllUsersFilteredAsync(QueriedUserRequestDto payload);
+        Task<PagedResponseDto<UserResponseDto>> GetAllUsersQueriedAsync(QueriedUserRequestDto payload);
         Task<UserResponseDto?> GetUserByIdAsync(Guid id);
         Task<UserResponseDto?> AddUserAsync(PostUserRequestDto payload);
         Task<UserResponseDto?> GetUserByEmailAsync(string email);
