@@ -24,7 +24,7 @@ namespace FlowManager.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<(List<FormTemplate> Data, int TotalCount)> GetAllFormTemplatesQueriedAsync(string? name, QueryParams parameters)
+        public async Task<(List<FormTemplate> Data, int TotalCount)> GetAllFormTemplatesQueriedAsync(string? name, QueryParams? parameters)
         {
             IQueryable<FormTemplate> query = _context.FormTemplates
                                                        .Where(ft => ft.DeletedAt == null)

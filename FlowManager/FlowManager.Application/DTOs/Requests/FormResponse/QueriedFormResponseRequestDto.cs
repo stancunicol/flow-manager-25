@@ -1,5 +1,4 @@
-﻿// Application/DTOs/Requests/FormResponse/QueriedFormResponseRequestDto.cs
-using FlowManager.Domain.Dtos;
+﻿using FlowManager.Domain.Dtos;
 
 namespace FlowManager.Application.DTOs.Requests.FormResponse
 {
@@ -13,21 +12,6 @@ namespace FlowManager.Application.DTOs.Requests.FormResponse
         public DateTime? CreatedTo { get; set; }
         public bool IncludeDeleted { get; set; } = false;
 
-        // Pagination and sorting
-        public bool? SortDescending { get; set; } = true;
-        public string? SortBy { get; set; } = "CreatedAt";
-        public int? Page { get; set; }
-        public int? PageSize { get; set; }
-
-        public QueryParams ToQueryParams()
-        {
-            return new QueryParams
-            {
-                SortDescending = SortDescending,
-                SortBy = SortBy,
-                Page = Page,
-                PageSize = PageSize
-            };
-        }
+        public QueryParamsDto? QueryParams { get; set; }
     }
 }

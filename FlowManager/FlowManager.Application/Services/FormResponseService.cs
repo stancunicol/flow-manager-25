@@ -1,10 +1,9 @@
-﻿
-
-// Application/Services/FormResponseService.cs
-using FlowManager.Application.DTOs.Requests.FormResponse;
+﻿using FlowManager.Application.DTOs.Requests.FormResponse;
 using FlowManager.Application.DTOs.Responses;
 using FlowManager.Application.Interfaces;
+using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
+using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
 
@@ -25,302 +24,277 @@ namespace FlowManager.Application.Services
 
         public async Task<PagedResponseDto<FormResponseResponseDto>> GetAllFormResponsesQueriedAsync(QueriedFormResponseRequestDto payload)
         {
-            try
+            _logger.LogInformation("Getting all form responses with query parameters");
+
+            QueryParams? queryParams = payload.QueryParams?.ToQueryParams();
+
+            var (data, totalCount) = await _formResponseRepository.GetAllFormResponsesQueriedAsync(
+                payload.FormTemplateId,
+                payload.StepId,
+                payload.UserId,
+                payload.SearchTerm,
+                payload.CreatedFrom,
+                payload.CreatedTo,
+                payload.IncludeDeleted,
+                queryParams);
+
+            var items = data.Select(fr => new FormResponseResponseDto
             {
-                _logger.LogInformation("Getting all form responses with query parameters");
+                Id = fr.Id,
+                RejectReason = fr.RejectReason,
+                ResponseFields = fr.ResponseFields,
+                FormTemplateId = fr.FormTemplateId,
+                FormTemplateName = fr.FormTemplate?.Name,
+                StepId = fr.StepId,
+                StepName = fr.Step?.Name,
+                UserId = fr.UserId,
+                UserName = fr.User?.Name,
+                UserEmail = fr.User?.Email,
+                CreatedAt = fr.CreatedAt,
+                UpdatedAt = fr.UpdatedAt,
+                DeletedAt = fr.DeletedAt
+            }).ToList();
 
-                var queryParams = payload.ToQueryParams();
-
-                var (data, totalCount) = await _formResponseRepository.GetAllFormResponsesQueriedAsync(
-                    payload.FormTemplateId,
-                    payload.StepId,
-                    payload.UserId,
-                    payload.SearchTerm,
-                    payload.CreatedFrom,
-                    payload.CreatedTo,
-                    payload.IncludeDeleted,
-                    queryParams);
-
-                var items = data.Select(fr => new FormResponseResponseDto
-                {
-                    Id = fr.Id,
-                    RejectReason = fr.RejectReason,
-                    ResponseFields = fr.ResponseFields,
-                    FormTemplateId = fr.FormTemplateId,
-                    FormTemplateName = fr.FormTemplate?.Name,
-                    StepId = fr.StepId,
-                    StepName = fr.Step?.Name,
-                    UserId = fr.UserId,
-                    UserName = fr.User?.Name,
-                    UserEmail = fr.User?.Email,
-                    CreatedAt = fr.CreatedAt,
-                    UpdatedAt = fr.UpdatedAt,
-                    DeletedAt = fr.DeletedAt
-                }).ToList();
-
-                return new PagedResponseDto<FormResponseResponseDto>
-                {
-                    Data = items,
-                    TotalCount = totalCount,
-                    Page = payload.Page ?? 1,
-                    PageSize = payload.PageSize ?? 10
-                };
-            }
-            catch (Exception ex)
+            return new PagedResponseDto<FormResponseResponseDto>
             {
-                _logger.LogError(ex, "Error occurred while getting form responses");
-                throw;
-            }
+                Data = items,
+                TotalCount = totalCount,
+                Page = payload.QueryParams?.Page ?? 1,
+                PageSize = payload.QueryParams?.PageSize ?? totalCount
+            };
         }
+
         public async Task<List<FormResponseResponseDto>> GetAllFormResponsesAsync()
         {
-            try
-            {
-                _logger.LogInformation("Getting all form responses without pagination");
+            _logger.LogInformation("Getting all form responses without pagination");
 
-                var data = await _formResponseRepository.GetAllFormResponsesAsync();
+            var data = await _formResponseRepository.GetAllFormResponsesAsync();
 
-                return data.Select(fr => new FormResponseResponseDto
-                {
-                    Id = fr.Id,
-                    RejectReason = fr.RejectReason,
-                    ResponseFields = fr.ResponseFields,
-                    FormTemplateId = fr.FormTemplateId,
-                    FormTemplateName = fr.FormTemplate?.Name,
-                    StepId = fr.StepId,
-                    StepName = fr.Step?.Name,
-                    UserId = fr.UserId,
-                    UserName = fr.User?.Name,
-                    UserEmail = fr.User?.Email,
-                    CreatedAt = fr.CreatedAt,
-                    UpdatedAt = fr.UpdatedAt,
-                    DeletedAt = fr.DeletedAt
-                }).ToList();
-            }
-            catch (Exception ex)
+            return data.Select(fr => new FormResponseResponseDto
             {
-                _logger.LogError(ex, "Error occurred while getting all form responses");
-                throw;
-            }
+                Id = fr.Id,
+                RejectReason = fr.RejectReason,
+                ResponseFields = fr.ResponseFields,
+                FormTemplateId = fr.FormTemplateId,
+                FormTemplateName = fr.FormTemplate?.Name,
+                StepId = fr.StepId,
+                StepName = fr.Step?.Name,
+                UserId = fr.UserId,
+                UserName = fr.User?.Name,
+                UserEmail = fr.User?.Email,
+                CreatedAt = fr.CreatedAt,
+                UpdatedAt = fr.UpdatedAt,
+                DeletedAt = fr.DeletedAt
+            }).ToList();
         }
+
         public async Task<FormResponseResponseDto?> GetFormResponseByIdAsync(Guid id)
         {
-            try
+            _logger.LogInformation("Getting form response with ID: {Id}", id);
+
+            var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(id);
+
+            if (formResponse == null)
+                return null;
+
+            return new FormResponseResponseDto
             {
-                _logger.LogInformation("Getting form response with ID: {Id}", id);
-
-                var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(id);
-
-                if (formResponse == null)
-                    return null;
-
-                return new FormResponseResponseDto
-                {
-                    Id = formResponse.Id,
-                    RejectReason = formResponse.RejectReason,
-                    ResponseFields = formResponse.ResponseFields,
-                    FormTemplateId = formResponse.FormTemplateId,
-                    FormTemplateName = formResponse.FormTemplate?.Name,
-                    StepId = formResponse.StepId,
-                    StepName = formResponse.Step?.Name,
-                    UserId = formResponse.UserId,
-                    UserName = formResponse.User?.Name,
-                    UserEmail = formResponse.User?.Email,
-                    CreatedAt = formResponse.CreatedAt,
-                    UpdatedAt = formResponse.UpdatedAt,
-                    DeletedAt = formResponse.DeletedAt
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while getting form response with ID: {Id}", id);
-                throw;
-            }
+                Id = formResponse.Id,
+                RejectReason = formResponse.RejectReason,
+                ResponseFields = formResponse.ResponseFields,
+                FormTemplateId = formResponse.FormTemplateId,
+                FormTemplateName = formResponse.FormTemplate?.Name,
+                StepId = formResponse.StepId,
+                StepName = formResponse.Step?.Name,
+                UserId = formResponse.UserId,
+                UserName = formResponse.User?.Name,
+                UserEmail = formResponse.User?.Email,
+                CreatedAt = formResponse.CreatedAt,
+                UpdatedAt = formResponse.UpdatedAt,
+                DeletedAt = formResponse.DeletedAt
+            };
         }
 
         public async Task<FormResponseResponseDto> PostFormResponseAsync(PostFormResponseRequestDto payload)
         {
-            try
+            _logger.LogInformation("Creating new form response");
+
+            var formResponse = new FormResponse
             {
-                _logger.LogInformation("Creating new form response");
+                FormTemplateId = payload.FormTemplateId,
+                StepId = payload.StepId,
+                UserId = payload.UserId,
+                ResponseFields = payload.ResponseFields,
+                CreatedAt = DateTime.UtcNow
+            };
 
-                var formResponse = new FormResponse
-                {
-                    FormTemplateId = payload.FormTemplateId,
-                    StepId = payload.StepId,
-                    UserId = payload.UserId,
-                    ResponseFields = payload.ResponseFields,
-                    CreatedAt = DateTime.UtcNow
-                };
+            await _formResponseRepository.AddAsync(formResponse);
 
-                await _formResponseRepository.AddAsync(formResponse);
-
-                return await GetFormResponseByIdAsync(formResponse.Id)
-                    ?? throw new InvalidOperationException("Failed to retrieve created form response");
-            }
-            catch (Exception ex)
+            return new FormResponseResponseDto
             {
-                _logger.LogError(ex, "Error occurred while creating form response");
-                throw;
-            }
+                Id = formResponse.Id,
+                RejectReason = formResponse.RejectReason,
+                ResponseFields = formResponse.ResponseFields,
+                FormTemplateId = formResponse.FormTemplateId,
+                FormTemplateName = formResponse.FormTemplate?.Name,
+                StepId = formResponse.StepId,
+                StepName = formResponse.Step?.Name,
+                UserId = formResponse.UserId,
+                UserName = formResponse.User?.Name,
+                UserEmail = formResponse.User?.Email,
+                CreatedAt = formResponse.CreatedAt,
+                UpdatedAt = formResponse.UpdatedAt,
+                DeletedAt = formResponse.DeletedAt
+            };
         }
 
-        public async Task<FormResponseResponseDto?> PatchFormResponseAsync(PatchFormResponseRequestDto payload)
+        public async Task<FormResponseResponseDto> PatchFormResponseAsync(PatchFormResponseRequestDto payload)
         {
-            try
+            _logger.LogInformation("Updating form response with ID: {Id}", payload.Id);
+
+            var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
+
+            if (formResponse == null)
             {
-                _logger.LogInformation("Updating form response with ID: {Id}", payload.Id);
-
-                var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
-
-                if (formResponse == null)
-                    return null;
-
-                // Update fields only if provided
-                if (payload.ResponseFields != null)
-                {
-                    formResponse.ResponseFields = payload.ResponseFields;
-                }
-
-                if (!string.IsNullOrEmpty(payload.RejectReason))
-                {
-                    formResponse.RejectReason = payload.RejectReason;
-                }
-
-                if (payload.StepId.HasValue)
-                {
-                    formResponse.StepId = payload.StepId.Value;
-                }
-
-                await _formResponseRepository.UpdateAsync(formResponse);
-
-                return await GetFormResponseByIdAsync(formResponse.Id);
+                throw new EntryNotFoundException($"Form response with id {payload.Id} was not found.");
             }
-            catch (Exception ex)
+
+            if (payload.ResponseFields != null)
             {
-                _logger.LogError(ex, "Error occurred while updating form response with ID: {Id}", payload.Id);
-                throw;
+                formResponse.ResponseFields = payload.ResponseFields;
             }
+
+            if (!string.IsNullOrEmpty(payload.RejectReason))
+            {
+                formResponse.RejectReason = payload.RejectReason;
+            }
+
+            if (payload.StepId.HasValue)
+            {
+                formResponse.StepId = payload.StepId.Value;
+            }
+
+            await _formResponseRepository.UpdateAsync(formResponse);
+
+            return new FormResponseResponseDto
+            {
+                Id = formResponse.Id,
+                RejectReason = formResponse.RejectReason,
+                ResponseFields = formResponse.ResponseFields,
+                FormTemplateId = formResponse.FormTemplateId,
+                FormTemplateName = formResponse.FormTemplate?.Name,
+                StepId = formResponse.StepId,
+                StepName = formResponse.Step?.Name,
+                UserId = formResponse.UserId,
+                UserName = formResponse.User?.Name,
+                UserEmail = formResponse.User?.Email,
+                CreatedAt = formResponse.CreatedAt,
+                UpdatedAt = formResponse.UpdatedAt,
+                DeletedAt = formResponse.DeletedAt
+            };
         }
 
-        public async Task<FormResponseResponseDto?> DeleteFormResponseAsync(Guid id)
+        public async Task<FormResponseResponseDto> DeleteFormResponseAsync(Guid id)
         {
-            try
+            _logger.LogInformation("Deleting form response with ID: {Id}", id);
+
+            var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(id);
+
+            if (formResponse == null)
             {
-                _logger.LogInformation("Deleting form response with ID: {Id}", id);
-
-                var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(id);
-
-                if (formResponse == null)
-                    return null;
-
-                var responseDto = await GetFormResponseByIdAsync(id);
-
-                await _formResponseRepository.DeleteAsync(id);
-
-                return responseDto;
+                throw new EntryNotFoundException($"Form response with id {id} not found.");
             }
-            catch (Exception ex)
+
+            await _formResponseRepository.DeleteAsync(id);
+
+            return new FormResponseResponseDto
             {
-                _logger.LogError(ex, "Error occurred while deleting form response with ID: {Id}", id);
-                throw;
-            }
+                Id = formResponse.Id,
+                RejectReason = formResponse.RejectReason,
+                ResponseFields = formResponse.ResponseFields,
+                FormTemplateId = formResponse.FormTemplateId,
+                FormTemplateName = formResponse.FormTemplate?.Name,
+                StepId = formResponse.StepId,
+                StepName = formResponse.Step?.Name,
+                UserId = formResponse.UserId,
+                UserName = formResponse.User?.Name,
+                UserEmail = formResponse.User?.Email,
+                CreatedAt = formResponse.CreatedAt,
+                UpdatedAt = formResponse.UpdatedAt,
+                DeletedAt = formResponse.DeletedAt
+            };
         }
 
         public async Task<List<FormResponseResponseDto>> GetFormResponsesByUserAsync(Guid userId)
         {
-            try
-            {
-                _logger.LogInformation("Getting form responses for user: {UserId}", userId);
+            _logger.LogInformation("Getting form responses for user: {UserId}", userId);
 
-                var data = await _formResponseRepository.GetFormResponsesByUserAsync(userId);
+            var data = await _formResponseRepository.GetFormResponsesByUserAsync(userId);
 
-                return data.Select(fr => new FormResponseResponseDto
-                {
-                    Id = fr.Id,
-                    RejectReason = fr.RejectReason,
-                    ResponseFields = fr.ResponseFields,
-                    FormTemplateId = fr.FormTemplateId,
-                    FormTemplateName = fr.FormTemplate?.Name,
-                    StepId = fr.StepId,
-                    StepName = fr.Step?.Name,
-                    UserId = fr.UserId,
-                    UserName = fr.User?.Name,
-                    UserEmail = fr.User?.Email,
-                    CreatedAt = fr.CreatedAt,
-                    UpdatedAt = fr.UpdatedAt,
-                    DeletedAt = fr.DeletedAt
-                }).ToList();
-            }
-            catch (Exception ex)
+            return data.Select(fr => new FormResponseResponseDto
             {
-                _logger.LogError(ex, "Error occurred while getting form responses for user: {UserId}", userId);
-                throw;
-            }
+                Id = fr.Id,
+                RejectReason = fr.RejectReason,
+                ResponseFields = fr.ResponseFields,
+                FormTemplateId = fr.FormTemplateId,
+                FormTemplateName = fr.FormTemplate?.Name,
+                StepId = fr.StepId,
+                StepName = fr.Step?.Name,
+                UserId = fr.UserId,
+                UserName = fr.User?.Name,
+                UserEmail = fr.User?.Email,
+                CreatedAt = fr.CreatedAt,
+                UpdatedAt = fr.UpdatedAt,
+                DeletedAt = fr.DeletedAt
+            }).ToList();
         }
 
         public async Task<List<FormResponseResponseDto>> GetFormResponsesByStepAsync(Guid stepId)
         {
-            try
-            {
-                _logger.LogInformation("Getting form responses for step: {StepId}", stepId);
+            _logger.LogInformation("Getting form responses for step: {StepId}", stepId);
 
-                var data = await _formResponseRepository.GetFormResponsesByStepAsync(stepId);
+            var data = await _formResponseRepository.GetFormResponsesByStepAsync(stepId);
 
-                return data.Select(fr => new FormResponseResponseDto
-                {
-                    Id = fr.Id,
-                    RejectReason = fr.RejectReason,
-                    ResponseFields = fr.ResponseFields,
-                    FormTemplateId = fr.FormTemplateId,
-                    FormTemplateName = fr.FormTemplate?.Name,
-                    StepId = fr.StepId,
-                    StepName = fr.Step?.Name,
-                    UserId = fr.UserId,
-                    UserName = fr.User?.Name,
-                    UserEmail = fr.User?.Email,
-                    CreatedAt = fr.CreatedAt,
-                    UpdatedAt = fr.UpdatedAt,
-                    DeletedAt = fr.DeletedAt
-                }).ToList();
-            }
-            catch (Exception ex)
+            return data.Select(fr => new FormResponseResponseDto
             {
-                _logger.LogError(ex, "Error occurred while getting form responses for step: {StepId}", stepId);
-                throw;
-            }
+                Id = fr.Id,
+                RejectReason = fr.RejectReason,
+                ResponseFields = fr.ResponseFields,
+                FormTemplateId = fr.FormTemplateId,
+                FormTemplateName = fr.FormTemplate?.Name,
+                StepId = fr.StepId,
+                StepName = fr.Step?.Name,
+                UserId = fr.UserId,
+                UserName = fr.User?.Name,
+                UserEmail = fr.User?.Email,
+                CreatedAt = fr.CreatedAt,
+                UpdatedAt = fr.UpdatedAt,
+                DeletedAt = fr.DeletedAt
+            }).ToList();
         }
 
         public async Task<List<FormResponseResponseDto>> GetFormResponsesByTemplateAsync(Guid formTemplateId)
         {
-            try
-            {
-                _logger.LogInformation("Getting form responses for template: {FormTemplateId}", formTemplateId);
+            _logger.LogInformation("Getting form responses for template: {FormTemplateId}", formTemplateId);
 
-                var data = await _formResponseRepository.GetFormResponsesByTemplateAsync(formTemplateId);
+            var data = await _formResponseRepository.GetFormResponsesByTemplateAsync(formTemplateId);
 
-                return data.Select(fr => new FormResponseResponseDto
-                {
-                    Id = fr.Id,
-                    RejectReason = fr.RejectReason,
-                    ResponseFields = fr.ResponseFields,
-                    FormTemplateId = fr.FormTemplateId,
-                    FormTemplateName = fr.FormTemplate?.Name,
-                    StepId = fr.StepId,
-                    StepName = fr.Step?.Name,
-                    UserId = fr.UserId,
-                    UserName = fr.User?.Name,
-                    UserEmail = fr.User?.Email,
-                    CreatedAt = fr.CreatedAt,
-                    UpdatedAt = fr.UpdatedAt,
-                    DeletedAt = fr.DeletedAt
-                }).ToList();
-            }
-            catch (Exception ex)
+            return data.Select(fr => new FormResponseResponseDto
             {
-                _logger.LogError(ex, "Error occurred while getting form responses for template: {FormTemplateId}", formTemplateId);
-                throw;
-            }
+                Id = fr.Id,
+                RejectReason = fr.RejectReason,
+                ResponseFields = fr.ResponseFields,
+                FormTemplateId = fr.FormTemplateId,
+                FormTemplateName = fr.FormTemplate?.Name,
+                StepId = fr.StepId,
+                StepName = fr.Step?.Name,
+                UserId = fr.UserId,
+                UserName = fr.User?.Name,
+                UserEmail = fr.User?.Email,
+                CreatedAt = fr.CreatedAt,
+                UpdatedAt = fr.UpdatedAt,
+                DeletedAt = fr.DeletedAt
+            }).ToList();
         }
     }
 }

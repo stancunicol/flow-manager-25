@@ -10,7 +10,7 @@ namespace FlowManager.Domain.IRepositories
 {
     public interface IFormTemplateRepository
     {
-        Task<(List<FormTemplate> Data, int TotalCount)> GetAllFormTemplatesQueriedAsync(string? name, QueryParams parameters);
+        Task<(List<FormTemplate> Data, int TotalCount)> GetAllFormTemplatesQueriedAsync(string? name, QueryParams? parameters);
         Task<FormTemplate?> GetFormTemplateByIdAsync(Guid id);
         Task<FormTemplate?> GetFormTemplateByNameAsync(string email);
         Task SaveChangesAsync();

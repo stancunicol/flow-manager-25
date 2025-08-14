@@ -5,6 +5,7 @@ using FlowManager.Application.DTOs.Responses.FormTemplateComponent;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
+using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -25,13 +26,13 @@ namespace FlowManager.Infrastructure.Services
             _formTemplateRepository = formTemplateRepository;
         }
 
-        public async Task<FormTemplateResponseDto?> DeleteFormTemplateAsync(Guid id)
+        public async Task<FormTemplateResponseDto> DeleteFormTemplateAsync(Guid id)
         {
             FormTemplate? formTemplateToDelete = await _formTemplateRepository.GetFormTemplateByIdAsync(id);
 
             if(formTemplateToDelete == null)
             {
-                return null; // middleware exception later
+                throw new EntryNotFoundException($"FormTemplate with id {id} was not found.");
             }
             
             formTemplateToDelete.DeletedAt = DateTime.UtcNow;
@@ -81,7 +82,7 @@ namespace FlowManager.Infrastructure.Services
 
             if (formTemplate == null)
             {
-                return null; // middleware exception later
+                throw new EntryNotFoundException($"FormTemplate with id {id} was not found.");
             }
 
             return new FormTemplateResponseDto
@@ -105,7 +106,7 @@ namespace FlowManager.Infrastructure.Services
 
             if (formTemplateToPatch == null)
             {
-                return null; // middleware exception later
+                throw new EntryNotFoundException($"FormTemplate with id {id} was not found.");
             }
 
             if(payload.Name != null && !string.IsNullOrEmpty(payload.Name))
@@ -169,7 +170,7 @@ namespace FlowManager.Infrastructure.Services
         {
             if(await _formTemplateRepository.GetFormTemplateByNameAsync(payload.Name) != null)
             {
-                return null; // middleware exception later
+                throw new UniqueConstraintViolationException($"FormTemplate with name {payload.Name} already exists.");
             }
 
             FormTemplate newFormTemplate = new FormTemplate

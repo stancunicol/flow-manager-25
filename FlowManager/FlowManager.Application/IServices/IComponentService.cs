@@ -14,9 +14,9 @@ namespace FlowManager.Application.IServices
     public interface IComponentService
     {
         Task<PagedResponseDto<ComponentResponseDto>> GetComponentsQueriedAsync(QueriedComponentRequestDto payload);
-        Task<ComponentResponseDto?> GetComponentByIdAsync(Guid id);
+        Task<ComponentResponseDto> GetComponentByIdAsync(Guid id);
         Task<ComponentResponseDto> PostComponentAsync(PostComponentRequestDto payload);
-        Task<ComponentResponseDto?> DeleteComponentAsync(Guid id);
-        Task<ComponentResponseDto?> PatchComponentAsync(Guid id, PatchComponentRequestDto payload);
+        Task<ComponentResponseDto> DeleteComponentAsync(Guid id);
+        Task<ComponentResponseDto> PatchComponentAsync(Guid id, PatchComponentRequestDto payload);
     }
 }

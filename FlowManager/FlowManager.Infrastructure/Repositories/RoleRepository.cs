@@ -19,7 +19,7 @@ namespace FlowManager.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<Role>?> GetAllRolesAsync()
+        public async Task<List<Role>> GetAllRolesAsync()
         {
             return await _context.Roles
                 .Where(role => role.DeletedAt == null)
