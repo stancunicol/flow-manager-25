@@ -17,6 +17,25 @@ namespace FlowManager.API.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllFormResponsesAsync()
+        {
+            var result = await _formResponseService.GetAllFormResponsesAsync();
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "All form responses retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+
+
         [HttpGet("queried")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

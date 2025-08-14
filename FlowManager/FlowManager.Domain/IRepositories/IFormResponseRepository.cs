@@ -15,7 +15,7 @@ namespace FlowManager.Domain.IRepositories
             DateTime? createdTo,
             bool includeDeleted,
             QueryParams parameters);
-
+        Task<List<FormResponse>> GetAllFormResponsesAsync();
         Task<FormResponse?> GetFormResponseByIdAsync(Guid id);
         Task<List<FormResponse>> GetFormResponsesByUserAsync(Guid userId);
         Task<List<FormResponse>> GetFormResponsesByStepAsync(Guid stepId);

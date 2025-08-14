@@ -104,7 +104,16 @@ namespace FlowManager.Infrastructure.Repositories
                 return (data, totalCount);
             }
         }
-
+        public async Task<List<FormResponse>> GetAllFormResponsesAsync()
+        {
+            return await _context.FormResponses
+                .Include(fr => fr.FormTemplate)
+                .Include(fr => fr.Step)
+                .Include(fr => fr.User)
+                .Where(fr => fr.DeletedAt == null)
+                .OrderByDescending(fr => fr.CreatedAt)
+                .ToListAsync();
+        }
         public async Task<FormResponse?> GetFormResponseByIdAsync(Guid id)
         {
             return await _context.FormResponses

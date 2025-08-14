@@ -72,7 +72,37 @@ namespace FlowManager.Application.Services
                 throw;
             }
         }
+        public async Task<List<FormResponseResponseDto>> GetAllFormResponsesAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Getting all form responses without pagination");
 
+                var data = await _formResponseRepository.GetAllFormResponsesAsync();
+
+                return data.Select(fr => new FormResponseResponseDto
+                {
+                    Id = fr.Id,
+                    RejectReason = fr.RejectReason,
+                    ResponseFields = fr.ResponseFields,
+                    FormTemplateId = fr.FormTemplateId,
+                    FormTemplateName = fr.FormTemplate?.Name,
+                    StepId = fr.StepId,
+                    StepName = fr.Step?.Name,
+                    UserId = fr.UserId,
+                    UserName = fr.User?.Name,
+                    UserEmail = fr.User?.Email,
+                    CreatedAt = fr.CreatedAt,
+                    UpdatedAt = fr.UpdatedAt,
+                    DeletedAt = fr.DeletedAt
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting all form responses");
+                throw;
+            }
+        }
         public async Task<FormResponseResponseDto?> GetFormResponseByIdAsync(Guid id)
         {
             try

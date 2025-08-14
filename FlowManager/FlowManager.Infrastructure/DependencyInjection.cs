@@ -37,7 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository, RoleRepository>();
         //services.AddScoped<IStepRepository, StepRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
-
+        services.AddScoped<IFormResponseRepository, FormResponseRepository>(); 
 
         return services;
     }

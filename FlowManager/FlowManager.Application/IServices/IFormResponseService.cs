@@ -6,6 +6,7 @@ namespace FlowManager.Application.Interfaces
     public interface IFormResponseService
     {
         Task<PagedResponseDto<FormResponseResponseDto>> GetAllFormResponsesQueriedAsync(QueriedFormResponseRequestDto payload);
+        Task<List<FormResponseResponseDto>> GetAllFormResponsesAsync();
         Task<FormResponseResponseDto?> GetFormResponseByIdAsync(Guid id);
         Task<FormResponseResponseDto> PostFormResponseAsync(PostFormResponseRequestDto payload);
         Task<FormResponseResponseDto?> PatchFormResponseAsync(PatchFormResponseRequestDto payload);
