@@ -18,6 +18,7 @@ namespace FlowManager.Infrastructure.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
+        private readonly IEmailService _emailService;
 
         public UserService(IUserRepository userRepository, IRoleRepository roleRepository)
         {
