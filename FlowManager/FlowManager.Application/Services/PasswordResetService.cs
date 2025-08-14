@@ -1,82 +1,68 @@
 ﻿using FlowManager.Application.Interfaces;
-using FlowManager.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Security.Cryptography;
 using System.Text;
 
-public class PasswordResetService : IPasswordResetService
+namespace FlowManager.Application.Services
 {
-    private readonly IUserService _userService;
-    private readonly IMemoryCache _cache;
-    private readonly IEmailService _emailService;
-
-    public PasswordResetService(IUserService userService, IMemoryCache cache, IEmailService emailService)
+    public class PasswordResetService : IPasswordResetService
     {
-        _userService = userService;
-        _cache = cache;
-        _emailService = emailService;
-    }
+        private readonly IUserService _userService;
+        private readonly IMemoryCache _cache;
+        private readonly IEmailService _emailService;
 
-    private static string GenerateRandomCode(int length = 6)
-    {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        var bytes = new byte[length];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(bytes);
-        var code = new StringBuilder(length);
-        foreach (var b in bytes)
-            code.Append(chars[b % chars.Length]);
-        return code.ToString();
-    }
-
-    public async Task SendResetCodeAsync(string email)
-    {
-        var user = await _userService.GetUserByEmailAsync(email);
-        if (user == null) throw new Exception("User not found");
-
-        var code = GenerateRandomCode(6);
-        _cache.Set($"reset_{email}", code, TimeSpan.FromMinutes(15));
-
-        var name = user.Name ?? "User";
-        var subject = "Password Reset - Siemens FMST";
-        var body = $@"Hello {name},
-
-You have requested to reset your password.
-
-Your verification code:
-
-{code}
-
-Important: This code is valid for 15 minutes.
-Use this code on the reset password page to set your new password.
-
-Best regards,
-The Siemens FMST Team";
-
-        await _emailService.SendEmailAsync(email, subject, body, false);
-    }
-
-    public Task<bool> VerifyResetCodeAsync(string email, string code)
-    {
-        if (_cache.TryGetValue($"reset_{email}", out string? cachedCode))
+        public PasswordResetService(IUserService userService, IMemoryCache cache, IEmailService emailService)
         {
-            return Task.FromResult(cachedCode == code);
+            _userService = userService;
+            _cache = cache;
+            _emailService = emailService;
         }
-        return Task.FromResult(false);
-    }
 
-    public async Task<bool> ResetPasswordAsync(string email, string code, string newPassword)
-    {
-        if (!_cache.TryGetValue($"reset_{email}", out string? cachedCode) || cachedCode != code)
-            return false;
+        private static string GenerateRandomCode(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var bytes = new byte[length];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(bytes);
+            var code = new StringBuilder(length);
+            foreach (var b in bytes)
+                code.Append(chars[b % chars.Length]);
+            return code.ToString();
+        }
 
-        var user = await _userService.GetUserByEmailAsync(email);   
-        if (user == null) return false;
+        public async Task SendResetCodeAsync(string email)
+        {
+            var user = await _userService.GetUserByEmailAsync(email);
+            if (user == null) throw new Exception("User not found");
 
-        await _userService.ResetPassword(user.Id, newPassword);
+            var code = GenerateRandomCode(6);
+            _cache.Set($"reset_{email}", code, TimeSpan.FromMinutes(15));
 
-        _cache.Remove($"reset_{email}");
-        return true;
+            var name = user.Name ?? "User";
+            await _emailService.SendPasswordResetCodeAsync(email, name, code);
+        }
+
+        public Task<bool> VerifyResetCodeAsync(string email, string code)
+        {
+            if (_cache.TryGetValue($"reset_{email}", out string? cachedCode))
+            {
+                return Task.FromResult(cachedCode == code);
+            }
+            return Task.FromResult(false);
+        }
+
+        public async Task<bool> ResetPasswordAsync(string email, string code, string newPassword)
+        {
+            if (!_cache.TryGetValue($"reset_{email}", out string? cachedCode) || cachedCode != code)
+                return false;
+
+            var user = await _userService.GetUserByEmailAsync(email);
+            if (user == null) return false;
+
+            await _userService.ResetPassword(user.Id, newPassword);
+
+            _cache.Remove($"reset_{email}");
+            return true;
+        }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Application.DTOs;
 using FlowManager.Domain.Entities;
-using FlowManager.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,10 +15,12 @@ namespace FlowManager.Infrastructure.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IEmailService _emailService;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IEmailService emailService)
         {
             _userRepository = userRepository;
+            _emailService = emailService;
         }
 
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
@@ -146,7 +147,7 @@ namespace FlowManager.Infrastructure.Services
                 UserName = payload.Username,
                 NormalizedUserName = payload.Username.ToUpper(),
                 Name = payload.Name,
-                NormalizedEmail = payload.Name.ToUpper(),
+                NormalizedEmail = payload.Email.ToUpper(),
                 Email = payload.Email,
                 EmailConfirmed = true
             };
@@ -162,6 +163,19 @@ namespace FlowManager.Infrastructure.Services
             }
 
             var result = await _userRepository.AddUserAsync(userToAdd);
+
+            // Send welcome email
+            try
+            {
+                Console.WriteLine($"Attempting to send welcome email to: {result.Email}");
+                await _emailService.SendWelcomeEmailAsync(result.Email, result.Name);
+                Console.WriteLine($"Welcome email sent successfully to: {result.Email}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending welcome email: {ex.Message}");
+                // Don't throw - just log the error so user creation still succeeds
+            }
 
             return new UserResponseDto
             {

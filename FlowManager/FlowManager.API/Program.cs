@@ -32,6 +32,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "FlowManagerAuth";
