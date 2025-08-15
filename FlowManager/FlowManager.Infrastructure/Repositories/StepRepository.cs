@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Context;
+using FlowManager.Infrastructure.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowManager.Infrastructure.Repositories
@@ -19,20 +21,22 @@ namespace FlowManager.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Step>> GetSteps()
+        public async Task<IEnumerable<Step>> GetStepsAsync()
         {
             return await _context.Steps
                 .ToListAsync();
         }
 
-        public async Task<Step?> GetStep(Guid id)
+        public async Task<Step?> GetStepByIdAsync(Guid id)
         {
             return await _context.Steps
                 .Include(s => s.Users)
+                .Include(s => s.FlowSteps)
+                    .ThenInclude(fs => fs.Flow)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
-        public async Task<IEnumerable<Step>> GetStepsByFlow(Guid flowId)
+        public async Task<IEnumerable<Step>> GetStepsByFlowAsync(Guid flowId)
         {
             return await _context.FlowSteps
                 .Where(fs => fs.FlowId == flowId)
@@ -42,124 +46,65 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Step> PostStep(Step step)
+        public async Task<Step> PostStepAsync(Step step)
         {
-            step.Id = Guid.NewGuid();
-            step.CreatedAt = DateTime.UtcNow;
-            step.UpdatedAt = DateTime.UtcNow;
-
             _context.Steps.Add(step);
             await _context.SaveChangesAsync();
 
             return step;
         }
 
-        public async Task<bool> PutStep(Guid id, Step step)
+        public async Task<Step> DeleteStepAsync(Step step)
         {
-            if (id != step.Id)
-                return false;
-
-            step.UpdatedAt = DateTime.UtcNow;
-            _context.Entry(step).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return _context.Steps.Any(e => e.Id == id);
-            }
-        }
-
-        public async Task<bool> DeleteStep(Guid id)
-        {
-            var step = await _context.Steps.FindAsync(id);
-            if (step == null)
-                return false;
-
-            _context.Steps.Remove(step);
+            step.DeletedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            return true;
+            return step;
         }
 
-        public async Task<bool> AssignUserToStep(Guid id, Guid userId)
+        public async Task SaveChangesAsync()
         {
-            var step = await _context.Steps
-                .Include(s => s.Users)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            await _context.SaveChangesAsync();
+        }
 
-            var user = await _context.Users.FindAsync(userId);
+        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsQueriedAsync(string? name, QueryParams? parameters)
+        {
+            IQueryable<Step> query = _context.Steps.Include(s => s.Users)
+                    .Include(s => s.FlowSteps)
+                        .ThenInclude(s => s.Flow);
 
-            if (step == null || user == null)
-                return false;
-
-            if (!step.Users.Any(u => u.Id == userId))
+            // filtering
+            if (!string.IsNullOrEmpty(name))
             {
-                step.Users.Add(user);
-                await _context.SaveChangesAsync();
+                query = query.Where(s => s.Name.Contains(name));
             }
 
-            return true;
-        }
+            int totalCount = query.Count();
 
-        public async Task<bool> UnassignUserFromStep(Guid id, Guid userId)
-        {
-            var step = await _context.Steps
-                .Include(s => s.Users)
-                .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (step == null)
-                return false;
-
-            var link = step.Users.FirstOrDefault(u => u.Id == userId);
-            if (link != null)
+            if (parameters == null)
             {
-                step.Users.Remove(link);
-                await _context.SaveChangesAsync();
+                return (await query.ToListAsync(), totalCount);
             }
 
-            return true;
-        }
-
-        public async Task<bool> AddStepToFlow(Guid stepId, Guid flowId)
-        {
-            var step = await _context.Steps.FindAsync(stepId);
-            var flow = await _context.Flows.FindAsync(flowId);
-
-            if (step == null || flow == null)
-                return false;
-
-            var existingFlowStep = await _context.FlowSteps
-                .FirstOrDefaultAsync(fs => fs.StepId == stepId && fs.FlowId == flowId);
-
-            if (existingFlowStep != null)
-                return false;
-
-            var flowStep = new FlowStep
+            if (parameters.SortBy != null)
             {
-                StepId = stepId,
-                FlowId = flowId,
-                CreatedAt = DateTime.UtcNow
-            };
+                if (parameters.SortDescending is bool sortDesc)
+                    query = query.ApplySorting<Step>(parameters.SortBy, sortDesc);
+                else
+                    query = query.ApplySorting<Step>(parameters.SortBy, false);
+            }
 
-            _context.FlowSteps.Add(flowStep);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> RemoveStepFromFlow(Guid stepId, Guid flowId)
-        {
-            var flowStep = await _context.FlowSteps
-                .FirstOrDefaultAsync(fs => fs.StepId == stepId && fs.FlowId == flowId);
-
-            if (flowStep == null)
-                return false;
-
-            _context.FlowSteps.Remove(flowStep);
-            await _context.SaveChangesAsync();
-            return true;
+            if (parameters.Page == null || parameters.Page < 0 ||
+               parameters.PageSize == null || parameters.PageSize < 0)
+            {
+                return (await query.ToListAsync(), totalCount);
+            }
+            else
+            {
+                List<Step> steps = await query.Skip((int)parameters.PageSize * ((int)parameters.Page - 1))
+                                               .Take((int)parameters.PageSize)
+                                               .ToListAsync();
+                return (steps, totalCount);
+            }
         }
     }
 }

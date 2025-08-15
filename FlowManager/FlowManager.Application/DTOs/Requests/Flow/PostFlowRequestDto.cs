@@ -1,0 +1,21 @@
+﻿using FlowManager.Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace FlowManager.Application.DTOs.Requests.Flow
+{
+    public class PostFlowRequestDto
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+
+        public string Name { get; set; }
+
+        public virtual Guid FormTemplateId { get; set; }
+
+        public virtual List<Guid> StepIds { get; set; } = new List<Guid>();
+    }
+}

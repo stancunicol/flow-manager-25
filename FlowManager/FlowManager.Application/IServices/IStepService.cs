@@ -3,21 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FlowManager.Application.DTOs.Requests.Step;
+using FlowManager.Application.DTOs.Responses;
+using FlowManager.Application.DTOs.Responses.Step;
 using FlowManager.Domain.Entities;
 
 namespace FlowManager.Application.Interfaces
 {
     public interface IStepService
     {
-        Task<IEnumerable<Step>> GetSteps();
-        Task<Step?> GetStep(Guid id);
-        Task<IEnumerable<Step>> GetStepsByFlow(Guid flowId);
-        Task<Step> PostStep(Step step);
-        Task<bool> PutStep(Guid id, Step step);
-        Task<bool> DeleteStep(Guid id);
-        Task<bool> AssignUserToStep(Guid id, Guid userId);
-        Task<bool> UnassignUserFromStep(Guid id, Guid userId);
-        Task<bool> AddStepToFlow(Guid stepId, Guid flowId);
-        Task<bool> RemoveStepFromFlow(Guid stepId, Guid flowId);
+        Task<PagedResponseDto<StepResponseDto>> GetAllStepsQueriedAsync(QueriedStepRequestDto payload);
+        Task<StepResponseDto> GetStepAsync(Guid id);
+        Task<StepResponseDto> PostStepAsync(PostStepRequestDto payload);
+        Task<StepResponseDto> PatchStepAsync(Guid id, PatchStepRequestDto payload);
+        Task<StepResponseDto> DeleteStepAsync(Guid id);
+        Task<StepResponseDto> AssignUserToStepAsync(Guid id, Guid userId);
+        Task<StepResponseDto> UnassignUserFromStepAsync(Guid id, Guid userId);
+        Task<StepResponseDto> AddStepToFlowAsync(Guid stepId, Guid flowId);
+        Task<StepResponseDto> RemoveStepFromFlowAsync(Guid stepId, Guid flowId);
+        Task<StepResponseDto> RestoreStepToFlowAsync(Guid stepId, Guid flowId);
     }
 }

@@ -3,21 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 
 namespace FlowManager.Domain.IRepositories
 {
     public interface IStepRepository
     {
-        Task<IEnumerable<Step>> GetSteps();
-        Task<Step?> GetStep(Guid id);
-        Task<IEnumerable<Step>> GetStepsByFlow(Guid flowId);
-        Task<Step> PostStep(Step step);
-        Task<bool> PutStep(Guid id, Step step);
-        Task<bool> DeleteStep(Guid id);
-        Task<bool> AssignUserToStep(Guid id, Guid userId);
-        Task<bool> UnassignUserFromStep(Guid id, Guid userId);
-        Task<bool> AddStepToFlow(Guid stepId, Guid flowId);
-        Task<bool> RemoveStepFromFlow(Guid stepId, Guid flowId);
+        Task<IEnumerable<Step>> GetStepsAsync();
+        Task<Step?> GetStepByIdAsync(Guid id);
+        Task<IEnumerable<Step>> GetStepsByFlowAsync(Guid flowId);
+        Task<Step> PostStepAsync(Step step);
+        Task<Step> DeleteStepAsync(Step step);
+        Task SaveChangesAsync();
+        Task<(List<Step> Steps, int TotalCount)> GetAllStepsQueriedAsync(string? name, QueryParams? parameters);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using FlowManager.Application.DTOs.Requests.FormTemplate;
+using FlowManager.Application.DTOs.Responses.FormTemplate;
 using FlowManager.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,8 +14,8 @@ namespace FlowManager.API.Controllers
 
         public FormTemplatesController(IFormTemplateService formTemplateService, ILogger<FormTemplatesController> logger)
         {
-            _formTemplateService = formTemplateService ?? throw new ArgumentNullException(nameof(formTemplateService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _formTemplateService = formTemplateService;
+            _logger = logger;
         }
 
         [HttpGet("queried")]
@@ -24,6 +25,17 @@ namespace FlowManager.API.Controllers
         public async Task<IActionResult> GetFormTemplatesQueriedAsync([FromQuery] QueriedFormTemplateRequestDto payload)
         {
             var result = await _formTemplateService.GetAllFormTemplatesQueriedAsync(payload);
+
+            if(result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<FormTemplateResponseDto>(),
+                    Success = false,
+                    Message = "No form templates found matching the criteria.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
 
             return Ok(new
             {

@@ -32,6 +32,8 @@ namespace FlowManager.Infrastructure.Context
             UniqueRolenameConstraintConfiguration(builder);
             UniqueFormTemplateConstraintConfiguration(builder);
 
+            UniqueFlowStepKeyConstraintConfiguration(builder);
+
             UserRoleRelationshipConfiguration(builder);
 
             JSONBConfiguration(builder);
@@ -84,6 +86,12 @@ namespace FlowManager.Infrastructure.Context
                           v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
                       .HasColumnType("jsonb"); // PostgreSQL jsonb type
             });
+        }
+
+        private void UniqueFlowStepKeyConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FlowStep>()
+                .HasKey(fs => new { fs.FlowId, fs.StepId });
         }
 
         private void UniqueRolenameConstraintConfiguration(ModelBuilder builder)

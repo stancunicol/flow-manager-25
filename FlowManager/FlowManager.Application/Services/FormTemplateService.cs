@@ -20,10 +20,12 @@ namespace FlowManager.Infrastructure.Services
     public class FormTemplateService : IFormTemplateService
     {
         private readonly IFormTemplateRepository _formTemplateRepository;
-        
-        public FormTemplateService(IFormTemplateRepository formTemplateRepository)
+        private readonly IComponentRepository _componentRepository;
+
+        public FormTemplateService(IFormTemplateRepository formTemplateRepository, IComponentRepository componentRepository)
         {
             _formTemplateRepository = formTemplateRepository;
+            _componentRepository = componentRepository;
         }
 
         public async Task<FormTemplateResponseDto> DeleteFormTemplateAsync(Guid id)
@@ -76,7 +78,7 @@ namespace FlowManager.Infrastructure.Services
         }
         
 
-        public async Task<FormTemplateResponseDto?> GetFormTemplateByIdAsync(Guid id)
+        public async Task<FormTemplateResponseDto> GetFormTemplateByIdAsync(Guid id)
         {
             FormTemplate? formTemplate = await _formTemplateRepository.GetFormTemplateByIdAsync(id);
 
@@ -100,7 +102,7 @@ namespace FlowManager.Infrastructure.Services
             };
         }
 
-        public async Task<FormTemplateResponseDto?> PatchFormTemplateAsync(Guid id, PatchFormTemplateRequestDto payload)
+        public async Task<FormTemplateResponseDto> PatchFormTemplateAsync(Guid id, PatchFormTemplateRequestDto payload)
         {
             var formTemplateToPatch = await _formTemplateRepository.GetFormTemplateByIdAsync(id);
 
@@ -117,7 +119,15 @@ namespace FlowManager.Infrastructure.Services
 
             if(payload.Components != null)
             {
-                foreach(FormTemplateComponent component in formTemplateToPatch.Components)
+                foreach (Guid componentId in payload.Components)
+                {
+                    if(await _componentRepository.GetComponentByIdAsync(componentId) == null)
+                    {
+                        throw new EntryNotFoundException($"Component with id {componentId} was not found.");
+                    }
+                }
+
+                foreach (FormTemplateComponent component in formTemplateToPatch.Components)
                 {
                     component.DeletedAt = DateTime.UtcNow;
                 }
@@ -139,12 +149,6 @@ namespace FlowManager.Infrastructure.Services
                         formTemplateToPatch.Components.Add(newComponent);
                     }
                 }
-
-                formTemplateToPatch.Components = payload.Components.Select(c => new FormTemplateComponent
-                {
-                    ComponentId = c,
-                    FormTemplateId = formTemplateToPatch.Id
-                }).ToList();
             }
 
             formTemplateToPatch.UpdatedAt = DateTime.UtcNow;

@@ -27,6 +27,17 @@ namespace FlowManager.API.Controllers
         {
             var result = await _userService.GetAllUsersAsync();
 
+            if(result == null || !result.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No users found.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
             return Ok(new
             {
                 Result = result,
@@ -42,6 +53,17 @@ namespace FlowManager.API.Controllers
         public async Task<IActionResult> GetAllModeratorsAsync()
         {
             var result = await _userService.GetAllModeratorsAsync();
+
+            if(result == null || !result.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No moderators found.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
 
             return Ok(new
             {
@@ -59,6 +81,17 @@ namespace FlowManager.API.Controllers
         {
             var result = await _userService.GetAllAdminsAsync();
 
+            if(result == null || !result.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No admins found.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
             return Ok(new
             {
                 Result = result,
@@ -75,6 +108,17 @@ namespace FlowManager.API.Controllers
         public async Task<IActionResult> GetAllUsersQueriedAsync([FromQuery] QueriedUserRequestDto payload)
         {
             var result = await _userService.GetAllUsersQueriedAsync(payload);
+
+            if(result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No users found matching the criteria.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
 
             return Ok(new
             {

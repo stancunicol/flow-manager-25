@@ -17,13 +17,24 @@ namespace FlowManager.API.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllFormResponsesAsync()
         {
             var result = await _formResponseService.GetAllFormResponsesAsync();
+
+            if(result.Count == 0)
+            {
+                return NotFound(new
+                {
+                    Result = new List<PostFormResponseRequestDto>(),
+                    Success = false,
+                    Message = "No form responses found.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
 
             return Ok(new
             {
@@ -34,8 +45,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-
-
         [HttpGet("queried")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -43,6 +52,17 @@ namespace FlowManager.API.Controllers
         public async Task<IActionResult> GetFormResponsesQueriedAsync([FromQuery] QueriedFormResponseRequestDto payload)
         {
             var result = await _formResponseService.GetAllFormResponsesQueriedAsync(payload);
+
+            if (result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<FormResponseResponseDto>(),
+                    Success = false,
+                    Message = "No form responses found.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
 
             return Ok(new
             {
