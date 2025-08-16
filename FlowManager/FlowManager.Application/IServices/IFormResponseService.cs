@@ -1,5 +1,5 @@
-﻿using FlowManager.Application.DTOs.Requests.FormResponse;
-using FlowManager.Application.DTOs.Responses;
+﻿using FlowManager.Shared.DTOs.Requests.FormResponse;
+using FlowManager.Shared.DTOs.Responses;
 
 namespace FlowManager.Application.Interfaces
 {

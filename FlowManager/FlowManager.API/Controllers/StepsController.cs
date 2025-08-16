@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
-using FlowManager.Application.DTOs.Responses.Step;
-using FlowManager.Application.DTOs.Requests.Step;
+using FlowManager.Shared.DTOs.Requests.Step;
+using FlowManager.Shared.DTOs.Responses.Step;
 
 namespace FlowManager.API.Controllers
 {

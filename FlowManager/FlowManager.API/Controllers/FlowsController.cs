@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
-using FlowManager.Application.DTOs.Responses.Flow;
-using FlowManager.Application.DTOs.Responses.Step;
-using FlowManager.Application.DTOs.Requests.Flow;
+using FlowManager.Shared.DTOs.Requests.Flow;
+using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.Step;
 
 namespace FlowManager.API.Controllers
 {

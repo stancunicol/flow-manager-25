@@ -1,7 +1,4 @@
-﻿using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.FormTemplate;
-using FlowManager.Application.DTOs.Responses.FormTemplateComponent;
-using FlowManager.Domain.Dtos;
+﻿using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Context;

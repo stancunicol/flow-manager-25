@@ -1,10 +1,11 @@
-﻿using FlowManager.Application.DTOs.Requests.FormResponse;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
+using FlowManager.Shared.DTOs.Requests.FormResponse;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Application.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace FlowManager.Application.Services

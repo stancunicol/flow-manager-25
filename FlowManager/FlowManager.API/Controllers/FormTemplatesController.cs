@@ -1,6 +1,6 @@
-﻿using FlowManager.Application.DTOs.Requests.FormTemplate;
-using FlowManager.Application.DTOs.Responses.FormTemplate;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
+using FlowManager.Shared.DTOs.Requests.FormTemplate;
+using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowManager.API.Controllers

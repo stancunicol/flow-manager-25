@@ -1,6 +1,6 @@
-﻿using FlowManager.Application.DTOs.Requests.FormTemplate;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.FormTemplate;
+﻿using FlowManager.Shared.DTOs.Requests.FormTemplate;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using System;
 using System.Collections.Generic;
 using System.Linq;

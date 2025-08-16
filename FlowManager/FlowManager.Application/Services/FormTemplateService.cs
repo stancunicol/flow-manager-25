@@ -1,13 +1,14 @@
-﻿using FlowManager.Application.DTOs.Requests.FormTemplate;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.FormTemplate;
-using FlowManager.Application.DTOs.Responses.FormTemplateComponent;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Utils;
+using FlowManager.Shared.DTOs.Requests.FormTemplate;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.FormTemplate;
+using FlowManager.Application.Utils;
+using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -77,7 +78,6 @@ namespace FlowManager.Infrastructure.Services
             };
         }
         
-
         public async Task<FormTemplateResponseDto> GetFormTemplateByIdAsync(Guid id)
         {
             FormTemplate? formTemplate = await _formTemplateRepository.GetFormTemplateByIdAsync(id);

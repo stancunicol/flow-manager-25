@@ -1,8 +1,8 @@
-﻿using FlowManager.Application.DTOs.Requests.Component;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.Component;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
 using FlowManager.Application.IServices;
+using FlowManager.Shared.DTOs.Requests.Component;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Component;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
 

@@ -1,11 +1,12 @@
-﻿using FlowManager.Application.DTOs.Requests.Step;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.Step;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
+using FlowManager.Shared.DTOs.Requests.Step;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Step;
+using FlowManager.Application.Utils;
 
 namespace FlowManager.Application.Services
 {

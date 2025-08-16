@@ -1,13 +1,14 @@
-using FlowManager.Application.DTOs.Requests.Flow;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.Flow;
-using FlowManager.Application.DTOs.Responses.Step;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
+using FlowManager.Shared.DTOs.Requests.Flow;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Application.Utils;
 using Microsoft.EntityFrameworkCore;
+using FlowManager.Shared.DTOs.Responses.Step;
 
 namespace FlowManager.Infrastructure.Services
 {

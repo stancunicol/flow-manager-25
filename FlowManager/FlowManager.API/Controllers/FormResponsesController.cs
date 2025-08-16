@@ -1,5 +1,5 @@
-﻿using FlowManager.Application.DTOs.Requests.FormResponse;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
+using FlowManager.Shared.DTOs.Requests.FormResponse;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowManager.API.Controllers
@@ -29,7 +29,7 @@ namespace FlowManager.API.Controllers
             {
                 return NotFound(new
                 {
-                    Result = new List<PostFormResponseRequestDto>(),
+                    Result = new List<FormResponseResponseDto>(),
                     Success = false,
                     Message = "No form responses found.",
                     Timestamp = DateTime.UtcNow

@@ -1,12 +1,12 @@
 ﻿using System.Security.Claims;
-using FlowManager.Application.DTOs;
-using FlowManager.Application.DTOs.Requests.Auth;
 using FlowManager.Domain.Entities;
 using FlowManager.Infrastructure.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using FlowManager.Shared.DTOs.Requests.Auth;
+using FlowManager.Shared.DTOs;
 
 namespace FlowManager.API.Controllers
 {

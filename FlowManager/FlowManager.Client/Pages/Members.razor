@@ -5,8 +5,9 @@
 @inject HttpClient Http
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using FlowManager.Client.ViewModels
 
-@attribute [Authorize(Roles = "Admin, Moderator")]
+@attribute [Authorize(Roles = "Admin")]
 
 <PageTitle>Members</PageTitle>
 
@@ -126,24 +127,22 @@ else
 }
 
 @code {
-    private List<UserResponseDto> users = new();
-    private Guid userIdToDelete;
-    private string userNameToDelete = "";
-    private bool showConfirm = false;
-    private bool showAddForm = false;
-    private bool showEditForm = false;
+    private bool _showConfirm = false;
+    private bool _showAddForm = false;
+    private bool _showEditForm = false;
 
+    private List<UserVM> _users = new();
+
+    // add/edit a user
     private string _name = "";
     private string _email = "";
     private string _password = "";
-    private string _rank = "";
-    private string selectedRole = "";
+    private List<Guid> selectedRoles = new();
 
-    private List<string> availableRoles = new() { "basic", "moderator", "admin" };
-    private UserResponseDto selectedUser = new();
+    private List<RoleVM> _availableRoles = new();
 
-    private Guid CurrentUserId = Guid.Empty;
-    private string CurrentUserEmail = "";
+    private UserVM? userToDelete = null;
+    private UserVM? userToEdit = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -152,7 +151,7 @@ else
 
     private async Task LoadUsers()
     {
-        var allUsers = await Http.GetFromJsonAsync<List<UserResponseDto>>("api/users");
+        var allUsers = await Http.GetFromJsonAsync<List<UserResponseDto>>("api/users/queried");
         users = allUsers.Where(u => u.Email != CurrentUserEmail).ToList();
     }
 
