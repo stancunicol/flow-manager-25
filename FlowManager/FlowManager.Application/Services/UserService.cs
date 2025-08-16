@@ -1,16 +1,16 @@
 ﻿using FlowManager.Application.Interfaces;
-using FlowManager.Application.DTOs;
 using FlowManager.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using FlowManager.Domain.IRepositories;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.User;
-using FlowManager.Application.DTOs.Requests.User;
 using FlowManager.Infrastructure.Utils;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.Dtos;
+using FlowManager.Application.Utils;
+using FlowManager.Shared.DTOs.Responses.User;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Requests.User;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -146,7 +146,7 @@ namespace FlowManager.Infrastructure.Services
             };
         }
 
-        public async Task<UserResponseDto?> AddUserAsync(PostUserRequestDto payload)
+        public async Task<UserResponseDto> AddUserAsync(PostUserRequestDto payload)
         {
             if(_userRepository.GetUserByEmailAsync(payload.Email) != null)
             {

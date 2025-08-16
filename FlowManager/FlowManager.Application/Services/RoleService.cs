@@ -1,8 +1,8 @@
-﻿using FlowManager.Application.DTOs.Responses.Role;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
+using FlowManager.Shared.DTOs.Responses.Role;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

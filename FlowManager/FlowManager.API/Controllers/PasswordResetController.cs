@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
-using FlowManager.Application.DTOs;
+using FlowManager.Shared.DTOs;
 
 namespace FlowManager.API.Controllers
 {

@@ -1,12 +1,11 @@
-﻿using System;
+﻿using FlowManager.Shared.DTOs.Requests.Step;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Step;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using FlowManager.Application.DTOs.Requests.Step;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.Step;
-using FlowManager.Domain.Entities;
 
 namespace FlowManager.Application.Interfaces
 {

@@ -1,4 +1,4 @@
-﻿using FlowManager.Application.DTOs;
+﻿using FlowManager.Shared.DTOs;
 using System.Net.Http.Json;
 
 namespace FlowManager.Client.Services

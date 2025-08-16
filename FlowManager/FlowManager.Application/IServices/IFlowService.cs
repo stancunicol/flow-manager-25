@@ -1,8 +1,8 @@
-using FlowManager.Application.DTOs.Requests.Flow;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.Flow;
-using FlowManager.Application.DTOs.Responses.Step;
 using FlowManager.Domain.Entities;
+using FlowManager.Shared.DTOs.Requests.Flow;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.Step;
 
 namespace FlowManager.Application.Interfaces
 {
