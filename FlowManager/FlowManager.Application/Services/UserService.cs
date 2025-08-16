@@ -11,6 +11,7 @@ using FlowManager.Application.Utils;
 using FlowManager.Shared.DTOs.Responses.User;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Requests.User;
+using FlowManager.Shared.DTOs.Responses.Role;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -39,7 +40,11 @@ namespace FlowManager.Infrastructure.Services
                 CreatedAt = u.CreatedAt,
                 UpdatedAt = u.UpdatedAt,
                 DeletedAt = u.DeletedAt,
-                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                Roles = u.Roles.Select(r => new RoleResponseDto
+                {
+                    Id = r.RoleId,
+                    Name = r.Role.Name
+                }).ToList()
             });
         }
 
@@ -55,8 +60,11 @@ namespace FlowManager.Infrastructure.Services
                 UserName = u.UserName,
                 CreatedAt = u.CreatedAt,
                 UpdatedAt = u.UpdatedAt,
-                DeletedAt = u.DeletedAt,
-                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                Roles = u.Roles.Select(r => new RoleResponseDto
+                {
+                    Id = r.RoleId,
+                    Name = r.Role.Name
+                }).ToList()
             });
         }
 
@@ -73,7 +81,11 @@ namespace FlowManager.Infrastructure.Services
                 CreatedAt = u.CreatedAt,
                 UpdatedAt = u.UpdatedAt,
                 DeletedAt = u.DeletedAt,
-                Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                Roles = u.Roles.Select(r => new RoleResponseDto
+                {
+                    Id = r.RoleId,
+                    Name = r.Role.Name
+                }).ToList()
             });
         }
 
@@ -92,7 +104,11 @@ namespace FlowManager.Infrastructure.Services
                     CreatedAt = u.CreatedAt,
                     UpdatedAt = u.UpdatedAt,
                     DeletedAt = u.DeletedAt,
-                    Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                    Roles = u.Roles.Select(r => new RoleResponseDto
+                    {
+                        Id = r.RoleId,
+                        Name = r.Role.Name 
+                    }).ToList()
                 }),
                 Page = payload.QueryParams.Page ?? 1,
                 PageSize = payload.QueryParams.PageSize ?? totalCount,
@@ -116,7 +132,11 @@ namespace FlowManager.Infrastructure.Services
                     CreatedAt = u.CreatedAt,
                     UpdatedAt = u.UpdatedAt,
                     DeletedAt = u.DeletedAt,
-                    Roles = u.Roles.Select(r => r.Role.Name).ToList()
+                    Roles = u.Roles.Select(r => new RoleResponseDto
+                    {
+                        Id = r.RoleId,
+                        Name = r.Role.Name
+                    }).ToList()
                 }),
                 Page = payload.QueryParams?.Page ?? 1,
                 PageSize = payload.QueryParams?.PageSize ?? totalCount,
@@ -142,7 +162,11 @@ namespace FlowManager.Infrastructure.Services
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 DeletedAt = user.DeletedAt,
-                Roles = user.Roles.Select(r => r.Role.Name).ToList()
+                Roles = user.Roles.Select(r => new RoleResponseDto
+                {
+                    Id = r.RoleId,
+                    Name = r.Role.Name
+                }).ToList()
             };
         }
 
@@ -160,7 +184,7 @@ namespace FlowManager.Infrastructure.Services
                 Name = payload.Name,
                 NormalizedEmail = payload.Email.ToUpper(),
                 Email = payload.Email,
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
             foreach (Guid roleId in payload.Roles)

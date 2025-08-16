@@ -1,0 +1,93 @@
+﻿@using FlowManager.Client.ViewModels
+@using FlowManager.Client.Services;
+@using FlowManager.Client.DTOs;
+@using FlowManager.Shared.DTOs.Responses.User;
+@using FlowManager.Shared.DTOs.Requests.User;
+@using FlowManager.Shared.DTOs.Responses.Role;
+
+@if (ShowAddForm)
+{
+    <div class="popup-backdrop">
+        <div class="popup-container">
+            <h3>Create a new user</h3>
+
+            <label>Name: </label>
+            <input @bind="_name" type="text" class="popup-input" name="username" />
+
+            <label>Email: </label>
+            <input @bind="_email" type="text" class="popup-input" name="email" />
+
+            <label>Roles :</label>
+            <div>
+                <div>
+                    <input type="checkbox"
+                           id="adminRole"
+                           name="adminRole"
+                           @bind="_isNewUserAdmin">
+                    <label for="adminRole">
+                        Admin
+                    </label>
+                </div>
+
+                <div>
+                    <input type="checkbox"
+                           id="moderatorRole"
+                           name="moderatorRole"
+                           @bind="_isNewUserModerator">
+                    <label for="moderatorRole">
+                        Moderator
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                *All the users are automatically set to employees.
+            </div>
+
+
+            <div class="modal-actions">
+                <button @onclick="RegisterUser">Send</button>
+                <button @onclick="() => ShowAddForm = false">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private UserService _userService { get; set; } = default!;
+    [Inject] private RoleService _roleService { get; set; } = default!;
+
+    [Parameter] public bool ShowAddForm { get; set; }
+
+    // add/edit a user
+    private string _name = "";
+    private string _email = "";
+    private List<Guid> selectedRoles = new();
+
+    private List<RoleVM> _availableRoles;
+
+    private bool _isNewUserAdmin = false;
+    private bool _isNewUserModerator = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApiResponse<List<RoleResponseDto>> response = await _roleService.GetAllRolesAsync();
+
+        _availableRoles = response.Result.Select(r => new RoleVM
+        {
+            Id = r.Id,
+            RoleName = r.Name!
+        }).ToList();
+    }
+
+    private async Task RegisterUser()
+    {
+        ApiResponse<UserResponseDto> response = await _userService.PostUserAsync(new PostUserRequestDto
+        {
+            Email = _email,
+            Name = _name,
+            Username = _email,
+            Roles = selectedRoles
+        });
+    }
+}

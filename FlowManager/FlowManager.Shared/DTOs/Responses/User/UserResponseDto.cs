@@ -1,4 +1,6 @@
-﻿namespace FlowManager.Shared.DTOs.Responses.User
+﻿using FlowManager.Shared.DTOs.Responses.Role;
+
+namespace FlowManager.Shared.DTOs.Responses.User
 {
     public class UserResponseDto
     {
@@ -10,6 +12,6 @@
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
         public bool? IsDeleted => DeletedAt.HasValue;
-        public List<string>? Roles { get; set; }
+        public List<RoleResponseDto>? Roles { get; set; }
     }
 }
