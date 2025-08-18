@@ -1,4 +1,5 @@
 ﻿using FlowManager.Application.Interfaces;
+using FlowManager.Application.Utils;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
@@ -6,7 +7,7 @@ using FlowManager.Domain.IRepositories;
 using FlowManager.Shared.DTOs.Requests.Step;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Step;
-using FlowManager.Application.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace FlowManager.Application.Services
 {
@@ -128,103 +129,80 @@ namespace FlowManager.Application.Services
 
         public async Task<StepResponseDto> PatchStepAsync(Guid id, PatchStepRequestDto payload)
         {
-            Step? stepToPatch = await _stepRepository.GetStepByIdAsync(id);
-
-            if (stepToPatch == null)
+            // 1. Verifică dacă step-ul există (operațiune lightweight)
+            Step? stepExists = await _stepRepository.GetStepByIdForPatchAsync(id);
+            if (stepExists == null)
             {
                 throw new EntryNotFoundException($"Step with id {id} was not found.");
             }
 
-            // Actualizează numele
-            if (!string.IsNullOrEmpty(payload.Name))
+            Step updatedStep = stepExists;
+
+            try
             {
-                stepToPatch.Name = payload.Name;
+                // 2. Actualizează numele dacă este furnizat
+                if (!string.IsNullOrEmpty(payload.Name))
+                {
+                    updatedStep = await _stepRepository.UpdateStepNameAsync(id, payload.Name);
+                }
+
+                // 3. Actualizează userii dacă sunt furnizați
+                if (payload.UserIds != null)
+                {
+                    // Validează că toți userii există
+                    var missingUserIds = await _stepRepository.ValidateUsersExistAsync(payload.UserIds);
+                    if (missingUserIds.Any())
+                    {
+                        throw new EntryNotFoundException($"Users not found: {string.Join(", ", missingUserIds)}");
+                    }
+
+                    // Înlocuiește userii (operațiune atomică)
+                    updatedStep = await _stepRepository.ReplaceStepUsersAsync(id, payload.UserIds);
+                }
+
+                // 4. Actualizează teams dacă sunt furnizate
+                if (payload.TeamIds != null)
+                {
+                    // Validează că toate teams există
+                    var missingTeamIds = await _stepRepository.ValidateTeamsExistAsync(payload.TeamIds);
+                    if (missingTeamIds.Any())
+                    {
+                        throw new EntryNotFoundException($"Teams not found: {string.Join(", ", missingTeamIds)}");
+                    }
+
+                    // Înlocuiește teams (operațiune atomică)
+                    updatedStep = await _stepRepository.ReplaceStepTeamsAsync(id, payload.TeamIds);
+                }
+
+                // 5. Dacă nu s-au făcut modificări de relații, încarcă datele pentru display
+                if (payload.UserIds == null && payload.TeamIds == null && !string.IsNullOrEmpty(payload.Name))
+                {
+                    updatedStep = await _stepRepository.GetStepByIdForDisplayAsync(id) ?? updatedStep;
+                }
+
+                return MapToStepResponseDto(updatedStep);
             }
-
-            stepToPatch.UpdatedAt = DateTime.UtcNow;
-
-            // Gestionează userii (similar cu rolurile din UserService)
-            if (payload.UserIds != null)
+            catch (DbUpdateConcurrencyException ex)
             {
-                // 1. "Șterge" toți userii existenți (setează DeletedAt)
-                foreach (StepUser stepUser in stepToPatch.Users)
+                // Log detailed concurrency info
+                var conflictInfo = ex.Entries.Select(e => new
                 {
-                    stepUser.DeletedAt = DateTime.UtcNow;
-                    stepUser.UpdatedAt = DateTime.UtcNow;
-                }
+                    EntityType = e.Entity.GetType().Name,
+                    EntityId = e.Entity.GetType().GetProperty("Id")?.GetValue(e.Entity)?.ToString() ?? "Unknown"
+                }).ToList();
 
-                // 2. Adaugă userii noi
-                foreach (Guid userId in payload.UserIds)
-                {
-                    User? user = await _userRepository.GetUserByIdAsync(userId);
-                    if (user == null)
-                    {
-                        throw new EntryNotFoundException($"User with id {userId} not found.");
-                    }
-
-                    // Verifică dacă relația există deja și o restaurează
-                    StepUser? existingStepUser = stepToPatch.Users.FirstOrDefault(su => su.UserId == userId);
-                    if (existingStepUser != null)
-                    {
-                        existingStepUser.DeletedAt = null;
-                        existingStepUser.UpdatedAt = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        // Creează relație nouă
-                        StepUser stepUserToAdd = new StepUser
-                        {
-                            UserId = userId,
-                            StepId = stepToPatch.Id
-                        };
-                        stepToPatch.Users.Add(stepUserToAdd);
-                    }
-                }
+                throw new InvalidOperationException(
+                    $"Concurrency conflict occurred while updating step {id}. " +
+                    $"Conflicting entities: {string.Join(", ", conflictInfo.Select(c => $"{c.EntityType}({c.EntityId})"))}. " +
+                    "Please refresh and try again.", ex);
             }
-
-            // Gestionează teams (similar cu userii)
-            if (payload.TeamIds != null)
+            catch (Exception ex)
             {
-                // 1. "Șterge" toate teams existente
-                foreach (StepTeam stepTeam in stepToPatch.Teams)
-                {
-                    stepTeam.DeletedAt = DateTime.UtcNow;
-                    stepTeam.UpdatedAt = DateTime.UtcNow;
-                }
-
-                // 2. Adaugă teams noi
-                foreach (Guid teamId in payload.TeamIds)
-                {
-                    Team? team = await _teamRepository.GetTeamByIdAsync(teamId);
-                    if (team == null)
-                    {
-                        throw new EntryNotFoundException($"Team with id {teamId} not found.");
-                    }
-
-                    // Verifică dacă relația există deja și o restaurează
-                    StepTeam? existingStepTeam = stepToPatch.Teams.FirstOrDefault(st => st.TeamId == teamId);
-                    if (existingStepTeam != null)
-                    {
-                        existingStepTeam.DeletedAt = null;
-                        existingStepTeam.UpdatedAt = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        // Creează relație nouă
-                        StepTeam stepTeamToAdd = new StepTeam
-                        {
-                            TeamId = teamId,
-                            StepId = stepToPatch.Id
-                        };
-                        stepToPatch.Teams.Add(stepTeamToAdd);
-                    }
-                }
+                // Log și re-throw pentru alte tipuri de erori
+                throw new InvalidOperationException($"Error updating step {id}: {ex.Message}", ex);
             }
-
-            await _stepRepository.SaveChangesAsync();
-
-            return MapToStepResponseDto(stepToPatch);
         }
+
 
         public async Task<StepResponseDto> DeleteStepAsync(Guid id)
         {
