@@ -1,4 +1,5 @@
-﻿@page "/"
+﻿@page "/auth"
+@page "/"
 <div class="fullAuth">
     <div class="auth-page">
         <div class="auth-left">
@@ -18,7 +19,7 @@
                 <input type="password" placeholder="Password" @bind="password" required />
 
                 <button type="submit">Sign in</button>
-                <a href="#" class="forgot-password">Reset Password?</a>
+                <a href="/reset-password" class="forgot-password">Reset Password?</a>
 
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {

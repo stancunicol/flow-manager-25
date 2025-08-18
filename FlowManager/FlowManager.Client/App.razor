@@ -4,16 +4,32 @@
 
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-            <Authorizing>
-                <div class="spinner-overlay">
-                    <div class="spinner"></div>
-                </div>
-            </Authorizing>
-            <NotAuthorized>
-                @RedirectToRootOnce()
-            </NotAuthorized>
-        </AuthorizeRouteView>
+        @{
+            var currentUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+            var isPublicRoute = currentUrl == "auth" ||
+            currentUrl == "reset-password" ||
+            currentUrl == "" ||
+            routeData.PageType.Name == "Auth" ||
+            routeData.PageType.Name == "ResetPassword";
+        }
+
+        @if (isPublicRoute)
+        {
+            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        }
+        else
+        {
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                <Authorizing>
+                    <div class="spinner-overlay">
+                        <div class="spinner"></div>
+                    </div>
+                </Authorizing>
+                <NotAuthorized>
+                    @RedirectToRootOnce()
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        }
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <NotFound>
@@ -29,8 +45,7 @@
         if (!_hasRedirected)
         {
             _hasRedirected = true;
-            // Redirectul se face în contextul Blazor, după randare
-            _ = InvokeAsync(() => Navigation.NavigateTo("/", true));
+            _ = InvokeAsync(() => Navigation.NavigateTo("/auth", true));
         }
     };
 }
