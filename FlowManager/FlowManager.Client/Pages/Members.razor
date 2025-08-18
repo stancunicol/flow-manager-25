@@ -1,4 +1,4 @@
-﻿@page "/members"
+@page "/members"
 @using System.Net.Http.Json
 @using FlowManager.Shared.DTOs.Requests
 @using FlowManager.Shared.DTOs.Responses
@@ -37,13 +37,11 @@ else
 }
 
 <FlowManager.Client.Components.MembersModals.MembersAddUserModal
-    ShowAddForm="@_showAddForm"
-    />
+    ShowAddForm="@_showAddForm" />
 
 <FlowManager.Client.Components.MembersModals.MembersEditUserModal
     ShowEditForm="@_showEditForm"
-    UserToEdit="@_selectedUserToEdit"/>
-
+    UserToEdit="@_selectedUserToEdit" />
 
 @code {
     [Inject] private UserService UserService { get; set; } = default!;
@@ -52,9 +50,7 @@ else
     private bool _showEditForm = false;
 
     private List<UserVM> _users = new();
-
     private List<RoleVM> _availableRoles = new();
-
     private UserVM _selectedUserToEdit = new();
 
     protected override async Task OnInitializedAsync()
@@ -89,7 +85,6 @@ else
     private void OpenEditUser(UserVM user)
     {
         _selectedUserToEdit = user;
-
         _showEditForm = true;
     }
 }

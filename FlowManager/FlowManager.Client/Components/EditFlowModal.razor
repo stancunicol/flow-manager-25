@@ -80,7 +80,7 @@
         if (FlowToEdit != null && IsOpen)
         {
             _name = FlowToEdit.Name;
-            _description = FlowToEdit.Description;
+            //_description = FlowToEdit.Description;
             Steps = FlowToEdit.Steps.ToList();
             OriginalSteps = FlowToEdit.Steps.ToList();
         }
@@ -146,7 +146,7 @@
             {
                 Id = FlowToEdit.Id,
                 Name = _name,
-                Description = _description,
+                //Description = _description,
                 CreatedAt = FlowToEdit.CreatedAt,
                 UpdatedAt = DateTime.UtcNow
             };

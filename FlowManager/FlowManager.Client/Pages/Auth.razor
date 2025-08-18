@@ -1,27 +1,23 @@
 ﻿@page "/auth"
 <div class="fullAuth">
-
     <div class="auth-page">
-        <div class="left-animation @(animateLeft ? "slide-left-out" : "")">
-            <div class="auth-left">
-                <img src="lib/siemens-logo.png" alt="Siemens Logo" class="siemens-logo"/>
+        <div class="auth-left">
+            <img src="lib/siemens-logo.png" alt="Siemens Logo" class="siemens-logo" />
 
-                <h1>Flow Simulator</h1>
-                <div class="auth-underline"></div>
-                <h2 class="auth-motto">Approve, optimize, evolve – all in one place.</h2>
-                <p class="auth-desc">Empower your teams with structured, fast, and transparent approvals.</p>
-            </div>
+            <h2 class="flow-title">Flow Simulator</h2>
+            <div class="auth-underline"></div>
+            <h3 class="auth-motto">Approve, optimize, evolve – all in one place.</h3>
         </div>
 
-        <div class="auth-right @(animateRight ? "slide-right-out" : "")">
+        <div class="auth-right">
             <form class="auth-form" @onsubmit="HandleLogin">
                 <h2 class="auth-title">Login</h2>
                 <p class="auth-subtitle">Access your account</p>
 
-                <input type="email" placeholder="Enter your email" @bind="email" required/>
-                <input type="password" placeholder="Enter your password" @bind="password" required/>
+                <input type="email" placeholder="Email" @bind="email" required />
+                <input type="password" placeholder="Password" @bind="password" required />
 
-                <button type="submit">Sign In</button>
+                <button type="submit">Sign in</button>
                 <a href="#" class="forgot-password">Reset Password?</a>
 
                 @if (!string.IsNullOrEmpty(errorMessage))
@@ -32,4 +28,3 @@
         </div>
     </div>
 </div>
-

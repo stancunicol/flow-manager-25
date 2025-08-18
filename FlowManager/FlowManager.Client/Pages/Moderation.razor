@@ -1,4 +1,4 @@
-﻿@page "/moderation"
+﻿@* @page "/moderation"
 @attribute [Authorize(Roles = "Moderator")]
 @using FlowManager.Domain.Entities
 @using FlowManager.Client.Components
@@ -350,4 +350,4 @@ else
         return 0; // Default to first step
     }
 
-}
+} *@
