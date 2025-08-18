@@ -33,6 +33,12 @@ namespace FlowManager.Infrastructure.Repositories
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
+        public async Task<Role?> GetRoleByRolenameAsync(string roleName)
+        {
+            return await _context.Roles
+                .FirstOrDefaultAsync(r => r.NormalizedName == roleName.ToUpper());
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

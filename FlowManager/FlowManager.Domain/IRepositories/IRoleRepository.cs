@@ -11,6 +11,7 @@ namespace FlowManager.Domain.IRepositories
     {
         Task<List<Role>> GetAllRolesAsync();
         Task<Role?> GetRoleByIdAsync(Guid id);
+        Task<Role?> GetRoleByRolenameAsync(string roleName);
         Task SaveChangesAsync();
     }
 }

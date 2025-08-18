@@ -1,4 +1,4 @@
-@using FlowManager.Domain.Entities
+@* @using FlowManager.Domain.Entities
 @using FlowManager.Client.Services
 @inject FlowService FlowService
 @inject StepService StepService
@@ -196,4 +196,4 @@
     }
 
     private bool IsFormValid => !string.IsNullOrWhiteSpace(_name) && Steps.Count > 0;
-}
+} *@
