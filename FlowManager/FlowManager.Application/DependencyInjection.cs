@@ -1,4 +1,5 @@
 using FlowManager.Application.Interfaces;
+using FlowManager.Application.IServices;
 using FlowManager.Application.Services;
 using FlowManager.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,9 @@ namespace FlowManager.Application
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFormTemplateService, FormTemplateService>();
             services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IStepService,StepService>();
+            services.AddScoped<ITeamService,TeamService>();
+            
 
             return services;
         }

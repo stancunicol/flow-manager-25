@@ -17,6 +17,13 @@ namespace FlowManager.API.Controllers
             _stepService = stepService;
         }
 
+        // ==========================================
+        // CRUD OPERATIONS
+        // ==========================================
+
+        /// <summary>
+        /// Get all steps with optional filtering, sorting and pagination
+        /// </summary>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -26,7 +33,7 @@ namespace FlowManager.API.Controllers
         {
             var result = await _stepService.GetAllStepsQueriedAsync(payload);
 
-            if(result.Data == null || !result.Data.Any())
+            if (result.Data == null || !result.Data.Any())
             {
                 return NotFound(new
                 {
@@ -46,6 +53,40 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Get all steps (simple list without pagination)
+        /// </summary>
+        [HttpGet("all")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllStepsAsync()
+        {
+            var result = await _stepService.GetStepsAsync();
+
+            if (result == null || !result.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<StepResponseDto>(),
+                    Success = false,
+                    Message = "No steps found.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Steps retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        /// <summary>
+        /// Get step by ID
+        /// </summary>
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -63,40 +104,84 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Create a new step with users, teams and flows
+        /// </summary>
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PostStepAsync([FromBody] PostStepRequestDto payload)
         {
             var result = await _stepService.PostStepAsync(payload);
-            return Ok(new
+            return CreatedAtAction(nameof(GetStepAsync), new { id = result.Id }, new
             {
                 Result = result,
                 Success = true,
-                Message = "Step posted succesfully.",
+                Message = "Step created successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }
 
+        /// <summary>
+        /// Update step (name, users, teams) - Complete management through PATCH
+        /// </summary>
+        /// <remarks>
+        /// Examples:
+        /// 
+        /// Update only name:
+        /// {
+        ///   "name": "New Step Name"
+        /// }
+        /// 
+        /// Update users (replace all):
+        /// {
+        ///   "userIds": ["user1-id", "user2-id"]
+        /// }
+        /// 
+        /// Remove all users:
+        /// {
+        ///   "userIds": []
+        /// }
+        /// 
+        /// Update teams (replace all):
+        /// {
+        ///   "teamIds": ["team1-id", "team2-id"]
+        /// }
+        /// 
+        /// Remove all teams:
+        /// {
+        ///   "teamIds": []
+        /// }
+        /// 
+        /// Update everything:
+        /// {
+        ///   "name": "Updated Step",
+        ///   "userIds": ["user1-id"],
+        ///   "teamIds": ["team1-id"]
+        /// }
+        /// </remarks>
         [HttpPatch("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchStepAsync(Guid id,[FromBody] PatchStepRequestDto payload)
+        public async Task<IActionResult> PatchStepAsync(Guid id, [FromBody] PatchStepRequestDto payload)
         {
             var result = await _stepService.PatchStepAsync(id, payload);
             return Ok(new
             {
                 Result = result,
                 Success = true,
-                Message = "Step put succesfully.",
+                Message = "Step updated successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }
 
+        /// <summary>
+        /// Delete step (soft delete)
+        /// </summary>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -109,92 +194,72 @@ namespace FlowManager.API.Controllers
             {
                 Result = result,
                 Success = true,
-                Message = "Step deleted succesfully.",
+                Message = "Step deleted successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }
 
-        [HttpPost("{id}/assign-user/{userId}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AssignUserToStep(Guid id, Guid userId)
-        {
-            var result = await _stepService.AssignUserToStepAsync(id, userId);
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "User assigned to step succesfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
+        // ==========================================
+        // FLOW MANAGEMENT (păstrat pentru că nu e redundant)
+        // ==========================================
 
-        [HttpDelete("{id}/unassign-user/{userId}")]
+        /// <summary>
+        /// Add step to flow
+        /// </summary>
+        [HttpPost("{stepId}/flows/{flowId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UnassignUserFromStep(Guid id, Guid userId)
-        {
-            var result = await _stepService.UnassignUserFromStepAsync(id, userId);
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "User unassigned from step succesfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        [HttpPost("{stepId}/add-to-flow/{flowId}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddStepToFlow(Guid stepId, Guid flowId, [FromQuery] int order = 0)
+        public async Task<IActionResult> AddStepToFlowAsync(Guid stepId, Guid flowId)
         {
             var result = await _stepService.AddStepToFlowAsync(stepId, flowId);
             return Ok(new
             {
                 Result = result,
                 Success = true,
-                Message = "Step added to flow succesfully.",
+                Message = "Step added to flow successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }
 
-        [HttpDelete("{stepId}/remove-from-flow/{flowId}")]
+        /// <summary>
+        /// Remove step from flow
+        /// </summary>
+        [HttpDelete("{stepId}/flows/{flowId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RemoveStepFromFlow(Guid stepId, Guid flowId)
+        public async Task<IActionResult> RemoveStepFromFlowAsync(Guid stepId, Guid flowId)
         {
             var result = await _stepService.RemoveStepFromFlowAsync(stepId, flowId);
             return Ok(new
             {
                 Result = result,
                 Success = true,
-                Message = "Step removed from flow succesfully.",
+                Message = "Step removed from flow successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }
 
-        [HttpPatch("{stepId}/restore-from-flow/{flowId}")]
+        /// <summary>
+        /// Restore step to flow (undo soft delete)
+        /// </summary>
+        [HttpPatch("{stepId}/flows/{flowId}/restore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RestoreStepFromFlow(Guid stepId, Guid flowId)
+        public async Task<IActionResult> RestoreStepToFlowAsync(Guid stepId, Guid flowId)
         {
             var result = await _stepService.RestoreStepToFlowAsync(stepId, flowId);
             return Ok(new
             {
                 Result = result,
                 Success = true,
-                Message = "Step removed from flow succesfully.",
+                Message = "Step restored to flow successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }

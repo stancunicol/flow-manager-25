@@ -23,7 +23,9 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
-
+        public DbSet<Team> Teams => Set<Team>();
+        public DbSet<StepUser> StepUsers => Set<StepUser>();
+        public DbSet<StepTeam> StepTeams => Set<StepTeam>();
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -31,10 +33,14 @@ namespace FlowManager.Infrastructure.Context
             UniqueUserEmailConstraintConfiguration(builder);
             UniqueRolenameConstraintConfiguration(builder);
             UniqueFormTemplateConstraintConfiguration(builder);
+            UniqueTeamNameConstraintConfiguration(builder);
 
             UniqueFlowStepKeyConstraintConfiguration(builder);
+            StepUserKeyConstraintConfiguration(builder); // NOU
+            StepTeamKeyConstraintConfiguration(builder); // NOU
 
             UserRoleRelationshipConfiguration(builder);
+            TeamRelationshipConfiguration(builder);
 
             JSONBConfiguration(builder);
         }
@@ -62,6 +68,46 @@ namespace FlowManager.Infrastructure.Context
                       .IsRequired();
             });
         }
+        private void TeamRelationshipConfiguration(ModelBuilder builder)
+        {
+            // User -> Team (1-to-many)
+            builder.Entity<User>(entity =>
+            {
+                entity.HasOne(u => u.Team)
+                      .WithMany(t => t.Users)
+                      .HasForeignKey(u => u.TeamId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // StepUser (many-to-many Step <-> User)
+            builder.Entity<StepUser>(entity =>
+            {
+                entity.HasOne(su => su.Step)
+                      .WithMany(s => s.Users)
+                      .HasForeignKey(su => su.StepId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(su => su.User)
+                      .WithMany(u => u.Steps)
+                      .HasForeignKey(su => su.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // StepTeam (many-to-many Step <-> Team)
+            builder.Entity<StepTeam>(entity =>
+            {
+                entity.HasOne(st => st.Step)
+                      .WithMany(s => s.Teams)
+                      .HasForeignKey(st => st.StepId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(st => st.Team)
+                      .WithMany(t => t.Steps)
+                      .HasForeignKey(st => st.TeamId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
 
         private void JSONBConfiguration(ModelBuilder builder)
         {
@@ -92,6 +138,23 @@ namespace FlowManager.Infrastructure.Context
         {
             builder.Entity<FlowStep>()
                 .HasKey(fs => new { fs.FlowId, fs.StepId });
+        }
+        // NOU - Configurare chei pentru StepUser
+        private void StepUserKeyConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<StepUser>()
+                .HasIndex(su => new { su.StepId, su.UserId })
+                .IsUnique()
+                .HasDatabaseName("IX_StepUsers_StepId_UserId");
+        }
+
+        // NOU - Configurare chei pentru StepTeam
+        private void StepTeamKeyConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<StepTeam>()
+                .HasIndex(st => new { st.StepId, st.TeamId })
+                .IsUnique()
+                .HasDatabaseName("IX_StepTeams_StepId_TeamId");
         }
 
         private void UniqueRolenameConstraintConfiguration(ModelBuilder builder)
@@ -125,6 +188,14 @@ namespace FlowManager.Infrastructure.Context
                 .HasIndex(ft => ft.Name)
                 .IsUnique()
                 .HasDatabaseName("IX_FormTemplates_Name");
+        }
+        // NOU - Configurare unicitate pentru Team name
+        private void UniqueTeamNameConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<Team>()
+                .HasIndex(t => t.Name)
+                .IsUnique()
+                .HasDatabaseName("IX_Teams_Name");
         }
     }
 }
