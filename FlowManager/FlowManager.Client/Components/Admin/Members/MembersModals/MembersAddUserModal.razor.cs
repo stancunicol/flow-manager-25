@@ -6,7 +6,7 @@ using FlowManager.Shared.DTOs.Responses.Role;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
 
-namespace FlowManager.Client.Components.MembersModals
+namespace FlowManager.Client.Components.Admin.Members.MembersModals
 {
     public partial class MembersAddUserModal : ComponentBase
     {
@@ -45,6 +45,11 @@ namespace FlowManager.Client.Components.MembersModals
                 Username = _email,
                 Roles = selectedRoles
             });
+        }
+
+        private void CancelForm()
+        {
+            ShowAddForm = false;
         }
     }
 }

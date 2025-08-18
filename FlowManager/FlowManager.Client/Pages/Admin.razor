@@ -1,0 +1,114 @@
+﻿@page "/admin"
+@layout MainLayout
+<FlowManager.Client.Components.NavBar.Navbar />
+
+<!-- Page description -->
+<div class="page-description">
+    <h2>Admin dashboard</h2>
+    <p>Manage system users, flows, forms and steps</p>
+</div>
+
+<div class="admin-container">
+    <!-- Left sidebar -->
+    <nav class="sidebar">
+        <!-- Navigation items -->
+        <div class="nav-main">
+            <!-- USERS -->
+            <button class="nav-item @(_activeTab == "USERS" ? "active" : "")"
+                    @onclick="@(() => SetActiveTab("USERS"))">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24"
+                     fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd"
+                          d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
+                          clip-rule="evenodd" />
+                </svg>
+                Users
+            </button>
+
+            <!-- FLOWS -->
+            <button class="nav-item @(_activeTab == "FLOWS" ? "active" : "")"
+                    @onclick="@(() => SetActiveTab("FLOWS"))">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24"
+                     fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd"
+                          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z"
+                          clip-rule="evenodd" />
+                    <path d="M8.25 3.75H6a.75.75 0 00-.75.75v1.5a.75.75 0 001.5 0V5.25h1.5a.75.75 0 000-1.5zm7.5 0a.75.75 0 000 1.5h1.5v.75a.75.75 0 001.5 0v-1.5a.75.75 0 00-.75-.75h-2.25zM6 15.75a.75.75 0 00-.75.75v1.5c0 .414.336.75.75.75h2.25a.75.75 0 000-1.5H6.75v-.75a.75.75 0 00-.75-.75zm12 0a.75.75 0 00-.75.75v.75h-.75a.75.75 0 000 1.5H18c.414 0 .75-.336.75-.75v-1.5a.75.75 0 00-.75-.75z" />
+                </svg>
+                Flows
+            </button>
+
+            <!-- STEPS -->
+            <button class="nav-item @(_activeTab == "STEPS" ? "active" : "")"
+            @onclick="@(() => SetActiveTab("STEPS"))">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24"
+                     fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd"
+                          d="M2.25 4.125c0-1.036.84-1.875 1.875-1.875h5.25c1.036 0 1.875.84 1.875 1.875V17.25a4.5 4.5 0 11-9 0V4.125zM4.5 14.25a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25zm0-3.75a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25zM4.5 6.75a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25z"
+                          clip-rule="evenodd" />
+                    <path d="M12.75 2.25a.75.75 0 00-1.5 0v15a2.25 2.25 0 104.5 0V3.375c0-.621-.504-1.125-1.125-1.125H12.75z" />
+                </svg>
+                Steps
+            </button>
+
+            <!-- FORM TEMPLATES -->
+            <button class="nav-item @(_activeTab == "FORMTEMPLATES" ? "active" : "")"
+            @onclick="@(() => SetActiveTab("FORMTEMPLATES"))">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24"
+                     fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd"
+                          d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75-4.5a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z"
+                          clip-rule="evenodd" />
+                    <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+                </svg>
+                Form Templates
+            </button>
+        </div>
+
+        <!-- Logout at bottom -->
+        <div class="nav-bottom">
+            <button class="nav-item logout-btn" @onclick="@(() => Logout())">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 24 24"
+                     fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd"
+                          d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6z"
+                          clip-rule="evenodd" />
+                    <path fill-rule="evenodd"
+                          d="M19.5 12a.75.75 0 000-1.5l-6-6a.75.75 0 00-1.06 1.06l4.72 4.72H9a.75.75 0 000 1.5h8.16l-4.72 4.72a.75.75 0 101.06 1.06l6-6z"
+                          clip-rule="evenodd" />
+                </svg>
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main content area -->
+    <main class="main-content">
+        @if (_activeTab == "USERS")
+        {
+            <FlowManager.Client.Components.Admin.Members.Members></FlowManager.Client.Components.Admin.Members.Members>
+        }
+        @if (_activeTab == "FLOWS")
+        {
+            <div>Flows content aici</div>
+        }
+        @if (_activeTab == "STEPS")
+        {
+            <div>Steps content aici</div>
+        }
+        @if (_activeTab == "FORMTEMPLATES")
+        {
+            <div>Form Templates content aici</div>
+        }
+    </main>
+</div>

@@ -21,10 +21,11 @@ namespace FlowManager.Infrastructure.Services
         private readonly IRoleRepository _roleRepository;
         private readonly IEmailService _emailService;
 
-        public UserService(IUserRepository userRepository, IRoleRepository roleRepository)
+        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, IEmailService emailService)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
+            _emailService = emailService;
         }
 
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
@@ -91,7 +92,7 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersQueriedAsync(QueriedUserRequestDto payload)
         {
-            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams.ToQueryParams());
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams?.ToQueryParams());
 
             return new PagedResponseDto<UserResponseDto>
             {
@@ -110,8 +111,8 @@ namespace FlowManager.Infrastructure.Services
                         Name = r.Role.Name 
                     }).ToList()
                 }),
-                Page = payload.QueryParams.Page ?? 1,
-                PageSize = payload.QueryParams.PageSize ?? totalCount,
+                Page = payload.QueryParams?.Page ?? 1,
+                PageSize = payload.QueryParams?.PageSize ?? totalCount,
                 TotalCount = totalCount
             };
         }

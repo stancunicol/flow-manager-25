@@ -5,7 +5,7 @@ using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
 
-namespace FlowManager.Client.Pages
+namespace FlowManager.Client.Components.Admin.Members
 {
     public partial class Members : ComponentBase
     {
@@ -53,6 +53,21 @@ namespace FlowManager.Client.Pages
         {
             _selectedUserToEdit = user;
 
+            _showEditForm = true;
+        }
+
+        private void DeleteUser(UserVM user)
+        {
+
+        }
+
+        private void RestoreUser(UserVM user)
+        {
+
+        }
+
+        private void EditUser(UserVM user)
+        {
             _showEditForm = true;
         }
     }
