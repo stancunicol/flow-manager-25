@@ -115,7 +115,7 @@
                 <button @onclick="() => showEditForm = false">Cancel</button>
             </div>
 
-            @if (selectedUser.UserRoles.Any())
+            @* @if (selectedUser.UserRoles.Any())
             {
                 <ul>
                     @foreach (var role in selectedUser.UserRoles)
@@ -126,7 +126,7 @@
                         </li>
                     }
                 </ul>
-            }
+            } *@
         </div>
     </div>
 }
@@ -260,40 +260,40 @@
     }
     private void OpenEditUser(UserResponseDto user)
     {
-        selectedUser = new UserResponseDto
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            UserRoles = user.UserRoles?.ToList() ?? new()
-        };
+        // selectedUser = new UserResponseDto
+        // {
+        //     Id = user.Id,
+        //     Name = user.Name,
+        //     Email = user.Email,
+        //     UserRoles = user.UserRoles?.ToList() ?? new()
+        // };
         showEditForm = true;
     }
 
     private void AddRoleToUser()
     {
-        if (string.IsNullOrWhiteSpace(selectedRole))
-            return;
+        // if (string.IsNullOrWhiteSpace(selectedRole))
+        //     return;
 
-        bool alreadyExists = selectedUser.UserRoles
-            .Any(r => r.Role.Name.Equals(selectedRole, StringComparison.OrdinalIgnoreCase));
+        // bool alreadyExists = selectedUser.UserRoles
+        //     .Any(r => r.Role.Name.Equals(selectedRole, StringComparison.OrdinalIgnoreCase));
 
-        if (!alreadyExists)
-        {
-            selectedUser.UserRoles.Add(new UserRoleDto { Role = new RoleDto { Name = selectedRole } });
-            selectedRole = "";
-        }
+        // if (!alreadyExists)
+        // {
+        //     selectedUser.UserRoles.Add(new UserRoleDto { Role = new RoleDto { Name = selectedRole } });
+        //     selectedRole = "";
+        // }
     }
 
 
     private async Task RemoveRole(string role)
     {
-        var toRemove = selectedUser.UserRoles.FirstOrDefault(r => r.Role.Name == role);
-        if (toRemove != null)
-        {
-            selectedUser.UserRoles.Remove(toRemove);
-            await Http.DeleteAsync($"api/userroles/user/{selectedUser.Id}/role/{role}");
-        }
+        // var toRemove = selectedUser.UserRoles.FirstOrDefault(r => r.Role.Name == role);
+        // if (toRemove != null)
+        // {
+        //     selectedUser.UserRoles.Remove(toRemove);
+        //     await Http.DeleteAsync($"api/userroles/user/{selectedUser.Id}/role/{role}");
+        // }
     }
 
 
@@ -304,25 +304,25 @@
 
         if (updateResponse.IsSuccessStatusCode)
         {
-            foreach (var roleDto in selectedUser.UserRoles)
-            {
-                var role = roleDto.Role.Name;
+            // foreach (var roleDto in selectedUser.UserRoles)
+            // {
+            //     var role = roleDto.Role.Name;
 
-                try
-                {
-                    var check = await Http.GetFromJsonAsync<RoleCheckResponse>(
-                        $"api/userroles/user/{selectedUser.Id}/role/{role}/check");
+            //     try
+            //     {
+            //         var check = await Http.GetFromJsonAsync<RoleCheckResponse>(
+            //             $"api/userroles/user/{selectedUser.Id}/role/{role}/check");
 
-                    if (check is not null && !check.IsInRole)
-                    {
-                        await Http.PostAsync($"api/userroles/user/{selectedUser.Id}/role/{role}", null);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[ERROR] Role check failed for '{role}': {ex.Message}");
-                }
-            }
+            //         if (check is not null && !check.IsInRole)
+            //         {
+            //             await Http.PostAsync($"api/userroles/user/{selectedUser.Id}/role/{role}", null);
+            //         }
+            //     }
+            //     catch (Exception ex)
+            //     {
+            //         Console.WriteLine($"[ERROR] Role check failed for '{role}': {ex.Message}");
+            //     }
+            // }
 
             showEditForm = false;
             await LoadUsers();

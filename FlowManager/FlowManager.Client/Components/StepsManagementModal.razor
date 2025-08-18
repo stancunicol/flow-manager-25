@@ -31,8 +31,8 @@
                                 @if (isExpanded)
                                 {
                                     <div class="step-details">
-                                        <p><strong>Created:</strong> @step.CreatedAt.ToLocalTime().ToString("g")</p>
-                                        <p><strong>Updated:</strong> @step.UpdatedAt.ToLocalTime().ToString("g")</p>
+                                       @*  <p><strong>Created:</strong> @step.CreatedAt.ToLocalTime().ToString("g")</p>
+                                        <p><strong>Updated:</strong> @step.UpdatedAt.ToLocalTime().ToString("g")</p> *@
                                         
                                         <div class="assigned-users-section">
                                             <h4>Assigned Users</h4>
@@ -237,14 +237,14 @@
     {
         try
         {
-            if (user?.UserRoles != null)
-            {
-                return user.UserRoles.Any(ur => 
-                    ur?.Role != null && 
-                    ur.Role.Name != null && 
-                    ur.Role.Name.Equals("Moderator", StringComparison.OrdinalIgnoreCase)
-                );
-            }
+            // if (user?.UserRoles != null)
+            // {
+            //     return user.UserRoles.Any(ur => 
+            //         ur?.Role != null && 
+            //         ur.Role.Name != null && 
+            //         ur.Role.Name.Equals("Moderator", StringComparison.OrdinalIgnoreCase)
+            //     );
+            // }
             return false;
         }
         catch

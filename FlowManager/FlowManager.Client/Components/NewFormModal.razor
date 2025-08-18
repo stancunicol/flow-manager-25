@@ -1,4 +1,4 @@
-@using FlowManager.Domain.Entities
+@* @using FlowManager.Domain.Entities
 
 @if (IsOpen)
 {
@@ -67,3 +67,4 @@
 
     private Task Close() => IsOpenChanged.InvokeAsync(false);
 }
+ *@
