@@ -30,6 +30,9 @@ namespace FlowManager.Infrastructure.Context
 
             UniqueUserEmailConstraintConfiguration(builder);
             UniqueRolenameConstraintConfiguration(builder);
+            UniqueFormTemplateConstraintConfiguration(builder);
+
+            UniqueFlowStepKeyConstraintConfiguration(builder);
 
             UserRoleRelationshipConfiguration(builder);
 
@@ -73,17 +76,6 @@ namespace FlowManager.Infrastructure.Context
                       .HasColumnType("jsonb"); // PostgreSQL jsonb type
             });
 
-            builder.Entity<FormTemplateComponent>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Properties)
-                      .HasConversion(
-                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                          v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null))
-                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
-            });
-
             builder.Entity<FormResponse>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -94,6 +86,12 @@ namespace FlowManager.Infrastructure.Context
                           v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
                       .HasColumnType("jsonb"); // PostgreSQL jsonb type
             });
+        }
+
+        private void UniqueFlowStepKeyConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FlowStep>()
+                .HasKey(fs => new { fs.FlowId, fs.StepId });
         }
 
         private void UniqueRolenameConstraintConfiguration(ModelBuilder builder)
@@ -119,6 +117,14 @@ namespace FlowManager.Infrastructure.Context
                     .HasIndex(u => u.NormalizedEmail)
                     .IsUnique()
                     .HasDatabaseName("IX_AspNetUsers_NormalizedEmail");
+        }
+
+        private void UniqueFormTemplateConstraintConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FormTemplate>()
+                .HasIndex(ft => ft.Name)
+                .IsUnique()
+                .HasDatabaseName("IX_FormTemplates_Name");
         }
     }
 }

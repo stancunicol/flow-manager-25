@@ -19,6 +19,7 @@
     <PackageReference Include="MudBlazor" Version="8.11.0" />
     <ProjectReference Include="..\FlowManager.Application\FlowManager.Application.csproj" />
     <ProjectReference Include="..\FlowManager.Infrastructure\FlowManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\FlowManager.Shared\FlowManager.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,4 @@
-﻿using FlowManager.Application.DTOs;
-using FlowManager.Domain.Dtos;
+﻿using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Context;
@@ -62,22 +61,65 @@ namespace FlowManager.Infrastructure.Repositories
             return users;
         }
 
-        public async Task<(List<User> Data, int TotalCount)> GetAllUsersFilteredAsync(string? email, QueryParams parameters)
+        public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email, QueryParams parameters)
         {
             IQueryable<User> query = _context.Users
                 .Where(u => u.DeletedAt == null)
                 .Include(u => u.Roles)
                 .ThenInclude(ur => ur.Role);
-   
-            // filtering 
-            if(!string.IsNullOrEmpty(email))
+
+            if (email != null)
             {
                 query = query.Where(u => u.NormalizedEmail.Contains(email.ToUpper()));
             }
 
             int totalCount = await query.CountAsync();
 
-            if(parameters == null)
+            if (parameters == null)
+            {
+                var data = await query.ToListAsync();
+                return (data, totalCount);
+            }
+
+            if (parameters.SortBy != null)
+            {
+                if (parameters.SortDescending is bool SortDesc)
+                    query = query.ApplySorting<User>(parameters.SortBy, SortDesc);
+                else
+                    query = query.ApplySorting<User>(parameters.SortBy, false);
+            }
+
+            if (parameters.Page == null || parameters.Page < 0 ||
+                parameters.PageSize == null || parameters.PageSize < 0)
+            {
+                List<User> data = await query.ToListAsync();
+                return (data, totalCount);
+            }
+            else
+            {
+                List<User> data = await query.Skip((int)parameters.PageSize * ((int)parameters.Page - 1))
+                                                     .Take((int)parameters.PageSize)
+                                                     .ToListAsync();
+                return (data, totalCount);
+            }
+        }
+
+        public async Task<(List<User> Data, int TotalCount)> GetAllUsersFilteredAsync(string? email, QueryParams parameters)
+        {
+            IQueryable<User> query = _context.Users
+                .Where(u => u.DeletedAt == null)
+                .Include(u => u.Roles)
+                .ThenInclude(ur => ur.Role);
+
+            // filtering 
+            if (!string.IsNullOrEmpty(email))
+            {
+                query = query.Where(u => u.NormalizedEmail.Contains(email.ToUpper()));
+            }
+
+            int totalCount = await query.CountAsync();
+
+            if (parameters == null)
             {
                 return (await query.ToListAsync(), totalCount);
             }
@@ -110,7 +152,7 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<User?> GetUserByEmailAsync(string email)
         {
             return await _context.Users.Where(u => u.DeletedAt == null)
-                .FirstOrDefaultAsync(u => u.NormalizedEmail ==  email.ToUpper());
+                .FirstOrDefaultAsync(u => u.NormalizedEmail == email.ToUpper());
         }
 
         public async Task<User?> GetUserByIdAsync(Guid id, bool includeDeleted = false)
@@ -129,7 +171,7 @@ namespace FlowManager.Infrastructure.Repositories
 
         public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();  
+            await _context.SaveChangesAsync();
         }
     }
 }

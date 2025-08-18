@@ -1,8 +1,8 @@
-﻿using FlowManager.Application.DTOs.Requests.Component;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.Component;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
 using FlowManager.Application.IServices;
+using FlowManager.Shared.DTOs.Requests.Component;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Component;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
 
@@ -29,6 +29,17 @@ namespace FlowManager.API.Controllers
         {
             PagedResponseDto<ComponentResponseDto> result = await _componentService.GetComponentsQueriedAsync(payload);
 
+            if( result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<ComponentResponseDto>(),
+                    Message = "No components found matching the criteria.",
+                    Success = false,
+                    Timestamp = DateTime.UtcNow
+                });
+            }   
+
             return Ok(new
             {
                 Result = result,
@@ -44,7 +55,7 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetComponentByIdAsync(Guid id)
         {
-            ComponentResponseDto? result = await _componentService.GetComponentByIdAsync(id);
+            ComponentResponseDto result = await _componentService.GetComponentByIdAsync(id);
 
             return Ok(new
             {
@@ -61,7 +72,7 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PostComponentAsync([FromBody] PostComponentRequestDto payload)
         {
-            ComponentResponseDto? result = await _componentService.PostComponentAsync(payload);
+            ComponentResponseDto result = await _componentService.PostComponentAsync(payload);
 
             return Created($"/api/components/{result.Id}", new
             {
@@ -72,14 +83,14 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        [HttpPatch]
+        [HttpPatch("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchComponentAsync([FromBody] PatchComponentRequestDto payload)
+        public async Task<IActionResult> PatchComponentAsync(Guid id, [FromBody] PatchComponentRequestDto payload)
         {
-            ComponentResponseDto? result = await _componentService.PatchComponentAsync(payload);
+            ComponentResponseDto result = await _componentService.PatchComponentAsync(id,payload);
 
             return Ok(new
             {
@@ -97,7 +108,7 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteComponentAsync(Guid id)
         {
-            ComponentResponseDto? result = await _componentService.DeleteComponentAsync(id);
+            ComponentResponseDto result = await _componentService.DeleteComponentAsync(id);
 
             return Ok(new
             {

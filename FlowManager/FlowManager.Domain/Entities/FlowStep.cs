@@ -8,7 +8,6 @@ namespace FlowManager.Domain.Entities
 {
     public class FlowStep
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
         public bool? IsApproved { get; set; } = null;
 
         // navigation properties

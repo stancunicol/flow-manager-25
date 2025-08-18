@@ -1,17 +1,23 @@
 ﻿using FlowManager.API;
 using FlowManager.Application;
-using FlowManager.Domain.Entities;
-using FlowManager.Infrastructure;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using FlowManager.Infrastructure.Utils;
-using FlowManager.Infrastructure.Context;
-using FlowManager.Application.Utils;
 using FlowManager.Application.Interfaces;
 using FlowManager.Application.Services;
+using FlowManager.Application.Utils;
+using FlowManager.Application.Utils;
+using FlowManager.Domain.Entities;
+using FlowManager.Infrastructure;
+using FlowManager.Infrastructure.Context;
+using FlowManager.Infrastructure.Context;
+using FlowManager.Infrastructure.Middleware;
+using FlowManager.Infrastructure.Seed;
+using FlowManager.Infrastructure.Utils;
+using FlowManager.Infrastructure.Utils;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +32,8 @@ builder.Services.AddCors(options =>
               .AllowCredentials(); 
     });
 });
+
+
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -66,10 +74,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddAuthorization();
 
 builder.Services.AddIdentityCore<User>()
-    .AddRoles<IdentityRole<Guid>>()
+    .AddRoles<Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager()
-    .AddRoleManager<RoleManager<IdentityRole<Guid>>>()
+    .AddRoleManager<RoleManager<Role>>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender>();
@@ -81,15 +89,16 @@ using (var scope = app.Services.CreateScope())
     AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-    BasicSeed.Populate(dbContext, passwordHasher);
+    // BasicSeed.Populate(dbContext, passwordHasher);
+    // FormResponseSeed.Populate(dbContext);
 }
 
-    if (app.Environment.IsDevelopment())
-    {
-        app.MapOpenApi();
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 
@@ -101,6 +110,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapIdentityApi<User>();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.MapControllers();
 
 app.Run();

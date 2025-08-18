@@ -11,6 +11,8 @@
     },
     "https": {
       "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger/index.html",
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:5000",
       "environmentVariables": {

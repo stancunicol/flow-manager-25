@@ -1,33 +1,32 @@
-﻿@page "/members"
+@page "/members"
 @using System.Net.Http.Json
-@using FlowManager.Application.DTOs
-@using FlowManager.Application.DTOs.Responses.User
-@inject HttpClient Http
+@using FlowManager.Shared.DTOs.Requests
+@using FlowManager.Shared.DTOs.Responses
+@using FlowManager.Shared.DTOs.Responses.User
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using FlowManager.Client.ViewModels
+@using FlowManager.Client.Services
+@using FlowManager.Client.DTOs
 
-@attribute [Authorize(Roles = "Admin, Moderator")]
+@attribute [Authorize(Roles = "Admin")]
 
 <PageTitle>Members</PageTitle>
 
 <div class="adminButtons">
-    <button @onclick="() => showAddForm = true" class="adminViewUsersButton">+ Add User</button>
+    <button @onclick="() => _showAddForm = true" class="adminViewUsersButton">+ Add User</button>
 </div>
 
-@if (users.Any())
+@if (_users.Any())
 {
     <ul>
-        @foreach (var user in users)
+        @foreach (var user in _users)
         {
             <li>
                 <span><strong>@user.Name</strong> (@user.Email)</span>
-                @if (user.Id != CurrentUserId)
-                {
-                    <div>
-                        <button @onclick="() => OpenEditUser(user)">Edit</button>
-                        <button @onclick="() => ConfirmDelete(user.Id, user.Name)">Delete</button>
-                    </div>
-                }
+                <div>
+                    <button @onclick="() => OpenEditUser(user)">Edit</button>
+                </div>
             </li>
         }
     </ul>
@@ -37,113 +36,22 @@ else
     <p class="text-white">No users found.</p>
 }
 
-@if (showAddForm)
-{
-    <div class="popup-backdrop">
-        <div class="popup-container">
-            <h3>Create a new user</h3>
+<FlowManager.Client.Components.MembersModals.MembersAddUserModal
+    ShowAddForm="@_showAddForm" />
 
-            <label>Name: </label>
-            <input @bind="_name" type="text" class="popup-input" name="username" />
-
-            <label>Email: </label>
-            <input @bind="_email" type="text" class="popup-input" name="email" />
-
-            <label>Password: </label>
-            <input @bind="_password" type="password" class="popup-input" name="password" />
-
-            <label>Select rank:</label>
-            <select @bind="_rank" class="popup-input">
-                <option value="" disabled selected>Select your option</option>
-                <option value="basic">Basic user</option>
-                <option value="moderator">Moderator</option>
-                <option value="admin">Admin</option>
-            </select>
-
-            <div class="modal-actions">
-                <button @onclick="RegisterUser">Send</button>
-                <button @onclick="() => showAddForm = false">Cancel</button>
-            </div>
-        </div>
-    </div>
-}
-
-@if (showConfirm)
-{
-    <div class="popup-backdrop">
-        <div class="popup-container">
-            <h3>Confirm Delete</h3>
-            <p>Are you sure you want to delete <strong>@userNameToDelete</strong>?</p>
-            <div class="modal-actions">
-                <button @onclick="DeleteUser">Yes, Delete</button>
-                <button @onclick="CancelDelete">Cancel</button>
-            </div>
-        </div>
-    </div>
-}
-
-@if (showEditForm)
-{
-    <div class="popup-backdrop">
-        <div class="popup-container">
-            <h3>Edit User</h3>
-
-            <label>Name:</label>
-            <input class="popup-input" @bind="selectedUser.Name" />
-
-            <label>Email:</label>
-            <input class="popup-input" @bind="selectedUser.Email" />
-
-            <label>Add Role:</label>
-            <select class="popup-input" @bind="selectedRole">
-                <option value="">-- Select role --</option>
-                @foreach (var role in availableRoles)
-                {
-                    <option value="@role">@role</option>
-                }
-            </select>
-
-            <div class="modal-actions">
-                <button @onclick="AddRoleToUser">Add Role</button>
-                <button @onclick="SaveUserChanges">Save</button>
-                <button @onclick="() => showEditForm = false">Cancel</button>
-            </div>
-
-            @* @if (selectedUser.UserRoles.Any())
-            {
-                <ul>
-                    @foreach (var role in selectedUser.UserRoles)
-                    {
-                        <li>
-                            @role.Role.Name
-                            <button @onclick="() => RemoveRole(role.Role.Name)">❌</button>
-                        </li>
-                    }
-                </ul>
-            } *@
-        </div>
-    </div>
-}
+<FlowManager.Client.Components.MembersModals.MembersEditUserModal
+    ShowEditForm="@_showEditForm"
+    UserToEdit="@_selectedUserToEdit" />
 
 @code {
-    private List<UserResponseDto> users = new();
-    private Guid userIdToDelete;
-    private string userNameToDelete = "";
-    private bool showConfirm = false;
-    private bool showAddForm = false;
-    private bool showEditForm = false;
+    [Inject] private UserService UserService { get; set; } = default!;
 
-    private string _name = "";
-    private string _email = "";
-    private string _password = "";
-    private string _rank = "";
-    private string selectedRole = "";
+    private bool _showAddForm = false;
+    private bool _showEditForm = false;
 
-    private List<string> availableRoles = new() { "basic", "moderator", "admin" };
-    private UserResponseDto selectedUser = new();
-
-    private Guid CurrentUserId = Guid.Empty;
-    private string CurrentUserEmail = "";
+    private List<UserVM> _users = new();
+    private List<RoleVM> _availableRoles = new();
+    private UserVM _selectedUserToEdit = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -152,97 +60,31 @@ else
 
     private async Task LoadUsers()
     {
-        var allUsers = await Http.GetFromJsonAsync<List<UserResponseDto>>("api/users");
-        users = allUsers.Where(u => u.Email != CurrentUserEmail).ToList();
-    }
+        ApiResponse<PagedResponseDto<UserResponseDto>> response = await UserService.GetAllUsersQueriedAsync();
 
-    private async Task RegisterUser()
-    {
-        var payload = new { name = _name, email = _email, password = _password, role = _rank };
-        var response = await Http.PostAsJsonAsync("api/auth/register", payload);
-        if (response.IsSuccessStatusCode)
-        {
-            showAddForm = false;
-            await LoadUsers();
+        if (!response.Success)
+        { 
+            _users = new();
+            return;
         }
-    }
 
-    private void ConfirmDelete(Guid id, string name)
-    {
-        userIdToDelete = id;
-        userNameToDelete = name;
-        showConfirm = true;
-    }
-
-    private async Task DeleteUser()
-    {
-        await Http.DeleteAsync($"api/users/{userIdToDelete}");
-        users = users.Where(u => u.Id != userIdToDelete).ToList();
-        showConfirm = false;
-    }
-
-    private void CancelDelete()
-    {
-        showConfirm = false;
-    }
-
-    private void OpenEditUser(UserResponseDto user)
-    {
-        // selectedUser = new UserResponseDto
-        // {
-        //     Id = user.Id,
-        //     Name = user.Name,
-        //     Email = user.Email,
-        //     UserRoles = user.UserRoles?.ToList() ?? new()
-        // };
-        showEditForm = true;
-    }
-
-    private void AddRoleToUser()
-    {
-        // if (!string.IsNullOrWhiteSpace(selectedRole) &&
-        //     !selectedUser.UserRoles.Any(r => r.Role.Name.Equals(selectedRole, StringComparison.OrdinalIgnoreCase)))
-        // {
-        //     selectedUser.UserRoles.Add(new UserRoleDto { Role = new RoleDto { Name = selectedRole } });
-        //     selectedRole = "";
-        // }
-    }
-
-    private async Task RemoveRole(string role)
-    {
-        // var toRemove = selectedUser.UserRoles.FirstOrDefault(r => r.Role.Name == role);
-        // if (toRemove != null)
-        // {
-        //     selectedUser.UserRoles.Remove(toRemove);
-        //     await Http.DeleteAsync($"api/userroles/user/{selectedUser.Id}/role/{role}");
-        // }
-    }
-
-    private async Task SaveUserChanges()
-    {
-        var url = $"api/users/{selectedUser.Id}/name/{selectedUser.Name}/email/{selectedUser.Email}";
-        var updateResponse = await Http.PutAsync(url, null);
-        if (updateResponse.IsSuccessStatusCode)
+        _users = response.Result.Data.Select(u => new UserVM
         {
-            // foreach (var roleDto in selectedUser.UserRoles)
-            // {
-            //     var role = roleDto.Role.Name;
-            //     var check = await Http.GetFromJsonAsync<RoleCheckResponse>(
-            //         $"api/userroles/user/{selectedUser.Id}/role/{role}/check");
-
-            //     if (check is not null && !check.IsInRole)
-            //     {
-            //         await Http.PostAsync($"api/userroles/user/{selectedUser.Id}/role/{role}", null);
-            //     }
-            // }
-
-            showEditForm = false;
-            await LoadUsers();
-        }
+            Id = u.Id,
+            Name = u.Name!,
+            Email = u.Email!,
+            IsActive = u.DeletedAt == null,
+            Roles = u.Roles!.Select(r => new RoleVM
+            {
+                Id = r.Id,
+                RoleName = r.Name!
+            }).ToList(),
+        }).ToList();
     }
 
-    private class RoleCheckResponse
+    private void OpenEditUser(UserVM user)
     {
-        public bool IsInRole { get; set; }
+        _selectedUserToEdit = user;
+        _showEditForm = true;
     }
 }

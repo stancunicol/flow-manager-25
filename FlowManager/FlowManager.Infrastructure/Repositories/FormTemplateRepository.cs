@@ -1,7 +1,4 @@
-﻿using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.FormTemplate;
-using FlowManager.Application.DTOs.Responses.FormTemplateComponent;
-using FlowManager.Domain.Dtos;
+﻿using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Context;
@@ -24,7 +21,7 @@ namespace FlowManager.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<(List<FormTemplate> Data, int TotalCount)> GetAllFormTemplatesQueriedAsync(string? name, QueryParams parameters)
+        public async Task<(List<FormTemplate> Data, int TotalCount)> GetAllFormTemplatesQueriedAsync(string? name, QueryParams? parameters)
         {
             IQueryable<FormTemplate> query = _context.FormTemplates
                                                        .Where(ft => ft.DeletedAt == null)
@@ -92,6 +89,15 @@ namespace FlowManager.Infrastructure.Repositories
         {
             _context.FormTemplates.Add(formTemplate);
             await SaveChangesAsync();
+        }
+
+        public async Task<FormTemplateComponent?> GetFormTemplateComponentByIdAsync(Guid id, bool includeDeleted = false)
+        {
+            IQueryable<FormTemplateComponent> query = _context.FormTemplateComponents;
+            if (!includeDeleted)
+                query = query.Where(ftc => ftc.DeletedAt == null);
+
+            return await query.FirstOrDefaultAsync(ftc => ftc.Id == id);
         }
     }
 }

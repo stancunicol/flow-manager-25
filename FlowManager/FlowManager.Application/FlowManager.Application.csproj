@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FlowManager.Domain\FlowManager.Domain.csproj" />
+    <ProjectReference Include="..\FlowManager.Shared\FlowManager.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
-using FlowManager.Application.DTOs.Responses.Flow;
-using FlowManager.Application.DTOs.Responses.Step;
+using FlowManager.Shared.DTOs.Requests.Flow;
+using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.Step;
 
 namespace FlowManager.API.Controllers
 {
@@ -23,9 +24,21 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<FlowResponseDto>>> GetFlows()
+        public async Task<IActionResult> GetFlowsQueriedAsync([FromQuery] QueriedFlowRequestDto payload)
         {
-            var result = await _flowService.GetAllFlowsAsync();
+            var result = await _flowService.GetAllFlowsQueriedAsync(payload);
+
+            if(result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<FlowResponseDto>(),
+                    Message = "No flows found matching the criteria.",
+                    Success = false,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
             return Ok(new
             {
                 Result = result,
@@ -40,9 +53,10 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<FlowResponseDto>> GetFlow(Guid id)
+        public async Task<IActionResult> GetFlowAsync(Guid id)
         {
             var result = await _flowService.GetFlowByIdAsync(id);
+
             return Ok(new
             {
                 Result = result,
@@ -58,9 +72,10 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<FlowResponseDto>> PostFlow(Flow flow)
+        public async Task<ActionResult<FlowResponseDto>> PostFlow(PostFlowRequestDto payload)
         {
-            var result = await _flowService.CreateFlowAsync(flow);
+            var result = await _flowService.CreateFlowAsync(payload);
+
             return Ok(new
             {
                 Result = result,
@@ -70,15 +85,15 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        //[Authorize(Roles = "Admin")]
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PutFlow(Guid id, Flow flow)
+        public async Task<IActionResult> PatchFlowAsync(Guid id, [FromBody] PatchFlowRequestDto payload)
         {
-            var result = await _flowService.UpdateFlowAsync(id, flow);
+            var result = await _flowService.UpdateFlowAsync(id, payload);
+
             return Ok(new
             {
                 Result = result,
@@ -94,9 +109,10 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteFlow(Guid id)
+        public async Task<IActionResult> DeleteFlowAsync(Guid id)
         {
             var result = await _flowService.DeleteFlowAsync(id);
+
             return Ok(new
             {
                 Result = result,
@@ -111,9 +127,21 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<StepResponseDto>>> GetFlowSteps(Guid id)
+        public async Task<IActionResult> GetStepsForFlowAsync(Guid flowId)
         {
-            var result = await _flowService.GetFlowByIdAsync(id);
+            var result = await _flowService.GetStepsForFlowAsync(flowId);
+
+            if (result == null || !result.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<StepResponseDto>(),
+                    Message = "No steps found for the specified flow.",
+                    Success = false,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
             return Ok(new
             {
                 Result = result,

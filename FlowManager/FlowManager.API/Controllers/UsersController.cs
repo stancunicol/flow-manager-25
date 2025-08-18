@@ -1,189 +1,216 @@
-﻿using FlowManager.Application.DTOs;
-using FlowManager.Application.DTOs.Requests.User;
-using FlowManager.Application.DTOs.Responses.User;
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
+using FlowManager.Shared.DTOs.Requests.User;
+using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowManager.API.Controllers
 {
+    [ApiController]
     [Route("api/[controller]")]
-    [ApiController] 
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, ILogger<UsersController> logger)
         {
-            _userService = userService;
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllUsers()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllUsersAsync()
         {
-            try
+            var result = await _userService.GetAllUsersAsync();
+
+            if(result == null || !result.Any())
             {
-                var users = await _userService.GetAllUsersAsync();
-                return Ok(users);
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No users found.",
+                    Timestamp = DateTime.UtcNow
+                });
             }
-            catch (Exception ex)
+
+            return Ok(new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "Users retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        
         [HttpGet("moderators")]
-        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllModerators()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllModeratorsAsync()
         {
-            try
+            var result = await _userService.GetAllModeratorsAsync();
+
+            if(result == null || !result.Any())
             {
-                var moderators = await _userService.GetAllModeratorsAsync();
-                return Ok(moderators);
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No moderators found.",
+                    Timestamp = DateTime.UtcNow
+                });
             }
-            catch (Exception ex)
+
+            return Ok(new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "Moderators retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        
         [HttpGet("admins")]
-        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllAdmins()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllAdminsAsync()
         {
-            try
+            var result = await _userService.GetAllAdminsAsync();
+
+            if(result == null || !result.Any())
             {
-                var admins = await _userService.GetAllAdminsAsync();
-                return Ok(admins);
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No admins found.",
+                    Timestamp = DateTime.UtcNow
+                });
             }
-            catch (Exception ex)
+
+            return Ok(new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "Admins retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        
-        [HttpGet("filtered")]
-        public async Task<IActionResult> GetAllUsersFiltered(
-            [FromQuery] QueriedUserRequestDto payload)
+        [HttpGet("queried")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllUsersQueriedAsync([FromQuery] QueriedUserRequestDto payload)
         {
-            try
+            var result = await _userService.GetAllUsersQueriedAsync(payload);
+
+            if(result.Data == null || !result.Data.Any())
             {
-                var users = await _userService.GetAllUsersFilteredAsync(payload);
-                return Ok(users);
+                return NotFound(new
+                {
+                    Result = new List<UserResponseDto>(),
+                    Success = false,
+                    Message = "No users found matching the criteria.",
+                    Timestamp = DateTime.UtcNow
+                });
             }
-            catch (Exception ex)
+
+            return Ok(new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "Users retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserById(Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUserByIdAsync(Guid id)
         {
-            try
+            var result = await _userService.GetUserByIdAsync(id);
+
+            return Ok(new
             {
-                var user = await _userService.GetUserByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound($"User with ID {id} not found");
-                }
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "User retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        
         [HttpPost]
-        public async Task<IActionResult> AddUser([FromBody] PostUserRequestDto payload)
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PostUserAsync([FromBody] PostUserRequestDto payload)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
+            var result = await _userService.AddUserAsync(payload);
 
-                var user = await _userService.AddUserAsync(payload);
-                if (user == null)
-                {
-                    return BadRequest("Failed to create user");
-                }
-
-                return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
-            }
-            catch (Exception ex)
+            return Created($"/api/users/{result.Id}", new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "User created successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        
         [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] PatchUserRequestDto payload)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PatchUserAsync(Guid id, [FromBody] PatchUserRequestDto payload)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
+            var result = await _userService.UpdateUserAsync(id, payload);
 
-                var result = await _userService.UpdateUserAsync(id, payload);
-                if (result == null)
-                {
-                    return NotFound($"User with ID {id} not found");
-                }
-
-                return NoContent(); 
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "User updated successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
-        
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteUser(Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteUserAsync(Guid id)
         {
-            try
-            {
-                var result = await _userService.DeleteUserAsync(id);
-                if (result == null)
-                {
-                    return NotFound($"User with ID {id} not found");
-                }
+            var result = await _userService.DeleteUserAsync(id);
 
-                return NoContent();
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "User deleted successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
 
         [HttpPatch("{id}/restore")]
-        public async Task<ActionResult> RestoreUser(Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RestoreUserAsync(Guid id)
         {
-            try
-            {
-                var result = await _userService.RestoreUserAsync(id);
-                if (result == null)
-                {
-                    return NotFound($"Deleted user with ID {id} not found");
-                }
+            var result = await _userService.RestoreUserAsync(id);
 
-                return NoContent();
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest($"Error: {ex.Message}");
-            }
+                Result = result,
+                Success = true,
+                Message = "User restored successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
     }
 }

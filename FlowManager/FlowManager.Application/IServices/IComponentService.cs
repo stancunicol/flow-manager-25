@@ -1,8 +1,6 @@
-﻿using FlowManager.Application.DTOs.Requests.Component;
-using FlowManager.Application.DTOs.Requests.FormTemplate;
-using FlowManager.Application.DTOs.Responses;
-using FlowManager.Application.DTOs.Responses.Component;
-using FlowManager.Application.DTOs.Responses.FormTemplate;
+﻿using FlowManager.Shared.DTOs.Requests.Component;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Component;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,9 +12,9 @@ namespace FlowManager.Application.IServices
     public interface IComponentService
     {
         Task<PagedResponseDto<ComponentResponseDto>> GetComponentsQueriedAsync(QueriedComponentRequestDto payload);
-        Task<ComponentResponseDto?> GetComponentByIdAsync(Guid id);
+        Task<ComponentResponseDto> GetComponentByIdAsync(Guid id);
         Task<ComponentResponseDto> PostComponentAsync(PostComponentRequestDto payload);
-        Task<ComponentResponseDto?> DeleteComponentAsync(Guid id);
-        Task<ComponentResponseDto?> PatchComponentAsync(PatchComponentRequestDto payload);
+        Task<ComponentResponseDto> DeleteComponentAsync(Guid id);
+        Task<ComponentResponseDto> PatchComponentAsync(Guid id, PatchComponentRequestDto payload);
     }
 }

@@ -1,36 +1,26 @@
 using FlowManager.Application.Interfaces;
-using FlowManager.Application.IServices;
 using FlowManager.Application.Services;
-using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Services;
-using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FlowManager.Application;
-
-public static class DependencyInjection
+namespace FlowManager.Application
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static class DependencyInjection
     {
-        // Add AutoMapper
-        services.AddAutoMapper(typeof(DependencyInjection).Assembly);
+        public static IServiceCollection AddApplication(this IServiceCollection services)
+        {
+            services.AddMemoryCache();
 
-        // Add MediatR
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+            // Application Services
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IPasswordResetService, PasswordResetService>();
 
-        // Add FluentValidation
-        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+            // Infrastructure Services (these are in Infrastructure namespace but should be registered here)
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IFormTemplateService, FormTemplateService>();
+            services.AddScoped<IRoleService, RoleService>();
 
-        services.AddScoped<IPasswordResetService, PasswordResetService>();
-        services.AddScoped<IEmailService, EmailService>();
-        services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IComponentService, ComponentService>();
-        services.AddScoped<IFlowService, FlowService>();
-        services.AddScoped<IFormTemplateService, FormTemplateService>();
-        // services.AddScoped<IFormService, FormSer>();
-        // services.AddScoped<IAuth, AuthService>();
-        services.AddScoped<IStepService, StepService>();
-
-        return services;
+            return services;
+        }
     }
 }

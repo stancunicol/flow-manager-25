@@ -14,7 +14,8 @@ namespace FlowManager.Domain.IRepositories
         Task<IEnumerable<User>> GetAllUsersAsync();
         Task<IEnumerable<User>> GetAllModeratorsAsync();
         Task<IEnumerable<User>> GetAllAdminsAsync();
-        Task<(List<User> Data, int TotalCount)> GetAllUsersFilteredAsync(string? email, QueryParams parameters);
+        Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email, QueryParams? parameters);
+        Task<(List<User> Data, int TotalCount)> GetAllUsersFilteredAsync(string? email, QueryParams? parameters);
         Task<User?> GetUserByIdAsync(Guid id, bool includeDeleted = false);
         Task<User?> AddUserAsync(User user);
         Task<User?> GetUserByEmailAsync(string email);

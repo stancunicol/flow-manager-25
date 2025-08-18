@@ -27,7 +27,7 @@ namespace FlowManager.Infrastructure.Repositories
             await SaveChangesAsync();
         }
 
-        public async Task<(List<Component> Data, int TotalCount)> GetAllComponentsQueriedAsync(string? type, string? label, QueryParams parameters)
+        public async Task<(List<Component> Data, int TotalCount)> GetAllComponentsQueriedAsync(string? type, string? label, QueryParams? parameters)
         {
             IQueryable<Component> query = _context.Components.Where(c => c.DeletedAt == null);
 
@@ -44,6 +44,11 @@ namespace FlowManager.Infrastructure.Repositories
 
             int totalCount = query.Count();
 
+            if (parameters == null)
+            {
+                return (await query.ToListAsync(), totalCount);
+            }
+
             // sorting
             if (parameters.SortBy != null)
             {
@@ -51,11 +56,6 @@ namespace FlowManager.Infrastructure.Repositories
                     query = query.ApplySorting<Component>(parameters.SortBy, SortDesc);
                 else
                     query = query.ApplySorting<Component>(parameters.SortBy, false);
-            }
-
-            if (parameters == null)
-            {
-                return (await query.ToListAsync(), totalCount);
             }
 
             // pagination
