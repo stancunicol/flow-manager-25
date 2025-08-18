@@ -1,4 +1,4 @@
-:root{
+﻿:root{
     --background-color: #010104;
     --background-color2: #1e1e1e;
     --card-background-color: #1a1a1a;
@@ -110,7 +110,7 @@ h1:focus {
 }
 
 .spinner-overlay {
-    background-color: #000028;
+    background: linear-gradient(135deg, #2DE6DB, #b2f7ef);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -118,14 +118,12 @@ h1:focus {
 }
 
 .spinner {
-    border: 8px solid #e0e0e0;
-    border-top: 8px solid #00d7a0;
+    border: 6px solid #ffffff;
+    border-top: 6px solid #00c896;
     border-radius: 50%;
-    align-items: center;
-    justify-content: center;
-    width: 60px;
-    height: 60px;
-    animation: spin 1s linear infinite;
+    width: 55px;
+    height: 55px;
+    animation: spin 0.9s linear infinite;
 }
 
 @keyframes spin {

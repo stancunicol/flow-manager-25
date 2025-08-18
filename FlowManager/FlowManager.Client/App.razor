@@ -2,8 +2,6 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 
-
-
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
@@ -13,21 +11,26 @@
                 </div>
             </Authorizing>
             <NotAuthorized>
-                @{
-                    var path = Navigation.ToBaseRelativePath(Navigation.Uri);
-
-                    if (!path.StartsWith("auth", StringComparison.OrdinalIgnoreCase))
-                    {
-                        Navigation.NavigateTo("/auth", true);
-                    }
-                }
+                @RedirectToRootOnce()
             </NotAuthorized>
         </AuthorizeRouteView>
-        <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <NotFound>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p>Sorry, nothing found.</p>
-        </LayoutView>
+        @RedirectToRootOnce()
     </NotFound>
 </Router>
+
+@code {
+    private bool _hasRedirected;
+
+    private RenderFragment RedirectToRootOnce() => builder =>
+    {
+        if (!_hasRedirected)
+        {
+            _hasRedirected = true;
+            // Redirectul se face în contextul Blazor, după randare
+            _ = InvokeAsync(() => Navigation.NavigateTo("/", true));
+        }
+    };
+}

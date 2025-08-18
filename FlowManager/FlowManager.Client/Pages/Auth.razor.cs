@@ -30,9 +30,9 @@ namespace FlowManager.Client.Pages
         protected override async Task OnInitializedAsync()
         {
             var authState = await AuthProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity is { IsAuthenticated: true })
+            if (authState.User.Identity?.IsAuthenticated == true)
             {
-                Navigation.NavigateTo("/");
+                await InvokeAsync(() => Navigation.NavigateTo("/"));
             }
         }
 
