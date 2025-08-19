@@ -1,0 +1,563 @@
+﻿@page "/form-template"
+@using FlowManager.Shared.DTOs.Requests.Component
+@using FlowManager.Shared.DTOs.Requests.FormTemplate
+@using FlowManager.Shared.DTOs.Responses.Component
+@using FlowManager.Shared.DTOs.Responses.FormTemplate
+@using FlowManager.Client.ViewModels
+@using FlowManager.Client.Services
+@using FlowManager.Client.DTOs
+@using static MudBlazor.CategoryTypes
+@using FlowManager.Client.Services
+
+<PageTitle>Form Template Builder</PageTitle>
+
+<div class="form-template-container">
+    <div class="form-template-header">
+        <h1>Form Template Builder</h1>
+        <div class="template-actions">
+            <input @bind="templateName" 
+                   placeholder="Enter template name..." 
+                   class="template-name-input" />
+            <button class="save-button" 
+                    @onclick="SaveTemplate" 
+                    disabled="@isSaving">
+                @if (isSaving)
+                {
+                    <span class="loading-spinner"></span>
+                }
+                Save Template
+            </button>
+        </div>
+    </div>
+
+    <div class="form-template-content">
+        <!-- Components Palette -->
+        <div class="components-palette">
+            <div class="palette-header">
+                <h2>Components</h2>
+                <span class="component-count">@availableComponents.Count available</span>
+            </div>
+            
+            <div class="component-list">
+                @foreach (var component in availableComponents)
+                {
+                    <div class="component-item" 
+                         draggable="true" 
+                         @ondragstart="@(() => OnDragStart(component))">
+                        <div class="component-icon">
+                            @GetComponentIcon(component.Type)
+                        </div>
+                        <div class="component-details">
+                            <div class="component-label">@component.Label</div>
+                            <div class="component-type">@component.Type</div>
+                        </div>
+                        <div class="drag-handle">⋮⋮</div>
+                    </div>
+                }
+            </div>
+            
+            <div class="palette-footer">
+                <button class="add-component-btn" @onclick="AddNewTextInput">
+                    <span class="add-icon">+</span>
+                    New Component
+                </button>
+            </div>
+        </div>
+
+        <!-- Form Canvas -->
+        <div class="form-canvas" 
+             @ondrop="@OnDrop" 
+             @ondragover="@OnDragOver" 
+             @ondragover:preventDefault="true">
+            
+            <div class="canvas-header">
+                <h2>Form Preview</h2>   
+                <div class="canvas-info">
+                    <span class="component-count">@formComponents.Count components</span>
+                </div>
+            </div>
+
+            <div class="canvas-content">
+                @if (!formComponents.Any())
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <h3>Start Building Your Form</h3>
+                        <p>Drag components from the left sidebar to create your form template</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="form-preview">
+                        @foreach (var (component, index) in formComponents.Select((c, i) => (c, i)))
+                        {
+                            <div class="form-component @(selectedComponentIndex == index ? "selected" : "")" 
+                                 @key="component.TempId"
+                                 @onclick="@(() => EditComponent(index))">
+                                
+                                <div class="component-content">
+                                    @if (component.Type == "TextInput")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <input type="text" 
+                                                   class="field-input" 
+                                                   placeholder="@component.Label"
+                                                   maxlength="@GetMaxLength(component)"
+                                                   readonly />
+                                            @if (GetMaxLength(component) > 0)
+                                            {
+                                                <div class="field-hint">Maximum @GetMaxLength(component) characters</div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="component-toolbar">
+                                    <button class="toolbar-btn edit-btn" 
+                                            @onclick="@(() => EditComponent(index))"
+                                            title="Edit component">
+                                        ✏️
+                                    </button>
+                                    
+                                    @if (index > 0)
+                                    {
+                                        <button class="toolbar-btn move-btn" 
+                                                @onclick="@(() => MoveUp(index))"
+                                                title="Move up">
+                                            ⬆️
+                                        </button>
+                                    }
+                                    
+                                    @if (index < formComponents.Count - 1)
+                                    {
+                                        <button class="toolbar-btn move-btn" 
+                                                @onclick="@(() => MoveDown(index))"
+                                                title="Move down">
+                                            ⬇️
+                                        </button>
+                                    }
+                                    
+                                    <button class="toolbar-btn delete-btn" 
+                                            @onclick="@(() => RemoveComponent(index))"
+                                            title="Delete component">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="properties-panel">
+            <div class="panel-header">
+                <h2>Properties</h2>
+            </div>
+            
+            <div class="panel-content">
+                @if (selectedComponentIndex.HasValue && selectedComponentIndex.Value < formComponents.Count)
+                {
+                    var selectedComponent = formComponents[selectedComponentIndex.Value];
+                    <div class="property-form">
+                        <div class="property-section">
+                            <h3>Basic Properties</h3>
+                            
+                            <div class="property-field">
+                                <label class="property-label">Label</label>
+                                <input @bind="selectedComponent.Label" 
+                                       class="property-input" 
+                                       placeholder="Component label" />
+                            </div>
+                            
+                            
+                        </div>
+
+                        @if (selectedComponent.Type == "TextInput")
+                        {
+                            <div class="property-section">
+                                <h3>Text Input Settings</h3>
+                                
+                                <div class="property-field">
+                                    <label class="property-label">Maximum Length</label>
+                                    <input @bind="maxLengthInput"
+                                           @bind:after="UpdateMaxLength"
+                                           class="property-input" 
+                                           type="number" 
+                                           min="0" 
+                                           max="1000"
+                                           placeholder="0 = unlimited" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-selection">
+                        <div class="no-selection-icon">⚙️</div>
+                        <h3>No Component Selected</h3>
+                        <p>Click on a component in the form preview to edit its properties</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Component Modal -->
+@if (showAddComponentModal)
+{
+    <div class="modal-overlay" @onclick="CloseAddComponentModal">
+        <div class="modal-container" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Add New Component</h2>
+                <button class="modal-close" @onclick="CloseAddComponentModal">×</button>
+            </div>
+
+            <div class="modal-content">
+                <div class="modal-field">
+                    <label class="modal-label">Component Type</label>
+                    <select @bind="newComponent.Type" class="modal-select">
+                        <option value="TextInput">Text Input</option>
+                        <!-- Add more types later -->
+                    </select>
+                </div>
+
+                <div class="modal-field">
+                    <label class="modal-label">Label</label>
+                    <input @bind="newComponent.Label" 
+                    class="modal-input" 
+                    placeholder="Enter component label" />
+                </div>
+
+                <div class="modal-field">
+                    <label class="checkbox-container">
+                        <input @bind="newComponent.Required" type="checkbox" />
+                        <span class="checkbox-mark"></span>
+                        Required field
+                    </label>
+                </div>
+
+                @if (newComponent.Type == "TextInput")
+                {
+                    <div class="modal-field">
+                        <label class="modal-label">Maximum Length</label>
+                        <input @bind="newComponentMaxLength" 
+                        class="modal-input" 
+                        type="number" 
+                        min="0" 
+                        placeholder="0 = unlimited" />
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-btn secondary" @onclick="CloseAddComponentModal">
+                    Cancel
+                </button>
+                <button class="modal-btn primary" @onclick="SaveNewComponent">
+                    Add Component
+                </button>
+            </div>
+        </div>
+    </div>
+}
+@code{
+    [Inject] private ComponentService ComponentService { get; set; } = default!;
+    [Inject] private FormTemplateService FormTemplateService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    // Properties that exist in the razor file
+    private List<ComponentResponseDto> availableComponents = new();
+    private List<FormComponentModel> formComponents = new();
+    private ComponentResponseDto? draggedComponent;
+    private int? selectedComponentIndex;
+    private string templateName = "";
+    private bool isSaving = false;
+
+    // Modal state
+    private bool showAddComponentModal = false;
+    private PostComponentRequestDto newComponent = new();
+    private int newComponentMaxLength = 0;
+    private int maxLengthInput = 0;
+
+    // Internal model for form components
+    public class FormComponentModel
+    {
+        public Guid TempId { get; set; } = Guid.NewGuid();
+        public Guid? ComponentId { get; set; }
+        public string? Type { get; set; }
+        public string? Label { get; set; }
+        public bool? Required { get; set; }
+        public Dictionary<string, object>? Properties { get; set; } = new();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableComponents();
+    }
+
+    private async Task LoadAvailableComponents()
+    {
+        var result = await ComponentService.GetAllComponentsQueriedAsync(new QueriedComponentRequestDto());
+        if (result?.Data != null)
+        {
+            availableComponents = result.Data.ToList();
+        }
+    }
+
+    private string GetComponentIcon(string? componentType)
+    {
+        return componentType switch
+        {
+            "TextInput" => "📝",
+            "Checkbox" => "☑️",
+            "DateTime" => "📅",
+            "RadioButton" => "🔘",
+            _ => "📄"
+        };
+    }
+
+    private void OnDragStart(ComponentResponseDto component)
+    {
+        draggedComponent = component;
+    }
+
+    private void OnDragOver()
+    {
+        // Allow drop
+    }
+
+    private void OnDrop()
+    {
+        if (draggedComponent != null)
+        {
+            var newFormComponent = new FormComponentModel
+            {
+                ComponentId = draggedComponent.Id,
+                Type = draggedComponent.Type,
+                Label = draggedComponent.Label,
+                Required = draggedComponent.Required,
+                Properties = draggedComponent.Properties != null ?
+                    new Dictionary<string, object>(draggedComponent.Properties) :
+                    new Dictionary<string, object>()
+            };
+
+            formComponents.Add(newFormComponent);
+            draggedComponent = null;
+            StateHasChanged();
+        }
+    }
+
+    private void EditComponent(int index)
+    {
+        selectedComponentIndex = index;
+        if (index < formComponents.Count)
+        {
+            var component = formComponents[index];
+            maxLengthInput = GetMaxLength(component);
+        }
+        StateHasChanged();
+    }
+
+    private void RemoveComponent(int index)
+    {
+        if (index < formComponents.Count)
+        {
+            formComponents.RemoveAt(index);
+            if (selectedComponentIndex == index)
+            {
+                selectedComponentIndex = null;
+            }
+            else if (selectedComponentIndex > index)
+            {
+                selectedComponentIndex--;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void MoveUp(int index)
+    {
+        if (index > 0 && index < formComponents.Count)
+        {
+            var component = formComponents[index];
+            formComponents.RemoveAt(index);
+            formComponents.Insert(index - 1, component);
+
+            if (selectedComponentIndex == index)
+            {
+                selectedComponentIndex = index - 1;
+            }
+            else if (selectedComponentIndex == index - 1)
+            {
+                selectedComponentIndex = index;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void MoveDown(int index)
+    {
+        if (index >= 0 && index < formComponents.Count - 1)
+        {
+            var component = formComponents[index];
+            formComponents.RemoveAt(index);
+            formComponents.Insert(index + 1, component);
+
+            if (selectedComponentIndex == index)
+            {
+                selectedComponentIndex = index + 1;
+            }
+            else if (selectedComponentIndex == index + 1)
+            {
+                selectedComponentIndex = index;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private int GetMaxLength(FormComponentModel component)
+    {
+        if (component.Properties != null && component.Properties.TryGetValue("MaxLength", out var maxLengthObj))
+        {
+            if (int.TryParse(maxLengthObj?.ToString(), out var maxLength))
+            {
+                return maxLength;
+            }
+        }
+        return 0;
+    }
+
+    private void UpdateMaxLength()
+    {
+        if (selectedComponentIndex.HasValue && selectedComponentIndex.Value < formComponents.Count)
+        {
+            var component = formComponents[selectedComponentIndex.Value];
+            component.Properties ??= new Dictionary<string, object>();
+            component.Properties["MaxLength"] = maxLengthInput;
+            StateHasChanged();
+        }
+    }
+
+    private void AddNewTextInput()
+    {
+        newComponent = new PostComponentRequestDto
+        {
+            Type = "TextInput",
+            Label = "New Text Input",
+            Required = false,
+            Properties = new Dictionary<string, object>()
+        };
+        newComponentMaxLength = 100;
+        showAddComponentModal = true;
+    }
+
+    private void CloseAddComponentModal()
+    {
+        showAddComponentModal = false;
+        newComponent = new PostComponentRequestDto();
+        newComponentMaxLength = 0;
+    }
+
+    private async Task SaveNewComponent()
+    {
+        if (newComponent.Type == "TextInput")
+        {
+            newComponent.Properties ??= new Dictionary<string, object>();
+            newComponent.Properties["MaxLength"] = newComponentMaxLength;
+        }
+
+        var result = await ComponentService.PostComponentAsync(newComponent);
+        if (result != null)
+        {
+            availableComponents.Add(result);
+            CloseAddComponentModal();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(templateName))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please enter a template name");
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            var componentIds = new List<Guid>();
+
+            // Create components that don't exist yet
+            foreach (var formComponent in formComponents)
+            {
+                if (formComponent.ComponentId.HasValue)
+                {
+                    componentIds.Add(formComponent.ComponentId.Value);
+                }
+                else
+                {
+                    // Create new component
+                    var newComponentRequest = new PostComponentRequestDto
+                    {
+                        Type = formComponent.Type ?? "TextInput",
+                        Label = formComponent.Label ?? "Unnamed Component",
+                        Required = formComponent.Required ?? false,
+                        Properties = formComponent.Properties ?? new Dictionary<string, object>()
+                    };
+
+                    var componentResponse = await ComponentService.PostComponentAsync(newComponentRequest);
+                    if (componentResponse != null)
+                    {
+                        componentIds.Add(componentResponse.Id);
+                        formComponent.ComponentId = componentResponse.Id;
+                    }
+                }
+            }
+
+            // Create form template using your DTOs
+            var formTemplateRequest = new PostFormTemplateRequestDto
+            {
+                Name = templateName,
+                Content = "", // You can add JSON content here if needed
+                Components = componentIds
+            };
+
+            var templateResponse = await FormTemplateService.PostFormTemplateAsync(formTemplateRequest);
+            if (templateResponse != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+                // Reset form
+                formComponents.Clear();
+                templateName = "";
+                selectedComponentIndex = null;
+                await LoadAvailableComponents(); // Refresh components list
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error saving template");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    }
