@@ -21,7 +21,7 @@
                            id="name"
                            name="name"
                            placeholder=" Enter full name"
-                           required/>
+                           required />
                 </div>
 
                 <div class="form-field">
@@ -31,16 +31,19 @@
                            id="email"
                            name="email"
                            placeholder=" user@example.com"
-                           required/>
+                           required />
                 </div>
 
                 <div class="form-field">
                     <label class="section-label">Roles</label>
                     <div class="checkbox-group">
                         <div class="role-checkbox">
-                            <input type="checkbox"
-                                   name="adminRole"
-                                   @bind="_isNewUserAdmin" />
+                            <input type="radio"
+                                   name="userRole"
+                                   id="adminRole"
+                                   value="admin"
+                                   checked="@(_selectedRole == "admin")"
+                                   @onchange="@(() => OnRoleChange("admin"))" />
                             <label for="adminRole">
                                 <span class="checkmark"></span>
                                 <span class="checkbox-label">Admin</span>
@@ -48,9 +51,12 @@
                             </label>
                         </div>
                         <div class="role-checkbox">
-                            <input type="checkbox"
-                                   name="moderatorRole"
-                                   @bind="_isNewUserModerator" />
+                            <input type="radio"
+                                   name="userRole"
+                                   id="moderatorRole"
+                                   value="moderator"
+                                   checked="@(_selectedRole == "moderator")"
+                                   @onchange="@(() => OnRoleChange("moderator"))" />
                             <label for="moderatorRole">
                                 <span class="checkmark"></span>
                                 <span class="checkbox-label">Moderator</span>
