@@ -22,6 +22,7 @@ namespace FlowManager.Application
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IStepService,StepService>();
             services.AddScoped<ITeamService,TeamService>();
+            services.AddScoped<IComponentService, ComponentService>();
             
 
             return services;
