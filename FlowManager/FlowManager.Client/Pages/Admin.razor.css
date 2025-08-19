@@ -1,0 +1,131 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background: white !important;
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+}
+
+.admin-container {
+    display: flex;
+    min-height: 83vh;
+}
+
+.page-description {
+    border-top: 1px solid var(--primary-color);
+    background: linear-gradient(180deg, #2c8e90 0%,#003d5c 100%);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(44, 142, 144, 0.15);
+}
+
+.page-description::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 150px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1));
+    pointer-events: none;
+}
+
+.page-description h2 {
+    padding-left: 1.5rem;
+    padding-top: 1.25rem;
+    margin: 0;
+    font-weight: 700;
+    font-size: 28px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.page-description p {
+    padding-left: 1.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 1.25rem;
+    margin: 0;
+    font-weight: 500;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.sidebar {
+    width: 200px;
+    background-color: white;
+    border-right: 1px solid #E5E5E5;
+    padding: 2rem 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-main {
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-bottom {
+    margin-top: auto;
+    border-top: 1px solid #E5E5E5;
+    padding-top: 1rem;
+}
+
+.main-content {
+    flex: 1;
+    padding: 1rem;
+    background-color: #f8fafc;
+    overflow-y: auto;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 18px;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    color: #6acc9b;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+    text-align: left;
+    font-weight: 400;
+}
+
+.nav-item:hover {
+    color: #00d7a0;
+    font-weight: 600;
+}
+
+.nav-item.active {
+    color: var(--siemens-blue);
+    font-weight: 500;
+}
+
+.nav-item:focus {
+    outline: none;
+}
+
+.nav-item:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+}
+
+.logout-btn {
+    color: #f73838;
+}
+
+.logout-btn:hover {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-left-color: #dc2626;
+}

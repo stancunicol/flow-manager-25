@@ -69,13 +69,27 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersQueriedAsync(QueriedUserRequestDto payload)
         {
-            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams.ToQueryParams());
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams?.ToQueryParams());
 
             return new PagedResponseDto<UserResponseDto>
             {
-                Data = result.Select(MapToUserResponseDto),
-                Page = payload.QueryParams.Page ?? 1,
-                PageSize = payload.QueryParams.PageSize ?? totalCount,
+                Data = result.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    UserName = u.UserName,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt,
+                    DeletedAt = u.DeletedAt,
+                    Roles = u.Roles.Select(r => new RoleResponseDto
+                    {
+                        Id = r.RoleId,
+                        Name = r.Role.Name 
+                    }).ToList()
+                }),
+                Page = payload.QueryParams?.Page ?? 1,
+                PageSize = payload.QueryParams?.PageSize ?? totalCount,
                 TotalCount = totalCount
             };
         }
