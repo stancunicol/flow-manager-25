@@ -1,330 +1,109 @@
-﻿@* @page "/"
-@using FlowManager.Domain.Entities
-@using FlowManager.Client.Components
-@using FlowManager.Client.Services
+﻿@page "/home"
+@layout MainLayout
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject HttpClient HttpClient
-@inject FlowService FlowService
-@inject StepService StepService
-@inject UserService UserService
-@inject FormService FormService
-
 @attribute [Authorize]
-<PageTitle>Flow Manager</PageTitle>
-<AuthorizeView>
-    <Authorized Context="authContext">
-        <div class="text-center">
-            <div class="topBar">
-                <button @onclick="() => showFormModal = true" class="newRequestButton">New request</button>
-            </div>
-        </div>
-        <NewFormModal IsOpen="@showFormModal"
-                      IsOpenChanged="@(value => showFormModal = value)"
-                      AvailableFlows="flows"
-                      CurrentUserId="@currentUserId"
-                      OnSubmit="HandleFormSubmit"
-                      IsSubmitting="@isSubmittingForm"
-                      ErrorMessage="@formSubmissionError"/>
-        @if (userForms.Any())
-        {
-            <div class="form-list">
-                @foreach (var form in userForms)
-                {
-                    var isExpanded = expandedFormId == form.Id;
-                    <div class="form-entry" @onclick="() => ToggleExpand(form.Id)">
-                        <div class="form-summary">
-                            <strong class="flowName">@GetFlowName(form.FlowId)</strong>
-                            <span class="status @form.Status">@form.Status</span>
-                            <span class="formSubmitTime">@form.CreatedAt.ToLocalTime().ToString("g")</span>
-                        </div>
-                        @if (isExpanded)
-                        {
-                            <div class="form-details">
-                                <p><strong>Comment:</strong> @form.Comment</p>
-                                <p><strong>Last Step:</strong> @(form.LastStep?.Name ?? "Not started")</p>
-                                <p><strong>Status:</strong> @form.Status</p>
-                                <p><strong>Updated:</strong> @form.UpdatedAt.ToLocalTime().ToString("g")</p>
-                            </div>
-                            //<FlowTracker Steps="@flow.Steps.OrderBy(s => s.CreatedAt).ToList()" CurrentStepIndex="@GetCurrentStepIndex(form)" />
-                            <FlowTracker flow="@form.Flow" CurrentStepIndex="@GetCurrentStepIndex(form)"/>
-                        }
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            <p style="margin-top: 2rem; align-content: center; text-align: center;">No requests submitted yet.</p>
-        }
-    </Authorized>
-    <NotAuthorized>
-        <p>You are not authorized to access this page.</p>
-    </NotAuthorized>
-</AuthorizeView>
-@code {
-    private string selectedRole = "Basic";
-    private string userName = "";
-    private string currentUserEmail = "";
-    private Guid currentUserId = Guid.Empty;
-    private bool showUserManagementModal = false;
+@inject NavigationManager Navigation
 
-    private bool showFormModal = false;
-    private bool showUserModal = false;
-    private bool showFlowModal = false;
-    private bool showEditFlowModal = false;
-    private bool showUserListModal = false;
-    private bool showStepModal = false;
-    private bool showStepsManagementModal = false;
-    private bool isSubmittingForm = false;
-    private string? formSubmissionError = null;
+<FlowManager.Client.Components.NavBar.Navbar />
 
-    private List<Flow> flows = new();
-    private List<Form> userForms = new();
-    private List<Form> assignedForms = new();
-    private List<Step> allSteps = new();
-    private List<string> userRoles = new();
-    private Guid? expandedFormId = null;
-    private bool isLoadingRoles = true;
-    private Flow? flowToEdit = null;
-    
-    int currentStep = 0;
+<!-- Page description -->
+<div class="page-description">
+    <h2>Welcome back!</h2>
+    <p>Choose your workspace to get started</p>
+</div>
 
-    Flow flow = new()
+<div class="home-container">
+    <div class="roles-grid">
+    @if (userRoles.Contains("Admin"))
     {
-        Name = "Test Flow"
-    };
+        <div class="role-card admin-card" @onclick="NavigateToAdmin">
+            <div class="role-icon">⚙️</div>
+            <h3 class="role-title">Admin Dashboard</h3>
+            <p class="role-description">Manage users, flows, forms and system settings</p>
+            <div class="role-badge admin-badge">Administrator</div>
+        </div>
+    }
 
+    @if (userRoles.Contains("Manager"))
+    {
+        <div class="role-card manager-card" @onclick="NavigateToManager">
+            <div class="role-icon">📊</div>
+            <h3 class="role-title">Manager Dashboard</h3>
+            <p class="role-description">Manage team flows and monitor progress</p>
+            <div class="role-badge manager-badge">Manager</div>
+        </div>
+    }
+
+    @if (userRoles.Contains("BasicUser") || userRoles.Contains("User"))
+    {
+        <div class="role-card user-card" @onclick="NavigateToUser">
+            <div class="role-icon">👤</div>
+            <h3 class="role-title">User Workspace</h3>
+            <p class="role-description">Access your flows, forms and tasks</p>
+            <div class="role-badge user-badge">User</div>
+        </div>
+    }
+</div>
+
+    @if (!userRoles.Any())
+    {
+        <div class="no-roles">
+            <h3>No roles assigned</h3>
+            <p>Please contact your administrator to assign roles to your account.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<string> userRoles = new();
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        // Aici ar trebui să obții rolurile utilizatorului din serviciul de autentificare
+        // Pentru demo, simulez că utilizatorul are rolurile Admin și User
+        userRoles = new List<string> { "Admin", "BasicUser", "Manager" };
 
-        if (user.Identity is { IsAuthenticated: true })
+        // Dacă utilizatorul are un singur rol, redirectează direct
+        if (userRoles.Count == 1)
         {
-            userName = user.Identity.Name;
-            
-            currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
-            // Debug: Print all claims to see what's available
-            Console.WriteLine($"[DEBUG] All user claims:");
-            foreach (var claim in user.Claims)
-            {
-                Console.WriteLine($"[DEBUG] Claim Type: {claim.Type}, Value: {claim.Value}");
-            }
-            
-            // Try multiple possible claim types for user ID
-            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                           ?? user.FindFirst("sub")?.Value 
-                           ?? user.FindFirst("id")?.Value
-                           ?? user.FindFirst("userId")?.Value;
-                           
-            Console.WriteLine($"[DEBUG] User ID claim from JWT: {userIdClaim}");
-            
-            if (Guid.TryParse(userIdClaim, out var userId))
-            {
-                currentUserId = userId;
-                Console.WriteLine($"[DEBUG] Set currentUserId to: {currentUserId}");
-            }
-            else
-            {
-                Console.WriteLine($"[DEBUG] Failed to parse user ID from claim: {userIdClaim}");
-                // If we can't get user ID from claims, try to get it from API
-                await LoadCurrentUserFromApi();
-            }
-            
-            // Get roles from authentication claims instead of API call
-            userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-            Console.WriteLine($"[DEBUG] Loaded roles from claims: {string.Join(", ", userRoles)}");
-            
-            if (userRoles.Any())
-            {
-                selectedRole = userRoles.First().ToLower();
-            }
-            else
-            {
-                Console.WriteLine($"[INFO] User has no roles assigned. Defaulting to 'basic' role.");
-                selectedRole = "basic";
-            }
-            
-            isLoadingRoles = false;
+            await NavigateToRole(userRoles.First());
         }
-        
-        // Ensure we have a valid user ID before proceeding
-        if (currentUserId == Guid.Empty)
-        {
-            Console.WriteLine("[ERROR] No valid user ID found. Cannot load user-specific data.");
-            return;
-        }
-        
-        Console.WriteLine($"[DEBUG] Final currentUserId: {currentUserId}");
-        await LoadFlows();
-        await LoadSteps();
-        await LoadForms();
-        
-        
     }
-    
 
-
-    private async Task HandleFormSubmit(Form form)
+    private void NavigateToAdmin()
     {
-        isSubmittingForm = true;
-        formSubmissionError = null;
-        StateHasChanged();
-        
-        try
-        {
-            Console.WriteLine($"[DEBUG] Submitting form to API - FlowId: {form.FlowId}, UserId: {form.UserId}");
-            var createdForm = await FormService.CreateFormAsync(form);
-            
-            if (createdForm != null)
-            {
-                Console.WriteLine($"[DEBUG] Form created successfully with ID: {createdForm.Id}");
-                userForms.Insert(0, createdForm);
-                showFormModal = false;
-                StateHasChanged();
-            }
-            else
-            {
-                Console.WriteLine("[ERROR] Failed to create form - API returned null");
-                formSubmissionError = "Failed to create form. Please try again.";
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[ERROR] Exception while creating form: {ex.Message}");
-            formSubmissionError = $"Error creating form: {ex.Message}";
-        }
-        finally
-        {
-            isSubmittingForm = false;
-            StateHasChanged();
-        }
+        Navigation.NavigateTo("/admin");
     }
-    private async Task LoadSteps()
+
+    private void NavigateToUser()
     {
-        allSteps = await StepService.GetStepsAsync();
-        StateHasChanged();
+        Navigation.NavigateTo("/user-dashboard");
     }
 
-    private async Task LoadFlows()
+    private void NavigateToManager()
     {
-        flows = await FlowService.GetFlowsAsync();
-        StateHasChanged();
-    }
-    private async Task LoadForms()
-    {
-        Console.WriteLine("[DEBUG] Starting to load forms...");
-        userForms = await FormService.GetAllFormsAsync();
-        Console.WriteLine($"[DEBUG] Loaded {userForms.Count} forms from API");
-        StateHasChanged();
+        Navigation.NavigateTo("/manager-dashboard");
     }
 
-    private async Task LoadCurrentUserFromApi()
+    private async Task NavigateToRole(string role)
     {
-        try
+        await Task.Delay(100);
+
+        switch (role)
         {
-            Console.WriteLine("[DEBUG] Attempting to load user from API...");
-            var response = await HttpClient.GetAsync("api/auth/me");
-            if (response.IsSuccessStatusCode)
-            {
-                var userInfo = await response.Content.ReadFromJsonAsync<UserProfileDto>();
-                if (userInfo != null && userInfo.Id != Guid.Empty)
-                {
-                    currentUserId = userInfo.Id;
-                    Console.WriteLine($"[DEBUG] Set currentUserId from API to: {currentUserId}");
-                }
-                else
-                {
-                    Console.WriteLine("[DEBUG] UserProfileDto returned but Id is empty");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"[DEBUG] Failed to load user from API. Status: {response.StatusCode}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[DEBUG] Exception loading user from API: {ex.Message}");
+            case "Admin":
+                NavigateToAdmin();
+                break;
+            case "BasicUser":
+            case "User":
+                NavigateToUser();
+                break;
+            case "Manager":
+                NavigateToManager();
+                break;
+            default:
+                Navigation.NavigateTo("/");
+                break;
         }
     }
-
-    private void ToggleExpand(Guid formId)
-    {
-        expandedFormId = expandedFormId == formId ? null : formId;
-    }
-
-    private string GetFlowName(Guid flowId)
-    {
-        return flows.FirstOrDefault(f => f.Id == flowId)?.Name ?? "Unknown Flow";
-    }
-
-    private Step? GetCurrentStepForForm(Form form)
-    {
-        var flow = flows.FirstOrDefault(f => f.Id == form.FlowId);
-        if (flow == null || !flow.Steps.Any()) return null;
-
-        var orderedSteps = flow.Steps.OrderBy(s => s.CreatedAt).ToList();
-        
-        // If no step has been processed yet (legacy forms), return the first step
-        if (form.LastStepId == null)
-        {
-            return orderedSteps.FirstOrDefault();
-        }
-
-        // If form is on the first step (newly created forms), return the first step as current
-        var currentStepIndex = orderedSteps.FindIndex(s => s.Id == form.LastStepId);
-        if (currentStepIndex >= 0)
-        {
-            // Return the current step (for forms that are active on a step)
-            return orderedSteps[currentStepIndex];
-        }
-
-        // If we can't find the step, return the first step as fallback
-        return orderedSteps.FirstOrDefault();
-    }
-
-    private async Task<bool> IsUserAssignedToStep(Guid userId, Guid stepId)
-    {
-        try
-        {
-            var assignedUsers = await UserService.GetUsersByStepAsync(stepId);
-            return assignedUsers.Any(u => u.Id == userId);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-    
-
-    private int GetCurrentStepIndex(Form form)
-    {
-        var flow = flows.FirstOrDefault(f => f.Id == form.FlowId);
-        if (flow == null || !flow.Steps.Any()) return 0;
-
-        var orderedSteps = flow.Steps.OrderBy(s => s.CreatedAt).ToList();
-        
-        // If no step has been processed yet (legacy forms), current step is 0 (first step)
-        if (form.LastStepId == null)
-        {
-            return 0;
-        }
-
-        // Find the index of the current active step
-        var currentStepIndex = orderedSteps.FindIndex(s => s.Id == form.LastStepId);
-        if (currentStepIndex >= 0)
-        {
-            // Return the current step index (forms are now active on the LastStepId)
-            return currentStepIndex;
-        }
-
-        return 0; // Default to first step
-    }
-
 }
- *@

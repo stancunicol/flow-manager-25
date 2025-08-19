@@ -8,9 +8,11 @@
             var currentUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
             var isPublicRoute = currentUrl == "auth" ||
             currentUrl == "reset-password" ||
+            currentUrl == "home" ||
             currentUrl == "" ||
             routeData.PageType.Name == "Auth" ||
-            routeData.PageType.Name == "ResetPassword";
+            routeData.PageType.Name == "ResetPassword" ||
+            routeData.PageType.Name == "Home";
         }
 
         @if (isPublicRoute)
