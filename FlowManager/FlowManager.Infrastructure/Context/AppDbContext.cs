@@ -26,6 +26,7 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<StepUser> StepUsers => Set<StepUser>();
         public DbSet<StepTeam> StepTeams => Set<StepTeam>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -36,8 +37,8 @@ namespace FlowManager.Infrastructure.Context
             UniqueTeamNameConstraintConfiguration(builder);
 
             UniqueFlowStepKeyConstraintConfiguration(builder);
-            StepUserKeyConstraintConfiguration(builder); // NOU
-            StepTeamKeyConstraintConfiguration(builder); // NOU
+            StepUserKeyConstraintConfiguration(builder); 
+            StepTeamKeyConstraintConfiguration(builder);
 
             UserRoleRelationshipConfiguration(builder);
             TeamRelationshipConfiguration(builder);

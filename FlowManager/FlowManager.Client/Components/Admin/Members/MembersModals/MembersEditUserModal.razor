@@ -7,50 +7,95 @@
 
 @if (ShowEditForm)
 {
-    <div class="popup-backdrop">
-        <div class="popup-container">
-            <h3>Edit User</h3>
+    <div class="popup-backdrop" @onclick="CancelForm">
+        <div class="popup-container" @onclick:stopPropagation="true">
+            <div class="popup-header">
+                <h3>Edit User</h3>
+            </div>
 
             <form @onsubmit="EditUser" @onsubmit:preventDefault="true">
-                <label>Name:</label>
-                <input class="popup-input" @bind="UserToEdit.Name" />
+                <div class="form-field">
+                    <label for="name">Name:</label>
+                    <input @bind="UserToEdit.Name"
+                           type="text"
+                           id="name"
+                           name="name"
+                           class="modern-input"
+                           placeholder="Enter full name"
+                           />
+                </div>
 
-                <label>Email:</label>
-                <input class="popup-input" @bind="UserToEdit.Email" />
+                <div class="form-field">
+                    <label for="email">Email:</label>
+                    <input @bind="UserToEdit.Email"
+                           type="email"
+                           id="email"
+                           name="email"
+                           class="modern-input"
+                           placeholder="Enter email address"
+                           />
+                </div>
 
-                <label>Roles:</label>
-                <div>
-                    <div>
-                        <input type="checkbox"
-                               id="adminRole"
-                               name="adminRole"
-                               @bind="_isAdmin">
-                        <label for="adminRole">
-                            Admin
-                        </label>
-                    </div>
+                <div class="form-field">
+                    <label>Roles:</label>
+                    <div class="checkbox-group">
+                        <div class="role-checkbox">
+                            <input type="checkbox"
+                                   id="adminRole"
+                                   name="adminRole"
+                                   @bind="_isAdmin" />
+                            <label for="adminRole">
+                                <div class="checkmark"></div>
+                                <div>
+                                    <div class="checkbox-label">Admin</div>
+                                    <div class="role-description">Full system access</div>
+                                </div>
+                            </label>
+                        </div>
 
-                    <div>
-                        <input type="checkbox"
-                               id="moderatorRole"
-                               name="moderatorRole"
-                               @bind="_isModerator">
-                        <label for="moderatorRole">
-                            Moderator
-                        </label>
+                        <div class="role-checkbox">
+                            <input type="checkbox"
+                                   id="moderatorRole"
+                                   name="moderatorRole"
+                                   @bind="_isModerator" />
+                            <label for="moderatorRole">
+                                <div class="checkmark"></div>
+                                <div>
+                                    <div class="checkbox-label">Moderator</div>
+                                    <div class="role-description">Content moderation</div>
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    *All the users are automatically set to employees.
-                </div>
+                <div class="info-card">
+                    <div class="info-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                     </div>
+                        <div>All users are automatically set to employees.</div>
+                    </div>
 
                 <div class="modal-actions">
-                    <button type="submit">Edit User</button>
-                    <button @onclick="() => ShowEditForm = false">Cancel</button>
+                    <button type="button" @onclick="CancelForm" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Save Changes
+                    </button>
                 </div>
+
+                @if(!string.IsNullOrEmpty(_onSubmitMessage))
+                {
+                    <div class="onSubmitMessage">
+                        <span class="onSubmit @(_onSubmitSuccess ? "success" : "fail")"> @_onSubmitMessage </span>
+                    </div>
+                }
             </form>
-           
         </div>
     </div>
 }

@@ -33,6 +33,10 @@ namespace FlowManager.Infrastructure.Middleware
             {
                 await HandleExpectionAsync(context, ex, HttpStatusCode.Conflict);
             }
+            catch(EmailNotSentException ex)
+            {
+                await HandleExpectionAsync(context, ex, HttpStatusCode.UnprocessableEntity);
+            }
             catch (Exception ex)
             {
                 await HandleExpectionAsync(context, ex, HttpStatusCode.InternalServerError);

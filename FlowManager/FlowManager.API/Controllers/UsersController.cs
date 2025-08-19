@@ -196,7 +196,7 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        [HttpPatch("{id}/restore")]
+        [HttpPatch("restore/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

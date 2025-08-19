@@ -9,14 +9,13 @@ namespace FlowManager.Client.Components.Admin.Members
 {
     public partial class Members : ComponentBase
     {
-        [Inject] private UserService UserService { get; set; } = default!;
+        [Inject] private UserService _userService { get; set; } = default!;
+        [Inject] private ILogger<Members> _logger { get; set; } = default!;
 
         private bool _showAddForm = false;
         private bool _showEditForm = false;
 
         private List<UserVM> _users = new();
-
-        private List<RoleVM> _availableRoles = new();
 
         private UserVM _selectedUserToEdit = new();
 
@@ -27,7 +26,7 @@ namespace FlowManager.Client.Components.Admin.Members
 
         private async Task LoadUsers()
         {
-            ApiResponse<PagedResponseDto<UserResponseDto>> response = await UserService.GetAllUsersQueriedAsync();
+            ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersQueriedAsync();
 
             if (!response.Success)
             {
@@ -49,26 +48,34 @@ namespace FlowManager.Client.Components.Admin.Members
             }).ToList();
         }
 
-        private void OpenEditUser(UserVM user)
+        private async Task DeleteUser(UserVM user)
         {
-            _selectedUserToEdit = user;
+            ApiResponse<UserResponseDto> response = await _userService.DeleteUserAsync(user.Id);
 
-            _showEditForm = true;
+            if(!response.Success)
+            {
+                _logger.LogError("Failed to delete user {UserId}: {Message}", user.Id, response.Message);
+            }
+
+            await LoadUsers();
         }
 
-        private void DeleteUser(UserVM user)
+        private async Task RestoreUser(UserVM user)
         {
+            ApiResponse<UserResponseDto> response = await _userService.RestoreUserAsync(user.Id);
 
+            if(!response.Success)
+            {
+                _logger.LogError("Failed to restore user {UserId}: {Message}", user.Id, response.Message);
+            }
+
+            await LoadUsers();
         }
-
-        private void RestoreUser(UserVM user)
-        {
-
-        }
-
+        
         private void EditUser(UserVM user)
         {
+            _selectedUserToEdit = user;
             _showEditForm = true;
-        }
+        }   
     }
 }

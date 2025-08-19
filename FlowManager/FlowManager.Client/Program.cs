@@ -39,8 +39,6 @@ builder.Services.AddScoped<FormService>();
 builder.Services.AddScoped<ClientAuthService>();
 builder.Services.AddScoped<RoleService>();
 
-
-
 builder.Services.AddBlazorBootstrap();
 
 await builder.Build().RunAsync();

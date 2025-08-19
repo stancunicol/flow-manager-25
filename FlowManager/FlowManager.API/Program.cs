@@ -90,7 +90,7 @@ using (var scope = app.Services.CreateScope())
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
      BasicSeed.Populate(dbContext, passwordHasher);
-    // FormResponseSeed.Populate(dbContext);
+     FormResponseSeed.Populate(dbContext);
 }
 
 if (app.Environment.IsDevelopment())

@@ -28,7 +28,6 @@ namespace FlowManager.Infrastructure.Services
             _emailService = emailService;
         }
 
-        // Helper method pentru mapping
         private UserResponseDto MapToUserResponseDto(User user)
         {
             return new UserResponseDto
@@ -37,7 +36,7 @@ namespace FlowManager.Infrastructure.Services
                 Name = user.Name,
                 Email = user.Email,
                 UserName = user.UserName,
-                TeamId = user.TeamId, // ADĂUGAT TeamId
+                TeamId = user.TeamId,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 DeletedAt = user.DeletedAt,
@@ -69,7 +68,7 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersQueriedAsync(QueriedUserRequestDto payload)
         {
-            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams?.ToQueryParams());
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams?.ToQueryParams(), includeDeleted: true); 
 
             return new PagedResponseDto<UserResponseDto>
             {
@@ -122,7 +121,7 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<UserResponseDto> AddUserAsync(PostUserRequestDto payload)
         {
-            if (_userRepository.GetUserByEmailAsync(payload.Email) != null)
+            if (await _userRepository.GetUserByEmailAsync(payload.Email) != null)
             {
                 throw new UniqueConstraintViolationException($"User with email {payload.Email} already exists.");
             }
@@ -135,12 +134,12 @@ namespace FlowManager.Infrastructure.Services
                 NormalizedEmail = payload.Email.ToUpper(),
                 Email = payload.Email,
                 EmailConfirmed = false,
-                TeamId = payload.TeamId // ADĂUGAT suportul pentru TeamId
+                TeamId = payload.TeamId
             };
 
             foreach (Guid roleId in payload.Roles)
             {
-                if (_roleRepository.GetRoleByIdAsync(roleId) == null)
+                if (await _roleRepository.GetRoleByIdAsync(roleId) == null)
                 {
                     throw new EntryNotFoundException($"Role with id {roleId} was not found (trying to create a user).");
                 }
@@ -153,22 +152,47 @@ namespace FlowManager.Infrastructure.Services
                 userToAdd.Roles.Add(userRole);
             }
 
-            var result = await _userRepository.AddUserAsync(userToAdd);
+            Guid basicRoleId = (await _roleRepository.GetRoleByRolenameAsync("Basic"))!.Id;
+
+            UserRole basicRole = new UserRole
+            {
+                UserId = userToAdd.Id,
+                RoleId = basicRoleId
+            };
+
+            userToAdd.Roles.Add(basicRole);
 
             // Send welcome email
             try
             {
-                Console.WriteLine($"Attempting to send welcome email to: {result.Email}");
-                await _emailService.SendWelcomeEmailAsync(result.Email, result.Name);
-                Console.WriteLine($"Welcome email sent successfully to: {result.Email}");
+                Console.WriteLine($"Attempting to send welcome email to: {userToAdd.Email}");
+                await _emailService.SendWelcomeEmailAsync(userToAdd.Email, userToAdd.Name);
+                Console.WriteLine($"Welcome email sent successfully to: {userToAdd.Email}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending welcome email: {ex.Message}");
-                // Don't throw - just log the error so user creation still succeeds
+                throw new EmailNotSentException($"Failed to send welcome email to {userToAdd.Email}. Invalid email address.");
             }
 
-            return MapToUserResponseDto(result);
+
+            var result = await _userRepository.AddUserAsync(userToAdd);
+
+            return new UserResponseDto
+            {
+                Id = result.Id,
+                Name = result.Name,
+                Email = result.Email,
+                UserName = result.UserName,
+                TeamId = result.TeamId,
+                CreatedAt = result.CreatedAt,
+                UpdatedAt = result.UpdatedAt,
+                DeletedAt = result.DeletedAt,
+                Roles = result.Roles.Select(r => new RoleResponseDto
+                {
+                    Id = r.RoleId,
+                    Name = r.Role.Name
+                }).ToList()
+            };
         }
 
         public async Task<UserResponseDto> UpdateUserAsync(Guid id, PatchUserRequestDto payload)
@@ -180,14 +204,23 @@ namespace FlowManager.Infrastructure.Services
                 throw new EntryNotFoundException($"User with id {id} was not found.");
             }
 
-            PatchHelper.PatchFrom<PatchUserRequestDto, User>(userToUpdate, payload);
-            userToUpdate.UpdatedAt = DateTime.UtcNow;
+            if(!string.IsNullOrEmpty(payload.Name))
+            {
+                userToUpdate.Name = payload.Name;
+            }
 
-            // Dacă TeamId este specificat în payload, îl actualizăm
+            if(!string.IsNullOrEmpty(payload.Email))
+            {
+                userToUpdate.Email = payload.Email;
+                userToUpdate.UserName = payload.Email;
+            }
+
             if (payload.TeamId.HasValue)
             {
                 userToUpdate.TeamId = payload.TeamId.Value;
             }
+
+            userToUpdate.UpdatedAt = DateTime.UtcNow;
 
             if (payload.Roles != null)
             {
@@ -198,7 +231,7 @@ namespace FlowManager.Infrastructure.Services
 
                 foreach (Guid roleId in payload.Roles)
                 {
-                    if (_roleRepository.GetRoleByIdAsync(roleId) == null)
+                    if (await _roleRepository.GetRoleByIdAsync(roleId) == null)
                     {
                         throw new EntryNotFoundException($"Role with id {roleId} was not found (trying to update a user).");
                     }
