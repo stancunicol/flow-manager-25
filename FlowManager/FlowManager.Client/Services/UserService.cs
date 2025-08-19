@@ -183,5 +183,55 @@ namespace FlowManager.Client.Services
                 return false;
             }
         }
+
+        public async Task<ApiResponse<UserResponseDto>> DeleteUserAsync(Guid id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"api/users/{id}");
+                return await response.Content.ReadFromJsonAsync<ApiResponse<UserResponseDto>>() ?? new ApiResponse<UserResponseDto>();
+            }
+            catch (HttpRequestException ex)
+            {
+                return new ApiResponse<UserResponseDto>
+                {
+                    Message = $"Network error: {ex.Message}",
+                    Success = false
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<UserResponseDto>
+                {
+                    Message = $"Unexpected error: {ex.Message}",
+                    Success = false
+                };
+            }
+        }
+
+        public async Task<ApiResponse<UserResponseDto>> RestoreUserAsync(Guid id)
+        {
+            try
+            {
+                var response = await _httpClient.PatchAsync($"api/users/restore/{id}", null);
+                return await response.Content.ReadFromJsonAsync<ApiResponse<UserResponseDto>>() ?? new ApiResponse<UserResponseDto>();
+            }
+            catch(HttpRequestException ex) 
+            {
+                return new ApiResponse<UserResponseDto>
+                {
+                    Message = $"Network error : {ex.Message}",
+                    Success = false
+                };
+            }
+            catch(Exception ex)
+            {
+                return new ApiResponse<UserResponseDto>
+                {
+                    Message = $"Unexpected error : {ex.Message}",
+                    Success = false
+                };
+            }
+        }
     }
 }

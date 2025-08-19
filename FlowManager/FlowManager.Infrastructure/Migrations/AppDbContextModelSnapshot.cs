@@ -54,7 +54,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Components", (string)null);
+                    b.ToTable("Components");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Flow", b =>
@@ -84,7 +84,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("FormTemplateId");
 
-                    b.ToTable("Flows", (string)null);
+                    b.ToTable("Flows");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStep", b =>
@@ -111,7 +111,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("StepId");
 
-                    b.ToTable("FlowSteps", (string)null);
+                    b.ToTable("FlowSteps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FormResponse", b =>
@@ -154,7 +154,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FormResponses", (string)null);
+                    b.ToTable("FormResponses");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplate", b =>
@@ -188,7 +188,7 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_FormTemplates_Name");
 
-                    b.ToTable("FormTemplates", (string)null);
+                    b.ToTable("FormTemplates");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplateComponent", b =>
@@ -218,7 +218,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("FormTemplateId");
 
-                    b.ToTable("FormTemplateComponents", (string)null);
+                    b.ToTable("FormTemplateComponents");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Role", b =>
@@ -283,7 +283,7 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Steps", (string)null);
+                    b.ToTable("Steps");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.StepTeam", b =>
@@ -315,7 +315,7 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_StepTeams_StepId_TeamId");
 
-                    b.ToTable("StepTeams", (string)null);
+                    b.ToTable("StepTeams");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.StepUser", b =>
@@ -347,7 +347,7 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_StepUsers_StepId_UserId");
 
-                    b.ToTable("StepUsers", (string)null);
+                    b.ToTable("StepUsers");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Team", b =>
@@ -376,7 +376,7 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_Teams_Name");
 
-                    b.ToTable("Teams", (string)null);
+                    b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>

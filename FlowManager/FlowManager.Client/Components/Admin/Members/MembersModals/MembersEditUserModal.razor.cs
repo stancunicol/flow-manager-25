@@ -8,13 +8,19 @@ using Microsoft.AspNetCore.Components;
 
 namespace FlowManager.Client.Components.Admin.Members.MembersModals
 {
-    public partial class MembersEditUserModal: ComponentBase
+    public partial class MembersEditUserModal : ComponentBase
     {
         [Inject] private UserService _userService { get; set; } = default!;
         [Inject] private RoleService _roleService { get; set; } = default!;
 
         [Parameter] public bool ShowEditForm { get; set; }
+        [Parameter] public EventCallback<bool> ShowEditFormChanged { get; set; }
         [Parameter] public UserVM UserToEdit { get; set; }
+
+        [Parameter] public EventCallback OnUserEdit { get; set; }
+
+        private string _onSubmitMessage = string.Empty;
+        private bool _onSubmitSuccess;
 
         private List<RoleVM> _availableRoles;
 
@@ -80,6 +86,21 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
                 UserName = UserToEdit.Email,
                 Roles = UserToEdit.Roles.Select(r => r.Id).ToList()
             });
+
+            _onSubmitSuccess = response.Success;
+            _onSubmitMessage = response.Message;
+
+            if (!response.Success)
+            {
+                return;
+            }
+
+            await OnUserEdit.InvokeAsync();
+        }
+
+        private async Task CancelForm()
+        {
+            await ShowEditFormChanged.InvokeAsync(false);
         }
     }
 }

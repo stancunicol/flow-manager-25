@@ -21,18 +21,17 @@ namespace FlowManager.Infrastructure.Repositories
             _context = context;
         }
 
-        // Helper method pentru Include-uri standard
         private IQueryable<User> GetUsersWithIncludes(IQueryable<User> query)
         {
             return query
                 .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
                     .ThenInclude(ur => ur.Role)
-                .Include(u => u.Team) // ADĂUGAT Team
-                .Include(u => u.Steps.Where(su => su.DeletedAt == null)) // ADĂUGAT Steps
+                .Include(u => u.Team)
+                .Include(u => u.Steps.Where(su => su.DeletedAt == null))
                     .ThenInclude(su => su.Step);
         }
 
-        public async Task<User?> AddUserAsync(User user)
+        public async Task<User> AddUserAsync(User user)
         {
             _context.Users.Add(user);
             await SaveChangesAsync();
@@ -63,19 +62,20 @@ namespace FlowManager.Infrastructure.Repositories
             return await GetUsersWithIncludes(query).ToListAsync();
         }
 
-        public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email, QueryParams parameters)
+        public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email, QueryParams parameters, bool includeDeleted = false)
         {
             IQueryable<User> query = _context.Users
-                .Where(u => u.DeletedAt == null);
+                .Where(u => u.DeletedAt == null)
+                .Include(u => u.Roles)
+                    .ThenInclude(ur => ur.Role);
 
-            // Filtrare după email
+            if (!includeDeleted)
+                query = query.Where(u => u.DeletedAt == null);
+
             if (email != null)
             {
-                query = query.Where(u => u.NormalizedEmail.Contains(email.ToUpper()));
+                query = query.Where(u => u.NormalizedEmail!.Contains(email.ToUpper()));
             }
-
-            // Include-uri pentru relații
-            query = GetUsersWithIncludes(query);
 
             int totalCount = await query.CountAsync();
 
@@ -115,13 +115,11 @@ namespace FlowManager.Infrastructure.Repositories
             IQueryable<User> query = _context.Users
                 .Where(u => u.DeletedAt == null);
 
-            // Filtrare după email
             if (!string.IsNullOrEmpty(email))
             {
                 query = query.Where(u => u.NormalizedEmail.Contains(email.ToUpper()));
             }
 
-            // Include-uri pentru relații
             query = GetUsersWithIncludes(query);
 
             int totalCount = await query.CountAsync();
@@ -158,7 +156,14 @@ namespace FlowManager.Infrastructure.Repositories
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            var query = _context.Users
+            var query = _context.Users;
+
+            return await query.FirstOrDefaultAsync(u => u.NormalizedEmail == email.ToUpper());
+        }
+
+        public async Task<User?> GetUserByEmailIncludeRelationshipsAsync(string email)
+        {
+            IQueryable<User> query = _context.Users
                 .Where(u => u.DeletedAt == null && u.NormalizedEmail == email.ToUpper());
 
             return await GetUsersWithIncludes(query).FirstOrDefaultAsync();
@@ -166,7 +171,9 @@ namespace FlowManager.Infrastructure.Repositories
 
         public async Task<User?> GetUserByIdAsync(Guid id, bool includeDeleted = false)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<User> query = _context.Users
+                .Include(u => u.Roles)
+                    .ThenInclude(ur => ur.Role);
 
             if (!includeDeleted)
                 query = query.Where(u => u.DeletedAt == null);
@@ -175,23 +182,6 @@ namespace FlowManager.Infrastructure.Repositories
 
             return await query.FirstOrDefaultAsync(u => u.Id == id);
         }
-
-        public async Task<string> GetUserRoleByEmailAsync(string email)
-        {
-            var query = _context.Users.Where(u => u.Email == email && u.DeletedAt == null)
-                .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
-                    .ThenInclude(ur => ur.Role);
-
-            var user = await query.FirstOrDefaultAsync();
-            if (user == null || !user.Roles.Any())
-                return string.Empty;
-
-            return user.Roles.First().Role.NormalizedName;
-        }
-
-        // ==========================================
-        // METODE PENTRU TEAMS
-        // ==========================================
 
         public async Task<List<User>> GetUsersByTeamIdAsync(Guid teamId)
         {
@@ -221,10 +211,6 @@ namespace FlowManager.Infrastructure.Repositories
             return await GetUsersWithIncludes(query).FirstOrDefaultAsync();
         }
 
-        // ==========================================
-        // METODE PENTRU STEPS (prin StepUser)
-        // ==========================================
-
         public async Task<User?> GetUserWithTeamAndStepsAsync(Guid userId)
         {
             return await _context.Users
@@ -250,7 +236,6 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-      
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

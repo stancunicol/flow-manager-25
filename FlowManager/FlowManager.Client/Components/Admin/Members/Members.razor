@@ -65,7 +65,7 @@
                             {
                                 <div class="actions-container">
                                     <button class="action-button edit-button"
-                                            @onclick="() => _showEditForm = true">
+                                            @onclick="() => EditUser(user)">
                                         <svg xmlns="http://www.w3.org/2000/svg"
                                              viewBox="0 0 24 24"
                                              fill="currentColor"
@@ -117,8 +117,10 @@ else
 }
 
 <FlowManager.Client.Components.Admin.Members.MembersModals.MembersAddUserModal 
-    ShowAddForm="@_showAddForm" />
+    @bind-ShowAddForm="@_showAddForm"
+    OnUserAdded="@LoadUsers"/>
 
 <FlowManager.Client.Components.Admin.Members.MembersModals.MembersEditUserModal
-    ShowEditForm="@_showEditForm"
-    UserToEdit="@_selectedUserToEdit"/>
+    @bind-ShowEditForm="@_showEditForm"
+    UserToEdit="@_selectedUserToEdit"
+    OnUserEdit="@LoadUsers"/>

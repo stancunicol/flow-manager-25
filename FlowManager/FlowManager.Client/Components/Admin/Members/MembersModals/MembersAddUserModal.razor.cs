@@ -14,6 +14,13 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
         [Inject] private RoleService _roleService { get; set; } = default!;
 
         [Parameter] public bool ShowAddForm { get; set; }
+        [Parameter] public EventCallback<bool> ShowAddFormChanged { get; set; }
+
+        [Parameter] public EventCallback OnUserAdded { get; set; }
+        private string _onSubmitMessage = string.Empty;
+        private bool _onSubmitSuccess;
+
+        [Inject] private ILogger<MembersAddUserModal> _logger { get; set; } = default!;
 
         // add/edit a user
         private string _name = "";
@@ -38,6 +45,16 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
 
         private async Task RegisterUser()
         {
+            if(_isNewUserAdmin)
+            { 
+                selectedRoles.Add(_availableRoles.First(r => r.RoleName.ToUpper() == "ADMIN").Id);
+            }
+
+            if(_isNewUserModerator)
+            {
+                selectedRoles.Add(_availableRoles.First(r => r.RoleName.ToUpper() == "MODERATOR").Id);
+            }
+
             ApiResponse<UserResponseDto> response = await _userService.PostUserAsync(new PostUserRequestDto
             {
                 Email = _email,
@@ -45,11 +62,32 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
                 Username = _email,
                 Roles = selectedRoles
             });
+
+            _onSubmitMessage = response.Message;
+            _onSubmitSuccess = response.Success;
+
+            if (!response.Success)
+            {
+                _logger.LogError("Failed to register user: {Message}", response.Message);
+                return;
+            }
+
+            await OnUserAdded.InvokeAsync();
         }
 
-        private void CancelForm()
+        private async Task CancelForm()
         {
-            ShowAddForm = false;
+            await ShowAddFormChanged.InvokeAsync(false);
+            ClearForm();
+        }
+
+        private void ClearForm()
+        {
+            _name = string.Empty;
+            _email = string.Empty;
+            selectedRoles.Clear();
+            _isNewUserAdmin = false;
+            _isNewUserModerator = false;
         }
     }
 }
