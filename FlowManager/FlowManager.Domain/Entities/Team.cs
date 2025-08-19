@@ -7,20 +7,19 @@ using System.Threading.Tasks;
 
 namespace FlowManager.Domain.Entities
 {
-    public class Step
+    public class Team
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        [MaxLength(50)]
+        [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
+        [MaxLength(500)]
+
         // navigation properties
+        public virtual ICollection<User> Users { get; set; } = new List<User>();
+        public virtual ICollection<StepTeam> Steps { get; set; } = new List<StepTeam>();
 
-        ///public virtual ICollection<User> DirectUsers { get; set; } = new List<User>();
-        public virtual ICollection<FlowStep> FlowSteps { get; set; } = new List<FlowStep>();
-
-        public virtual ICollection<StepUser> Users { get; set; } = new List<StepUser>();
-        public virtual ICollection<StepTeam> Teams { get; set; } = new List<StepTeam>();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }

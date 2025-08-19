@@ -28,7 +28,8 @@ namespace FlowManager.Infrastructure
             services.AddScoped<IStepRepository, StepRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IFormResponseRepository, FormResponseRepository>();
-
+            services.AddScoped<ITeamRepository, TeamRepository>();
+            
             return services;
         }
     }
