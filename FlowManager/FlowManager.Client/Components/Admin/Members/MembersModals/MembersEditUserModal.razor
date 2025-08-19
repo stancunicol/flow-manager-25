@@ -11,43 +11,46 @@
         <div class="popup-container">
             <h3>Edit User</h3>
 
-            <label>Name:</label>
-            <input class="popup-input" @bind="UserToEdit.Name" />
+            <form @onsubmit="EditUser" @onsubmit:preventDefault="true">
+                <label>Name:</label>
+                <input class="popup-input" @bind="UserToEdit.Name" />
 
-            <label>Email:</label>
-            <input class="popup-input" @bind="UserToEdit.Email" />
+                <label>Email:</label>
+                <input class="popup-input" @bind="UserToEdit.Email" />
 
-            <label>Roles:</label>
-            <div>
+                <label>Roles:</label>
                 <div>
-                    <input type="checkbox"
-                           id="adminRole"
-                           name="adminRole"
-                           @bind="_isAdmin">
-                    <label for="adminRole">
-                        Admin
-                    </label>
+                    <div>
+                        <input type="checkbox"
+                               id="adminRole"
+                               name="adminRole"
+                               @bind="_isAdmin">
+                        <label for="adminRole">
+                            Admin
+                        </label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox"
+                               id="moderatorRole"
+                               name="moderatorRole"
+                               @bind="_isModerator">
+                        <label for="moderatorRole">
+                            Moderator
+                        </label>
+                    </div>
                 </div>
 
                 <div>
-                    <input type="checkbox"
-                           id="moderatorRole"
-                           name="moderatorRole"
-                           @bind="_isModerator">
-                    <label for="moderatorRole">
-                        Moderator
-                    </label>
+                    *All the users are automatically set to employees.
                 </div>
-            </div>
 
-            <div>
-                *All the users are automatically set to employees.
-            </div>
-
-            <div class="modal-actions">
-                <button @onclick="EditUser">Edit User</button>
-                <button @onclick="() => ShowEditForm = false">Cancel</button>
-            </div>
+                <div class="modal-actions">
+                    <button type="submit">Edit User</button>
+                    <button @onclick="() => ShowEditForm = false">Cancel</button>
+                </div>
+            </form>
+           
         </div>
     </div>
 }
