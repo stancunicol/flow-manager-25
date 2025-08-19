@@ -74,7 +74,6 @@ namespace FlowManager.API.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"[DEBUG] Error getting user role: {ex.Message}");
-                // Returnează success dar fără rol - client-ul va merge la default
                 return Ok(new
                 {
                     message = "Login successful",
