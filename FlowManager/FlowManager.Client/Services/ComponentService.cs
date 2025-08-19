@@ -2,17 +2,29 @@
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 
 namespace FlowManager.Client.Services
 {
+    // Wrapper pentru răspunsurile API-ului
+    public class ApiResponseWrapper<T>
+    {
+        public T Result { get; set; }
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+
     public class ComponentService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<ComponentService> _logger;
 
-        public ComponentService(HttpClient httpClient)
+        public ComponentService(HttpClient httpClient, ILogger<ComponentService> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
         }
 
         public async Task<PagedResponseDto<ComponentResponseDto>?> GetAllComponentsQueriedAsync(QueriedComponentRequestDto? payload = null)
@@ -53,22 +65,44 @@ namespace FlowManager.Client.Services
                 }
 
                 uriBuilder.Query = query.ToString();
+                _logger.LogInformation($"Making API call to: {uriBuilder.Uri}");
 
                 var response = await _httpClient.GetAsync(uriBuilder.Uri);
+                _logger.LogInformation($"API Response Status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Răspunsul tău are formatul: { Result: { Data: [...], TotalCount: ... }, Success: true, ... }
-                    var apiResponse = await response.Content.ReadFromJsonAsync<dynamic>();
-                    var result = await response.Content.ReadFromJsonAsync<PagedResponseDto<ComponentResponseDto>>();
-                    return result;
+                    // Citește răspunsul ca string pentru debugging
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation($"API Response Content: {responseContent}");
+
+                    // Deserializează cu wrapper-ul corect conform controller-ului
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<PagedResponseDto<ComponentResponseDto>>>(
+                        responseContent,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+
+                    if (apiResponse?.Success == true && apiResponse.Result != null)
+                    {
+                        _logger.LogInformation($"Successfully loaded {apiResponse.Result.Data?.Count() ?? 0} components");
+                        return apiResponse.Result;
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"API call failed. Success: {apiResponse?.Success}, Message: {apiResponse?.Message}");
+                    }
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"API call failed with status {response.StatusCode}: {errorContent}");
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
-                // Log error if needed
+                _logger.LogError(ex, "Error in GetAllComponentsQueriedAsync");
                 return null;
             }
         }
@@ -78,16 +112,27 @@ namespace FlowManager.Client.Services
             try
             {
                 var response = await _httpClient.GetAsync($"api/components/{id}");
+                _logger.LogInformation($"GetComponentById Response Status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<ComponentResponseDto>();
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<ComponentResponseDto>>(
+                        responseContent,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+
+                    if (apiResponse?.Success == true && apiResponse.Result != null)
+                    {
+                        return apiResponse.Result;
+                    }
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error in GetComponentByIdAsync for id: {id}");
                 return null;
             }
         }
@@ -97,16 +142,27 @@ namespace FlowManager.Client.Services
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("api/components", payload);
+                _logger.LogInformation($"PostComponent Response Status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<ComponentResponseDto>();
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<ComponentResponseDto>>(
+                        responseContent,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+
+                    if (apiResponse?.Success == true && apiResponse.Result != null)
+                    {
+                        return apiResponse.Result;
+                    }
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in PostComponentAsync");
                 return null;
             }
         }
@@ -116,16 +172,27 @@ namespace FlowManager.Client.Services
             try
             {
                 var response = await _httpClient.PatchAsJsonAsync($"api/components/{id}", payload);
+                _logger.LogInformation($"PatchComponent Response Status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<ComponentResponseDto>();
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<ComponentResponseDto>>(
+                        responseContent,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+
+                    if (apiResponse?.Success == true && apiResponse.Result != null)
+                    {
+                        return apiResponse.Result;
+                    }
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error in PatchComponentAsync for id: {id}");
                 return null;
             }
         }
@@ -135,10 +202,24 @@ namespace FlowManager.Client.Services
             try
             {
                 var response = await _httpClient.DeleteAsync($"api/components/{id}");
-                return response.IsSuccessStatusCode;
+                _logger.LogInformation($"DeleteComponent Response Status: {response.StatusCode}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<ComponentResponseDto>>(
+                        responseContent,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
+
+                    return apiResponse?.Success == true;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error in DeleteComponentAsync for id: {id}");
                 return false;
             }
         }
