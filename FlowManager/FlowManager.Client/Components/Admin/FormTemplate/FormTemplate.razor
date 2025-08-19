@@ -58,12 +58,11 @@
                     <div class="form-preview">
                         @foreach (var (component, index) in formComponents.Select((c, i) => (c, i)))
                         {
-                            <div class="form-component @(selectedComponentIndex == index ? "selected" : "")"
-                                 @key="component.TempId"
-                                 @onclick="@(() => EditComponent(index))">
+                            <div class="form-component"
+                                 @key="component.TempId">
 
                                 <div class="component-content">
-                                    @if (component.Type == "TextInput")
+                                    @if (component.Type == "TextInput" || component.Type == "email" || component.Type == "text")
                                     {
                                         <div class="form-field">
                                             <label class="field-label">
@@ -76,15 +75,10 @@
                                             <input type="text"
                                                    class="field-input"
                                                    placeholder="@component.Label"
-                                                   maxlength="@GetMaxLength(component)"
                                                    readonly />
-                                            @if (GetMaxLength(component) > 0)
-                                            {
-                                                <div class="field-hint">Maximum @GetMaxLength(component) characters</div>
-                                            }
                                         </div>
                                     }
-                                    @if (component.Type == "Checkbox")
+                                    @if (component.Type == "Checkbox" || component.Type == "checkbox")
                                     {
                                         <div class="form-field">
                                             <label class="checkbox-field">
@@ -99,7 +93,7 @@
                                             </label>
                                         </div>
                                     }
-                                    @if (component.Type == "DateTime")
+                                    @if (component.Type == "DateTime" || component.Type == "date")
                                     {
                                         <div class="form-field">
                                             <label class="field-label">
@@ -109,12 +103,12 @@
                                                     <span class="required-mark">*</span>
                                                 }
                                             </label>
-                                            <input type="datetime-local"
+                                            <input type="date"
                                                    class="field-input"
                                                    readonly />
                                         </div>
                                     }
-                                    @if (component.Type == "RadioButton")
+                                    @if (component.Type == "RadioButton" || component.Type == "radio")
                                     {
                                         <div class="form-field">
                                             <label class="field-label">
@@ -136,15 +130,57 @@
                                             </div>
                                         </div>
                                     }
+                                    @if (component.Type == "number")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <input type="number"
+                                                   class="field-input"
+                                                   placeholder="@component.Label"
+                                                   readonly />
+                                        </div>
+                                    }
+                                    @if (component.Type == "textarea")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <textarea class="field-input textarea-input"
+                                          placeholder="@component.Label"
+                                          readonly></textarea>
+                                        </div>
+                                    }
+                                    @if (component.Type == "select")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <select class="field-input" disabled>
+                                                <option>Select an option</option>
+                                                <option>Option 1</option>
+                                                <option>Option 2</option>
+                                            </select>
+                                        </div>
+                                    }
                                 </div>
 
                                 <div class="component-toolbar">
-                                    <button class="toolbar-btn edit-btn"
-                                            @onclick="@(() => EditComponent(index))"
-                                            title="Edit component">
-                                        ✏️
-                                    </button>
-
                                     <button class="toolbar-btn delete-btn"
                                             @onclick="@(() => RemoveComponent(index))"
                                             title="Delete component">
@@ -153,66 +189,6 @@
                                 </div>
                             </div>
                         }
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Properties Panel - Center -->
-        <div class="properties-panel">
-            <div class="panel-header">
-                <h2>Properties</h2>
-            </div>
-
-            <div class="panel-content">
-                @if (selectedComponentIndex.HasValue && selectedComponentIndex.Value < formComponents.Count)
-                {
-                    var selectedComponent = formComponents[selectedComponentIndex.Value];
-                    <div class="property-form">
-                        <div class="property-section">
-                            <h3>Basic Properties</h3>
-
-                            <div class="property-field">
-                                <label class="property-label">Label</label>
-                                <input @bind="selectedComponent.Label"
-                                       class="property-input"
-                                       placeholder="Component label" />
-                            </div>
-
-                            <div class="property-field">
-                                <label class="checkbox-container">
-                                    <input @bind="selectedComponent.Required" type="checkbox" />
-                                    <span class="checkbox-mark"></span>
-                                    Required field
-                                </label>
-                            </div>
-                        </div>
-
-                        @if (selectedComponent.Type == "TextInput")
-                        {
-                            <div class="property-section">
-                                <h3>Text Input Settings</h3>
-
-                                <div class="property-field">
-                                    <label class="property-label">Maximum Length</label>
-                                    <input @bind="maxLengthInput"
-                                           @bind:after="UpdateMaxLength"
-                                           class="property-input"
-                                           type="number"
-                                           min="0"
-                                           max="1000"
-                                           placeholder="0 = unlimited" />
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="no-selection">
-                        <div class="no-selection-icon">⚙️</div>
-                        <h3>No Component Selected</h3>
-                        <p>Click on a component in the form preview to edit its properties</p>
                     </div>
                 }
             </div>
@@ -340,7 +316,6 @@
     private List<ComponentResponseDto> availableComponents = new();
     private List<FormComponentModel> formComponents = new();
     private ComponentResponseDto? draggedComponent;
-    private int? selectedComponentIndex;
     private string templateName = "";
     private bool isSaving = false;
     private bool isLoading = true;
@@ -349,7 +324,6 @@
     private bool showAddComponentModal = false;
     private PostComponentRequestDto newComponent = new();
     private int newComponentMaxLength = 0;
-    private int maxLengthInput = 0;
 
     // Debug pentru API call
     private string apiCallStatus = "Not started";
@@ -408,10 +382,13 @@
     {
         return componentType switch
         {
-            "TextInput" => "📝",
-            "Checkbox" => "☑️",
-            "DateTime" => "📅",
-            "RadioButton" => "🔘",
+            "TextInput" or "text" or "email" => "📝",
+            "Checkbox" or "checkbox" => "☑️",
+            "DateTime" or "date" => "📅",
+            "RadioButton" or "radio" => "🔘",
+            "number" => "🔢",
+            "textarea" => "📄",
+            "select" => "📋",
             _ => "📄"
         };
     }
@@ -448,17 +425,6 @@
         }
     }
 
-    private void EditComponent(int index)
-    {
-        selectedComponentIndex = index;
-        if (index < formComponents.Count)
-        {
-            var component = formComponents[index];
-            maxLengthInput = GetMaxLength(component);
-        }
-        StateHasChanged();
-    }
-
     private void RemoveComponent(int index)
     {
         if (index < formComponents.Count)
@@ -471,14 +437,6 @@
                 formComponents[i].Order = i;
             }
 
-            if (selectedComponentIndex == index)
-            {
-                selectedComponentIndex = null;
-            }
-            else if (selectedComponentIndex > index)
-            {
-                selectedComponentIndex--;
-            }
             StateHasChanged();
         }
     }
@@ -493,17 +451,6 @@
             }
         }
         return 0;
-    }
-
-    private void UpdateMaxLength()
-    {
-        if (selectedComponentIndex.HasValue && selectedComponentIndex.Value < formComponents.Count)
-        {
-            var component = formComponents[selectedComponentIndex.Value];
-            component.Properties ??= new Dictionary<string, object>();
-            component.Properties["MaxLength"] = maxLengthInput;
-            StateHasChanged();
-        }
     }
 
     private void AddNewComponent()
@@ -636,7 +583,6 @@
                 // Reset form
                 formComponents.Clear();
                 templateName = "";
-                selectedComponentIndex = null;
                 await LoadAvailableComponents(); // Refresh components list
             }
             else
