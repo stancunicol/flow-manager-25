@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FlowManager.Client.Services;
+using FlowManager.Infrastructure.Services;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
+using FlowManager.Shared.DTOs.Requests.Auth;
 
 namespace FlowManager.Client.Pages
 {
@@ -38,7 +42,7 @@ namespace FlowManager.Client.Pages
 
         protected async Task HandleLogin()
         {
-            var loginData = new { email = email, password = password };
+            var loginData = new { email = email, password = password};
             
             var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/login")
             {
@@ -50,15 +54,35 @@ namespace FlowManager.Client.Pages
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("[Auth] Login successful, notifying authentication state");
-                
-                animateLeft = true;
-                animateRight = true;
+                var responseContent = await response.Content.ReadAsStringAsync();
+
                 StateHasChanged();
                 await Task.Delay(850);
                 
                 (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication();
-                Navigation.NavigateTo("/");
+
+                var loginResponse = JsonSerializer.Deserialize<LoginResponseDto>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                switch (loginResponse?.Role?.ToUpperInvariant())
+                {
+                    case "ADMIN":
+                        Console.WriteLine("[Auth] Redirecting to admin");
+                        Navigation.NavigateTo("/admin");
+                        break;
+                    case "BASIC":
+                        Console.WriteLine("[Auth] Redirecting to home (basic user)");
+                        Navigation.NavigateTo("/");
+                        break;
+                    default:
+                        Console.WriteLine($"[Auth] Unknown role '{loginResponse?.Role}', redirecting to home");
+                        Navigation.NavigateTo("/");
+                        break;
+                }
             }
+
             else
             {
                 Console.WriteLine($"[Auth] Login failed with status: {response.StatusCode}");

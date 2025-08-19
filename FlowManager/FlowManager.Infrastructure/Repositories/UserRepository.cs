@@ -176,6 +176,19 @@ namespace FlowManager.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync(u => u.Id == id);
         }
 
+        public async Task<string> GetUserRoleByEmailAsync(string email)
+        {
+            var query = _context.Users.Where(u => u.Email == email && u.DeletedAt == null)
+                .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
+                    .ThenInclude(ur => ur.Role);
+
+            var user = await query.FirstOrDefaultAsync();
+            if (user == null || !user.Roles.Any())
+                return string.Empty;
+
+            return user.Roles.First().Role.NormalizedName;
+        }
+
         // ==========================================
         // METODE PENTRU TEAMS
         // ==========================================

@@ -279,5 +279,15 @@ namespace FlowManager.Infrastructure.Services
             await _userRepository.SaveChangesAsync();
             return true;
         }
+
+        public async Task<string> GetUserRoleByEmailAsync(string email)
+        {
+            string role = await _userRepository.GetUserRoleByEmailAsync(email);
+            if (string.IsNullOrEmpty(role))
+            {
+                throw new EntryNotFoundException($"Role for user with email {email} was not found.");
+            }
+            return role;
+        }
     }
 }

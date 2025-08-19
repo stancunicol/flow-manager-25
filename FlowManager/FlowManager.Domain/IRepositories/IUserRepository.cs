@@ -20,6 +20,8 @@ namespace FlowManager.Domain.IRepositories
         Task<User?> AddUserAsync(User user);
         Task<User?> GetUserByEmailAsync(string email);
         Task SaveChangesAsync();
+
+        Task<string> GetUserRoleByEmailAsync(string email);
         // ==========================================
         // METODE PENTRU TEAMS
         // ==========================================

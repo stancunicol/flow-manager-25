@@ -212,5 +212,22 @@ namespace FlowManager.API.Controllers
                 Timestamp = DateTime.UtcNow
             });
         }
+
+        [HttpGet("{email}/role")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUserRoleByEmailAsync(string email)
+        {
+            var result = await _userService.GetUserRoleByEmailAsync(email);
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Role retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+
+        }
     }
 }

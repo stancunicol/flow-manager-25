@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FlowManager.Shared.DTOs.Requests.Auth;
 using FlowManager.Shared.DTOs;
+using FlowManager.Application.Interfaces;
 
 namespace FlowManager.API.Controllers
 {
@@ -18,17 +19,20 @@ namespace FlowManager.API.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<Role> _roleManager;
         private readonly AppDbContext _context;
+        private readonly IUserService _userService;
 
         public AuthController(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             RoleManager<Role> roleManager,
-            AppDbContext context)
+            AppDbContext context,
+            IUserService userService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _context = context;
+            _userService = userService;
         }
 
         [HttpPost("login")]
@@ -56,7 +60,27 @@ namespace FlowManager.API.Controllers
             await _signInManager.SignInAsync(user, isPersistent: true);
             Console.WriteLine($"[DEBUG] User {request.Email} signed in successfully");
 
-            return Ok(new { message = "Login successful" });
+            try
+            {
+                var userRole = await _userService.GetUserRoleByEmailAsync(request.Email);
+                Console.WriteLine($"[DEBUG] User role: {userRole}");
+
+                return Ok(new
+                {
+                    message = "Login successful",
+                    role = userRole
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Error getting user role: {ex.Message}");
+                // Returnează success dar fără rol - client-ul va merge la default
+                return Ok(new
+                {
+                    message = "Login successful",
+                    role = (string?)null
+                });
+            }
         }
 
         [HttpPost("logout")]
