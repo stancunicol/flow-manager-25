@@ -1,0 +1,603 @@
+﻿@page "/form-template"
+@using FlowManager.Shared.DTOs.Requests.Component
+@using FlowManager.Shared.DTOs.Requests.FormTemplate
+@using FlowManager.Shared.DTOs.Responses.Component
+@using FlowManager.Shared.DTOs.Responses.FormTemplate
+@using FlowManager.Client.ViewModels
+@using FlowManager.Client.Services
+@using FlowManager.Client.DTOs
+@using static MudBlazor.CategoryTypes
+@using FlowManager.Client.Services
+
+<PageTitle>Form Template Builder</PageTitle>
+
+<div class="form-template-container">
+    <div class="form-template-header">
+        <h1>Form Template Builder</h1>
+        <div class="template-actions">
+            <input @bind="templateName"
+                   placeholder="Enter template name..."
+                   class="template-name-input" />
+            <button class="save-button"
+                    @onclick="SaveTemplate"
+                    disabled="@isSaving">
+                @if (isSaving)
+                {
+                    <span class="loading-spinner"></span>
+                }
+                Save Template
+            </button>
+        </div>
+    </div>
+
+    <div class="form-template-content">
+        <!-- Form Canvas - Left Side -->
+        <div class="form-canvas"
+             @ondrop="@OnDrop"
+             @ondragover="@OnDragOver"
+             @ondragover:preventDefault="true">
+
+            <div class="canvas-header">
+                <h2>Form Preview</h2>
+                <div class="canvas-info">
+                    <span class="component-count">@formComponents.Count components</span>
+                </div>
+            </div>
+
+            <div class="canvas-content">
+                @if (!formComponents.Any())
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <h3>Start Building Your Form</h3>
+                        <p>Drag components from the right sidebar to create your form template</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="form-preview">
+                        @foreach (var (component, index) in formComponents.Select((c, i) => (c, i)))
+                        {
+                            <div class="form-component"
+                                 @key="component.TempId">
+
+                                <div class="component-content">
+                                    @if (component.Type == "TextInput" || component.Type == "email" || component.Type == "text")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <input type="text"
+                                                   class="field-input"
+                                                   placeholder="@component.Label"
+                                                   readonly />
+                                        </div>
+                                    }
+                                    @if (component.Type == "Checkbox" || component.Type == "checkbox")
+                                    {
+                                        <div class="form-field">
+                                            <label class="checkbox-field">
+                                                <input type="checkbox" disabled />
+                                                <span class="checkbox-label">
+                                                    @component.Label
+                                                    @if (component.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </span>
+                                            </label>
+                                        </div>
+                                    }
+                                    @if (component.Type == "DateTime" || component.Type == "date")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <input type="date"
+                                                   class="field-input"
+                                                   readonly />
+                                        </div>
+                                    }
+                                    @if (component.Type == "RadioButton" || component.Type == "radio")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <div class="radio-group">
+                                                <label class="radio-option">
+                                                    <input type="radio" name="radio_@component.TempId" disabled />
+                                                    <span>Option 1</span>
+                                                </label>
+                                                <label class="radio-option">
+                                                    <input type="radio" name="radio_@component.TempId" disabled />
+                                                    <span>Option 2</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (component.Type == "number")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <input type="number"
+                                                   class="field-input"
+                                                   placeholder="@component.Label"
+                                                   readonly />
+                                        </div>
+                                    }
+                                    @if (component.Type == "textarea")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <textarea class="field-input textarea-input"
+                                          placeholder="@component.Label"
+                                          readonly></textarea>
+                                        </div>
+                                    }
+                                    @if (component.Type == "select")
+                                    {
+                                        <div class="form-field">
+                                            <label class="field-label">
+                                                @component.Label
+                                                @if (component.Required == true)
+                                                {
+                                                    <span class="required-mark">*</span>
+                                                }
+                                            </label>
+                                            <select class="field-input" disabled>
+                                                <option>Select an option</option>
+                                                <option>Option 1</option>
+                                                <option>Option 2</option>
+                                            </select>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="component-toolbar">
+                                    <button class="toolbar-btn delete-btn"
+                                            @onclick="@(() => RemoveComponent(index))"
+                                            title="Delete component">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Available Components - Right Side -->
+        <div class="components-palette">
+            <div class="palette-header">
+                <h2>Available Components</h2>
+                <span class="component-count">@availableComponents.Count available</span>
+            </div>
+
+            <div class="component-list">
+                @if (isLoading)
+                {
+                    <div class="loading-state">
+                        <p>Loading components...</p>
+                        <div class="loading-spinner"></div>
+                    </div>
+                }
+                else if (!availableComponents.Any())
+                {
+                    <div class="no-components">
+                        <p>No components found</p>
+                        <p>Status: @apiCallStatus</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var component in availableComponents)
+                    {
+                        <div class="component-item"
+                             draggable="true"
+                             @ondragstart="@(() => OnDragStart(component))">
+                            <div class="component-icon">
+                                @GetComponentIcon(component.Type)
+                            </div>
+                            <div class="component-info">
+                                <div class="component-name">@component.Label</div>
+                                <div class="component-type">@component.Type</div>
+                            </div>
+                            <div class="drag-handle">⋮⋮</div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="palette-footer">
+                <button class="add-component-btn" @onclick="AddNewComponent">
+                    <span class="add-icon">+</span>
+                    New Component
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Component Modal -->
+@if (showAddComponentModal)
+{
+    <div class="modal-overlay" @onclick="CloseAddComponentModal">
+        <div class="modal-container" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Add New Component</h2>
+                <button class="modal-close" @onclick="CloseAddComponentModal">×</button>
+            </div>
+
+            <div class="modal-content">
+                <div class="modal-field">
+                    <label class="modal-label">Component Type</label>
+                    <select @bind="newComponent.Type" class="modal-select">
+                        <option value="TextInput">Text Input</option>
+                        <option value="Checkbox">Checkbox</option>
+                        <option value="DateTime">Date Time</option>
+                        <option value="RadioButton">Radio Button</option>
+                    </select>
+                </div>
+
+                <div class="modal-field">
+                    <label class="modal-label">Label</label>
+                    <input @bind="newComponent.Label"
+                           class="modal-input"
+                           placeholder="Enter component label" />
+                </div>
+
+                <div class="modal-field">
+                    <label class="checkbox-container">
+                        <input @bind="newComponent.Required" type="checkbox" />
+                        <span class="checkbox-mark"></span>
+                        Required field
+                    </label>
+                </div>
+
+                @if (newComponent.Type == "TextInput")
+                {
+                    <div class="modal-field">
+                        <label class="modal-label">Maximum Length</label>
+                        <input @bind="newComponentMaxLength"
+                               class="modal-input"
+                               type="number"
+                               min="0"
+                               placeholder="0 = unlimited" />
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-btn secondary" @onclick="CloseAddComponentModal">
+                    Cancel
+                </button>
+                <button class="modal-btn primary" @onclick="SaveNewComponent">
+                    Add Component
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private ComponentService ComponentService { get; set; } = default!;
+    [Inject] private FormTemplateService FormTemplateService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    // Properties that exist in the razor file
+    private List<ComponentResponseDto> availableComponents = new();
+    private List<FormComponentModel> formComponents = new();
+    private ComponentResponseDto? draggedComponent;
+    private string templateName = "";
+    private bool isSaving = false;
+    private bool isLoading = true;
+
+    // Modal state
+    private bool showAddComponentModal = false;
+    private PostComponentRequestDto newComponent = new();
+    private int newComponentMaxLength = 0;
+
+    // Debug pentru API call
+    private string apiCallStatus = "Not started";
+
+    // Internal model for form components
+    public class FormComponentModel
+    {
+        public Guid TempId { get; set; } = Guid.NewGuid();
+        public Guid? ComponentId { get; set; }
+        public string? Type { get; set; }
+        public string? Label { get; set; }
+        public bool? Required { get; set; }
+        public Dictionary<string, object>? Properties { get; set; } = new();
+        public int Order { get; set; } // Pentru salvarea ordinii
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableComponents();
+    }
+
+    private async Task LoadAvailableComponents()
+    {
+        try
+        {
+            isLoading = true;
+            apiCallStatus = "Starting API call...";
+            StateHasChanged();
+
+            var result = await ComponentService.GetAllComponentsQueriedAsync(new QueriedComponentRequestDto());
+
+            if (result?.Data != null)
+            {
+                availableComponents = result.Data.ToList();
+                apiCallStatus = $"Successfully loaded {availableComponents.Count} components from database";
+            }
+            else
+            {
+                apiCallStatus = "No data returned from API - check if backend is running";
+                availableComponents = new List<ComponentResponseDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            apiCallStatus = $"Error loading components: {ex.Message}";
+            availableComponents = new List<ComponentResponseDto>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetComponentIcon(string? componentType)
+    {
+        return componentType switch
+        {
+            "TextInput" or "text" or "email" => "📝",
+            "Checkbox" or "checkbox" => "☑️",
+            "DateTime" or "date" => "📅",
+            "RadioButton" or "radio" => "🔘",
+            "number" => "🔢",
+            "textarea" => "📄",
+            "select" => "📋",
+            _ => "📄"
+        };
+    }
+
+    private void OnDragStart(ComponentResponseDto component)
+    {
+        draggedComponent = component;
+    }
+
+    private void OnDragOver()
+    {
+        // Allow drop
+    }
+
+    private void OnDrop()
+    {
+        if (draggedComponent != null)
+        {
+            var newFormComponent = new FormComponentModel
+            {
+                ComponentId = draggedComponent.Id,
+                Type = draggedComponent.Type,
+                Label = draggedComponent.Label,
+                Required = draggedComponent.Required,
+                Properties = draggedComponent.Properties != null ?
+                    new Dictionary<string, object>(draggedComponent.Properties) :
+                    new Dictionary<string, object>(),
+                Order = formComponents.Count // Setează ordinea bazată pe poziția curentă
+            };
+
+            formComponents.Add(newFormComponent);
+            draggedComponent = null;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveComponent(int index)
+    {
+        if (index < formComponents.Count)
+        {
+            formComponents.RemoveAt(index);
+
+            // Reordonează componentele după ștergere
+            for (int i = 0; i < formComponents.Count; i++)
+            {
+                formComponents[i].Order = i;
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private int GetMaxLength(FormComponentModel component)
+    {
+        if (component.Properties != null && component.Properties.TryGetValue("MaxLength", out var maxLengthObj))
+        {
+            if (int.TryParse(maxLengthObj?.ToString(), out var maxLength))
+            {
+                return maxLength;
+            }
+        }
+        return 0;
+    }
+
+    private void AddNewComponent()
+    {
+        newComponent = new PostComponentRequestDto
+        {
+            Type = "TextInput",
+            Label = "New Component",
+            Required = false,
+            Properties = new Dictionary<string, object>()
+        };
+        newComponentMaxLength = 0;
+        showAddComponentModal = true;
+    }
+
+    private void CloseAddComponentModal()
+    {
+        showAddComponentModal = false;
+        newComponent = new PostComponentRequestDto();
+        newComponentMaxLength = 0;
+    }
+
+    private async Task SaveNewComponent()
+    {
+        if (string.IsNullOrWhiteSpace(newComponent.Label))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please enter a component label");
+            return;
+        }
+
+        try
+        {
+            if (newComponent.Type == "TextInput" && newComponentMaxLength > 0)
+            {
+                newComponent.Properties ??= new Dictionary<string, object>();
+                newComponent.Properties["MaxLength"] = newComponentMaxLength;
+            }
+
+            var result = await ComponentService.PostComponentAsync(newComponent);
+            if (result != null)
+            {
+                availableComponents.Add(result);
+                CloseAddComponentModal();
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("alert", "Component created successfully!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error creating component");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task SaveTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(templateName))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please enter a template name");
+            return;
+        }
+
+        if (!formComponents.Any())
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please add at least one component to the form");
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            var componentIds = new List<Guid>();
+
+            // Sortează componentele după ordinea lor înainte de salvare
+            var sortedComponents = formComponents.OrderBy(c => c.Order).ToList();
+
+            // Create components that don't exist yet
+            foreach (var formComponent in sortedComponents)
+            {
+                if (formComponent.ComponentId.HasValue)
+                {
+                    componentIds.Add(formComponent.ComponentId.Value);
+                }
+                else
+                {
+                    // Create new component
+                    var newComponentRequest = new PostComponentRequestDto
+                    {
+                        Type = formComponent.Type ?? "TextInput",
+                        Label = formComponent.Label ?? "Unnamed Component",
+                        Required = formComponent.Required ?? false,
+                        Properties = formComponent.Properties ?? new Dictionary<string, object>()
+                    };
+
+                    var componentResponse = await ComponentService.PostComponentAsync(newComponentRequest);
+                    if (componentResponse != null)
+                    {
+                        componentIds.Add(componentResponse.Id);
+                        formComponent.ComponentId = componentResponse.Id;
+                    }
+                }
+            }
+
+            // Creează JSON content care să conțină ordinea și proprietățile
+            var templateContent = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Components = sortedComponents.Select((c, index) => new
+                {
+                    ComponentId = c.ComponentId,
+                    Order = index,
+                    Properties = c.Properties
+                }).ToList()
+            });
+
+            // Create form template using your DTOs
+            var formTemplateRequest = new PostFormTemplateRequestDto
+            {
+                Name = templateName,
+                Content = templateContent, // Salvează structura cu ordinea
+                Components = componentIds
+            };
+
+            var templateResponse = await FormTemplateService.PostFormTemplateAsync(formTemplateRequest);
+            if (templateResponse != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+                // Reset form
+                formComponents.Clear();
+                templateName = "";
+                await LoadAvailableComponents(); // Refresh components list
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error saving template");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+}

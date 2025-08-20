@@ -209,6 +209,18 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<Guid>("FormTemplateId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Properties")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
