@@ -82,52 +82,63 @@ body {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    padding: 0 1.5rem;
 }
 
-.content-header {
-    background: white;
-    border-bottom: 1px solid #E5E5E5;
-    padding: 1rem 1.5rem;
+/* Add Form Button - exact same style as Add User */
+.adminButtons {
     display: flex;
     justify-content: flex-end;
-    align-items: center;
-    min-height: 60px;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
-.header-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.add-form-btn {
-    background: linear-gradient(135deg, #2c8e90 0%, #003d5c 100%);
+.adminViewUsersButton {
+    background: var(--primary-color);
     color: white;
+    padding: 12px;
     border: none;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-size: 14px;
-    font-weight: 600;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 16px;
+    animation: fadein 0.4s ease-out forwards;
+    transition: background 0.3s;
     display: flex;
-    align-items: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(44, 142, 144, 0.2);
+    max-width: 250px;
+    width: 15%;
+    margin-left: auto;
+    text-align: center;
+    font-weight: 500;
+    font-size: 18px;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
-    .add-form-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(44, 142, 144, 0.3);
-        background: linear-gradient(135deg, #34a3a5 0%, #004a6b 100%);
-    }
+.adminViewUsersButton:hover {
+    background: #00c494;
+}
 
-    .add-form-btn:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 4px rgba(44, 142, 144, 0.2);
-    }
+.forms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
 
-.content-body {
-    flex: 1;
-    padding: 1.5rem;
+.forms-header h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.forms-header .adminViewUsersButton {
+    margin: 0;
+    padding: 12px 24px;
+    font-size: 16px;
+    max-width: none;
+    width: auto;
 }
 
 .forms-content, .details-content {
@@ -197,3 +208,8 @@ body {
         color: #991b1b;
         border-left-color: #dc2626;
     }
+
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
