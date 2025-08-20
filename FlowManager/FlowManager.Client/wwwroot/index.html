@@ -36,22 +36,35 @@
                 </div>
             </svg>
         </div>
-    
-    <!--    <div id="blazor-error-ui">-->
-    <!--        An unhandled error has occurred.-->
-    <!--        <a href="." class="reload">Reload</a>-->
-    <!--        <span class="dismiss">🗙</span>-->
-    <!--    </div>-->
+
+        <!--    <div id="blazor-error-ui">-->
+        <!--        An unhandled error has occurred.-->
+        <!--        <a href="." class="reload">Reload</a>-->
+        <!--        <span class="dismiss">🗙</span>-->
+        <!--    </div>-->
         <script src="js/cookieInterop.js"></script>
         <script src="_framework/blazor.webassembly.js"></script>
         <script>
             // Setup credentials for all fetch requests
             window.cookieInterop.setupCredentials();
-        
+
             // Log cookies on page load for debugging
             setTimeout(() => {
                 window.cookieInterop.logCookies();
             }, 1000);
+        </script>
+        <script>
+            window.getElementBounds = (element) => {
+                const rect = element.getBoundingClientRect();
+                return {
+                    left: rect.left,
+                    top: rect.top,
+                    right: rect.right,
+                    bottom: rect.bottom,
+                    width: rect.width,
+                    height: rect.height
+                };
+            };
         </script>
     </body>
 </html>

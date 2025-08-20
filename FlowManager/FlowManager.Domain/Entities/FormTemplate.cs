@@ -13,7 +13,7 @@ namespace FlowManager.Domain.Entities
 
         [MaxLength(50)]
         public string Name { get; set; }
-        [MaxLength(1000)]
+        [MaxLength(1000000)]
         public string Content { get; set; }
 
         // navigation properties
