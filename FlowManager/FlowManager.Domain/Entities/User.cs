@@ -17,9 +17,7 @@ namespace FlowManager.Domain.Entities
         public virtual Team? Team { get; set; }
         public Guid? TeamId { get; set; }
         public virtual ICollection<StepUser> Steps { get; set; } = new List<StepUser>();
-
-        //public virtual Step? Step { get; set; }
-        //public Guid? StepId { get; set; }
+        public virtual ICollection<FlowStepUser> FlowStepUsers { get; set; } = new List<FlowStepUser>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

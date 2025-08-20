@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace FlowManager.Domain.Entities
 {
-    public class StepUser
+    public class FlowStepUser
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        // navigation properties
-        public virtual Step Step { get; set; }
-        public Guid StepId { get; set; }
-
-        public virtual User User { get; set; }
+        public Guid FlowStepId { get; set; }
         public Guid UserId { get; set; }
-       
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // navigation properties
+        public virtual FlowStep FlowStep { get; set; }
+        public virtual User User { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
     }

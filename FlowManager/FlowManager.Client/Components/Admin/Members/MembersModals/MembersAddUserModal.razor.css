@@ -34,12 +34,12 @@
     border-bottom: 1px solid #e5e7eb;
 }
 
-    .popup-header h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0;
-    }
+.popup-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
 
 .close-btn {
     background: none;
@@ -54,10 +54,10 @@
     justify-content: center;
 }
 
-    .close-btn:hover {
-        background: #f1f5f9;
-        color: #475569;
-    }
+.close-btn:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
 
 form {
     padding: 32px;
@@ -67,21 +67,21 @@ form {
     margin-bottom: 24px;
 }
 
-    .form-field label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #1f2937;
-    }
+.form-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1f2937;
+}
 
-    .form-field input {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e5e7eb;
-        border-radius: 12px;
-        font-size: 15px;
-        transition: all 0.2s ease;
-    }
+.form-field input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.2s ease;
+}
 
 .modern-input {
     width: 100%;
@@ -115,39 +115,39 @@ form {
     position: relative;
 }
 
-    .role-checkbox input[type="radio"] {
-        position: absolute;
-        opacity: 0;
-        cursor: pointer;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        margin: 0;
-    }
+.role-checkbox input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    margin: 0;
+}
 
-    .role-checkbox label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        padding: 12px 16px;
-        border: 2px solid #e5e7eb;
-        border-radius: 12px;
-        background: white;
-        transition: all 0.25s ease;
-    }
+.role-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.25s ease;
+}
 
-        .role-checkbox label:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-            background: #f9fafb;
-        }
+.role-checkbox label:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    background: #f9fafb;
+}
 
-    .role-checkbox input[type="radio"]:checked + label {
-        border-color: #3b82f6;
-        background: #eff6ff;
-    }
+.role-checkbox input[type="radio"]:checked + label {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
 
 .checkmark {
     width: 20px;
@@ -167,12 +167,12 @@ form {
     border-color: #3b82f6;
 }
 
-    .role-checkbox input[type="radio"]:checked + label .checkmark::after {
-        content: "✓";
-        color: white;
-        font-size: 12px;
-        font-weight: bold;
-    }
+.role-checkbox input[type="radio"]:checked + label .checkmark::after {
+    content: "✓";
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
 
 .checkbox-label {
     font-weight: 500;
@@ -233,10 +233,10 @@ form {
     border: 2px solid #e2e8f0;
 }
 
-    .btn-secondary:hover {
-        background: #f1f5f9;
-        border-color: #cbd5e1;
-    }
+.btn-secondary:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
 
 .btn-primary {
     background: linear-gradient(90deg, #3b82f6, #2563eb);
@@ -246,14 +246,14 @@ form {
     transition: all 0.25s ease;
 }
 
-    .btn-primary:hover {
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
-    }
+.btn-primary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+}
 
-    .btn-primary:active {
-        transform: translateY(0);
-    }
+.btn-primary:active {
+    transform: translateY(0);
+}
 
 .onSubmitMessage {
     margin-top: 10px;

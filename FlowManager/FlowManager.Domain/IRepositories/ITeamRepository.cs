@@ -10,7 +10,6 @@ namespace FlowManager.Domain.IRepositories
 {
     public interface ITeamRepository
     {
-        // Metode principale CRUD
         Task<List<Team>> GetAllTeamsAsync();
         Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? name, QueryParams? queryParams);
         Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false);
@@ -19,7 +18,5 @@ namespace FlowManager.Domain.IRepositories
         Task<Team> AddTeamAsync(Team team);
         Task<Team> UpdateTeamAsync(Team team);
         Task SaveChangesAsync();
-
-       
     }
 }

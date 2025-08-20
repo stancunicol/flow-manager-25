@@ -1,0 +1,120 @@
+﻿@using FlowManager.Client.ViewModels;
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="add-flow-container">
+    <!-- Step configuration area -->
+    <div class="step-configuration @(_isDragOver ? "drag-over" : "")"
+         @ondrop="HandleDrop"
+         @ondragover="HandleDragOver"
+         @ondragover:preventDefault="true"
+         @ondragenter="HandleDragEnter"
+         @ondragleave="HandleDragLeave">
+
+        <div class="step-configuration-header">
+            <div class="flow-name-section">
+                <label for="flowName" class="flow-name-label">Flow Name:</label>
+                <input type="text"
+                       id="flowName"
+                       class="flow-name-input @GetFlowNameValidationClass()"
+                       placeholder="Enter workflow name..."
+                       @bind="_flowName"
+                       @bind:event="oninput"
+                       maxlength="100" />
+            </div>
+
+            @if (_configuredSteps.Any())
+            {
+                <span class="workflow-info">(@_configuredSteps.Count steps, @GetTotalUsersInWorkflow() total users)</span>
+            }
+        </div>
+
+        <div class="dropped-steps">
+            @if (!_configuredSteps.Any())
+            {
+                <div class="empty-state">
+                    Drag steps here to build your workflow
+                </div>
+            }
+            else
+            {
+                @for (int i = 0; i < _configuredSteps.Count; i++)
+                {
+                    var step = _configuredSteps[i];
+                    var stepIndex = i;
+
+                    <div class="dropped-step" key="@step.Id">
+                        <!-- Step order indicator -->
+                        <div class="step-order">@(stepIndex + 1)</div>
+
+                        <!-- Remove button -->
+                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(step.Id)">×</button>
+
+                        <!-- Reorder buttons -->
+                        <div class="reorder-buttons">
+                            @if (stepIndex > 0)
+                            {
+                                <button class="reorder-btn up" @onclick="() => MoveStepUp(stepIndex)" title="Move up">↑</button>
+                            }
+                            @if (stepIndex < _configuredSteps.Count - 1)
+                            {
+                                <button class="reorder-btn down" @onclick="() => MoveStepDown(stepIndex)" title="Move down">↓</button>
+                            }
+                        </div>
+
+                        <!-- Step content -->
+                        <div class="step-info">
+                            <div class="step-avatar">
+                                @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
+                            </div>
+                            <div class="step-details">
+                                <div class="step-name">@step.Name</div>
+                                <div class="step-users-count">
+                                    @(step.Users!.Count() + step.Teams!.Sum(t => t.Users!.Count())) users
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Action buttons -->
+                <div class="workflow-actions">
+                    <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
+                    <button class="btn-save" @onclick="SaveWorkflow" disabled="@(!IsWorkflowValid())">
+                        Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Steps navbar -->
+    <div class="steps-navbar">
+        <div class="navbar-header">Available Steps</div>
+
+        @foreach (StepVM step in _availableSteps)
+        {
+            <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : "") @(IsStepConfigured(step.Id) ? "configured" : "")"
+                 draggable="true"
+                 @ondragstart="(e) => HandleDragStart(e, step)"
+                 @ondragend="HandleDragEnd">
+
+                <!-- Step description -->
+                <div class="step-avatar">
+                    @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
+                </div>
+                <div class="step-details">
+                    <div class="step-name">@step.Name</div>
+                    <div class="step-users-count">
+                        @(step.Users!.Count() + step.Teams!.Sum(t => t.Users!.Count())) users
+                    </div>
+                </div>
+
+                <!-- Configured indicator -->
+                @if (IsStepConfigured(step.Id))
+                {
+                    <div class="configured-indicator" title="Already configured">✓</div>
+                }
+            </div>
+        }
+    </div>
+</div>

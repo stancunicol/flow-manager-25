@@ -1,13 +1,15 @@
-﻿using FlowManager.Application.Interfaces;
-using FlowManager.Application.Utils;
+﻿using FlowManager.Shared.DTOs.Requests.Step;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Step;
+using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
-using FlowManager.Shared.DTOs.Requests.Step;
-using FlowManager.Shared.DTOs.Responses;
-using FlowManager.Shared.DTOs.Responses.Step;
-using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using FlowManager.Application.Utils;
+using FlowManager.Shared.DTOs.Responses.User;
+using FlowManager.Shared.DTOs.Responses.Team;
 
 namespace FlowManager.Application.Services
 {
@@ -18,11 +20,7 @@ namespace FlowManager.Application.Services
         private readonly IFlowRepository _flowRepository;
         private readonly ITeamRepository _teamRepository;
 
-        public StepService(
-            IStepRepository stepRepository,
-            IUserRepository userRepository,
-            IFlowRepository flowRepository,
-            ITeamRepository teamRepository)
+        public StepService(IStepRepository stepRepository, IUserRepository userRepository, IFlowRepository flowRepository, ITeamRepository teamRepository)
         {
             _stepRepository = stepRepository;
             _userRepository = userRepository;
@@ -30,26 +28,32 @@ namespace FlowManager.Application.Services
             _teamRepository = teamRepository;
         }
 
-        // Helper method pentru mapping
-        private StepResponseDto MapToStepResponseDto(Step step)
-        {
-            return new StepResponseDto
-            {
-                Id = step.Id,
-                Name = step.Name,
-                UserIds = step.Users?.Where(su => su.DeletedAt == null).Select(su => su.UserId).ToList() ?? new List<Guid>(),
-                TeamIds = step.Teams?.Where(st => st.DeletedAt == null).Select(st => st.TeamId).ToList() ?? new List<Guid>(),
-                FlowIds = step.FlowSteps?.Where(fs => fs.DeletedAt == null).Select(fs => fs.FlowId).ToList() ?? new List<Guid>(),
-                CreatedAt = step.CreatedAt,
-                UpdatedAt = step.UpdatedAt,
-                DeletedAt = step.DeletedAt
-            };
-        }
-
         public async Task<List<StepResponseDto>> GetStepsAsync()
         {
             var steps = await _stepRepository.GetStepsAsync();
-            return steps.Select(MapToStepResponseDto).ToList();
+
+            return steps.Select(s => new StepResponseDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Users = s.Users.Select(su => new UserResponseDto
+                {
+                    Id = su.UserId,
+                    Name = su.User.Name,
+                    Email = su.User.Email,
+                }).ToList(),
+                Teams = s.Teams.Select(st => new TeamResponseDto
+                {
+                    Id = st.TeamId,
+                    Name = st.Team.Name,
+                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email
+                    }).ToList()
+                }).ToList(),
+            }).ToList();
         }
 
         public async Task<StepResponseDto> GetStepAsync(Guid id)
@@ -61,7 +65,28 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException($"Step with id {id} was not found.");
             }
 
-            return MapToStepResponseDto(step);
+            return new StepResponseDto
+            {
+                Id = step.Id,
+                Name = step.Name,
+                Users = step.Users.Select(su => new UserResponseDto
+                {
+                    Id = su.UserId,
+                    Name = su.User.Name,
+                    Email = su.User.Email,
+                }).ToList(),
+                Teams = step.Teams.Select(st => new TeamResponseDto
+                {
+                    Id = st.TeamId,
+                    Name = st.Team.Name,
+                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email
+                    }).ToList()
+                }).ToList(),
+            };
         }
 
         public async Task<StepResponseDto> PostStepAsync(PostStepRequestDto payload)
@@ -71,7 +96,6 @@ namespace FlowManager.Application.Services
                 Name = payload.Name
             };
 
-            // Adaugă userii prin StepUser
             foreach (Guid userId in payload.UserIds)
             {
                 User? user = await _userRepository.GetUserByIdAsync(userId);
@@ -79,33 +103,16 @@ namespace FlowManager.Application.Services
                 {
                     throw new EntryNotFoundException($"User with id {userId} not found.");
                 }
-
-                StepUser stepUser = new StepUser
+                else
                 {
-                    UserId = userId,
-                    StepId = stepToPost.Id
-                };
-                stepToPost.Users.Add(stepUser);
-            }
-
-            // Adaugă teams prin StepTeam
-            foreach (Guid teamId in payload.TeamIds)
-            {
-                Team? team = await _teamRepository.GetTeamByIdAsync(teamId);
-                if (team == null)
-                {
-                    throw new EntryNotFoundException($"Team with id {teamId} not found.");
+                    stepToPost.Users.Add(new StepUser
+                    {
+                        StepId = stepToPost.Id,
+                        UserId = userId
+                    });
                 }
-
-                StepTeam stepTeam = new StepTeam
-                {
-                    TeamId = teamId,
-                    StepId = stepToPost.Id
-                };
-                stepToPost.Teams.Add(stepTeam);
             }
 
-            // Adaugă flows prin FlowStep
             foreach (Guid flowId in payload.FlowIds)
             {
                 Flow? flow = await _flowRepository.GetFlowByIdAsync(flowId);
@@ -113,96 +120,164 @@ namespace FlowManager.Application.Services
                 {
                     throw new EntryNotFoundException($"Flow with id {flowId} not found.");
                 }
-
-                FlowStep flowStep = new FlowStep
+                else
                 {
-                    FlowId = flowId,
-                    StepId = stepToPost.Id
-                };
-                stepToPost.FlowSteps.Add(flowStep);
+                    stepToPost.FlowSteps.Add(new FlowStep
+                    {
+                        FlowId = flowId,
+                        StepId = stepToPost.Id
+                    });
+                }
+            }
+
+            foreach (Guid teamId in payload.TeamIds)
+            {
+                Team? team = await _teamRepository.GetTeamByIdAsync(teamId);
+                if (team == null)
+                {
+                    throw new EntryNotFoundException($"Team with id {teamId} not found.");
+                }
+                else
+                {
+                    stepToPost.Teams.Add(new StepTeam
+                    {
+                        StepId = stepToPost.Id,
+                        TeamId = teamId
+                    });
+                }
             }
 
             await _stepRepository.PostStepAsync(stepToPost);
 
-            return MapToStepResponseDto(stepToPost);
+            return new StepResponseDto
+            {
+                Id = stepToPost.Id,
+                Name = stepToPost.Name,
+                Users = stepToPost.Users.Select(su => new UserResponseDto
+                {
+                    Id = su.UserId,
+                    Name = su.User.Name,
+                    Email = su.User.Email,
+                }).ToList(),
+                Teams = stepToPost.Teams.Select(st => new TeamResponseDto
+                {
+                    Id = st.TeamId,
+                    Name = st.Team.Name,
+                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email
+                    }).ToList()
+                }).ToList(),
+            };
         }
 
         public async Task<StepResponseDto> PatchStepAsync(Guid id, PatchStepRequestDto payload)
         {
-            // 1. Verifică dacă step-ul există (operațiune lightweight)
-            Step? stepExists = await _stepRepository.GetStepByIdForPatchAsync(id);
-            if (stepExists == null)
+            Step? stepToPatch = await _stepRepository.GetStepByIdAsync(id);
+
+            if (stepToPatch == null)
             {
                 throw new EntryNotFoundException($"Step with id {id} was not found.");
             }
 
-            Step updatedStep = stepExists;
-
-            try
+            if (!string.IsNullOrEmpty(payload.Name))
             {
-                // 2. Actualizează numele dacă este furnizat
-                if (!string.IsNullOrEmpty(payload.Name))
-                {
-                    updatedStep = await _stepRepository.UpdateStepNameAsync(id, payload.Name);
-                }
+                stepToPatch.Name = payload.Name;
+            }
 
-                // 3. Actualizează userii dacă sunt furnizați
-                if (payload.UserIds != null)
+            if (payload.UserIds != null && payload.UserIds.Any())
+            {
+                foreach (Guid userId in payload.UserIds)
                 {
-                    // Validează că toți userii există
-                    var missingUserIds = await _stepRepository.ValidateUsersExistAsync(payload.UserIds);
-                    if (missingUserIds.Any())
+                    if (_userRepository.GetUserByIdAsync(userId) == null)
                     {
-                        throw new EntryNotFoundException($"Users not found: {string.Join(", ", missingUserIds)}");
+                        throw new EntryNotFoundException($"User with id {userId} was not found.");
                     }
-
-                    // Înlocuiește userii (operațiune atomică)
-                    updatedStep = await _stepRepository.ReplaceStepUsersAsync(id, payload.UserIds);
                 }
 
-                // 4. Actualizează teams dacă sunt furnizate
-                if (payload.TeamIds != null)
+                foreach (StepUser stepUser in stepToPatch.Users)
                 {
-                    // Validează că toate teams există
-                    var missingTeamIds = await _stepRepository.ValidateTeamsExistAsync(payload.TeamIds);
-                    if (missingTeamIds.Any())
+                    stepUser.DeletedAt = DateTime.UtcNow;
+                }
+
+                foreach (Guid userId in payload.UserIds)
+                {
+                    if (stepToPatch.Users.Any(su => su.UserId == userId))
                     {
-                        throw new EntryNotFoundException($"Teams not found: {string.Join(", ", missingTeamIds)}");
+                        StepUser existingUser = stepToPatch.Users.First(su => su.UserId == userId);
+                        existingUser!.DeletedAt = null;
                     }
+                    else
+                    {
+                        stepToPatch.Users.Add(new StepUser
+                        {
+                            UserId = userId,
+                            StepId = stepToPatch.Id
+                        });
+                    }
+                }
+            }
 
-                    // Înlocuiește teams (operațiune atomică)
-                    updatedStep = await _stepRepository.ReplaceStepTeamsAsync(id, payload.TeamIds);
+            if (payload.TeamIds != null && payload.TeamIds.Any())
+            {
+                foreach (Guid teamId in payload.TeamIds)
+                {
+                    if (_teamRepository.GetTeamWithUsersAsync(teamId) == null)
+                    {
+                        throw new EntryNotFoundException($"Team with id {teamId} was not found.");
+                    }
                 }
 
-                // 5. Dacă nu s-au făcut modificări de relații, încarcă datele pentru display
-                if (payload.UserIds == null && payload.TeamIds == null && !string.IsNullOrEmpty(payload.Name))
+                foreach (StepTeam stepTeam in stepToPatch.Teams)
                 {
-                    updatedStep = await _stepRepository.GetStepByIdForDisplayAsync(id) ?? updatedStep;
+                    stepTeam.DeletedAt = DateTime.UtcNow;
                 }
 
-                return MapToStepResponseDto(updatedStep);
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                // Log detailed concurrency info
-                var conflictInfo = ex.Entries.Select(e => new
+                foreach (Guid teamId in payload.TeamIds)
                 {
-                    EntityType = e.Entity.GetType().Name,
-                    EntityId = e.Entity.GetType().GetProperty("Id")?.GetValue(e.Entity)?.ToString() ?? "Unknown"
-                }).ToList();
+                    if (stepToPatch.Teams.Any(st => st.TeamId == teamId))
+                    {
+                        StepTeam existingTeam = stepToPatch.Teams.First(st => st.TeamId == teamId);
+                        existingTeam!.DeletedAt = null;
+                    }
+                    else
+                    {
+                        stepToPatch.Teams.Add(new StepTeam
+                        {
+                            TeamId = teamId,
+                            StepId = stepToPatch.Id
+                        });
+                    }
+                }
+            }
 
-                throw new InvalidOperationException(
-                    $"Concurrency conflict occurred while updating step {id}. " +
-                    $"Conflicting entities: {string.Join(", ", conflictInfo.Select(c => $"{c.EntityType}({c.EntityId})"))}. " +
-                    "Please refresh and try again.", ex);
-            }
-            catch (Exception ex)
+            await _stepRepository.SaveChangesAsync();
+
+            return new StepResponseDto
             {
-                // Log și re-throw pentru alte tipuri de erori
-                throw new InvalidOperationException($"Error updating step {id}: {ex.Message}", ex);
-            }
+                Id = stepToPatch.Id,
+                Name = stepToPatch.Name,
+                Users = stepToPatch.Users.Select(su => new UserResponseDto
+                {
+                    Id = su.UserId,
+                    Name = su.User.Name,
+                    Email = su.User.Email,
+                }).ToList(),
+                Teams = stepToPatch.Teams.Select(st => new TeamResponseDto
+                {
+                    Id = st.TeamId,
+                    Name = st.Team.Name,
+                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email
+                    }).ToList()
+                }).ToList(),
+            };
         }
-
 
         public async Task<StepResponseDto> DeleteStepAsync(Guid id)
         {
@@ -215,96 +290,131 @@ namespace FlowManager.Application.Services
 
             await _stepRepository.DeleteStepAsync(step);
 
-            return MapToStepResponseDto(step);
+            return new StepResponseDto
+            {
+                Id = step.Id,
+                Name = step.Name,
+                Users = step.Users.Select(su => new UserResponseDto
+                {
+                    Id = su.UserId,
+                    Name = su.User.Name,
+                    Email = su.User.Email,
+                }).ToList(),
+                Teams = step.Teams.Select(st => new TeamResponseDto
+                {
+                    Id = st.TeamId,
+                    Name = st.Team.Name,
+                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email
+                    }).ToList()
+                }).ToList(),
+            };
         }
 
-        // ==========================================
-        // DOAR FLOW MANAGEMENT (nu e redundant)
-        // ==========================================
-
-        public async Task<StepResponseDto> AddStepToFlowAsync(Guid stepId, Guid flowId)
+        public async Task<StepResponseDto> AssignUserToStepAsync(Guid id, Guid userId)
         {
-            var step = await _stepRepository.GetStepByIdAsync(stepId);
+            User? user = await _userRepository.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                throw new EntryNotFoundException($"User with id {userId} was not found.");
+            }
+
+            Step? step = await _stepRepository.GetStepByIdAsync(id);
+
             if (step == null)
             {
-                throw new EntryNotFoundException($"Step {stepId} not found.");
+                throw new EntryNotFoundException($"Step with id {id} was not found.");
             }
 
-            var flow = await _flowRepository.GetFlowByIdAsync(flowId);
-            if (flow == null)
+            if (step.Users.FirstOrDefault(su => su.UserId == userId) != null)
             {
-                throw new EntryNotFoundException($"Flow {flowId} not found.");
+                throw new UniqueConstraintViolationException($"Relationship between user id {user.Id} and step id {step.Id} already exists.");
             }
 
-            if (step.FlowSteps.Any(fs => fs.FlowId == flowId && fs.DeletedAt == null))
+            step.Users.Add(new StepUser
             {
-                throw new UniqueConstraintViolationException($"Step {stepId} is already part of flow {flowId}.");
-            }
-
-            // Verifică dacă există o relație ștearsă și o restaurează
-            FlowStep? existingFlowStep = step.FlowSteps.FirstOrDefault(fs => fs.FlowId == flowId);
-            if (existingFlowStep != null)
-            {
-                existingFlowStep.DeletedAt = null;
-                existingFlowStep.UpdatedAt = DateTime.UtcNow;
-            }
-            else
-            {
-                step.FlowSteps.Add(new FlowStep { StepId = stepId, FlowId = flowId });
-            }
+                UserId = userId,
+                StepId = step.Id
+            });
 
             await _stepRepository.SaveChangesAsync();
 
-            return MapToStepResponseDto(step);
+            return new StepResponseDto
+            {
+                Id = step.Id,
+                Name = step.Name,
+                Users = step.Users.Select(su => new UserResponseDto
+                {
+                    Id = su.UserId,
+                    Name = su.User.Name,
+                    Email = su.User.Email,
+                }).ToList(),
+                Teams = step.Teams.Select(st => new TeamResponseDto
+                {
+                    Id = st.TeamId,
+                    Name = st.Team.Name,
+                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email
+                    }).ToList()
+                }).ToList(),
+            };
         }
 
-        public async Task<StepResponseDto> RemoveStepFromFlowAsync(Guid stepId, Guid flowId)
+        public async Task<StepResponseDto> UnassignUserFromStepAsync(Guid id, Guid userId)
         {
-            var step = await _stepRepository.GetStepByIdAsync(stepId);
+            User? user = await _userRepository.GetUserByIdAsync(userId, includeDeleted: true);
+
+            if (user == null)
+            {
+                throw new EntryNotFoundException($"User with id {userId} was not found.");
+            }
+
+            Step? step = await _stepRepository.GetStepByIdAsync(id);
+
             if (step == null)
             {
-                throw new EntryNotFoundException($"Step {stepId} not found.");
+                throw new EntryNotFoundException($"Step with id {id} was not found.");
             }
 
-            var flowStep = step.FlowSteps.FirstOrDefault(fs => fs.FlowId == flowId && fs.DeletedAt == null);
-            if (flowStep == null)
+            StepUser? stepUserToUnassign = step.Users.FirstOrDefault(su => su.UserId == userId && su.DeletedAt == null);
+            if (stepUserToUnassign == null)
             {
-                throw new InvalidOperationException($"Step {stepId} is not part of flow {flowId}.");
+                throw new EntryNotFoundException($"Relationship between user id {user.Id} and step id {step.Id} does not exist.");
             }
 
-            flowStep.DeletedAt = DateTime.UtcNow;
-            flowStep.UpdatedAt = DateTime.UtcNow;
+            stepUserToUnassign.DeletedAt = DateTime.UtcNow;
 
-            await _stepRepository.SaveChangesAsync();
+            await _userRepository.SaveChangesAsync();
 
-            return MapToStepResponseDto(step);
-        }
-
-        public async Task<StepResponseDto> RestoreStepToFlowAsync(Guid stepId, Guid flowId)
-        {
-            var step = await _stepRepository.GetStepByIdAsync(stepId);
-            if (step == null)
+            return new StepResponseDto
             {
-                throw new EntryNotFoundException($"Step {stepId} not found.");
-            }
-
-            if (step.FlowSteps.Any(fs => fs.FlowId == flowId && fs.DeletedAt == null))
-            {
-                throw new InvalidOperationException($"Step {stepId} is already part of flow {flowId}.");
-            }
-
-            var deletedFlowStep = step.FlowSteps.FirstOrDefault(fs => fs.FlowId == flowId && fs.DeletedAt != null);
-            if (deletedFlowStep == null)
-            {
-                throw new InvalidOperationException($"No deleted relationship found between step {stepId} and flow {flowId}.");
-            }
-
-            deletedFlowStep.DeletedAt = null;
-            deletedFlowStep.UpdatedAt = DateTime.UtcNow;
-
-            await _stepRepository.SaveChangesAsync();
-
-            return MapToStepResponseDto(step);
+                Id = step.Id,
+                Name = step.Name,
+                Users = step.Users.Select(su => new UserResponseDto
+                {
+                    Id = su.UserId,
+                    Name = su.User.Name,
+                    Email = su.User.Email,
+                }).ToList(),
+                Teams = step.Teams.Select(st => new TeamResponseDto
+                {
+                    Id = st.TeamId,
+                    Name = st.Team.Name,
+                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email
+                    }).ToList()
+                }).ToList(),
+            };
         }
 
         public async Task<PagedResponseDto<StepResponseDto>> GetAllStepsQueriedAsync(QueriedStepRequestDto payload)
@@ -315,7 +425,28 @@ namespace FlowManager.Application.Services
 
             return new PagedResponseDto<StepResponseDto>
             {
-                Data = data.Select(MapToStepResponseDto).ToList(),
+                Data = data.Select(step => new StepResponseDto
+                {
+                    Id = step.Id,
+                    Name = step.Name,
+                    Users = step.Users.Select(su => new UserResponseDto
+                    {
+                        Id = su.UserId,
+                        Name = su.User.Name,
+                        Email = su.User.Email,
+                    }).ToList(),
+                    Teams = step.Teams.Select(st => new TeamResponseDto
+                    {
+                        Id = st.TeamId,
+                        Name = st.Team.Name,
+                        Users = st.Team.Users.Select(u => new UserResponseDto
+                        {
+                            Id = u.Id,
+                            Name = u.Name,
+                            Email = u.Email
+                        }).ToList()
+                    }).ToList(),
+                }).ToList(),
                 TotalCount = totalCount,
                 Page = parameters?.Page ?? 1,
                 PageSize = parameters?.PageSize ?? totalCount,

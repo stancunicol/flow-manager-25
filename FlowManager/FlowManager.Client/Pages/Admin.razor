@@ -73,7 +73,7 @@
             </button>
         </div>
 
-        <!-- Logout at bottom -->
+        <!-- Logout -->
         <div class="nav-bottom">
             <button class="nav-item logout-btn" @onclick="@(() => Logout())">
                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -100,7 +100,7 @@
         }
         @if (_activeTab == "FLOWS")
         {
-            <div>Flows content aici</div>
+            <FlowManager.Client.Components.Admin.Flows.Flows></FlowManager.Client.Components.Admin.Flows.Flows>
         }
         @if (_activeTab == "STEPS")
         {

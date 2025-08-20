@@ -17,13 +17,6 @@ namespace FlowManager.API.Controllers
             _teamService = teamService;
         }
 
-        // ==========================================
-        // CRUD OPERATIONS
-        // ==========================================
-
-        /// <summary>
-        /// Get all teams with optional filtering, sorting and pagination
-        /// </summary>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -53,40 +46,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Get all teams (simple list without pagination)
-        /// </summary>
-        [HttpGet("all")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllTeamsAsync()
-        {
-            var result = await _teamService.GetAllTeamsAsync();
-
-            if (result == null || !result.Any())
-            {
-                return NotFound(new
-                {
-                    Result = new List<TeamResponseDto>(),
-                    Success = false,
-                    Message = "No teams found.",
-                    Timestamp = DateTime.UtcNow
-                });
-            }
-
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "Teams retrieved successfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        /// <summary>
-        /// Get team by ID
-        /// </summary>
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -104,9 +63,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Get team by ID with all users details
-        /// </summary>
         [HttpGet("{id}/details")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -124,9 +80,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Get team by name
-        /// </summary>
         [HttpGet("by-name/{name}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -144,9 +97,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Create a new team
-        /// </summary>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -165,9 +115,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Update team (partial update) - supports user management
-        /// </summary>
         [HttpPatch("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -186,9 +133,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Delete team (soft delete) - automatically removes users from team
-        /// </summary>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -206,9 +150,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Restore team (undo soft delete)
-        /// </summary>
         [HttpPatch("{id}/restore")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -226,16 +167,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        // ==========================================
-        // USER MANAGEMENT ENDPOINTS
-        // ==========================================
-        // Nota: Aceste endpoint-uri sunt opționale deoarece managementul 
-        // userilor se poate face prin PATCH cu UserIds, dar sunt utile 
-        // pentru operațiuni granulare
-
-        /// <summary>
-        /// Add multiple users to team (alternative to PATCH)
-        /// </summary>
         [HttpPost("{teamId}/users")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -244,7 +175,6 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> AddUsersToTeamAsync(Guid teamId, [FromBody] List<Guid> userIds)
         {
-            // Folosește PATCH cu logica existentă
             var patchPayload = new PatchTeamRequestDto { UserIds = userIds };
             var result = await _teamService.UpdateTeamAsync(teamId, patchPayload);
 
@@ -257,9 +187,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        /// Remove all users from team
-        /// </summary>
         [HttpDelete("{teamId}/users")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -267,7 +194,6 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RemoveAllUsersFromTeamAsync(Guid teamId)
         {
-            // Folosește PATCH cu listă goală pentru a elimina toți userii
             var patchPayload = new PatchTeamRequestDto { UserIds = new List<Guid>() };
             var result = await _teamService.UpdateTeamAsync(teamId, patchPayload);
 
@@ -280,13 +206,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        // ==========================================
-        // STATISTICS ENDPOINTS (opționale)
-        // ==========================================
-
-        /// <summary>
-        /// Get team statistics
-        /// </summary>
         [HttpGet("{id}/stats")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

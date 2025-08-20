@@ -1,0 +1,22 @@
+﻿@using FlowManager.Client.Components.Admin.Flows.AddFlow;
+
+<div class="options-container">
+    <button class="option-button @(_activeTab == "ADD" ? "active" : "inactive")"
+            @onclick='() => SetActiveTab("ADD")'>
+        Add Flow
+    </button>
+
+    <button class="option-button @(_activeTab == "VIEW" ? "active" : "inactive")"
+            @onclick='() => SetActiveTab("VIEW")'>
+        View Flow
+    </button>
+</div>
+
+@if (_activeTab == "ADD")
+{
+    <FlowsAddModal />
+}
+else if (_activeTab == "VIEW")
+{
+    <FlowsViewModal />
+}

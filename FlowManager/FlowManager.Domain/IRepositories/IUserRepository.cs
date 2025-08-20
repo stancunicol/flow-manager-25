@@ -22,9 +22,6 @@ namespace FlowManager.Domain.IRepositories
         Task SaveChangesAsync();
 
         Task<string> GetUserRoleByEmailAsync(string email);
-        // ==========================================
-        // METODE PENTRU TEAMS
-        // ==========================================
         Task<List<User>> GetUsersByTeamIdAsync(Guid teamId);
         Task<List<User>> GetUsersWithoutTeamAsync();
         Task<User?> GetUserWithTeamAsync(Guid userId);

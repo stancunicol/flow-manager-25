@@ -25,7 +25,6 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
-                .OrderBy(t => t.Name)
                 .ToListAsync();
         }
 
@@ -36,13 +35,11 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
                 .AsQueryable();
 
-            // Filtrare după nume dacă este specificat
             if (!string.IsNullOrEmpty(name))
             {
                 query = query.Where(t => t.Name.ToLower().Contains(name.ToLower()));
             }
 
-            // Obține totalul înaintea paginării
             int totalCount = await query.CountAsync();
 
             // Sortare
@@ -89,7 +86,7 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false)
         {
             var query = _context.Teams
-                .Include(t => t.Users.Where(u => includeDeleted || u.DeletedAt == null))
+                .Include(t => t.Users.Where(u => u.DeletedAt == null))
                 .AsQueryable();
 
             if (!includeDeleted)
@@ -113,8 +110,6 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
-                    .ThenInclude(u => u.Roles)
-                        .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
@@ -136,8 +131,6 @@ namespace FlowManager.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
-
-               
     }
 }
 

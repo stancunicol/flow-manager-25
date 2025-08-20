@@ -1,0 +1,36 @@
+﻿.options-container {
+    display: flex;
+    gap: 8px; 
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb; 
+    padding-bottom: 0;
+}
+
+.option-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 2px solid black;
+    border-radius: 8px 8px 0 0;
+    font-size: 16px;
+    font-weight: 450;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: scale(1);
+    background: #ede9e9;
+}
+
+.option-button:hover {
+    background: var(--primary-color);
+}
+
+.option-button.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.option-button.inactive:hover {
+    background: var(--primary-color);
+    color: white;
+}

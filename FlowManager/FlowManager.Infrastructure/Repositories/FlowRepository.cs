@@ -45,30 +45,11 @@ namespace FlowManager.Infrastructure.Repositories
             return flow;
         }
 
-        public async Task<bool> UpdateFlowAsync(Guid id, Flow flow)
-        {
-            if (id != flow.Id)
-                return false;
-            flow.UpdatedAt = DateTime.UtcNow;
-            _context.Entry(flow).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> DeleteFlowAsync(Guid id)
-        {
-            var flow = await _context.Flows.FindAsync(id);
-            if (flow == null)
-                return false;
-            _context.Flows.Remove(flow);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
         public async Task<(List<Flow> Data, int TotalCount)> GetAllFlowsQueriedAsync(string? name, QueryParams? parameters)
         {
             IQueryable<Flow> query = _context.Flows
-                .Include(f => f.Steps);
+                .Include(f => f.Steps)
+                    .ThenInclude(fs => fs.Step);
 
             // filtering
             if(!string.IsNullOrEmpty(name))

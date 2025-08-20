@@ -1,0 +1,78 @@
+﻿@using FlowManager.Client.ViewModels;
+
+<div class="flows-view-modal-overlay">
+    <div class="flows-view-modal">
+        <!-- Modal Header -->
+        <div class="modal-header">
+            <h2>Saved Workflows</h2>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text"
+                   class="search-input"
+                   placeholder="Search workflows by name..."
+                   @bind="_searchTerm"
+                   @onkeypress="OnEnterPressed" />
+            <button class="search-btn" @onclick="SearchFlows">Search</button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="modal-content">
+            @if (_isLoading)
+            {
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading workflows...</p>
+                </div>
+            }
+            else if (!_flows.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h3>No Workflows Found</h3>
+                    <p>@(string.IsNullOrEmpty(_searchTerm) ? "You haven't created any workflows yet." : "No workflows match your search.")</p>
+                </div>
+            }
+            else
+            {
+                <div class="flows-grid">
+                    @foreach (var flow in _flows)
+                    {
+                        <div class="flow-card">
+                            <!-- Flow Header -->
+                            <div class="flow-header">
+                                <div class="flow-avatar">
+                                    @flow.Name!.Substring(0, Math.Min(2, flow.Name.Length)).ToUpper()
+                                </div>
+                            </div>
+
+                            <!-- Flow Steps Preview -->
+                            @if (flow.Steps?.Any() == true)
+                            {
+                                <div class="flow-steps">
+                                    <div class="steps-label">Steps:</div>
+                                    <div class="steps-list">
+                                        @foreach (var step in flow.Steps.Take(3))
+                                        {
+                                            <div class="step-item">
+                                                <div class="step-avatar">
+                                                    @step.Name!.Substring(0, Math.Min(2, step.Name.Length)).ToUpper()
+                                                </div>
+                                                <span class="step-name">@step.Name</span>
+                                            </div>
+                                        }
+                                        @if (flow.Steps.Count > 3)
+                                        {
+                                            <div class="more-steps">+@(flow.Steps.Count - 3) more</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
