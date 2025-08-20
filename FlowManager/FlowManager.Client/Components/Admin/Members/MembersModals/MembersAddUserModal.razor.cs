@@ -55,6 +55,12 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
         {
             selectedRoles.Clear();
 
+            var employeeRole = _availableRoles.FirstOrDefault(r => r.RoleName.ToUpper() == "EMPLOYEE");
+            if (employeeRole != null)
+            {
+                selectedRoles.Add(employeeRole.Id);
+            }
+
             if (_isNewUserAdmin)
             {
                 selectedRoles.Add(_availableRoles.First(r => r.RoleName.ToUpper() == "ADMIN").Id);
@@ -63,6 +69,7 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
             {
                 selectedRoles.Add(_availableRoles.First(r => r.RoleName.ToUpper() == "MODERATOR").Id);
             }
+
 
             ApiResponse<UserResponseDto> response = await _userService.PostUserAsync(new PostUserRequestDto
             {
