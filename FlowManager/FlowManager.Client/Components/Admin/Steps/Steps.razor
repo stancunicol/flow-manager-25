@@ -1,0 +1,64 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using FlowManager.Client.ViewModels
+
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Moderators</PageTitle>
+
+@if (_users.Any())
+{
+    <!-- Users table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th class="table-header-item">User</th>
+                    <th class="table-header-item">Email</th>
+                    <th class="table-header-item">Roles</th>
+                    <th class="table-header-item">Team</th>
+                    <th class="table-header-item">Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (UserVM user in _users)
+                {
+                    <tr>
+                        <td class="table-data-item">
+                            <div class="user-info">
+                                <div class="user-avatar">
+                                    @user.Name.Substring(0, Math.Min(2, user.Name.Length)).ToUpper()
+                                </div>
+                                <div class="user-details">
+                                    <div class="user-name">@user.Name</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="table-data-item">
+                            <div class="text-sm">@user.Email</div>
+                        </td>
+                        <td class="table-data-item">
+                            <div class="text-sm">@string.Join(", ", user.Roles.Select(r => r.RoleName))</div>
+                        </td>
+                        <td class="table-data-item">
+                            <div class="text-sm">Team 1</div>
+                        </td>
+                        <td class="table-data-item">
+                            <span class="status-badge @(user.IsActive ? "status-active" : "status-inactive")">
+                                @(user.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p class="text-white">No users found.</p>
+}
+
+@code {
+
+}
