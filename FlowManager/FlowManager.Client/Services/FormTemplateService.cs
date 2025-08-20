@@ -3,6 +3,7 @@ using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using System.Net.Http.Json;
 using System.Web;
+using System.Text.Json;
 
 namespace FlowManager.Client.Services
 {
@@ -13,6 +14,37 @@ namespace FlowManager.Client.Services
         public FormTemplateService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+        }
+
+        public async Task<List<FormTemplateResponseDto>?> GetAllFormTemplatesAsync()
+        {
+            try
+            {
+                // Folosesc endpoint-ul queried fără parametri pentru a obține toate template-urile
+                var response = await _httpClient.GetAsync("api/formtemplates/queried");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Raw response: {jsonContent}"); // Pentru debugging
+
+                    // Dezeria structura cu Result wrappat
+                    var apiResponse = JsonSerializer.Deserialize<FormTemplateApiResponse<PagedResponseDto<FormTemplateResponseDto>>>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    // Returnez lista din PagedResponseDto
+                    return apiResponse?.Result?.Data?.ToList();
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting form templates: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return null;
+            }
         }
 
         public async Task<PagedResponseDto<FormTemplateResponseDto>?> GetAllFormTemplatesQueriedAsync(QueriedFormTemplateRequestDto? payload = null)
@@ -55,13 +87,20 @@ namespace FlowManager.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<PagedResponseDto<FormTemplateResponseDto>>();
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<FormTemplateApiResponse<PagedResponseDto<FormTemplateResponseDto>>>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    return apiResponse?.Result;
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting queried form templates: {ex.Message}");
                 return null;
             }
         }
@@ -74,13 +113,20 @@ namespace FlowManager.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<FormTemplateResponseDto>();
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<FormTemplateApiResponse<FormTemplateResponseDto>>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    return apiResponse?.Result;
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting form template by id: {ex.Message}");
                 return null;
             }
         }
@@ -93,13 +139,20 @@ namespace FlowManager.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<FormTemplateResponseDto>();
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<FormTemplateApiResponse<FormTemplateResponseDto>>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    return apiResponse?.Result;
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error posting form template: {ex.Message}");
                 return null;
             }
         }
@@ -112,13 +165,20 @@ namespace FlowManager.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<FormTemplateResponseDto>();
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<FormTemplateApiResponse<FormTemplateResponseDto>>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    return apiResponse?.Result;
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error patching form template: {ex.Message}");
                 return null;
             }
         }
@@ -132,8 +192,18 @@ namespace FlowManager.Client.Services
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error deleting form template: {ex.Message}");
                 return false;
             }
         }
+    }
+
+    // Clasa redenumită pentru a evita conflictele
+    public class FormTemplateApiResponse<T>
+    {
+        public T? Result { get; set; }
+        public bool Success { get; set; }
+        public string? Message { get; set; }
+        public DateTime Timestamp { get; set; }
     }
 }
