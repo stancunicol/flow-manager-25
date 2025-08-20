@@ -1,4 +1,4 @@
-﻿/* FormTemplate.razor.css */
+﻿/* FormTemplate.razor.css - Free Canvas Layout */
 
 .form-template-container {
     padding: 20px;
@@ -85,14 +85,15 @@
     min-height: 600px;
 }
 
-/* FORM CANVAS - STÂNGA */
-.form-canvas {
+/* FREE CANVAS - STÂNGA */
+.free-canvas {
     background: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
 }
 
 .canvas-header {
@@ -102,6 +103,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+    z-index: 1000;
 }
 
     .canvas-header h2 {
@@ -110,7 +113,7 @@
         color: #333;
     }
 
-.component-count {
+.element-count {
     background: #e9ecef;
     padding: 4px 8px;
     border-radius: 12px;
@@ -118,13 +121,37 @@
     color: #6c757d;
 }
 
-.canvas-content {
+.canvas-workspace {
     flex: 1;
-    padding: 20px;
-    overflow-y: auto;
+    position: relative;
+    overflow: hidden;
+    cursor: text;
+    user-select: none; /* Prevent text selection while dragging */
 }
 
-.empty-state {
+/* CANVAS ELEMENTS */
+.canvas-element {
+    position: absolute;
+    min-width: 50px;
+    min-height: 20px;
+}
+
+.text-element {
+    z-index: 100;
+    cursor: move;
+}
+
+.component-element {
+    z-index: 200;
+    cursor: move;
+}
+
+/* When dragging, change cursor */
+.canvas-element:active {
+    cursor: grabbing;
+}
+
+.empty-workspace {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -132,6 +159,7 @@
     height: 100%;
     text-align: center;
     color: #6c757d;
+    pointer-events: none;
 }
 
 .empty-icon {
@@ -139,85 +167,132 @@
     margin-bottom: 16px;
 }
 
-.empty-state h3 {
+.empty-workspace h3 {
     margin: 0 0 8px 0;
     color: #495057;
 }
 
-.form-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.form-component {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
+/* TEXT DISPLAY */
+.text-display {
     position: relative;
+    min-height: 20px;
+    line-height: 1.4;
+    font-size: 16px;
+    color: #333;
+    cursor: text;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    padding: 2px 4px;
+    border-radius: 4px;
     transition: all 0.2s;
-    cursor: pointer;
+    margin: 2px;
 }
 
-    .form-component:hover {
-        border-color: #007bff;
-        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+    .text-display:hover {
+        background-color: rgba(255, 255, 255, 0.3);
     }
 
-    .form-component.selected {
-        border-color: #007bff;
+.placeholder-text {
+    color: #6c757d;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* INLINE TEXT EDITOR */
+.inline-text-editor {
+    position: relative;
+}
+
+.inline-textarea {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    line-height: 1.4;
+    color: #333;
+    resize: both;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    border-radius: 4px;
+    min-height: 20px;
+    overflow: hidden;
+}
+
+    .inline-textarea:focus {
+        background-color: rgba(255, 255, 255, 0.5);
         box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
     }
 
-.component-toolbar {
+    .inline-textarea::placeholder {
+        color: #6c757d;
+        font-style: italic;
+    }
+
+/* DELETE BUTTONS */
+.delete-element-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.form-component:hover .component-toolbar {
-    opacity: 1;
-}
-
-.toolbar-btn {
-    width: 24px;
-    height: 24px;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
     border: none;
-    border-radius: 4px;
-    background: #f8f9fa;
+    border-radius: 50%;
+    background: #dc3545;
+    color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
+    font-weight: bold;
+    opacity: 0;
+    transition: all 0.2s;
+    z-index: 1000;
 }
 
-    .toolbar-btn:hover {
-        background: #e9ecef;
+.canvas-element:hover .delete-element-btn {
+    opacity: 1;
+}
+
+.delete-element-btn:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* COMPONENT DISPLAY */
+.component-display {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    padding: 10px;
+    position: relative;
+    transition: all 0.2s;
+    min-width: 180px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin: 2px;
+}
+
+    .component-display:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 6px rgba(0, 123, 255, 0.15);
     }
 
-.delete-btn:hover {
-    background: #dc3545;
-    color: white;
+/* FORM FIELDS */
+.form-field {
+    margin-bottom: 8px;
 }
 
-.form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+    .form-field:last-child {
+        margin-bottom: 0;
+    }
 
 .field-label {
-    font-weight: 600;
-    color: #333;
-    font-size: 16px;
-    margin-bottom: 8px;
     display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
 }
 
 .required-mark {
@@ -226,23 +301,19 @@
 }
 
 .field-input {
-    padding: 12px 16px;
-    border: 2px solid #ced4da;
-    border-radius: 6px;
-    font-size: 16px;
-    background: #f8f9fa;
     width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #f8f9fa;
+    color: #6c757d;
     box-sizing: border-box;
 }
 
 .textarea-input {
     min-height: 80px;
     resize: vertical;
-}
-
-.field-hint {
-    font-size: 12px;
-    color: #6c757d;
 }
 
 .checkbox-field {
@@ -252,11 +323,15 @@
     cursor: pointer;
 }
 
+.checkbox-label {
+    font-size: 14px;
+    color: #333;
+}
+
 .radio-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-top: 6px;
 }
 
 .radio-option {
@@ -264,99 +339,8 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
-}
-
-/* PROPERTIES PANEL - CENTRU */
-.properties-panel {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.panel-header {
-    background: #f8f9fa;
-    padding: 15px 20px;
-    border-bottom: 1px solid #dee2e6;
-}
-
-    .panel-header h2 {
-        margin: 0;
-        font-size: 18px;
-        color: #333;
-    }
-
-.panel-content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.property-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.property-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-    .property-section h3 {
-        margin: 0;
-        font-size: 16px;
-        color: #495057;
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 8px;
-    }
-
-.property-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.property-label {
-    font-weight: 500;
-    color: #495057;
     font-size: 14px;
-}
-
-.property-input {
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-}
-
-.checkbox-mark {
-    font-size: 14px;
-}
-
-.no-selection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    text-align: center;
-    color: #6c757d;
-}
-
-.no-selection-icon {
-    font-size: 32px;
-    margin-bottom: 12px;
+    color: #333;
 }
 
 /* COMPONENTS PALETTE - DREAPTA */
@@ -380,35 +364,56 @@
 
     .palette-header h2 {
         margin: 0;
-        font-size: 18px;
+        font-size: 16px;
         color: #333;
     }
 
+.component-count {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
 .component-list {
     flex: 1;
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
+}
+
+.loading-state {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #6c757d;
+}
+
+.no-components {
+    text-align: center;
+    color: #6c757d;
+    padding: 40px 20px;
 }
 
 .component-item {
     display: flex;
     align-items: center;
-    gap: 12px;
     padding: 12px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
+    border: 1px solid #e9ecef;
     border-radius: 6px;
+    margin-bottom: 8px;
     cursor: grab;
     transition: all 0.2s;
+    background: white;
 }
 
     .component-item:hover {
-        background: #e9ecef;
         border-color: #007bff;
+        background: #f8f9fa;
         transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .component-item:active {
@@ -416,53 +421,53 @@
     }
 
 .component-icon {
-    font-size: 16px;
-    width: 20px;
+    font-size: 20px;
+    margin-right: 12px;
+    width: 24px;
     text-align: center;
 }
 
 .component-info {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
 }
 
 .component-name {
     font-weight: 500;
     color: #333;
     font-size: 14px;
+    margin-bottom: 2px;
 }
 
 .component-type {
-    font-size: 12px;
     color: #6c757d;
+    font-size: 12px;
 }
 
 .drag-handle {
     color: #6c757d;
-    font-size: 12px;
-    cursor: grab;
+    font-size: 16px;
+    opacity: 0.7;
 }
 
 .palette-footer {
-    padding: 15px 20px;
+    padding: 15px;
     border-top: 1px solid #dee2e6;
 }
 
 .add-component-btn {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     background: #28a745;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 14px;
+    transition: background-color 0.2s;
 }
 
     .add-component-btn:hover {
@@ -471,25 +476,16 @@
 
 .add-icon {
     font-size: 16px;
+    font-weight: bold;
 }
 
-.loading-state, .no-components {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-    color: #6c757d;
-}
-
-/* MODAL */
+/* MODAL STYLES */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
@@ -500,23 +496,26 @@
 .modal-container {
     background: white;
     border-radius: 8px;
+    padding: 0;
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #dee2e6;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
 }
 
     .modal-header h2 {
         margin: 0;
-        font-size: 20px;
+        font-size: 18px;
+        color: #333;
     }
 
 .modal-close {
@@ -525,39 +524,69 @@
     font-size: 24px;
     cursor: pointer;
     color: #6c757d;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+    .modal-close:hover {
+        color: #333;
+    }
 
 .modal-content {
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 .modal-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    margin-bottom: 20px;
 }
 
 .modal-label {
+    display: block;
+    margin-bottom: 8px;
     font-weight: 500;
-    color: #495057;
+    color: #333;
+    font-size: 14px;
 }
 
 .modal-input, .modal-select {
-    padding: 8px 12px;
+    width: 100%;
+    padding: 10px 12px;
     border: 1px solid #ced4da;
     border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+    .modal-input:focus, .modal-select:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-mark {
     font-size: 14px;
 }
 
 .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
     padding: 20px;
     border-top: 1px solid #dee2e6;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
+    background: #f8f9fa;
 }
 
 .modal-btn {
@@ -566,46 +595,23 @@
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
+    transition: background-color 0.2s;
 }
-
-    .modal-btn.primary {
-        background: #007bff;
-        color: white;
-    }
 
     .modal-btn.secondary {
         background: #6c757d;
         color: white;
     }
 
-    .modal-btn:hover {
-        opacity: 0.8;
+        .modal-btn.secondary:hover {
+            background: #5a6268;
+        }
+
+    .modal-btn.primary {
+        background: #007bff;
+        color: white;
     }
 
-/* RESPONSIVE */
-@media (max-width: 1200px) {
-    .form-template-content {
-        grid-template-columns: 1fr 300px;
-    }
-}
-
-@media (max-width: 768px) {
-    .form-template-content {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .form-template-header {
-        flex-direction: column;
-        gap: 15px;
-        align-items: stretch;
-    }
-
-    .template-actions {
-        justify-content: stretch;
-    }
-
-    .template-name-input {
-        flex: 1;
-    }
-}
+        .modal-btn.primary:hover {
+            background: #0056b3;
+        }

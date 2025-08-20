@@ -165,8 +165,8 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasMaxLength(1000000)
+                        .HasColumnType("character varying(1000000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -215,7 +215,10 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.Property<string>("Properties")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("Required")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Type")
                         .IsRequired()
