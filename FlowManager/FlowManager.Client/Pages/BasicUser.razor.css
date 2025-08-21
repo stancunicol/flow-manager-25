@@ -115,9 +115,9 @@ body {
     margin-bottom: 20px;
 }
 
-.adminViewUsersButton:hover {
-    background: #00c494;
-}
+    .adminViewUsersButton:hover {
+        background: #00c494;
+    }
 
 .forms-header {
     display: flex;
@@ -126,20 +126,20 @@ body {
     margin-bottom: 1rem;
 }
 
-.forms-header h3 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-    color: #1f2937;
-}
+    .forms-header h3 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #1f2937;
+    }
 
-.forms-header .adminViewUsersButton {
-    margin: 0;
-    padding: 12px 24px;
-    font-size: 16px;
-    max-width: none;
-    width: auto;
-}
+    .forms-header .adminViewUsersButton {
+        margin: 0;
+        padding: 12px 24px;
+        font-size: 16px;
+        max-width: none;
+        width: auto;
+    }
 
 .forms-content, .details-content {
     background: white;
@@ -209,7 +209,177 @@ body {
         border-left-color: #dc2626;
     }
 
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+    .close-btn:hover {
+        background: #f3f4f6;
+    }
+
+    .close-btn svg {
+        width: 20px;
+        height: 20px;
+        color: #6b7280;
+    }
+
+.modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.template-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .template-item:hover {
+        border-color: var(--primary-color);
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 215, 160, 0.1);
+    }
+
+.template-icon {
+    margin-right: 1rem;
+    color: var(--primary-color);
+}
+
+    .template-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+.template-info {
+    flex: 1;
+}
+
+    .template-info h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .template-info p {
+        margin: 0;
+        font-size: 14px;
+        color: #6b7280;
+    }
+
+.template-arrow {
+    color: #9ca3af;
+}
+
+    .template-arrow svg {
+        width: 16px;
+        height: 16px;
+    }
+
+.no-templates {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}
+
+    .no-templates p {
+        margin: 0;
+        font-size: 16px;
+    }
+
 @keyframes fadein {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

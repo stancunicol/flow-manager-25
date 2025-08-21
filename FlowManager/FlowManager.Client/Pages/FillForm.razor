@@ -1,0 +1,111 @@
+﻿@page "/fill-form/{TemplateId:guid}"
+@layout MainLayout
+@using FlowManager.Shared.DTOs.Responses.FormTemplate
+@using FlowManager.Shared.DTOs.Responses.Component
+@using System.Text.Json
+@inject FlowManager.Client.Services.FormTemplateService FormTemplateService
+@inject FlowManager.Client.Services.ComponentService ComponentService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+
+<PageTitle>Fill Form</PageTitle>
+
+<div class="fill-form-container">
+    <div class="fill-form-header">
+        <button class="back-btn" @onclick="GoBack">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 11H20a.75.75 0 010 1.5H9.31l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" />
+            </svg>
+            Back to My Forms
+        </button>
+        <h1>@(formTemplate?.Name ?? "Loading...")</h1>
+        <button class="submit-btn" @onclick="SubmitForm" disabled="@isSubmitting">
+            @if (isSubmitting)
+            {
+                <div class="spinner-small"></div>
+                <span>Submitting...</span>
+            }
+            else
+            {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                </svg>
+                <span>Submit Form</span>
+            }
+        </button>
+    </div>
+
+    <div class="fill-form-content">
+        @if (isLoading)
+        {
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <p>Loading form...</p>
+            </div>
+        }
+        else if (formTemplate != null && formElements != null)
+        {
+            <div class="form-canvas">
+                @foreach (var element in formElements.OrderBy(e => e.ZIndex))
+                {
+                    <div class="form-element" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
+                        @if (element.IsTextElement)
+                        {
+                            <div class="static-text">
+                                @element.TextContent
+                            </div>
+                        }
+                        else
+                        {
+                            var component = components?.FirstOrDefault(c => c.Id == element.ComponentId);
+                            if (component != null)
+                            {
+                                <div class="form-field">
+                                    <label class="field-label">
+                                        @component.Label
+                                        @if (component.Required == true)
+                                        {
+                                            <span class="required-mark">*</span>
+                                        }
+                                    </label>
+                                    @switch (component.Type.ToLower())
+                                    {
+                                        case "textinput":
+                                            <input type="text" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            break;
+                                        case "number":
+                                            <input type="number" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            break;
+                                        case "datetime":
+                                            <input type="datetime-local" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            break;
+                                        case "textarea":
+                                            <textarea class="textarea-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))"></textarea>
+                                            break;
+                                        case "checkbox":
+                                            <div class="checkbox-field">
+                                                <input type="checkbox" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                                <span class="checkbox-label">@component.Label</span>
+                                            </div>
+                                            break;
+                                        default:
+                                            <input type="text" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            break;
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="error-container">
+                <p>Error loading form template.</p>
+                <button class="retry-btn" @onclick="LoadFormTemplate">Try Again</button>
+            </div>
+        }
+    </div>
+</div>
