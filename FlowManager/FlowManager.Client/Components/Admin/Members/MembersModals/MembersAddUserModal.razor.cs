@@ -38,19 +38,6 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
             }).ToList();
         }
 
-        private void OnRoleChange(string role)
-        {
-            _selectedRole = role;
-            selectedRoles.Clear();
-            _isNewUserAdmin = false;
-            _isNewUserModerator = false;
-
-            if (role == "admin")
-                _isNewUserAdmin = true;
-            else if (role == "moderator")
-                _isNewUserModerator = true;
-        }
-
         private async Task RegisterUser()
         {
             selectedRoles.Clear();
@@ -65,11 +52,11 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
             {
                 selectedRoles.Add(_availableRoles.First(r => r.RoleName.ToUpper() == "ADMIN").Id);
             }
-            else if (_isNewUserModerator)
+
+            if (_isNewUserModerator)
             {
                 selectedRoles.Add(_availableRoles.First(r => r.RoleName.ToUpper() == "MODERATOR").Id);
             }
-
 
             ApiResponse<UserResponseDto> response = await _userService.PostUserAsync(new PostUserRequestDto
             {
@@ -85,6 +72,7 @@ namespace FlowManager.Client.Components.Admin.Members.MembersModals
             if (!response.Success)
             {
                 _logger.LogError("Failed to register user: {Message}", response.Message);
+                await ShowAddFormChanged.InvokeAsync(false);
                 return;
             }
 

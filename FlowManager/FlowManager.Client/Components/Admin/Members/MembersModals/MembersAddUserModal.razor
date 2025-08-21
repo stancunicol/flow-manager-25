@@ -1,71 +1,67 @@
 ﻿@using FlowManager.Client.ViewModels
-@using FlowManager.Client.Services;
-@using FlowManager.Client.DTOs;
-@using FlowManager.Shared.DTOs.Responses.User;
-@using FlowManager.Shared.DTOs.Requests.User;
-@using FlowManager.Shared.DTOs.Responses.Role;
+@using FlowManager.Client.Services
+@using FlowManager.Client.DTOs
+@using FlowManager.Shared.DTOs.Responses.User
+@using FlowManager.Shared.DTOs.Requests.User
+@using FlowManager.Shared.DTOs.Responses.Role
 
 @if (ShowAddForm)
 {
     <div class="popup-backdrop" @onclick="CancelForm">
         <div class="popup-container" @onclick:stopPropagation="true">
+
+            <!-- Header -->
             <div class="popup-header">
                 <h3>Create a new user</h3>
             </div>
 
+            <!-- Form -->
             <form @onsubmit="RegisterUser" @onsubmit:preventDefault="true">
+
+                <!-- Name -->
                 <div class="form-field">
                     <label for="name">*Name</label>
                     <input @bind="_name"
                            type="text"
                            id="name"
                            name="name"
-                           placeholder=" Enter full name"
+                           placeholder="Enter full name"
                            required />
                 </div>
 
+                <!-- Email -->
                 <div class="form-field">
                     <label for="email">*Email</label>
                     <input @bind="_email"
                            type="email"
                            id="email"
                            name="email"
-                           placeholder=" user@example.com"
+                           placeholder="user@example.com"
                            required />
                 </div>
 
-                <div class="form-field">
-                    <label class="section-label">Roles</label>
-                    <div class="checkbox-group">
-                        <div class="role-checkbox">
-                            <input type="radio"
-                                   name="userRole"
-                                   id="adminRole"
-                                   value="admin"
-                                   checked="@(_selectedRole == "admin")"
-                                   @onchange="@(() => OnRoleChange("admin"))" />
-                            <label for="adminRole">
-                                <span class="checkmark"></span>
-                                <span class="checkbox-label">Admin</span>
-                                <span class="role-description">Full system access</span>
-                            </label>
+                <!-- Roles -->
+                <div class="role-checkbox">
+                    <label @onclick="@(() => _isNewUserAdmin = !_isNewUserAdmin)">
+                        <span class="checkmark @(_isNewUserAdmin ? "checked" : "")"></span>
+                        <div class="checkbox-text">
+                            <span class="checkbox-label">Admin</span>
+                            <span class="role-description">Full system access</span>
                         </div>
-                        <div class="role-checkbox">
-                            <input type="radio"
-                                   name="userRole"
-                                   id="moderatorRole"
-                                   value="moderator"
-                                   checked="@(_selectedRole == "moderator")"
-                                   @onchange="@(() => OnRoleChange("moderator"))" />
-                            <label for="moderatorRole">
-                                <span class="checkmark"></span>
-                                <span class="checkbox-label">Moderator</span>
-                                <span class="role-description">Content management</span>
-                            </label>
-                        </div>
-                    </div>
+                    </label>
                 </div>
 
+                <div class="role-checkbox">
+                    <label @onclick="@(() => _isNewUserModerator = !_isNewUserModerator)">
+                        <span class="checkmark @(_isNewUserModerator ? "checked" : "")"></span>
+                        <div class="checkbox-text">
+                            <span class="checkbox-label">Moderator</span>
+                            <span class="role-description">Content management</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Info Card -->
                 <div class="info-card">
                     <div class="info-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -77,6 +73,7 @@
                     <span>All users are automatically assigned the employee role</span>
                 </div>
 
+                <!-- Actions -->
                 <div class="modal-actions">
                     <button type="button" @onclick="CancelForm" class="btn btn-secondary">
                         Cancel
@@ -86,10 +83,13 @@
                     </button>
                 </div>
 
+                <!-- Submit Message -->
                 @if (!string.IsNullOrEmpty(_onSubmitMessage))
                 {
                     <div class="onSubmitMessage">
-                        <span class="onSubmitMessage @(_onSubmitSuccess ? "success" : "fail")"> @_onSubmitMessage </span>
+                        <span class="onSubmitMessage @(_onSubmitSuccess ? "success" : "fail")">
+                            @_onSubmitMessage
+                        </span>
                     </div>
                 }
             </form>
