@@ -12,7 +12,16 @@
 
 <PageTitle>Members</PageTitle>
 
-<div class="adminButtons">
+<div class="admin-buttons">
+    <div class="search-bar">
+        <input type="text"
+               class="search-input"
+               placeholder="Search workflows by name..."
+               @bind="_searchTerm"
+               @onkeypress="OnEnterPressed" />
+        <button class="search-btn" @onclick="SearchFlows">Search</button>
+    </div>
+
     <button @onclick="() => _showAddForm = true" class="adminViewUsersButton">+ Add User</button>
 </div>
 

@@ -1,9 +1,11 @@
 ﻿using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
+using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace FlowManager.Client.Components.Admin.Members
 {
@@ -19,6 +21,8 @@ namespace FlowManager.Client.Components.Admin.Members
 
         private UserVM _selectedUserToEdit = new();
 
+        private string _searchTerm = string.Empty;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadUsers();
@@ -26,7 +30,14 @@ namespace FlowManager.Client.Components.Admin.Members
 
         private async Task LoadUsers()
         {
-            ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersQueriedAsync();
+            QueriedUserRequestDto payload = new QueriedUserRequestDto();
+
+            if(!string.IsNullOrEmpty(_searchTerm))
+            {
+                payload.Email = _searchTerm;
+            }
+
+            ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersQueriedAsync(payload);
 
             if (!response.Success)
             {
@@ -77,5 +88,20 @@ namespace FlowManager.Client.Components.Admin.Members
             _selectedUserToEdit = user;
             _showEditForm = true;
         }   
+
+        private async Task OnEnterPressed(KeyboardEventArgs e)
+        {
+            if (e.Key == "Enter")
+            {
+                _searchTerm = _searchTerm.Trim();
+                await LoadUsers();
+            }
+        }
+
+        private async Task SearchFlows()
+        {
+            _searchTerm = _searchTerm.Trim();
+            await LoadUsers();
+        }
     }
 }
