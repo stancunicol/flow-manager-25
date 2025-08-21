@@ -1,8 +1,8 @@
 ﻿@page "/home"
 @layout MainLayout
 @using Microsoft.AspNetCore.Authorization
+@using FlowManager.Shared.DTOs
 @attribute [Authorize]
-@inject NavigationManager Navigation
 
 <FlowManager.Client.Components.NavBar.Navbar />
 
@@ -13,97 +13,80 @@
 </div>
 
 <div class="home-container">
-    <div class="roles-grid">
-    @if (userRoles.Contains("Admin"))
+    @if (isLoading)
     {
-        <div class="role-card admin-card" @onclick="NavigateToAdmin">
-            <div class="role-icon">⚙️</div>
-            <h3 class="role-title">Admin Dashboard</h3>
-            <p class="role-description">Manage users, flows, forms and system settings</p>
-            <div class="role-badge admin-badge">Administrator</div>
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Loading your workspace...</p>
         </div>
     }
-
-    @if (userRoles.Contains("Manager"))
+    else if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="role-card manager-card" @onclick="NavigateToManager">
-            <div class="role-icon">📊</div>
-            <h3 class="role-title">Manager Dashboard</h3>
-            <p class="role-description">Manage team flows and monitor progress</p>
-            <div class="role-badge manager-badge">Manager</div>
+        <div class="error-container">
+            <div class="error-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="error-icon">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                </svg>
+                @errorMessage
+            </div>
+            <button @onclick="LoadUserRoles" class="retry-button">Try Again</button>
         </div>
     }
-
-    @if (userRoles.Contains("BasicUser") || userRoles.Contains("User"))
+    else if (userRoles.Any())
     {
-        <div class="role-card user-card" @onclick="NavigateToUser">
-            <div class="role-icon">👤</div>
-            <h3 class="role-title">User Workspace</h3>
-            <p class="role-description">Access your flows, forms and tasks</p>
-            <div class="role-badge user-badge">User</div>
+        <div class="roles-grid">
+            @if (HasRole("Admin"))
+            {
+                <div class="role-card admin-card" @onclick="NavigateToAdmin">
+                    <div class="role-icon">⚙️</div>
+                    <h3 class="role-title">Admin Dashboard</h3>
+                    <p class="role-description">Manage users, flows, forms and system settings</p>
+                    <div class="role-badge admin-badge">Administrator</div>
+                </div>
+            }
+
+            @if (HasRole("Manager"))
+            {
+                <div class="role-card manager-card" @onclick="NavigateToManager">
+                    <div class="role-icon">📊</div>
+                    <h3 class="role-title">Manager Dashboard</h3>
+                    <p class="role-description">Manage team flows and monitor progress</p>
+                    <div class="role-badge manager-badge">Manager</div>
+                </div>
+            }
+
+            @if (HasRole("Moderator"))
+            {
+                <div class="role-card moderator-card" @onclick="NavigateToModerator">
+                    <div class="role-icon">🛡️</div>
+                    <h3 class="role-title">Moderator Dashboard</h3>
+                    <p class="role-description">Moderate content and manage community</p>
+                    <div class="role-badge moderator-badge">Moderator</div>
+                </div>
+            }
+
+            @if (HasRole("BasicUser") || HasRole("User") || HasRole("Basic"))
+            {
+                <div class="role-card user-card" @onclick="NavigateToUser">
+                    <div class="role-icon">👤</div>
+                    <h3 class="role-title">User Workspace</h3>
+                    <p class="role-description">Access your flows, forms and tasks</p>
+                    <div class="role-badge user-badge">User</div>
+                </div>
+            }
         </div>
     }
-</div>
-
-    @if (!userRoles.Any())
+    else
     {
         <div class="no-roles">
+            <div class="no-roles-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clip-rule="evenodd" />
+                </svg>
+            </div>
             <h3>No roles assigned</h3>
             <p>Please contact your administrator to assign roles to your account.</p>
+            <button @onclick="LoadUserRoles" class="refresh-roles-btn">Refresh</button>
         </div>
     }
 </div>
-
-@code {
-    private List<string> userRoles = new();
-
-    protected override async Task OnInitializedAsync()
-    {
-        // Aici ar trebui să obții rolurile utilizatorului din serviciul de autentificare
-        // Pentru demo, simulez că utilizatorul are rolurile Admin și User
-        userRoles = new List<string> { "Admin", "BasicUser", "Manager" };
-
-        // Dacă utilizatorul are un singur rol, redirectează direct
-        if (userRoles.Count == 1)
-        {
-            await NavigateToRole(userRoles.First());
-        }
-    }
-
-    private void NavigateToAdmin()
-    {
-        Navigation.NavigateTo("/admin");
-    }
-
-    private void NavigateToUser()
-    {
-        Navigation.NavigateTo("/basic-user");
-    }
-
-    private void NavigateToManager()
-    {
-        Navigation.NavigateTo("/manager-dashboard");
-    }
-
-    private async Task NavigateToRole(string role)
-    {
-        await Task.Delay(100);
-
-        switch (role)
-        {
-            case "Admin":
-                NavigateToAdmin();
-                break;
-            case "BasicUser":
-            case "User":
-                NavigateToUser();
-                break;
-            case "Manager":
-                NavigateToManager();
-                break;
-            default:
-                Navigation.NavigateTo("/");
-                break;
-        }
-    }
-}
