@@ -14,11 +14,10 @@ namespace FlowManager.Domain.Entities
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(500)]
-
         // navigation properties
         public virtual ICollection<User> Users { get; set; } = new List<User>();
         public virtual ICollection<StepTeam> Steps { get; set; } = new List<StepTeam>();
+        public virtual ICollection<FlowStepTeam> FlowStepTeams { get; set; } = new List<FlowStepTeam>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

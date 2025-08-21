@@ -36,7 +36,11 @@ namespace FlowManager.Infrastructure.Services
                 {
                     Id = f.Id,
                     Name = f.Name,
-                    StepIds = f.Steps.Select(s => s.StepId).ToList(),
+                    Steps = f.Steps.Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
                     FormTemplateId = f.FormTemplateId,
                     CreatedAt = f.CreatedAt,
                     UpdatedAt = f.UpdatedAt,
@@ -59,7 +63,11 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flow.Id,
                 Name = flow.Name,
-                StepIds = flow.Steps.Select(s => s.StepId).ToList(),
+                Steps = flow.Steps.Select(s => new StepResponseDto
+                {
+                    Id = s.Step.Id,
+                    Name = s.Step.Name,
+                }).ToList(),
                 FormTemplateId = flow.FormTemplateId,
                 CreatedAt = flow.CreatedAt,
                 UpdatedAt = flow.UpdatedAt,
@@ -82,11 +90,18 @@ namespace FlowManager.Infrastructure.Services
             }).ToList();
 
             await _flowRepository.CreateFlowAsync(flowToPost);
+
+            Flow postedFlow = (await _flowRepository.GetFlowByIdAsync(flowToPost.Id))!;
+
             return new FlowResponseDto
             {
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
-                StepIds = flowToPost.Steps.Select(s => s.StepId).ToList(),
+                Steps = flowToPost.Steps.Select(s => new StepResponseDto
+                {
+                    Id = s.Step.Id,
+                    Name = s.Step.Name,
+                }).ToList(),
                 FormTemplateId = flowToPost.FormTemplateId,
                 CreatedAt = flowToPost.CreatedAt,
                 UpdatedAt = flowToPost.UpdatedAt,
@@ -121,7 +136,11 @@ namespace FlowManager.Infrastructure.Services
                 {
                     Id = flowToUpdate.Id,
                     Name = flowToUpdate.Name,
-                    StepIds = flowToUpdate.Steps.Select(s => s.StepId).ToList(),
+                    Steps = flowToUpdate.Steps.Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
                     FormTemplateId = flowToUpdate.FormTemplateId,
                     CreatedAt = flowToUpdate.CreatedAt,
                     UpdatedAt = flowToUpdate.UpdatedAt,
@@ -167,7 +186,11 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToUpdate.Id,
                 Name = flowToUpdate.Name,
-                StepIds = flowToUpdate.Steps.Select(s => s.StepId).ToList(),
+                Steps = flowToUpdate.Steps.Select(s => new StepResponseDto
+                {
+                    Id = s.Step.Id,
+                    Name = s.Step.Name,
+                }).ToList(),
                 FormTemplateId = flowToUpdate.FormTemplateId,
                 CreatedAt = flowToUpdate.CreatedAt,
                 UpdatedAt = flowToUpdate.UpdatedAt,
@@ -189,7 +212,11 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToDelete.Id,
                 Name = flowToDelete.Name,
-                StepIds = flowToDelete.Steps.Select(s => s.StepId).ToList(),
+                Steps = flowToDelete.Steps.Select(s => new StepResponseDto
+                {
+                    Id = s.Step.Id,
+                    Name = s.Step.Name,
+                }).ToList(),
                 FormTemplateId = flowToDelete.FormTemplateId,
                 CreatedAt = flowToDelete.CreatedAt,
                 UpdatedAt = flowToDelete.UpdatedAt,

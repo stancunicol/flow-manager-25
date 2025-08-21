@@ -26,6 +26,8 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<StepUser> StepUsers => Set<StepUser>();
         public DbSet<StepTeam> StepTeams => Set<StepTeam>();
+        public DbSet<FlowStepUser> FlowStepUsers => Set<FlowStepUser>();
+        public DbSet<FlowStepTeam> FlowStepTeams => Set<FlowStepTeam>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -37,6 +39,7 @@ namespace FlowManager.Infrastructure.Context
             UniqueTeamNameConstraintConfiguration(builder);
 
             UniqueFlowStepKeyConstraintConfiguration(builder);
+
             StepUserKeyConstraintConfiguration(builder); 
             StepTeamKeyConstraintConfiguration(builder);
 
@@ -150,7 +153,7 @@ namespace FlowManager.Infrastructure.Context
             builder.Entity<FlowStep>()
                 .HasKey(fs => new { fs.FlowId, fs.StepId });
         }
-        // NOU - Configurare chei pentru StepUser
+
         private void StepUserKeyConstraintConfiguration(ModelBuilder builder)
         {
             builder.Entity<StepUser>()
@@ -159,7 +162,6 @@ namespace FlowManager.Infrastructure.Context
                 .HasDatabaseName("IX_StepUsers_StepId_UserId");
         }
 
-        // NOU - Configurare chei pentru StepTeam
         private void StepTeamKeyConstraintConfiguration(ModelBuilder builder)
         {
             builder.Entity<StepTeam>()

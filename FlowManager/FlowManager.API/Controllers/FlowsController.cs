@@ -19,7 +19,7 @@ namespace FlowManager.API.Controllers
             _flowService = flowService;
         }
 
-        [HttpGet]
+        [HttpGet("queried")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

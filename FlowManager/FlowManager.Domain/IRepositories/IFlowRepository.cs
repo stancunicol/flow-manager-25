@@ -15,8 +15,6 @@ namespace FlowManager.Domain.IRepositories
         Task<Flow?> GetFlowByIdAsync(Guid id);
         Task<Flow?> GetFlowIncludeDeletedStepsByIdAsync(Guid id);
         Task<Flow> CreateFlowAsync(Flow flow);
-        Task<bool> UpdateFlowAsync(Guid id, Flow flow);
-        Task<bool> DeleteFlowAsync(Guid id);
         Task SaveChangesAsync();
     }
 }

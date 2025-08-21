@@ -1,23 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace FlowManager.Domain.Entities
 {
-    public class Step
+    public class FlowStepTeam
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        [MaxLength(50)]
-        public string Name { get; set; } = string.Empty;
+        public Guid FlowStepId { get; set; }
+        public Guid TeamId { get; set; }
 
         // navigation properties
-        public virtual ICollection<FlowStep> FlowSteps { get; set; } = new List<FlowStep>();
-        public virtual ICollection<StepUser> Users { get; set; } = new List<StepUser>();
-        public virtual ICollection<StepTeam> Teams { get; set; } = new List<StepTeam>();
+        public virtual FlowStep FlowStep { get; set; }
+        public virtual Team Team { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

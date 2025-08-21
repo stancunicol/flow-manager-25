@@ -12,7 +12,16 @@
 
 <PageTitle>Members</PageTitle>
 
-<div class="adminButtons">
+<div class="admin-buttons">
+    <div class="search-bar">
+        <input type="text"
+               class="search-input"
+               placeholder="Search workflows by name..."
+               @bind="_searchTerm"
+               @onkeypress="OnEnterPressed" />
+        <button class="search-btn" @onclick="SearchFlows">Search</button>
+    </div>
+
     <button @onclick="() => _showAddForm = true" class="adminViewUsersButton">+ Add User</button>
 </div>
 
@@ -39,7 +48,7 @@
                         <td class="table-data-item">
                             <div class="user-info">
                                 <div class="user-avatar">
-                                    @user.Name.Substring(0, Math.Min(2, user.Name.Length)).ToUpper()
+                                    @user.Name!.Substring(0, Math.Min(2, user.Name.Length)).ToUpper()
                                 </div>
                                 <div class="user-details">
                                     <div class="user-name">@user.Name</div>
@@ -50,18 +59,18 @@
                             <div class="text-sm">@user.Email</div>
                         </td>
                         <td class="table-data-item">
-                            <div class="text-sm">@string.Join(", ", user.Roles.Select(r => r.RoleName))</div>
+                            <div class="text-sm">@string.Join(", ", user.Roles!.Select(r => r.RoleName))</div>
                         </td>
                         <td class="table-data-item">
                             <div class="text-sm">Team 1</div>
                         </td>
                         <td class="table-data-item">
-                        <span class="status-badge @(user.IsActive ? "status-active" : "status-inactive")">
-                                @(user.IsActive ? "Active" : "Inactive")
+                        <span class="status-badge @((bool)user.IsActive! ? "status-active" : "status-inactive")">
+                                @((bool)user.IsActive ? "Active" : "Inactive")
                             </span>
                         </td>
                         <td class="table-data-item">
-                            @if (user.IsActive)
+                            @if ((bool)user.IsActive)
                             {
                                 <div class="actions-container">
                                     <button class="action-button edit-button"
@@ -86,7 +95,7 @@
                                     </button>
                                 </div>
                             }
-                            @if (!user.IsActive)
+                            @if (!(bool)user.IsActive)
                             {
                                 <div class="actions-container">
                                     <button class="action-button restore-button"

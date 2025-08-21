@@ -12,17 +12,16 @@ namespace FlowManager.Application
         {
             services.AddMemoryCache();
 
-            // Application Services
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IPasswordResetService, PasswordResetService>();
 
-            // Infrastructure Services (these are in Infrastructure namespace but should be registered here)
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFormTemplateService, FormTemplateService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IStepService,StepService>();
             services.AddScoped<ITeamService,TeamService>();
             services.AddScoped<IComponentService, ComponentService>();
+            services.AddScoped<IFlowService, FlowService>();
             
 
             return services;

@@ -17,18 +17,5 @@ namespace FlowManager.Domain.IRepositories
         Task<Step> DeleteStepAsync(Step step);
         Task SaveChangesAsync();
         Task<(List<Step> Steps, int TotalCount)> GetAllStepsQueriedAsync(string? name, QueryParams? parameters);
-
-        // Metode pentru managementul optimizat al relațiilor
-        Task<Step> ReplaceStepUsersAsync(Guid stepId, List<Guid> newUserIds);
-        Task<Step> ReplaceStepTeamsAsync(Guid stepId, List<Guid> newTeamIds);
-        Task<Step> UpdateStepNameAsync(Guid stepId, string newName);
-
-        // Metode pentru validare
-        Task<List<Guid>> ValidateUsersExistAsync(List<Guid> userIds);
-        Task<List<Guid>> ValidateTeamsExistAsync(List<Guid> teamIds);
-
-        // Metode pentru loading optimizat
-        Task<Step?> GetStepByIdForPatchAsync(Guid id);
-        Task<Step?> GetStepByIdForDisplayAsync(Guid id);
     }
 }
