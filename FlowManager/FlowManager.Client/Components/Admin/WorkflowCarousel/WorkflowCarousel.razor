@@ -1,0 +1,103 @@
+﻿@using FlowManager.Client.Components.Admin.Flows
+@using FlowManager.Client.Components.Admin.FormTemplate
+
+@namespace FlowManager.Client.Components.Admin.WorkflowCarousel
+
+<div class="workflow-carousel-container">
+    <!-- Carousel Header -->
+    <div class="carousel-header">
+        <h2>Workflow Builder</h2>
+        <div class="page-indicators">
+            <div class="indicator @(_currentPage == 0 ? "active" : "")" @onclick="() => GoToPage(0)">
+                <span class="indicator-number">1</span>
+                <span class="indicator-label">Form Templates</span>
+            </div>
+            <div class="indicator @(_currentPage == 1 ? "active" : "")" @onclick="() => GoToPage(1)">
+                <span class="indicator-number">2</span>
+                <span class="indicator-label">Flows</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carousel Content -->
+    <div class="carousel-content">
+        <div class="carousel-track" style="transform: translateX(-@(_currentPage * 100)%);">
+
+            <!-- Page 1: Form Templates -->
+            <div class="carousel-page">
+                <div class="page-content">
+                    <FormTemplate />
+                </div>
+            </div>
+
+            <!-- Page 2: Flows -->
+            <div class="carousel-page">
+                <div class="page-content">
+                    <Flows />
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="carousel-navigation">
+        <button class="nav-button prev @(_currentPage == 0 ? "disabled" : "")"
+                @onclick="PreviousPage"
+                disabled="@(_currentPage == 0)">
+            <span class="nav-icon">‹</span>
+            <span class="nav-text">Previous</span>
+        </button>
+
+        <div class="page-counter">
+            <span class="current-page">@(_currentPage + 1)</span>
+            <span class="page-separator">of</span>
+            <span class="total-pages">@_totalPages</span>
+        </div>
+
+        <button class="nav-button next @(_currentPage == _totalPages - 1 ? "disabled" : "")"
+                @onclick="NextPage"
+                disabled="@(_currentPage == _totalPages - 1)">
+            <span class="nav-text">Next</span>
+            <span class="nav-icon">›</span>
+        </button>
+    </div>
+</div>
+
+@code {
+    private int _currentPage = 0;
+    private int _totalPages = 2;
+
+    private void NextPage()
+    {
+        if (_currentPage < _totalPages - 1)
+        {
+            _currentPage++;
+            StateHasChanged();
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (_currentPage > 0)
+        {
+            _currentPage--;
+            StateHasChanged();
+        }
+    }
+
+    private void GoToPage(int pageIndex)
+    {
+        if (pageIndex >= 0 && pageIndex < _totalPages)
+        {
+            _currentPage = pageIndex;
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Start on first page (Form Templates)
+        _currentPage = 0;
+    }
+}
