@@ -44,8 +44,8 @@
                             <div class="text-sm">Team 1</div>
                         </td>
                         <td class="table-data-item">
-                            <span class="status-badge @(user.IsActive ? "status-active" : "status-inactive")">
-                                @(user.IsActive ? "Active" : "Inactive")
+                            <span class="status-badge @((bool)user.IsActive ? "status-active" : "status-inactive")">
+                                @((bool)user.IsActive ? "Active" : "Inactive")
                             </span>
                         </td>
                     </tr>

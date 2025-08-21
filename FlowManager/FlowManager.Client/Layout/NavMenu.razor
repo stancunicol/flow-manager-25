@@ -147,7 +147,7 @@
         var response = await Http.PostAsync("api/auth/logout", null);
         if (response.IsSuccessStatusCode)
         {
-            Navigation.NavigateTo("/auth", forceLoad: true);
+            Navigation.NavigateTo("/", forceLoad: true);
         }
         else
         {

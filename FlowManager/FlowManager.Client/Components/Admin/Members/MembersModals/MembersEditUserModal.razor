@@ -21,8 +21,7 @@
                            id="name"
                            name="name"
                            class="modern-input"
-                           placeholder="Enter full name"
-                           />
+                           placeholder="Enter full name" />
                 </div>
 
                 <div class="form-field">
@@ -32,8 +31,7 @@
                            id="email"
                            name="email"
                            class="modern-input"
-                           placeholder="Enter email address"
-                           />
+                           placeholder="Enter email address" />
                 </div>
 
                 <div class="form-field">
@@ -76,9 +74,9 @@
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
-                     </div>
-                        <div>All users are automatically set to employees.</div>
                     </div>
+                    <div>All users are automatically set to employees.</div>
+                </div>
 
                 <div class="modal-actions">
                     <button type="button" @onclick="CancelForm" class="btn btn-secondary">
@@ -89,7 +87,7 @@
                     </button>
                 </div>
 
-                @if(!string.IsNullOrEmpty(_onSubmitMessage))
+                @if (!string.IsNullOrEmpty(_onSubmitMessage))
                 {
                     <div class="onSubmitMessage">
                         <span class="onSubmit @(_onSubmitSuccess ? "success" : "fail")"> @_onSubmitMessage </span>

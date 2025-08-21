@@ -1,17 +1,18 @@
 ﻿using FlowManager.Application.Interfaces;
+using FlowManager.Application.Utils;
+using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
+using FlowManager.Domain.Exceptions;
+using FlowManager.Domain.IRepositories;
+using FlowManager.Infrastructure.Utils;
+using FlowManager.Shared.DTOs.Requests.User;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Role;
+using FlowManager.Shared.DTOs.Responses.User;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
-using FlowManager.Domain.IRepositories;
-using FlowManager.Infrastructure.Utils;
-using FlowManager.Domain.Exceptions;
-using FlowManager.Domain.Dtos;
-using FlowManager.Application.Utils;
-using FlowManager.Shared.DTOs.Responses.User;
-using FlowManager.Shared.DTOs.Responses;
-using FlowManager.Shared.DTOs.Requests.User;
-using FlowManager.Shared.DTOs.Responses.Role;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -20,12 +21,14 @@ namespace FlowManager.Infrastructure.Services
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IEmailService _emailService;
+        private readonly IPasswordHasher<User> _passwordHasher;
 
-        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, IEmailService emailService)
+        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, IEmailService emailService, IPasswordHasher<User> password)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _emailService = emailService;
+            _passwordHasher = password;
         }
 
         private UserResponseDto MapToUserResponseDto(User user)
@@ -134,7 +137,9 @@ namespace FlowManager.Infrastructure.Services
                 NormalizedEmail = payload.Email.ToUpper(),
                 Email = payload.Email,
                 EmailConfirmed = false,
-                TeamId = payload.TeamId
+                TeamId = payload.TeamId,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                ConcurrencyStamp = Guid.NewGuid().ToString()
             };
 
             foreach (Guid roleId in payload.Roles)
@@ -308,7 +313,7 @@ namespace FlowManager.Infrastructure.Services
                 throw new EntryNotFoundException($"User with id {id} was not found.");
             }
 
-            user.PasswordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(newPassword)));
+            user.PasswordHash = _passwordHasher.HashPassword(user, newPassword);
             await _userRepository.SaveChangesAsync();
             return true;
         }

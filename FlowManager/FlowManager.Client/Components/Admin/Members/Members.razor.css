@@ -1,7 +1,7 @@
-﻿.adminViewUsersButton{
-    background: var(--primary-color);
+﻿.adminViewUsersButton {
+    background: var(--siemens-blue);
     color: white;
-    padding: 12px;
+    padding: 8px 0px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -16,14 +16,15 @@
     font-weight: 500;
     font-size: 18px;
     justify-content: center;
-    margin-top: 10px;
-    margin-bottom: 20px;
+    flex: 0 0 15%;
 }
 
 .admin-buttons {
     border-bottom: 2px thin gray;
     display: flex;
-    flex-direction: row;
+    align-items: center;
+    padding: 20px 30px;
+    gap: 15px;
 }
 
 .edit-button {
@@ -256,9 +257,10 @@ tbody tr:hover {
 }
 
 .search-bar {
-    padding: 20px 30px;
-    border-bottom: 1px solid #e0e0e0;
+    display: flex;
     gap: 12px;
+    flex: 0 0 85%; 
+    align-items: center;
 }
 
 .search-input {
@@ -269,12 +271,12 @@ tbody tr:hover {
     background: white;
     transition: border-color 0.2s ease;
     outline: none;
-    flex: 0 0 70%;
+    flex: 1;
 }
 
-    .search-input:focus {
-        border-color: #20B486;
-    }
+.search-input:focus {
+    border-color: #20B486;
+}
 
 .search-btn {
     padding: 12px 24px;
