@@ -104,6 +104,12 @@ namespace FlowManager.Application.Utils
                     UserId = moderatorUser.Id,
                     RoleId = moderatorRole.Id
                 });
+
+                dbContext.UserRoles.Add(new UserRole
+                {
+                    UserId = moderatorUser.Id,
+                    RoleId = basicRole.Id
+                });
             }
 
             User? adminUser = dbContext.Users.FirstOrDefault(u => u.NormalizedUserName == "ADMINUSER");
@@ -129,6 +135,12 @@ namespace FlowManager.Application.Utils
                 {
                     UserId = adminUser.Id,
                     RoleId = adminRole.Id
+                });
+
+                dbContext.UserRoles.Add(new UserRole
+                {
+                    UserId = adminUser.Id,
+                    RoleId = basicRole.Id
                 });
             }
 

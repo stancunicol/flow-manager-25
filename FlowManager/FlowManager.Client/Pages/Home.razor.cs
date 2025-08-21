@@ -7,7 +7,6 @@ namespace FlowManager.Client.Pages
 {
     public partial class Home : ComponentBase
     {
-        [Inject] protected NavigationManager Navigation { get; set; } = default!;
         [Inject] protected HttpClient Http { get; set; } = default!;
         [Inject] protected AuthenticationStateProvider AuthProvider { get; set; } = default!;
 
