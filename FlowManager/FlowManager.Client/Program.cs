@@ -39,6 +39,7 @@ builder.Services.AddScoped<FormService>();
 builder.Services.AddScoped<ClientAuthService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<FormTemplateService>();
+builder.Services.AddScoped<FormResponseService>();
 builder.Services.AddScoped<ComponentService>();
 
 builder.Services.AddBlazorBootstrap();
