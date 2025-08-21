@@ -28,6 +28,20 @@ namespace FlowManager.Client.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+
+            if (!authState.User.Identity?.IsAuthenticated ?? true)
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
+
+            if (!authState.User.IsInRole("Basic"))
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
+
             await LoadCurrentUser();
             if (currentUserId != Guid.Empty)
             {

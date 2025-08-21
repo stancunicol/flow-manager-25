@@ -6,6 +6,7 @@
 @using FlowManager.Shared.DTOs
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.AspNetCore.Authorization
 @inject FlowManager.Client.Services.FormTemplateService FormTemplateService
 @inject FlowManager.Client.Services.FormResponseService FormResponseService
 @inject NavigationManager Navigation
@@ -13,6 +14,7 @@
 @inject CookieAuthStateProvider CookieAuthStateProvider
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
+@attribute [Authorize(Roles = "Basic")]
 
 <FlowManager.Client.Components.NavBar.Navbar />
 

@@ -6,23 +6,30 @@ using static System.Net.WebRequestMethods;
 
 namespace FlowManager.Client.Pages
 {
-    public partial class Admin: ComponentBase
+    public partial class Admin : ComponentBase
     {
         private string _activeTab = "USERS";
         protected string? errorMessage;
 
-        [Inject]
-        protected NavigationManager Navigation { get; set; }
+        protected override async Task OnInitializedAsync()
+        {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
 
-        [Inject]
-        protected AuthenticationStateProvider AuthProvider { get; set; }
+            if (!authState.User.Identity?.IsAuthenticated ?? true)
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
 
-        [Inject]
-        protected CookieAuthStateProvider CookieAuthStateProvider { get; set; }
+            if (!authState.User.IsInRole("Admin"))
+            {
+                Console.WriteLine("[Admin] User does not have Admin role, redirecting to home");
+                Navigation.NavigateTo("/");
+                return;
+            }
 
-        [Inject]
-        protected HttpClient Http { get; set; }
-
+            Console.WriteLine("[Admin] User has Admin role, allowing access");
+        }
 
         private void SetActiveTab(string tab)
         {
@@ -32,17 +39,13 @@ namespace FlowManager.Client.Pages
         protected async Task Logout()
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/logout");
-
             request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
-
             var response = await Http.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("[Auth] Logout successful, notifying state provider");
-
                 (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserLogout();
-
                 Navigation.NavigateTo("/");
             }
             else
@@ -51,6 +54,5 @@ namespace FlowManager.Client.Pages
                 errorMessage = "Logout failed. Please try again.";
             }
         }
-
     }
 }
