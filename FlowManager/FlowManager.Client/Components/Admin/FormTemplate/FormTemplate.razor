@@ -364,7 +364,7 @@
     private Guid? draggedElementId = null;
     private double dragOffsetX = 0;
     private double dragOffsetY = 0;
-
+    private bool justFinishedDragging = false;
     // Grid settings
     private const int GRID_SIZE = 25; // 20px for element + 5px spacing
 
@@ -434,6 +434,12 @@
 
     private async Task OnWorkspaceClick(MouseEventArgs e)
     {
+        if (justFinishedDragging)
+        {
+            justFinishedDragging = false;
+            return; // Nu crea text element
+        }
+
         // Only create text if not dragging and not editing
         if (!isDragging && !isEditingText)
         {
@@ -452,6 +458,7 @@
                 await CreateTextElement(SnapToGrid(100), SnapToGrid(100));
             }
         }
+        
     }
 
     private async Task OnElementMouseDown(MouseEventArgs e, Guid elementId)
@@ -497,6 +504,18 @@
 
     private async Task OnMouseUp(MouseEventArgs e)
     {
+        if (isDragging)
+        {
+            justFinishedDragging = true; // Marchează că tocmai am terminat de tras
+
+            // Resetează după un delay scurt pentru a permite event-ului click să se proceseze
+            _ = Task.Delay(100).ContinueWith(_ =>
+            {
+                justFinishedDragging = false;
+                InvokeAsync(StateHasChanged);
+            });
+        }
+
         isDragging = false;
         draggedElementId = null;
         dragOffsetX = 0;
