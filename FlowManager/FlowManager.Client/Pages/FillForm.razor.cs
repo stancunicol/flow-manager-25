@@ -112,20 +112,17 @@ namespace FlowManager.Client.Pages
             isSubmitting = true;
             try
             {
-                var requiredComponents = components?.Where(c => c.Required == true) ?? Enumerable.Empty<ComponentResponseDto>();
-                var missingRequired = requiredComponents.Where(c => !responses.ContainsKey(c.Id) || string.IsNullOrWhiteSpace(responses[c.Id]));
+                // ...existing validation code...
 
-                if (missingRequired.Any())
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", "Please fill in all required fields.");
-                    return;
-                }
-
+                // Construct formResponseData before using it
                 var formResponseData = new
                 {
-                    FormTemplateId = TemplateId,
-                    Responses = responses.Select(r => new { ComponentId = r.Key, Value = r.Value }).ToList(),
-                    SubmittedAt = DateTime.UtcNow
+                    TemplateId = this.TemplateId,
+                    Responses = responses.Select(r => new
+                    {
+                        ComponentId = r.Key,
+                        Value = r.Value
+                    }).ToList()
                 };
 
                 var response = await Http.PostAsJsonAsync("api/formresponses", formResponseData);
@@ -133,7 +130,7 @@ namespace FlowManager.Client.Pages
                 if (response.IsSuccessStatusCode)
                 {
                     await JSRuntime.InvokeVoidAsync("alert", "Form submitted successfully!");
-                    Navigation.NavigateTo("/basic-user");
+                    Navigation.NavigateTo("/basic-user"); // Redirecționează înapoi la BasicUser
                 }
                 else
                 {

@@ -1,9 +1,13 @@
-﻿@page "/basic-user"
+﻿<!-- filepath: FlowManager/FlowManager.Client/Pages/BasicUser.razor -->
+@page "/basic-user"
 @layout MainLayout
 @using FlowManager.Shared.DTOs.Responses.FormTemplate
+@using FlowManager.Shared.DTOs.Requests.FormResponse
+@using FlowManager.Shared.DTOs
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Http
 @inject FlowManager.Client.Services.FormTemplateService FormTemplateService
+@inject FlowManager.Client.Services.FormResponseService FormResponseService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthProvider
 @inject CookieAuthStateProvider CookieAuthStateProvider
@@ -74,11 +78,84 @@
                 <!-- Header with title and button on same line -->
                 <div class="forms-header">
                     <h3>My Forms</h3>
-                    <button @onclick="ShowFormSelectionModal" class="adminViewUsersButton">+ Add Form</button>
+                    <div class="header-actions">
+                        <button @onclick="RefreshUserForms" class="refresh-btn" title="Refresh forms">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 000 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button @onclick="ShowFormSelectionModal" class="adminViewUsersButton">+ Add Form</button>
+                    </div>
                 </div>
 
-                <p>Here you can view and manage your forms.</p>
-                <!-- Add your forms component here -->
+                @if (isLoadingUserForms)
+                {
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Loading your forms...</p>
+                    </div>
+                }
+                else if (userForms?.Any() == true)
+                {
+                    <div class="forms-grid">
+                        @foreach (var form in userForms.OrderByDescending(f => f.CreatedAt))
+                        {
+                            <div class="form-card">
+                                <div class="form-card-header">
+                                    <div class="form-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="form-info">
+                                        <h4>@(form.FormTemplateName ?? "Unknown Template")</h4>
+                                        <p class="form-meta">Step: @(form.StepName ?? "Unknown Step")</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-card-body">
+                                    <div class="form-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">Created:</span>
+                                            <span class="detail-value">@form.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                        @if (form.UpdatedAt.HasValue)
+                                        {
+                                            <div class="detail-item">
+                                                <span class="detail-label">Updated:</span>
+                                                <span class="detail-value">@form.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(form.RejectReason))
+                                        {
+                                            <div class="detail-item reject-reason">
+                                                <span class="detail-label">Reject Reason:</span>
+                                                <span class="detail-value">@form.RejectReason</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="form-card-footer">
+                                    <div class="form-id">ID: @form.Id.ToString().Substring(0, 8)...</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-forms">
+                        <div class="no-forms-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <h4>No forms yet</h4>
+                        <p>You haven't submitted any forms yet. Click "Add Form" to get started.</p>
+                        <button @onclick="ShowFormSelectionModal" class="get-started-btn">Get Started</button>
+                    </div>
+                }
             </div>
         }
         @if (_activeTab == "MYDETAILS")
