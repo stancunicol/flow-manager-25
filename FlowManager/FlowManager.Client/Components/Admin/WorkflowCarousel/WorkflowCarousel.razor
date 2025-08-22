@@ -1,6 +1,6 @@
 ﻿@using FlowManager.Client.Components.Admin.Flows
 @using FlowManager.Client.Components.Admin.FormTemplate
-
+@using FlowManager.Client.Components.Admin.Flows.AddFlow
 @namespace FlowManager.Client.Components.Admin.WorkflowCarousel
 
 <div class="workflow-carousel-container">
@@ -14,7 +14,11 @@
             </div>
             <div class="indicator @(_currentPage == 1 ? "active" : "")" @onclick="() => GoToPage(1)">
                 <span class="indicator-number">2</span>
-                <span class="indicator-label">Flows</span>
+                <span class="indicator-label">Add Flow</span>
+            </div>
+            <div class="indicator @(_currentPage == 2 ? "active" : "")" @onclick="() => GoToPage(2)">
+                <span class="indicator-number">3</span>
+                <span class="indicator-label">View Flows</span>
             </div>
         </div>
     </div>
@@ -33,8 +37,14 @@
             <!-- Page 2: Flows -->
             <div class="carousel-page">
                 <div class="page-content">
-                    <Flows SavedFormTemplateId="_savedFormTemplateId"
+                    <FlowsAddModal SavedFormTemplateId="_savedFormTemplateId"
                            SavedFormTemplateName="_savedFormTemplateName" />
+                </div>
+            </div>
+
+            <div class="carousel-page">
+                <div class="page-content">
+                    <FlowsViewModal />
                 </div>
             </div>
 
@@ -67,7 +77,7 @@
 
 @code {
     private int _currentPage = 0;
-    private int _totalPages = 2;
+    private int _totalPages = 3;
     
     private Guid? _savedFormTemplateId = null;
     private string _savedFormTemplateName = "";
