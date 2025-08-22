@@ -118,7 +118,8 @@ namespace FlowManager.Client.Services
                 var response = await _httpClient.PostAsJsonAsync("api/steps", step);
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<Step>();
+                    var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<Step>>();
+                    return wrapper?.Result;
                 }
                 return null;
             }

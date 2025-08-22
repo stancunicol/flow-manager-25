@@ -34,3 +34,7 @@
     background: var(--primary-color);
     color: white;
 }
+
+.step-button {
+    margin-left: -16px;
+}

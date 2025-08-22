@@ -1,4 +1,7 @@
-﻿namespace FlowManager.Client.DTOs
+﻿using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Step;
+
+namespace FlowManager.Client.DTOs
 {
     public class ApiResponse<T>
     {

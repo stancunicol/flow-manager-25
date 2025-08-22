@@ -1,0 +1,44 @@
+﻿@page "/create-step"
+
+<div class="create-step">
+    <button class="create-step-button" @onclick="OpenModal">
+        ➕ Create Step
+    </button>
+</div>
+
+<div class="steps-grid">
+    @if (steps == null || !steps.Any())
+    {
+        <p>No steps available.</p>
+    }
+    else
+    {
+        @foreach (var step in steps)
+        {
+            <div class="step-card">
+                <span class="step-name">@step.Name</span>
+            </div>
+        }
+    }
+</div>
+
+@if (showModal)
+{
+    <div class="create-step-modal-overlay" @onclick="CloseModal">
+        <div class="create-step-modal" @onclick:stopPropagation="true">
+            <h2>Create New Step</h2>
+            <input type="text" @bind="newStepName" @bind:event="oninput"
+                   placeholder="Enter step name..."
+                   class="modal-input"
+                   @onkeypress="HandleKeyPress" />
+            <div class="modal-actions">
+                <button class="save-btn" @onclick="SaveStep" disabled="@(string.IsNullOrWhiteSpace(newStepName))">
+                    Save
+                </button>
+                <button class="cancel-btn" @onclick="CloseModal">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+}

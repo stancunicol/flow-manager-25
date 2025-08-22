@@ -72,21 +72,7 @@ namespace FlowManager.Client.Pages
                     PropertyNameCaseInsensitive = true
                 });
 
-                switch (loginResponse?.Role?.ToUpperInvariant())
-                {
-                    case "ADMIN":
-                        Console.WriteLine("[Auth] Redirecting to admin");
-                        Navigation.NavigateTo("/admin", true); // Force reload
-                        break;
-                    case "BASIC":
-                        Console.WriteLine("[Auth] Redirecting to basic-user");
-                        Navigation.NavigateTo("/basic-user", true); // Force reload
-                        break;
-                    default:
-                        Console.WriteLine($"[Auth] Unknown role '{loginResponse?.Role}', redirecting to home");
-                        Navigation.NavigateTo("/", true); // Force reload
-                        break;
-                }
+                Navigation.NavigateTo("/home", true);
             }
             else
             {
