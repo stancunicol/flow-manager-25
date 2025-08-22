@@ -26,14 +26,15 @@
             <!-- Page 1: Form Templates -->
             <div class="carousel-page">
                 <div class="page-content">
-                    <FormTemplate />
+                    <FormTemplate OnTemplateSaved="@OnFormTemplateSaved" />
                 </div>
             </div>
 
             <!-- Page 2: Flows -->
             <div class="carousel-page">
                 <div class="page-content">
-                    <Flows />
+                    <Flows SavedFormTemplateId="_savedFormTemplateId"
+                           SavedFormTemplateName="_savedFormTemplateName" />
                 </div>
             </div>
 
@@ -67,6 +68,18 @@
 @code {
     private int _currentPage = 0;
     private int _totalPages = 2;
+    
+    private Guid? _savedFormTemplateId = null;
+    private string _savedFormTemplateName = "";
+
+    
+    // ADAUGĂ ACEASTĂ METODĂ:
+    private void OnFormTemplateSaved((Guid Id, string Name) templateInfo)
+    {
+        _savedFormTemplateId = templateInfo.Id;
+        _savedFormTemplateName = templateInfo.Name;
+        StateHasChanged();
+    }   
 
     private void NextPage()
     {

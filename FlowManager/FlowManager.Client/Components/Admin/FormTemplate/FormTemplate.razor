@@ -333,9 +333,11 @@
 }
 
 @code {
+    [Parameter] public EventCallback<(Guid Id, string Name)> OnTemplateSaved { get; set; }
     [Inject] private ComponentService ComponentService { get; set; } = default!;
     [Inject] private FormTemplateService FormTemplateService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+   
 
     // Properties
     private List<ComponentResponseDto> availableComponents = new();
@@ -370,6 +372,8 @@
 
     // Debug pentru API call
     private string apiCallStatus = "Not started";
+    
+
 
     // Z-index counter for layering
     private int zIndexCounter = 1;
@@ -835,6 +839,7 @@
             if (templateResponse != null)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+                await OnTemplateSaved.InvokeAsync((templateResponse.Id, templateResponse.Name));
                 // Reset form
                 canvasElements.Clear();
                 templateName = "";

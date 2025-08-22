@@ -14,6 +14,8 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
     {
         [Inject] private StepService _stepService { get; set; } = default!;
         [Inject] private FlowService _flowService { get; set; } = default!;
+        [Parameter] public Guid? SavedFormTemplateId { get; set; }
+        [Parameter] public string SavedFormTemplateName { get; set; } = "";
 
         private List<StepVM> _availableSteps = new List<StepVM>();
         private List<StepVM> _configuredSteps = new List<StepVM>();
@@ -140,7 +142,8 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
             await _flowService.PostFlowAsync(new PostFlowRequestDto
             {
                 Name = _flowName,
-                StepIds = workflowStepIds
+                StepIds = workflowStepIds,
+                FormTemplateId = SavedFormTemplateId
             });
         }
 
