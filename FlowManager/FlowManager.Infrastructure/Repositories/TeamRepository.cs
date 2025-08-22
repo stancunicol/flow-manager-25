@@ -25,6 +25,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User)
                 .ToListAsync();
         }
 
@@ -33,6 +34,7 @@ namespace FlowManager.Infrastructure.Repositories
             var query = _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(name))
@@ -83,16 +85,21 @@ namespace FlowManager.Infrastructure.Repositories
             return (teams, totalCount);
         }
 
-        public async Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false)
+        public async Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedUserTeams = false)
         {
-            var query = _context.Teams
-                .Include(t => t.Users.Where(u => u.DeletedAt == null))
-                .AsQueryable();
+            var query = _context.Teams.AsQueryable();
 
             if (!includeDeleted)
             {
                 query = query.Where(t => t.DeletedAt == null);
             }
+
+            if (!includeDeletedUserTeams)
+                query = query.Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User);
+            else
+                query = query.Include(t => t.Users)
+                    .ThenInclude(ut => ut.User);
 
             return await query.FirstOrDefaultAsync(t => t.Id == id);
         }
@@ -102,6 +109,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User)
                 .FirstOrDefaultAsync(t => t.Name.ToLower() == name.ToLower());
         }
 

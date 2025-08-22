@@ -1,6 +1,7 @@
 ﻿using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
+using FlowManager.Client.ViewModels.Team;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Step;

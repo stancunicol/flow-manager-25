@@ -48,9 +48,9 @@ namespace FlowManager.Application.Services
                     Name = st.Team.Name,
                     Users = st.Team.Users.Select(u => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email
+                        Id = u.User.Id,
+                        Name = u.User.Name,
+                        Email = u.User.Email
                     }).ToList()
                 }).ToList(),
             }).ToList();
@@ -81,9 +81,9 @@ namespace FlowManager.Application.Services
                     Name = st.Team.Name,
                     Users = st.Team.Users.Select(u => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email
+                        Id = u.User.Id,
+                        Name = u.User.Name,
+                        Email = u.User.Email
                     }).ToList()
                 }).ToList(),
             };
@@ -165,9 +165,9 @@ namespace FlowManager.Application.Services
                     Name = st.Team.Name,
                     Users = st.Team.Users.Select(u => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email
+                        Id = u.User.Id,
+                        Name = u.User.Name,
+                        Email = u.User.Email
                     }).ToList()
                 }).ToList(),
             };
@@ -271,9 +271,9 @@ namespace FlowManager.Application.Services
                     Name = st.Team.Name,
                     Users = st.Team.Users.Select(u => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email
+                        Id = u.User.Id,
+                        Name = u.User.Name,
+                        Email = u.User.Email
                     }).ToList()
                 }).ToList(),
             };
@@ -306,9 +306,9 @@ namespace FlowManager.Application.Services
                     Name = st.Team.Name,
                     Users = st.Team.Users.Select(u => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email
+                        Id = u.User.Id,
+                        Name = u.User.Name,
+                        Email = u.User.Email
                     }).ToList()
                 }).ToList(),
             };
@@ -357,11 +357,11 @@ namespace FlowManager.Application.Services
                 {
                     Id = st.TeamId,
                     Name = st.Team.Name,
-                    Users = st.Team.Users.Select(u => new UserResponseDto
+                    Users = st.Team.Users.Select(ut => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email
+                        Id = ut.User.Id,
+                        Name = ut.User.Name,
+                        Email = ut.User.Email
                     }).ToList()
                 }).ToList(),
             };
@@ -409,9 +409,9 @@ namespace FlowManager.Application.Services
                     Name = st.Team.Name,
                     Users = st.Team.Users.Select(u => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email
+                        Id = u.User.Id,
+                        Name = u.User.Name,
+                        Email = u.User.Email
                     }).ToList()
                 }).ToList(),
             };
@@ -421,7 +421,7 @@ namespace FlowManager.Application.Services
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
 
-            (List<Step> data, int totalCount) = await _stepRepository.GetAllStepsQueriedAsync(payload.Name, parameters);
+            (List<Step> data, int totalCount) = await _stepRepository.GetAllStepsIncludeUsersAndTeamsQueriedAsync(payload.Name, parameters);
 
             return new PagedResponseDto<StepResponseDto>
             {
@@ -441,9 +441,9 @@ namespace FlowManager.Application.Services
                         Name = st.Team.Name,
                         Users = st.Team.Users.Select(u => new UserResponseDto
                         {
-                            Id = u.Id,
-                            Name = u.Name,
-                            Email = u.Email
+                            Id = u.User.Id,
+                            Name = u.User.Name,
+                            Email = u.User.Email
                         }).ToList()
                     }).ToList(),
                 }).ToList(),

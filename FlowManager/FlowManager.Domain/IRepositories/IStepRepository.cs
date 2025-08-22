@@ -11,11 +11,11 @@ namespace FlowManager.Domain.IRepositories
     public interface IStepRepository
     {
         Task<IEnumerable<Step>> GetStepsAsync();
-        Task<Step?> GetStepByIdAsync(Guid id);
+        Task<Step?> GetStepByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedStepUser = false, bool includeDeletedStepTeams = false);
         Task<IEnumerable<Step>> GetStepsByFlowAsync(Guid flowId);
         Task<Step> PostStepAsync(Step step);
         Task<Step> DeleteStepAsync(Step step);
         Task SaveChangesAsync();
-        Task<(List<Step> Steps, int TotalCount)> GetAllStepsQueriedAsync(string? name, QueryParams? parameters);
+        Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(string? name, QueryParams? parameters);
     }
 }

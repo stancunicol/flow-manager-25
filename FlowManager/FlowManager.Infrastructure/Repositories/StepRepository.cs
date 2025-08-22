@@ -32,15 +32,30 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Step?> GetStepByIdAsync(Guid id)
+        public async Task<Step?> GetStepByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedStepUser = false, bool includeDeletedStepTeams = false)
         {
-            return await _context.Steps
-                .Include(s => s.Users)
-                    .ThenInclude(su => su.User)
-                .Include(s => s.Teams)
+            IQueryable<Step> query = _context.Steps;
+
+            if (!includeDeleted)
+                query = query.Where(s => s.DeletedAt == null);
+
+            if (!includeDeletedStepUser)
+                query = query.Include(s => s.Users.Where(su => su.DeletedAt == null))
+                    .ThenInclude(su => su.User);
+            else
+                query = query.Include(s => s.Users)
+                     .ThenInclude(su => su.User);
+
+            if (!includeDeletedStepTeams)
+                query = query.Include(s => s.Teams.Where(st => st.DeletedAt == null))
                     .ThenInclude(st => st.Team)
-                        .ThenInclude(t => t.Users)
-                .FirstOrDefaultAsync(s => s.Id == id);
+                        .ThenInclude(t => t.Users);
+            else
+                query = query.Include(s => s.Teams)
+                    .ThenInclude(st => st.Team)
+                        .ThenInclude(t => t.Users);
+
+            return await query.FirstOrDefaultAsync(s => s.Id == id);
         }
 
         public async Task<IEnumerable<Step>> GetStepsByFlowAsync(Guid flowId)
@@ -76,11 +91,14 @@ namespace FlowManager.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsQueriedAsync(string? name, QueryParams? parameters)
+        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(string? name, QueryParams? parameters)
         {
-            IQueryable<Step> query = _context.Steps.Include(s => s.Users)
-                    .Include(s => s.FlowSteps)
-                        .ThenInclude(s => s.Flow);
+            IQueryable<Step> query = _context.Steps
+                .Include(s => s.Users.Where(su => su.DeletedAt == null))
+                    .ThenInclude(su => su.User)
+                .Include(s => s.Teams.Where(st => st.DeletedAt == null))
+                    .Include(st => st.Users)
+                        .ThenInclude(su => su.User);
 
             // filtering
             if (!string.IsNullOrEmpty(name))

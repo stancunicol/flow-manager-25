@@ -6,7 +6,7 @@ using FlowManager.Shared.DTOs.Responses.Role;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
 
-namespace FlowManager.Client.Components.Admin.Members.MembersModals
+namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersModals
 {
     public partial class MembersAddUserModal : ComponentBase
     {

@@ -41,11 +41,11 @@ namespace FlowManager.Application.Services
                 {
                     Id = t.Id,
                     Name = t.Name,
-                    Users = t.Users?.Select(u => new UserResponseDto
+                    Users = t.Users?.Select(ut => new UserResponseDto
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email,
+                        Id = ut.User.Id,
+                        Name = ut.User.Name,
+                        Email = ut.User.Email,
                     }).ToList(),
                     UsersCount = t.Users?.Count(u => u.DeletedAt == null) ?? 0,
                     CreatedAt = t.CreatedAt,
@@ -71,11 +71,11 @@ namespace FlowManager.Application.Services
             {
                 Id = team.Id,
                 Name = team.Name,
-                Users = team.Users?.Select(u => new UserResponseDto
+                Users = team.Users?.Select(ut => new UserResponseDto
                 {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
+                    Id = ut.User.Id,
+                    Name = ut.User.Name,
+                    Email = ut.User.Email,
                 }).ToList(),
                 UsersCount = team.Users?.Count(u => u.DeletedAt == null) ?? 0,
                 CreatedAt = team.CreatedAt,
@@ -107,7 +107,11 @@ namespace FlowManager.Application.Services
                         throw new EntryNotFoundException($"User with id {userId} was not found (trying to create a team).");
                     }
 
-                    user.TeamId = teamToAdd.Id;
+                    user.Teams.Add(new UserTeam
+                    {
+                        TeamId = teamToAdd.Id,
+                        UserId = userId,
+                    });
                 }
             }
 
@@ -117,11 +121,11 @@ namespace FlowManager.Application.Services
             {
                 Id = teamToAdd.Id,
                 Name = teamToAdd.Name,
-                Users = teamToAdd.Users?.Select(u => new UserResponseDto
+                Users = teamToAdd.Users?.Select(ut => new UserResponseDto
                 {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
+                    Id = ut.User.Id,
+                    Name = ut.User.Name,
+                    Email = ut.User.Email,
                 }).ToList(),
                 UsersCount = teamToAdd.Users?.Count(u => u.DeletedAt == null) ?? 0,
                 CreatedAt = teamToAdd.CreatedAt,
@@ -132,8 +136,7 @@ namespace FlowManager.Application.Services
 
         public async Task<TeamResponseDto> UpdateTeamAsync(Guid id, PatchTeamRequestDto payload)
         {
-            var teamToUpdate = await _teamRepository.GetTeamByIdAsync(id);
-
+            var teamToUpdate = await _teamRepository.GetTeamByIdAsync(id, includeDeletedUserTeams: true);
             if (teamToUpdate == null)
             {
                 throw new EntryNotFoundException($"Team with id {id} was not found.");
@@ -144,15 +147,11 @@ namespace FlowManager.Application.Services
                 teamToUpdate.Name = payload.Name;
             }
 
-            teamToUpdate.UpdatedAt = DateTime.UtcNow;
-
             if (payload.UserIds != null)
             {
-                var currentUsers = await _userRepository.GetUsersByTeamIdAsync(id);
-                foreach (User user in currentUsers)
+                foreach (UserTeam userTeam in teamToUpdate.Users)
                 {
-                    user.TeamId = null;
-                    user.UpdatedAt = DateTime.UtcNow;
+                    userTeam.DeletedAt = DateTime.UtcNow;
                 }
 
                 foreach (Guid userId in payload.UserIds)
@@ -163,24 +162,35 @@ namespace FlowManager.Application.Services
                         throw new EntryNotFoundException($"User with id {userId} was not found (trying to update team).");
                     }
 
-                    user.TeamId = id;
-                    user.UpdatedAt = DateTime.UtcNow;
+                    UserTeam existingUserTeam = teamToUpdate.Users.FirstOrDefault(ut => ut.UserId == userId);
+                    if (existingUserTeam != null)
+                    {
+                        existingUserTeam.DeletedAt = null;
+                    }
+                    else
+                    {
+                        UserTeam userTeamToAdd = new UserTeam
+                        {
+                            TeamId = id,
+                            UserId = userId
+                        };
+                        teamToUpdate.Users.Add(userTeamToAdd);
+                    }
                 }
-
-                await _userRepository.SaveChangesAsync();
             }
 
+            teamToUpdate.UpdatedAt = DateTime.UtcNow;
             await _teamRepository.SaveChangesAsync();
 
             return new TeamResponseDto
             {
                 Id = teamToUpdate.Id,
                 Name = teamToUpdate.Name,
-                Users = teamToUpdate.Users?.Select(u => new UserResponseDto
+                Users = teamToUpdate.Users?.Where(ut => ut.DeletedAt == null).Select(ut => new UserResponseDto
                 {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
+                    Id = ut.User.Id,
+                    Name = ut.User.Name,
+                    Email = ut.User.Email,
                 }).ToList(),
                 UsersCount = teamToUpdate.Users?.Count(u => u.DeletedAt == null) ?? 0,
                 CreatedAt = teamToUpdate.CreatedAt,
@@ -201,7 +211,8 @@ namespace FlowManager.Application.Services
             var users = await _userRepository.GetUsersByTeamIdAsync(id);
             foreach (var user in users)
             {
-                user.TeamId = null;
+                UserTeam userTeamToDelete = user.Teams.First(ut => ut.TeamId == id);
+                userTeamToDelete.DeletedAt = DateTime.UtcNow;
                 user.UpdatedAt = DateTime.UtcNow;
             }
 
@@ -214,11 +225,11 @@ namespace FlowManager.Application.Services
             {
                 Id = teamToDelete.Id,
                 Name = teamToDelete.Name,
-                Users = teamToDelete.Users?.Select(u => new UserResponseDto
+                Users = teamToDelete.Users?.Select(ut => new UserResponseDto
                 {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
+                    Id = ut.User.Id,
+                    Name = ut.User.Name,
+                    Email = ut.User.Email,
                 }).ToList(),
                 UsersCount = teamToDelete.Users?.Count(u => u.DeletedAt == null) ?? 0,
                 CreatedAt = teamToDelete.CreatedAt,
@@ -245,11 +256,11 @@ namespace FlowManager.Application.Services
             {
                 Id = teamToRestore.Id,
                 Name = teamToRestore.Name,
-                Users = teamToRestore.Users?.Select(u => new UserResponseDto
+                Users = teamToRestore.Users?.Select(ut => new UserResponseDto
                 {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
+                    Id = ut.User.Id,
+                    Name = ut.User.Name,
+                    Email = ut.User.Email,
                 }).ToList(),
                 UsersCount = teamToRestore.Users?.Count(u => u.DeletedAt == null) ?? 0,
                 CreatedAt = teamToRestore.CreatedAt,
@@ -271,11 +282,11 @@ namespace FlowManager.Application.Services
             {
                 Id = team.Id,
                 Name = team.Name,
-                Users = team.Users?.Select(u => new UserResponseDto
+                Users = team.Users?.Select(ut => new UserResponseDto
                 {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
+                    Id = ut.User.Id,
+                    Name = ut.User.Name,
+                    Email = ut.User.Email,
                 }).ToList(),
                 UsersCount = team.Users?.Count(u => u.DeletedAt == null) ?? 0,
                 CreatedAt = team.CreatedAt,
@@ -301,13 +312,12 @@ namespace FlowManager.Application.Services
                 UpdatedAt = team.UpdatedAt,
                 DeletedAt = team.DeletedAt,
                 UsersCount = team.Users?.Count ?? 0,
-                Users = team.Users?.Select(u => new UserResponseDto 
+                Users = team.Users?.Select(ut => new UserResponseDto 
                 {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
-                    UserName = u.UserName,
-                    TeamId = u.TeamId,
+                    Id = ut.User.Id,
+                    Name = ut.User.Name,
+                    Email = ut.User.Email,
+                    UserName = ut.User.UserName,
                 }).ToList()
             };
         }

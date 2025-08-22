@@ -26,7 +26,8 @@ namespace FlowManager.Infrastructure.Repositories
             return query
                 .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
                     .ThenInclude(ur => ur.Role)
-                .Include(u => u.Team)
+                .Include(u => u.Teams)
+                    .ThenInclude(ut => ut.Team)
                 .Include(u => u.Steps.Where(su => su.DeletedAt == null))
                     .ThenInclude(su => su.Step);
         }
@@ -67,7 +68,9 @@ namespace FlowManager.Infrastructure.Repositories
             IQueryable<User> query = _context.Users
                 .Where(u => u.DeletedAt == null)
                 .Include(u => u.Roles)
-                    .ThenInclude(ur => ur.Role);
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.Teams)
+                    .ThenInclude(ut => ut.Team);
 
             if (!includeDeleted)
                 query = query.Where(u => u.DeletedAt == null);
@@ -169,7 +172,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await GetUsersWithIncludes(query).FirstOrDefaultAsync();
         }
 
-        public async Task<User?> GetUserByIdAsync(Guid id, bool includeDeleted = false)
+        public async Task<User?> GetUserByIdAsync(Guid id, bool includeDeleted = false,  bool includeDeletedUserTeams = false)
         {
             IQueryable<User> query = _context.Users
                 .Include(u => u.Roles)
@@ -177,6 +180,13 @@ namespace FlowManager.Infrastructure.Repositories
 
             if (!includeDeleted)
                 query = query.Where(u => u.DeletedAt == null);
+
+            if(!includeDeletedUserTeams)
+                query = query.Include(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                    .ThenInclude(ut => ut.Team);
+            else
+                query = query.Include(u => u.Teams)
+                   .ThenInclude(ut => ut.Team);
 
             query = GetUsersWithIncludes(query);
 
@@ -196,28 +206,14 @@ namespace FlowManager.Infrastructure.Repositories
             return user.Roles.First().Role.NormalizedName;
         }
 
-        // ==========================================
-        // METODE PENTRU TEAMS
-        // ==========================================
-
         public async Task<List<User>> GetUsersByTeamIdAsync(Guid teamId)
         {
             var query = _context.Users
-                .Where(u => u.DeletedAt == null && u.TeamId == teamId);
+                .Where(u => u.DeletedAt == null);
 
-            return await GetUsersWithIncludes(query)
-                .OrderBy(u => u.Name)
-                .ToListAsync();
-        }
+            query = GetUsersWithIncludes(query).Where(u => u.Teams.Any(ut => ut.TeamId == teamId));
 
-        public async Task<List<User>> GetUsersWithoutTeamAsync()
-        {
-            var query = _context.Users
-                .Where(u => u.DeletedAt == null && u.TeamId == null);
-
-            return await GetUsersWithIncludes(query)
-                .OrderBy(u => u.Name)
-                .ToListAsync();
+            return await query.ToListAsync();
         }
 
         public async Task<User?> GetUserWithTeamAsync(Guid userId)
@@ -232,7 +228,8 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.Users
                 .Where(u => u.DeletedAt == null && u.Id == userId)
-                .Include(u => u.Team)
+                .Include(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                    .ThenInclude(ut => ut.Team)
                 .Include(u => u.Steps.Where(su => su.DeletedAt == null))
                     .ThenInclude(su => su.Step)
                 .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
@@ -245,7 +242,8 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.StepUsers
                 .Where(su => su.DeletedAt == null && su.StepId == stepId)
                 .Include(su => su.User)
-                    .ThenInclude(u => u.Team)
+                    .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                        .ThenInclude(ut => ut.Team)
                 .Include(su => su.User.Roles.Where(ur => ur.DeletedAt == null))
                     .ThenInclude(ur => ur.Role)
                 .Select(su => su.User)

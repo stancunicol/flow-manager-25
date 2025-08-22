@@ -12,7 +12,7 @@ namespace FlowManager.Domain.IRepositories
     {
         Task<List<Team>> GetAllTeamsAsync();
         Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? name, QueryParams? queryParams);
-        Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false);
+        Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedUserTeams = false);
         Task<Team?> GetTeamByNameAsync(string name);
         Task<Team?> GetTeamWithUsersAsync(Guid id);
         Task<Team> AddTeamAsync(Team team);

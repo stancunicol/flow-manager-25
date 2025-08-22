@@ -48,7 +48,7 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<(List<Flow> Data, int TotalCount)> GetAllFlowsQueriedAsync(string? name, QueryParams? parameters)
         {
             IQueryable<Flow> query = _context.Flows
-                .Include(f => f.Steps)
+                .Include(f => f.Steps.Where(s => s.DeletedAt == null))
                     .ThenInclude(fs => fs.Step);
 
             // filtering
@@ -100,7 +100,7 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<Flow?> GetFlowIncludeDeletedStepsByIdAsync(Guid id)
         {
             return await _context.Flows
-                .Include(f => f.Steps)
+                .Include(f => f.Steps.Where(s => s.DeletedAt == null))
                     .ThenInclude(fs => fs.Step)
                 .Include(f => f.FormTemplate)
                 .FirstOrDefaultAsync(f => f.Id == id);

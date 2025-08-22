@@ -9,10 +9,6 @@ namespace FlowManager.Domain.Entities
     public class FormTemplateComponent
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string Type { get; set; } = string.Empty;
-        public string Label { get; set; } = string.Empty;
-        public bool Required { get; set; }
-        public Dictionary<string, object> Properties { get; set; } = new();
 
         // navigation properties
         public virtual FormTemplate FormTemplate { get; set; }
@@ -20,8 +16,6 @@ namespace FlowManager.Domain.Entities
 
         public virtual Component Component { get; set; }
         public Guid ComponentId { get; set; }
-
-       
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

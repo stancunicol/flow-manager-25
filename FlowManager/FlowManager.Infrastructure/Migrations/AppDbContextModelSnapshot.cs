@@ -281,21 +281,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<Guid>("FormTemplateId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Properties")
-                        .IsRequired()
-                        .HasColumnType("jsonb");
-
-                    b.Property<bool>("Required")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -463,7 +448,7 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_Teams_Name");
 
-                    b.ToTable("Teams");
+                    b.ToTable("Teams", (string)null);
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
@@ -522,9 +507,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("TeamId")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
 
@@ -548,8 +530,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
-
-                    b.HasIndex("TeamId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -576,6 +556,30 @@ namespace FlowManager.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.UserTeam", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "TeamId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("UserTeams");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -816,16 +820,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
-                {
-                    b.HasOne("FlowManager.Domain.Entities.Team", "Team")
-                        .WithMany("Users")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Team");
-                });
-
             modelBuilder.Entity("FlowManager.Domain.Entities.UserRole", b =>
                 {
                     b.HasOne("FlowManager.Domain.Entities.Role", "Role")
@@ -841,6 +835,25 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.UserTeam", b =>
+                {
+                    b.HasOne("FlowManager.Domain.Entities.Team", "Team")
+                        .WithMany("Users")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FlowManager.Domain.Entities.User", "User")
+                        .WithMany("Teams")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
 
                     b.Navigation("User");
                 });
@@ -935,6 +948,8 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("Roles");
 
                     b.Navigation("Steps");
+
+                    b.Navigation("Teams");
                 });
 #pragma warning restore 612, 618
         }

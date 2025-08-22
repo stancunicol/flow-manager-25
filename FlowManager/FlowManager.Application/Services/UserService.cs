@@ -1,4 +1,5 @@
 ﻿using FlowManager.Application.Interfaces;
+using FlowManager.Application.IServices;
 using FlowManager.Application.Utils;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
@@ -8,6 +9,7 @@ using FlowManager.Infrastructure.Utils;
 using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Role;
+using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -22,13 +24,19 @@ namespace FlowManager.Infrastructure.Services
         private readonly IRoleRepository _roleRepository;
         private readonly IEmailService _emailService;
         private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly ITeamRepository _teamRepostiory;
 
-        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, IEmailService emailService, IPasswordHasher<User> password)
+        public UserService(IUserRepository userRepository,
+            IRoleRepository roleRepository,
+            IEmailService emailService, 
+            IPasswordHasher<User> password,
+            ITeamRepository teamRepository)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _emailService = emailService;
             _passwordHasher = password;
+            _teamRepostiory = teamRepository;
         }
 
         private UserResponseDto MapToUserResponseDto(User user)
@@ -39,7 +47,11 @@ namespace FlowManager.Infrastructure.Services
                 Name = user.Name,
                 Email = user.Email,
                 UserName = user.UserName,
-                TeamId = user.TeamId,
+                Teams = user.Teams.Select(ut => new TeamResponseDto
+                {
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
+                }).ToList(),
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt,
                 DeletedAt = user.DeletedAt,
@@ -81,6 +93,11 @@ namespace FlowManager.Infrastructure.Services
                     Name = u.Name,
                     Email = u.Email,
                     UserName = u.UserName,
+                    Teams = u.Teams.Select(ut => new TeamResponseDto
+                    {
+                        Id = ut.Team.Id,
+                        Name = ut.Team.Name,
+                    }).ToList(),
                     CreatedAt = u.CreatedAt,
                     UpdatedAt = u.UpdatedAt,
                     DeletedAt = u.DeletedAt,
@@ -137,10 +154,25 @@ namespace FlowManager.Infrastructure.Services
                 NormalizedEmail = payload.Email.ToUpper(),
                 Email = payload.Email,
                 EmailConfirmed = false,
-                TeamId = payload.TeamId,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 ConcurrencyStamp = Guid.NewGuid().ToString()
             };
+
+            foreach(Guid teamId in payload.TeamsIds)
+            {
+                if(await _teamRepostiory.GetTeamByIdAsync(teamId) == null)
+                {
+                    throw new EntryNotFoundException($"Team with id {teamId} was not found (trying to create a new user).");
+                }
+
+                UserTeam userTeam = new UserTeam
+                {
+                    UserId = userToAdd.Id,
+                    TeamId = teamId,
+                };
+
+                userToAdd.Teams.Add(userTeam);
+            }
 
             foreach (Guid roleId in payload.Roles)
             {
@@ -188,7 +220,11 @@ namespace FlowManager.Infrastructure.Services
                 Name = result.Name,
                 Email = result.Email,
                 UserName = result.UserName,
-                TeamId = result.TeamId,
+                Teams = result.Teams.Select(ut => new TeamResponseDto
+                {
+                    Id = ut.TeamId,
+                    Name = ut.Team.Name
+                }).ToList(),
                 CreatedAt = result.CreatedAt,
                 UpdatedAt = result.UpdatedAt,
                 DeletedAt = result.DeletedAt,
@@ -202,7 +238,7 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<UserResponseDto> UpdateUserAsync(Guid id, PatchUserRequestDto payload)
         {
-            var userToUpdate = await _userRepository.GetUserByIdAsync(id);
+            var userToUpdate = await _userRepository.GetUserByIdAsync(id, includeDeletedUserTeams: true);
 
             if (userToUpdate == null)
             {
@@ -220,12 +256,31 @@ namespace FlowManager.Infrastructure.Services
                 userToUpdate.UserName = payload.Email;
             }
 
-            if (payload.TeamId.HasValue)
+            if (payload.TeamsIds != null && payload.TeamsIds.Count() != 0)
             {
-                userToUpdate.TeamId = payload.TeamId.Value;
-            }
+                foreach(UserTeam userTeam in userToUpdate.Teams)
+                {
+                    userTeam.DeletedAt = DateTime.UtcNow;
+                }
 
-            userToUpdate.UpdatedAt = DateTime.UtcNow;
+                foreach(Guid teamId in payload.TeamsIds)
+                {
+                    if(await _teamRepostiory.GetTeamByIdAsync(teamId) == null)
+                    {
+                        UserTeam existingUserTeam = userToUpdate.Teams.First(userToUpdate => userToUpdate.TeamId == teamId);
+                        existingUserTeam.DeletedAt = null;
+                    }
+                    else
+                    {
+                        UserTeam userTeamToAdd = new UserTeam
+                        {
+                            TeamId = teamId,
+                            UserId = userToUpdate.Id
+                        };
+                        userToUpdate.Teams.Add(userTeamToAdd);
+                    }
+                }
+            }
 
             if (payload.Roles != null)
             {
@@ -257,6 +312,8 @@ namespace FlowManager.Infrastructure.Services
                     }
                 }
             }
+
+            userToUpdate.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.SaveChangesAsync();
             return MapToUserResponseDto(userToUpdate);

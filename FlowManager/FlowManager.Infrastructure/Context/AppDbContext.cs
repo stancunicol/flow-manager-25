@@ -28,6 +28,7 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<StepTeam> StepTeams => Set<StepTeam>();
         public DbSet<FlowStepUser> FlowStepUsers => Set<FlowStepUser>();
         public DbSet<FlowStepTeam> FlowStepTeams => Set<FlowStepTeam>();
+        public DbSet<UserTeam> UserTeams => Set<UserTeam>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -46,6 +47,8 @@ namespace FlowManager.Infrastructure.Context
             UserRoleRelationshipConfiguration(builder);
             TeamRelationshipConfiguration(builder);
 
+            UserTeamRelationshipConfiguration(builder);
+
             JSONBConfiguration(builder);
         }
 
@@ -54,7 +57,6 @@ namespace FlowManager.Infrastructure.Context
             builder.Entity<User>(entity =>
             {
                 entity.ToTable("AspNetUsers");
-
 
                 entity.HasMany(u => u.Roles)
                       .WithOne(ur => ur.User)
@@ -72,17 +74,37 @@ namespace FlowManager.Infrastructure.Context
                       .IsRequired();
             });
         }
-        private void TeamRelationshipConfiguration(ModelBuilder builder)
+
+        private void UserTeamRelationshipConfiguration(ModelBuilder builder)
         {
-            // User -> Team (1-to-many)
-            builder.Entity<User>(entity =>
+            builder.Entity<UserTeam>(entity =>
             {
-                entity.HasOne(u => u.Team)
+                entity.HasKey(ut => new { ut.UserId, ut.TeamId });
+
+                entity.HasOne(ut => ut.User)
+                      .WithMany(u => u.Teams)
+                      .HasForeignKey(ut => ut.UserId)
+                      .IsRequired();
+
+                entity.HasOne(ut => ut.Team)
                       .WithMany(t => t.Users)
-                      .HasForeignKey(u => u.TeamId)
-                      .OnDelete(DeleteBehavior.SetNull);
+                      .HasForeignKey(ut => ut.TeamId)
+                      .IsRequired();
             });
 
+            builder.Entity<User>(entity =>
+            {
+                entity.ToTable("AspNetUsers");
+            });
+
+            builder.Entity<Team>(entity =>
+            {
+                entity.ToTable("Teams");
+            });
+        }
+
+        private void TeamRelationshipConfiguration(ModelBuilder builder)
+        {
             // StepUser (many-to-many Step <-> User)
             builder.Entity<StepUser>(entity =>
             {
@@ -135,16 +157,6 @@ namespace FlowManager.Infrastructure.Context
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                           v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
                       .HasColumnType("jsonb"); // PostgreSQL jsonb type
-            });
-
-            builder.Entity<FormTemplateComponent>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Properties)
-                     .HasConversion(
-                         v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                         v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null))
-                     .HasColumnType("jsonb"); // PostgreSQL jsonb type
             });
         }
 

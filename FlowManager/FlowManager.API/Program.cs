@@ -37,8 +37,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "FlowManagerAuth";
@@ -61,8 +59,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 
 // Add layer dependencies
-builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers()
@@ -84,24 +82,6 @@ builder.Services.AddIdentityCore<User>()
     .AddRoleManager<RoleManager<Role>>()
     .AddDefaultTokenProviders();
 
-
-
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IFlowService, FlowService>();
-builder.Services.AddScoped<IStepService, StepService>();
-builder.Services.AddScoped<IFormTemplateService, FormTemplateService>();
-builder.Services.AddScoped<IComponentService, ComponentService>();
-builder.Services.AddScoped<IRoleService, RoleService>();
-
-builder.Services.AddScoped<IFormResponseService, FlowManager.Application.Services.FormResponseService>();
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IFlowRepository, FlowRepository>();
-builder.Services.AddScoped<IStepRepository, StepRepository>();
-builder.Services.AddScoped<IFormTemplateRepository, FormTemplateRepository>();
-builder.Services.AddScoped<IComponentRepository, ComponentRepository>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-
 builder.Services.AddScoped<IFormResponseRepository, FormResponseRepository>();
 
 
@@ -115,6 +95,7 @@ using (var scope = app.Services.CreateScope())
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
      BasicSeed.Populate(dbContext, passwordHasher);
+     UsersAndTeamsSeed.Populate(dbContext, passwordHasher);
      FormResponseSeed.Populate(dbContext);
 }
 

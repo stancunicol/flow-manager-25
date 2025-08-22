@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="Components\Admin\Members\TeamsViewTeamsModal.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Pages\ResetPassword.razor.cs" />
   </ItemGroup>
 
@@ -29,6 +33,10 @@
     <ProjectReference Include="..\FlowManager.Application\FlowManager.Application.csproj" />
     <ProjectReference Include="..\FlowManager.Infrastructure\FlowManager.Infrastructure.csproj" />
     <ProjectReference Include="..\FlowManager.Shared\FlowManager.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Admin\Members\ViewTeams\" />
   </ItemGroup>
 
 </Project>

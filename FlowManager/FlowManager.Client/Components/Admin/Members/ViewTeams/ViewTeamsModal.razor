@@ -1,0 +1,54 @@
+﻿@using FlowManager.Client.ViewModels.Team;
+@using FlowManager.Client.ViewModels;
+
+<div class="view-teams-container">
+    <div class="search-container">
+        <input class="search-teams-input"
+               type="text"
+               placeholder="Search teams by name..."
+               @bind="_searchTerm" />
+        <button class="search-teams-button" @onclick="LoadTeams">
+            Search
+        </button>
+    </div>
+    
+    <div class="teams-container">
+        @for (int i = 0; i < _teams.Count(); i++)
+        {
+            int index = i;
+
+            <!-- Team details -->
+            <div class="team-details">
+                <!-- Dropdown team members button -->
+                @if (_teams[i].Users != null && _teams[i].Users?.Count() > 0)
+                {
+                    <button class="dropdown-team-members-button" @onclick="() => ChangeVisibilityTeamMembersDropdown(index)">
+                        ˅
+                    </button>
+                }
+                <label class="team-name">@_teams[i].Name</label>
+                <span class="team-users-count">@(_teams[i].Users?.Count ?? 0) users</span>
+                @if (_dropdownTeamMembersState[i] && _teams[i].Users != null && _teams[i].Users?.Count() > 0)
+                {
+                    <!-- Team members container-->
+                    <div class="team-members-container">
+                        @for (int j = 0; j < _teams[i].Users!.Count; j++)
+                        {
+                            <!-- Team members details -->
+                            <div class="team-members-details">
+                                <span class="team-member-name">@_teams[i].Users![j].Name</span>
+                                <span class="team-member-email">(@_teams[i].Users![j].Email)</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    
+
+    @if(_teams == null || _teams.Count == 0)
+    {
+        <p>No teams found.</p>
+    }
+</div>

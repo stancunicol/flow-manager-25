@@ -15,7 +15,7 @@ namespace FlowManager.Domain.Entities
         public string Name { get; set; } = string.Empty;
 
         // navigation properties
-        public virtual ICollection<User> Users { get; set; } = new List<User>();
+        public virtual ICollection<UserTeam> Users { get; set; } = new List<UserTeam>();
         public virtual ICollection<StepTeam> Steps { get; set; } = new List<StepTeam>();
         public virtual ICollection<FlowStepTeam> FlowStepTeams { get; set; } = new List<FlowStepTeam>();
 
