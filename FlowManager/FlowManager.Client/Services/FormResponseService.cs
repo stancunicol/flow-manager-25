@@ -1,6 +1,6 @@
 ﻿using FlowManager.Shared.DTOs.Requests.FormResponse;
+using FlowManager.Client.DTOs;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace FlowManager.Client.Services
 {
@@ -13,7 +13,7 @@ namespace FlowManager.Client.Services
             _httpClient = httpClient;
         }
 
-        public async Task<List<FormResponseResponseDto>?> GetFormResponsesByUserAsync(Guid userId)
+        public async Task<List<FormResponseResponseDto>> GetFormResponsesByUserAsync(Guid userId)
         {
             try
             {
@@ -21,29 +21,38 @@ namespace FlowManager.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var jsonContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonSerializer.Deserialize<FormResponseApiResponse<List<FormResponseResponseDto>>>(jsonContent, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    return apiResponse?.Result;
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<FormResponseResponseDto>>>();
+                    return result?.Result ?? new List<FormResponseResponseDto>();
                 }
+
+                return new List<FormResponseResponseDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading user forms: {ex.Message}");
+                return new List<FormResponseResponseDto>();
+            }
+        }
+
+        public async Task<FormResponseResponseDto?> SubmitFormResponseAsync(PostFormResponseRequestDto formResponse)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/formresponses", formResponse);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<FormResponseResponseDto>>();
+                    return result?.Result;
+                }
+
                 return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error getting user form responses: {ex.Message}");
+                Console.WriteLine($"Error submitting form: {ex.Message}");
                 return null;
             }
         }
-    }
-
-    public class FormResponseApiResponse<T>
-    {
-        public T? Result { get; set; }
-        public bool Success { get; set; }
-        public string? Message { get; set; }
-        public DateTime Timestamp { get; set; }
     }
 }

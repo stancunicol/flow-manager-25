@@ -1,15 +1,19 @@
 ﻿using FlowManager.API;
 using FlowManager.Application;
 using FlowManager.Application.Interfaces;
+using FlowManager.Application.IServices;
 using FlowManager.Application.Services;
 using FlowManager.Application.Utils;
 using FlowManager.Application.Utils;
 using FlowManager.Domain.Entities;
+using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure;
 using FlowManager.Infrastructure.Context;
 using FlowManager.Infrastructure.Context;
 using FlowManager.Infrastructure.Middleware;
+using FlowManager.Infrastructure.Repositories;
 using FlowManager.Infrastructure.Seed;
+using FlowManager.Infrastructure.Services;
 using FlowManager.Infrastructure.Utils;
 using FlowManager.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
@@ -79,6 +83,27 @@ builder.Services.AddIdentityCore<User>()
     .AddSignInManager()
     .AddRoleManager<RoleManager<Role>>()
     .AddDefaultTokenProviders();
+
+
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFlowService, FlowService>();
+builder.Services.AddScoped<IStepService, StepService>();
+builder.Services.AddScoped<IFormTemplateService, FormTemplateService>();
+builder.Services.AddScoped<IComponentService, ComponentService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+
+builder.Services.AddScoped<IFormResponseService, FlowManager.Application.Services.FormResponseService>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IFlowRepository, FlowRepository>();
+builder.Services.AddScoped<IStepRepository, StepRepository>();
+builder.Services.AddScoped<IFormTemplateRepository, FormTemplateRepository>();
+builder.Services.AddScoped<IComponentRepository, ComponentRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+
+builder.Services.AddScoped<IFormResponseRepository, FormResponseRepository>();
+
 
 builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender>();
 

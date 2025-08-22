@@ -1,6 +1,10 @@
 ﻿using FlowManager.Client.Services;
+using FlowManager.Client.DTOs;
 using FlowManager.Shared.DTOs.Responses.Component;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
+using FlowManager.Shared.DTOs.Responses.Step;
+using FlowManager.Shared.DTOs.Requests.FormResponse;
+using FlowManager.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
@@ -17,11 +21,37 @@ namespace FlowManager.Client.Pages
         private List<ComponentResponseDto>? components;
         private bool isLoading = true;
         private bool isSubmitting = false;
-        private Dictionary<Guid, string> responses = new();
+        private Dictionary<Guid, object> responses = new();
+        private Guid currentUserId = Guid.Empty;
+        private Guid? selectedStepId = null;
+        private List<StepResponseDto>? availableSteps;
 
         protected override async Task OnInitializedAsync()
         {
+            await LoadCurrentUser();
             await LoadFormTemplate();
+            await LoadAvailableSteps();
+        }
+
+        private async Task LoadCurrentUser()
+        {
+            try
+            {
+                var response = await Http.GetAsync("api/auth/me");
+                if (response.IsSuccessStatusCode)
+                {
+                    var userInfo = await response.Content.ReadFromJsonAsync<UserProfileDto>();
+                    if (userInfo != null && userInfo.Id != Guid.Empty)
+                    {
+                        currentUserId = userInfo.Id;
+                        Console.WriteLine($"[DEBUG] Current user ID: {currentUserId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to load current user: {ex.Message}");
+            }
         }
 
         private async Task LoadFormTemplate()
@@ -44,6 +74,31 @@ namespace FlowManager.Client.Pages
             {
                 isLoading = false;
                 StateHasChanged();
+            }
+        }
+
+        private async Task LoadAvailableSteps()
+        {
+            try
+            {
+                // Încarcă toate step-urile disponibile
+                var response = await Http.GetAsync("api/steps/all");
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<StepResponseDto>>>();
+                    availableSteps = result?.Result ?? new List<StepResponseDto>();
+
+                    // Setează primul step ca default dacă există
+                    if (availableSteps.Any())
+                    {
+                        selectedStepId = availableSteps.First().Id;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading steps: {ex.Message}");
+                availableSteps = new List<StepResponseDto>();
             }
         }
 
@@ -71,12 +126,10 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                // Corectez să folosesc formTemplateComponent.Id în loc de ComponentId
                 var componentTasks = formTemplate.Components.Select(async formTemplateComponent =>
                 {
                     try
                     {
-                        // Folosesc Id-ul din FormTemplateComponentResponseDto
                         return await ComponentService.GetComponentByIdAsync(formTemplateComponent.Id);
                     }
                     catch
@@ -95,51 +148,84 @@ namespace FlowManager.Client.Pages
             }
         }
 
-        private void UpdateResponse(Guid componentId, string? value)
+        private void UpdateResponse(Guid componentId, string? value, string componentType)
         {
-            if (value != null)
-            {
-                responses[componentId] = value;
-            }
-            else
+            if (string.IsNullOrWhiteSpace(value))
             {
                 responses.Remove(componentId);
+                return;
             }
+
+            // Convertim valoarea în tipul corespunzător
+            object convertedValue = componentType.ToLower() switch
+            {
+                "number" => int.TryParse(value, out var intVal) ? intVal : value,
+                "checkbox" => bool.TryParse(value, out var boolVal) ? boolVal : value,
+                "datetime" => DateTime.TryParse(value, out var dateVal) ? dateVal : value,
+                _ => value
+            };
+
+            responses[componentId] = convertedValue;
         }
 
         private async Task SubmitForm()
         {
+            if (currentUserId == Guid.Empty)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "User not authenticated. Please login again.");
+                return;
+            }
+
+            if (!selectedStepId.HasValue)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please select a step for this form.");
+                return;
+            }
+
+            // Validare: verifică câmpurile obligatorii
+            var requiredComponents = components?.Where(c => c.Required == true) ?? new List<ComponentResponseDto>();
+            var missingRequiredFields = requiredComponents.Where(c => !responses.ContainsKey(c.Id)).ToList();
+
+            if (missingRequiredFields.Any())
+            {
+                var fieldNames = string.Join(", ", missingRequiredFields.Select(f => f.Label));
+                await JSRuntime.InvokeVoidAsync("alert", $"Please fill in all required fields: {fieldNames}");
+                return;
+            }
+
             isSubmitting = true;
+            StateHasChanged();
+
             try
             {
-                // ...existing validation code...
-
-                // Construct formResponseData before using it
-                var formResponseData = new
+                var formResponseData = new PostFormResponseRequestDto
                 {
-                    TemplateId = this.TemplateId,
-                    Responses = responses.Select(r => new
-                    {
-                        ComponentId = r.Key,
-                        Value = r.Value
-                    }).ToList()
+                    FormTemplateId = TemplateId,
+                    StepId = selectedStepId.Value,
+                    UserId = currentUserId,
+                    ResponseFields = responses
                 };
+
+                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, Step={selectedStepId}, User={currentUserId}");
+                Console.WriteLine($"[DEBUG] Response fields count: {responses.Count}");
 
                 var response = await Http.PostAsJsonAsync("api/formresponses", formResponseData);
 
                 if (response.IsSuccessStatusCode)
                 {
                     await JSRuntime.InvokeVoidAsync("alert", "Form submitted successfully!");
-                    Navigation.NavigateTo("/basic-user"); // Redirecționează înapoi la BasicUser
+                    Navigation.NavigateTo("/basic-user");
                 }
                 else
                 {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[ERROR] Submit failed: {response.StatusCode} - {errorContent}");
                     await JSRuntime.InvokeVoidAsync("alert", "Error submitting form. Please try again.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error submitting form: {ex.Message}");
+                Console.WriteLine($"[ERROR] Exception during submit: {ex.Message}");
                 await JSRuntime.InvokeVoidAsync("alert", "Error submitting form. Please try again.");
             }
             finally
@@ -154,6 +240,7 @@ namespace FlowManager.Client.Pages
             Navigation.NavigateTo("/basic-user");
         }
 
+        // Classes pentru deserializare
         public class FormContent
         {
             public string Layout { get; set; } = "";
@@ -174,5 +261,7 @@ namespace FlowManager.Client.Pages
             public bool? Required { get; set; }
             public Dictionary<string, object>? Properties { get; set; }
         }
+
+        
     }
 }

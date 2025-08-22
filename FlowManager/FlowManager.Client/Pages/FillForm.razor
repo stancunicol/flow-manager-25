@@ -2,6 +2,9 @@
 @layout MainLayout
 @using FlowManager.Shared.DTOs.Responses.FormTemplate
 @using FlowManager.Shared.DTOs.Responses.Component
+@using FlowManager.Shared.DTOs.Responses.Step
+@using FlowManager.Shared.DTOs.Requests.FormResponse
+@using FlowManager.Shared.DTOs
 @using System.Text.Json
 @inject FlowManager.Client.Services.FormTemplateService FormTemplateService
 @inject FlowManager.Client.Services.ComponentService ComponentService
@@ -20,7 +23,7 @@
             Back to My Forms
         </button>
         <h1>@(formTemplate?.Name ?? "Loading...")</h1>
-        <button class="submit-btn" @onclick="SubmitForm" disabled="@isSubmitting">
+        <button class="submit-btn" @onclick="SubmitForm" disabled="@(isSubmitting || !selectedStepId.HasValue)">
             @if (isSubmitting)
             {
                 <div class="spinner-small"></div>
@@ -46,6 +49,21 @@
         }
         else if (formTemplate != null && formElements != null)
         {
+            <!-- Step Selection -->
+            <div class="step-selection">
+                <label for="step-select" class="step-label">Select Step:</label>
+                <select id="step-select" class="step-select" @bind="selectedStepId">
+                    <option value="">-- Select a step --</option>
+                    @if (availableSteps != null)
+                    {
+                        @foreach (var step in availableSteps)
+                        {
+                            <option value="@step.Id">@step.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
             <div class="form-canvas">
                 @foreach (var element in formElements.OrderBy(e => e.ZIndex))
                 {
@@ -72,25 +90,31 @@
                                     @switch (component.Type.ToLower())
                                     {
                                         case "textinput":
-                                            <input type="text" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            <input type="text" class="field-input"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "number":
-                                            <input type="number" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            <input type="number" class="field-input"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "datetime":
-                                            <input type="datetime-local" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            <input type="datetime-local" class="field-input"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "textarea":
-                                            <textarea class="textarea-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))"></textarea>
+                                            <textarea class="textarea-input"
+                                                      @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))"></textarea>
                                             break;
                                         case "checkbox":
                                             <div class="checkbox-field">
-                                                <input type="checkbox" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                                <input type="checkbox"
+                                                       @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                                 <span class="checkbox-label">@component.Label</span>
                                             </div>
                                             break;
                                         default:
-                                            <input type="text" class="field-input" @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString()))" />
+                                            <input type="text" class="field-input"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                     }
                                 </div>

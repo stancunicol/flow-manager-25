@@ -1,19 +1,11 @@
-﻿<!-- filepath: FlowManager/FlowManager.Client/Pages/BasicUser.razor -->
-@page "/basic-user"
+﻿@page "/basic-user"
 @layout MainLayout
 @using FlowManager.Shared.DTOs.Responses.FormTemplate
 @using FlowManager.Shared.DTOs.Requests.FormResponse
 @using FlowManager.Shared.DTOs
+@using FlowManager.Shared.DTOs.Responses.Component
 @using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.WebAssembly.Http
 @using Microsoft.AspNetCore.Authorization
-@inject FlowManager.Client.Services.FormTemplateService FormTemplateService
-@inject FlowManager.Client.Services.FormResponseService FormResponseService
-@inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthProvider
-@inject CookieAuthStateProvider CookieAuthStateProvider
-@inject HttpClient Http
-@inject IJSRuntime JSRuntime
 @attribute [Authorize(Roles = "Basic")]
 
 <FlowManager.Client.Components.NavBar.Navbar />
@@ -102,7 +94,7 @@
                     <div class="forms-grid">
                         @foreach (var form in userForms.OrderByDescending(f => f.CreatedAt))
                         {
-                            <div class="form-card">
+                            <div class="form-card" @onclick="() => ViewFormResponse(form)">
                                 <div class="form-card-header">
                                     <div class="form-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -140,6 +132,13 @@
 
                                 <div class="form-card-footer">
                                     <div class="form-id">ID: @form.Id.ToString().Substring(0, 8)...</div>
+                                    <div class="view-indicator">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                            <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
+                                        </svg>
+                                        Click to view
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -221,6 +220,114 @@
                         <p>No form templates available.</p>
                     </div>
                 }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- View Form Modal -->
+@if (showViewFormModal && selectedFormResponse != null)
+{
+    <div class="modal-overlay" @onclick="CloseViewFormModal">
+        <div class="view-form-modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h3>@(selectedFormTemplate?.Name ?? "Form Response")</h3>
+                    <div class="form-metadata">
+                        <span class="metadata-item">
+                            <strong>Step:</strong> @(selectedFormResponse.StepName ?? "Unknown")
+                        </span>
+                        <span class="metadata-item">
+                            <strong>Submitted:</strong> @selectedFormResponse.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </span>
+                        @if (selectedFormResponse.UpdatedAt.HasValue)
+                        {
+                            <span class="metadata-item">
+                                <strong>Updated:</strong> @selectedFormResponse.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                        }
+                    </div>
+                </div>
+                <button class="close-btn" @onclick="CloseViewFormModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(selectedFormResponse.RejectReason))
+                {
+                    <div class="reject-reason-banner">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                        </svg>
+                        <div>
+                            <strong>Form Rejected</strong>
+                            <p>@selectedFormResponse.RejectReason</p>
+                        </div>
+                    </div>
+                }
+
+                @if (isLoadingFormDetails)
+                {
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Loading form details...</p>
+                    </div>
+                }
+                else if (formElements?.Any() == true && formComponents?.Any() == true)
+                {
+                    <div class="form-responses">
+                        @foreach (var element in formElements.Where(e => !e.IsTextElement && e.ComponentId.HasValue).OrderBy(e => e.Y).ThenBy(e => e.X))
+                        {
+                            var component = formComponents.FirstOrDefault(c => c.Id == element.ComponentId);
+                            if (component != null)
+                            {
+                                var fieldValue = GetFieldValue(component.Id);
+
+                                <div class="response-field">
+                                    <div class="response-label">
+                                        @component.Label
+                                        @if (component.Required == true)
+                                        {
+                                            <span class="required-indicator">*</span>
+                                        }
+                                    </div>
+                                    <div class="response-value @(fieldValue == null ? "empty" : "")">
+                                        @FormatFieldValue(fieldValue, component.Type)
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        @* Afișează și elementele de text static *@
+                        @if (formElements.Any(e => e.IsTextElement))
+                        {
+                            <div class="static-text-section">
+                                <h4>Form Content</h4>
+                                @foreach (var textElement in formElements.Where(e => e.IsTextElement).OrderBy(e => e.Y).ThenBy(e => e.X))
+                                {
+                                    <div class="static-text-item">
+                                        @textElement.TextContent
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-form-data">
+                        <p>Unable to load form structure or no responses found.</p>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <div class="form-id-display">
+                    Form ID: @selectedFormResponse.Id
+                </div>
             </div>
         </div>
     </div>
