@@ -56,15 +56,12 @@ namespace FlowManager.Client.Pages
                 Console.WriteLine("[Auth] Login successful, notifying authentication state");
                 var responseContent = await response.Content.ReadAsStringAsync();
 
-                // Notify the authentication state provider first
                 (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication();
 
-                // Wait for the state to be processed
                 await Task.Delay(100);
 
                 StateHasChanged();
 
-                // Additional delay to ensure authentication state is fully processed
                 await Task.Delay(200);
 
                 var loginResponse = JsonSerializer.Deserialize<LoginResponseDto>(responseContent, new JsonSerializerOptions
@@ -72,7 +69,14 @@ namespace FlowManager.Client.Pages
                     PropertyNameCaseInsensitive = true
                 });
 
-                Navigation.NavigateTo("/home", true);
+                if(loginResponse.Roles.Contains("Basic") && loginResponse.Roles.Count() == 1)
+                {
+                    Navigation.NavigateTo("/basic-user", true);
+                }
+                else
+                {
+                    Navigation.NavigateTo("/home", true);
+                }
             }
             else
             {

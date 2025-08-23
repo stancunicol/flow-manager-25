@@ -183,17 +183,16 @@ namespace FlowManager.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<string> GetUserRoleByEmailAsync(string email)
+        public async Task<List<string>> GetUserRolesByEmailAsync(string email)
         {
-            var query = _context.Users.Where(u => u.Email == email && u.DeletedAt == null)
-                .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
-                    .ThenInclude(ur => ur.Role);
+            var roles = await _context.Users
+                .Where(u => u.Email == email && u.DeletedAt == null)
+                .SelectMany(u => u.Roles
+                    .Where(ur => ur.DeletedAt == null)
+                    .Select(ur => ur.Role.Name))  // ia doar numele rolului
+                .ToListAsync();
 
-            var user = await query.FirstOrDefaultAsync();
-            if (user == null || !user.Roles.Any())
-                return string.Empty;
-
-            return user.Roles.First().Role.NormalizedName;
+            return roles;
         }
 
         // ==========================================

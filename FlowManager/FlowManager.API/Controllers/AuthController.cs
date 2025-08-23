@@ -62,13 +62,13 @@ namespace FlowManager.API.Controllers
 
             try
             {
-                var userRole = await _userService.GetUserRoleByEmailAsync(request.Email);
+                List<string> userRole = await _userService.GetUserRolesByEmailAsync(request.Email);
                 Console.WriteLine($"[DEBUG] User role: {userRole}");
 
                 return Ok(new
                 {
                     message = "Login successful",
-                    role = userRole
+                    roles = userRole
                 });
             }
             catch (Exception ex)
@@ -77,7 +77,7 @@ namespace FlowManager.API.Controllers
                 return Ok(new
                 {
                     message = "Login successful",
-                    role = (string?)null
+                    roles = new List<string>()
                 });
             }
         }
