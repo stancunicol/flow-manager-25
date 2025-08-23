@@ -1,64 +1,63 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using FlowManager.Client.ViewModels
-
 @attribute [Authorize(Roles = "Admin")]
 
-<PageTitle>Moderators</PageTitle>
+<PageTitle>Departments</PageTitle>
 
-@if (_users.Any())
+<h2 class="page-title">Departments</h2>
+
+<div class="departments-grid">
+    @if (departments == null || !departments.Any())
+    {
+        <p>No departments available.</p>
+    }
+    else
+    {
+        @foreach (var department in departments)
+        {
+            <div class="department-card" @onclick="() => OpenModal(department)">
+                <span class="department-name">@department.Name</span>
+
+            </div>
+        }
+    }
+</div>
+
+@if (isModalOpen && selectedDepartment != null)
 {
-    <!-- Users table -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th class="table-header-item">User</th>
-                    <th class="table-header-item">Email</th>
-                    <th class="table-header-item">Roles</th>
-                    <th class="table-header-item">Team</th>
-                    <th class="table-header-item">Status</th>
-                </tr>
-            </thead>
+    <div class="modal-backdrop" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
 
-            <tbody>
-                @foreach (UserVM user in _users)
-                {
-                    <tr>
-                        <td class="table-data-item">
-                            <div class="user-info">
-                                <div class="user-avatar">
-                                    @user.Name.Substring(0, Math.Min(2, user.Name.Length)).ToUpper()
-                                </div>
-                                <div class="user-details">
-                                    <div class="user-name">@user.Name</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="table-data-item">
-                            <div class="text-sm">@user.Email</div>
-                        </td>
-                        <td class="table-data-item">
-                            <div class="text-sm">@string.Join(", ", user.Roles.Select(r => r.RoleName))</div>
-                        </td>
-                        <td class="table-data-item">
-                            <div class="text-sm">Team 1</div>
-                        </td>
-                        <td class="table-data-item">
-                            <span class="status-badge @((bool)user.IsActive ? "status-active" : "status-inactive")">
-                                @((bool)user.IsActive ? "Active" : "Inactive")
-                            </span>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+            <div class="modal-header">
+                <h3>@selectedDepartment.Name</h3>
+                <button class="close-icon" @onclick="CloseModal">✕</button>
+            </div>
+
+            @if (selectedDepartment.Teams != null && selectedDepartment.Teams.Any())
+            {
+                <div class="modal-section">
+                    <h4>Teams</h4>
+                    <ul>
+                        @foreach (var team in selectedDepartment.Teams)
+                        {
+                            <li>@team.Name</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (selectedDepartment.Users != null && selectedDepartment.Users.Any())
+            {
+                <div class="modal-section">
+                    <h4>Users</h4>
+                    <ul>
+                        @foreach (var user in selectedDepartment.Users)
+                        {
+                            <li>@user.Name (@user.Email)</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
     </div>
-}
-else
-{
-    <p class="text-white">No users found.</p>
-}
-
-@code {
-
 }

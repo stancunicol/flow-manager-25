@@ -5,6 +5,7 @@ using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.User;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 
 namespace FlowManager.Client.Services
@@ -77,21 +78,17 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<Step?> GetStepAsync(Guid id)
+        public async Task<StepResponseDto?> GetStepAsync(Guid id)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"api/steps/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadFromJsonAsync<Step>();
-                }
+            var response = await _httpClient.GetAsync($"api/steps/{id}");
+            if (!response.IsSuccessStatusCode)
                 return null;
-            }
-            catch
-            {
-                return null;
-            }
+
+            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+
+            return apiResponse?.Result;
         }
 
         public async Task<List<Step>> GetStepsByFlowAsync(Guid flowId)

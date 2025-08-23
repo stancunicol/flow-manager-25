@@ -4,42 +4,63 @@ using FlowManager.Shared.DTOs.Responses.User;
 using FlowManager.Shared.DTOs.Responses;
 using Microsoft.AspNetCore.Components;
 using FlowManager.Client.Services;
+using FlowManager.Application.Services;
+using FlowManager.Domain.Entities;
+using FlowManager.Shared.DTOs.Responses.Step;
+using StepService = FlowManager.Client.Services.StepService;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
     public partial class Steps: ComponentBase
     {
-        [Inject] private UserService _userService { get; set; } = default!;
+        private List<StepResponseDto> departments = new();
+        private bool isModalOpen = false;
+        private StepResponseDto? selectedDepartment;
 
-        private List<UserVM> _users = new();
+        [Inject]
+        private StepService stepService { get; set; } = default!;
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadUsers();
+            await LoadDepartments();
         }
 
-        private async Task LoadUsers()
+        private async Task LoadDepartments()
         {
-            ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersQueriedAsync();
-
-            if (!response.Success)
+            try
             {
-                _users = new();
-                return;
-            }
-
-            _users = response.Result.Data.Where(u => u.Roles != null && u.Roles.Any(r => r.Name != null && r.Name.ToUpper() == "MODERATOR")).Select(u => new UserVM
-            {
-                Id = u.Id,
-                Name = u.Name!,
-                Email = u.Email!,
-                IsActive = u.DeletedAt == null,
-                Roles = u.Roles!.Select(r => new RoleVM
+                var response = await stepService.GetStepsQueriedAsync();
+                if (response != null && response.Success && response.Result != null)
                 {
-                    Id = r.Id,
-                    RoleName = r.Name!
-                }).ToList(),
-            }).ToList();
+                    departments = (List<StepResponseDto>)response.Result.Data;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading departments: {ex.Message}");
+            }
+        }
+
+        private async Task OpenModal(StepResponseDto department)
+        {
+            isModalOpen = true;
+            var stepDetails = await stepService.GetStepAsync(department.Id);
+
+            if (stepDetails != null)
+            {
+                Console.WriteLine($"Loaded step: {stepDetails.Name} ({stepDetails.Id})");
+                selectedDepartment = stepDetails;
+            }
+            else
+            {
+                Console.WriteLine("Step details not found!");
+            }
+        }
+
+        private void CloseModal()
+        {
+            isModalOpen = false;
+            selectedDepartment = null;
         }
     }
 }
