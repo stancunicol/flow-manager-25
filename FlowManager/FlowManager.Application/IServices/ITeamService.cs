@@ -1,4 +1,5 @@
-﻿using FlowManager.Shared.DTOs.Requests.Team;
+﻿using FlowManager.Shared.DTOs.Requests;
+using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Team;
 using System;
@@ -19,5 +20,6 @@ namespace FlowManager.Application.IServices
         Task<TeamResponseDto> UpdateTeamAsync(Guid id, PatchTeamRequestDto payload);
         Task<TeamResponseDto> DeleteTeamAsync(Guid id);
         Task<TeamResponseDto> RestoreTeamAsync(Guid id);
+        Task<SplitUsersByTeamIdResponseDto> GetSplitUsersByTeamIdAsync(Guid id, QueriedTeamRequestDto payload);
     }
 }

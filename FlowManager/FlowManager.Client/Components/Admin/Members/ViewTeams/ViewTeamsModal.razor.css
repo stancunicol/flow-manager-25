@@ -54,6 +54,27 @@
         transform: translateY(0);
     }
 
+.add-team-button {
+    background: var(--siemens-blue);
+    color: white;
+    padding: 8px 0px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    animation: fadein 0.4s ease-out forwards;
+    transition: background 0.3s;
+    display: flex;
+    max-width: 200px;
+    width: 15%;
+    margin-left: auto;
+    text-align: center;
+    font-weight: 500;
+    font-size: 18px;
+    justify-content: center;
+    flex: 0 0 15%;
+}
+
 .teams-container {
     display: flex;
     flex-direction: column;
@@ -78,14 +99,15 @@
     background: #f1f3f5;
     border: 1px solid #e0e6ed;
     border-radius: 6px;
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
     font-size: 16px;
     color: #495057;
     transition: all 0.2s ease;
-    float: right;
-    margin-bottom: 10px;
+    float: left;
+    align-content: center;
+    margin-right: 12px;
 }
 
     .dropdown-team-members-button:hover {
@@ -146,4 +168,15 @@
     background: white;
     border-radius: 12px;
     border: 1px solid #e0e6ed;
+}
+
+.edit-team-btn{
+    background: #01ffbe;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    float: right;
+    border-radius: 6px;
+    border: 2px;
+    border-color: transparent;
 }

@@ -1,0 +1,79 @@
+﻿@using FlowManager.Client.ViewModels;
+
+@if(ShowAddTeamModal)
+{
+    <div class="popup-backdrop" @onclick="() => ShowAddTeamModal = false">
+        <div class="popup-container" @onclick:stopPropagation="true">
+            <form @onsubmit="OnSubmit" @onsubmit:preventDefault="true">
+                <div class="popup-header">
+                    <h3>Create a new team</h3>
+                </div>
+
+                <div class="form-content">
+                    <div class="team-name-input">
+                        <label for="team-name">*Team Name:</label>
+                        <input type="text"
+                               id="team-name"
+                               @bind="_teamName"
+                               placeholder="Enter team name..."
+                               required />
+                    </div>
+
+                    <label class="assign-users-label">Assign users:</label>
+                    <div class="search-users">
+                        <input type="text"
+                               @bind="_searchTerm"
+                               @bind:event="oninput"
+                               placeholder="Search users by name..." />
+                        <button class="search-btn-users" @onclick="LoadUsers">
+                            Search
+                        </button>
+                    </div>
+                    
+
+                    <div class="users-container">
+                        @for (int i = 0; i < _users.Count; i++)
+                        {
+                            int index = i;
+
+                            <div class="user-item">
+                                <input type="checkbox"
+                                       class="user-checkbox"
+                                       id="user"
+                                       name="selectedUsers"
+                                       value="@_users[index].Id"
+                                       @bind="_selectionStateUser[index]"/>
+                                <label for="user" class="user-details">
+                                    <span class="user-name">@_users[i].Name</span>
+                                    <span class="user-email">@_users[i].Email</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+
+                @if (!string.IsNullOrEmpty(_submitMessage))
+                {
+                    <div class="submit-message @(_submitStatus ? "success" : "fail")">
+                        <span>@_submitMessage</span>
+                    </div>
+                }
+
+                <div class="popup-actions">
+                    <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
+                    <button type="submit" class="create-button" disabled="@_isSubmitting">
+                        @if (_isSubmitting)
+                        {
+                            <span>Creating...</span>
+                        }
+                        else
+                        {
+                            <span>Create Team</span>
+                        }
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

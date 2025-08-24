@@ -214,7 +214,7 @@ namespace FlowManager.Infrastructure.Context
                 .IsUnique()
                 .HasDatabaseName("IX_FormTemplates_Name");
         }
-        // NOU - Configurare unicitate pentru Team name
+
         private void UniqueTeamNameConstraintConfiguration(ModelBuilder builder)
         {
             builder.Entity<Team>()

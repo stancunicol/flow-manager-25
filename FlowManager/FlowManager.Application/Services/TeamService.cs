@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FlowManager.Application.IServices;
+using FlowManager.Shared.DTOs.Requests;
 
 namespace FlowManager.Application.Services
 {
@@ -32,6 +33,7 @@ namespace FlowManager.Application.Services
         public async Task<PagedResponseDto<TeamResponseDto>> GetAllTeamsQueriedAsync(QueriedTeamRequestDto payload)
         {
             (List<Team> result, int totalCount) = await _teamRepository.GetAllTeamsQueriedAsync(
+                payload.GlobalSearchTerm,
                 payload.Name,
                 payload.QueryParams?.ToQueryParams());
 
@@ -115,7 +117,7 @@ namespace FlowManager.Application.Services
                 }
             }
 
-            await _teamRepository.SaveChangesAsync();
+            await _teamRepository.AddTeamAsync(teamToAdd);
 
             return new TeamResponseDto
             {
@@ -318,6 +320,36 @@ namespace FlowManager.Application.Services
                     Name = ut.User.Name,
                     Email = ut.User.Email,
                     UserName = ut.User.UserName,
+                }).ToList()
+            };
+        }
+
+        public async Task<SplitUsersByTeamIdResponseDto> GetSplitUsersByTeamIdAsync(Guid teamId, QueriedTeamRequestDto payload)
+        {
+            var team = await _teamRepository.GetTeamWithUsersAsync(teamId);
+
+            if (team == null)
+            {
+                throw new EntryNotFoundException($"Team with id {teamId} was not found.");
+            }
+
+            (List<User> assignedToTeam, List<User> unassignedToTeam) = 
+                await _teamRepository.GetSplitUsersByTeamIdQueriedAsync(teamId, payload.GlobalSearchTerm, payload.QueryParams?.ToQueryParams());
+
+            return new SplitUsersByTeamIdResponseDto
+            {
+                TeamId = teamId,
+                AssignedToTeamUsers = assignedToTeam.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email
+                }).ToList(),
+                UnassignedToTeamUsers = unassignedToTeam.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email
                 }).ToList()
             };
         }

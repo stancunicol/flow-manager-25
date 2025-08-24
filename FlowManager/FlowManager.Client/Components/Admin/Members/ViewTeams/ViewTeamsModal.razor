@@ -1,14 +1,20 @@
 ﻿@using FlowManager.Client.ViewModels.Team;
 @using FlowManager.Client.ViewModels;
+@using FlowManager.Client.Components.Admin.Members.ViewTeams;
 
 <div class="view-teams-container">
     <div class="search-container">
         <input class="search-teams-input"
                type="text"
-               placeholder="Search teams by name..."
+               placeholder="Search by teams or employees name..."
                @bind="_searchTerm" />
+
         <button class="search-teams-button" @onclick="LoadTeams">
             Search
+        </button>
+
+        <button class="add-team-button" @onclick="() => OpenAddTeamModal()">
+            + Add Team 
         </button>
     </div>
     
@@ -42,6 +48,10 @@
                         }
                     </div>
                 }
+
+                <button class="edit-team-btn" @onclick="() => OpenEditTeamModal(_teams[index])">
+                    🖊️ Edit
+                </button>
             </div>
         }
     </div>
@@ -52,3 +62,17 @@
         <p>No teams found.</p>
     }
 </div>
+
+@if(_showAddTeamModal)
+{
+    <FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals.AddTeamModal
+        @bind-ShowAddTeamModal="@_showAddTeamModal"/>
+}
+
+@if(_showEditTeamModal)
+{
+    <FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals.EditTeamModal
+        @bind-ShowEditTeamModal="@_showEditTeamModal"
+        TeamToEdit="@_teamToEdit"
+        TeamWasEdited="() => LoadTeams()"/>
+}

@@ -18,6 +18,11 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
         private BitArray _dropdownTeamMembersState = new(0);
         private string _searchTerm = string.Empty;
 
+        private bool _showAddTeamModal = false;
+
+        private bool _showEditTeamModal = false;
+        private TeamVM _teamToEdit = null;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadTeams();
@@ -30,7 +35,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
             {
                 payload = new QueriedTeamRequestDto
                 {
-                    Name = _searchTerm
+                    GlobalSearchTerm = _searchTerm
                 };
             }
 
@@ -65,6 +70,20 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
             {
                 _dropdownTeamMembersState[i] = !_dropdownTeamMembersState[i];
             }
+        }
+
+        private void OpenEditTeamModal(TeamVM teamToEdit)
+        {
+            _teamToEdit = teamToEdit;
+            _showAddTeamModal = false;
+            _showEditTeamModal = true;
+        }
+
+
+        private void OpenAddTeamModal()
+        {
+            _showAddTeamModal = true;
+            _showEditTeamModal = false;
         }
     }
 }

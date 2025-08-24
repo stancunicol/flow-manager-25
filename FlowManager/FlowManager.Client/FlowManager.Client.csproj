@@ -35,8 +35,4 @@
     <ProjectReference Include="..\FlowManager.Shared\FlowManager.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\Admin\Members\ViewTeams\" />
-  </ItemGroup>
-
 </Project>
