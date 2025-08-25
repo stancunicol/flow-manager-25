@@ -165,7 +165,7 @@ namespace FlowManager.Client.Services
         {
             try
             {
-                var response = await _httpClient.PostAsync($"api/stepusers/assign?stepId={stepId}&userId={userId}", null);
+                var response = await _httpClient.PostAsync($"api/users/assign/{stepId}/{userId}", null);
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -219,7 +219,7 @@ namespace FlowManager.Client.Services
                 var response = await _httpClient.PatchAsync($"api/users/restore/{id}", null);
                 return await response.Content.ReadFromJsonAsync<ApiResponse<UserResponseDto>>() ?? new ApiResponse<UserResponseDto>();
             }
-            catch(HttpRequestException ex) 
+            catch (HttpRequestException ex)
             {
                 return new ApiResponse<UserResponseDto>
                 {
@@ -227,9 +227,34 @@ namespace FlowManager.Client.Services
                     Success = false
                 };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new ApiResponse<UserResponseDto>
+                {
+                    Message = $"Unexpected error : {ex.Message}",
+                    Success = false
+                };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> VerifyIfAssigned(Guid id)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/users/{id}/assigned");
+                return await response.Content.ReadFromJsonAsync<ApiResponse<bool>>() ?? new ApiResponse<bool>();
+            }
+            catch (HttpRequestException ex)
+            {
+                return new ApiResponse<bool>
+                {
+                    Message = $"Network error : {ex.Message}",
+                    Success = false
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<bool>
                 {
                     Message = $"Unexpected error : {ex.Message}",
                     Success = false

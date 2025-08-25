@@ -6,6 +6,10 @@
 
 <h2 class="page-title">Departments</h2>
 
+<div class="actions-bar">
+    <button class="action-btn create-btn" @onclick="OpenCreateModal">+ Create Department</button>
+</div>
+
 <div class="departments-grid">
     @if (departments == null || !departments.Any())
     {
@@ -58,6 +62,53 @@
                     </ul>
                 </div>
             }
+
+            <div class="modal-actions">
+                <button class="action-btn edit-btn" >✎ Edit</button>
+                <button class="action-btn delete-btn" >🗑 Delete</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (isCreateModalOpen)
+{
+    <div class="create-dep-modal-overlay" @onclick="CloseCreateModal">
+        <div class="create-dep-modal" @onclick:stopPropagation="true">
+
+            <h2>Create Department</h2>
+
+            <input type="text" placeholder="Department name" @bind="newDepName" />
+
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <p class="error-text">@error</p>
+            }
+
+            <div class="users-list">
+                <h3>Select Users</h3>
+                @if (unsignedUsers?.Any() == true)
+                {
+                    @foreach (var user in unsignedUsers)
+                    {
+                        <label class="user-checkbox">
+                            <input type="checkbox"
+                                   value="@user.Id"
+                                   @onchange="e => ToggleUserSelection(user, (bool)e.Value )" />
+                            <span>@user.Name (@user.Email)</span>
+                        </label>
+                    }
+                }
+                else
+                {
+                    <p class="no-users">No available users</p>
+                }
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn save-btn" @onclick="SaveDepartment">💾 Save</button>
+                <button class="btn cancel-btn" @onclick="CloseCreateModal">✕ Cancel</button>
+            </div>
         </div>
     </div>
 }

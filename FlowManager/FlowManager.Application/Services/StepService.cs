@@ -338,6 +338,7 @@ namespace FlowManager.Application.Services
             step.Users.Add(new StepUser
             {
                 UserId = userId,
+                User = user,
                 StepId = step.Id
             });
 
@@ -347,7 +348,7 @@ namespace FlowManager.Application.Services
             {
                 Id = step.Id,
                 Name = step.Name,
-                Users = step.Users.Select(su => new UserResponseDto
+                Users = step.Users.Where(su => su.User != null).Select(su => new UserResponseDto
                 {
                     Id = su.UserId,
                     Name = su.User.Name,
