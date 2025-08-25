@@ -1,5 +1,6 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Application.IServices;
+using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Responses.Team;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ namespace FlowManager.API.Controllers
             _teamService = teamService;
         }
 
-        [HttpGet]
+        [HttpGet("queried")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -42,6 +43,29 @@ namespace FlowManager.API.Controllers
                 Result = result,
                 Success = true,
                 Message = "Teams retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        /// <summary>
+        ///  Splits the users in assigned to the teamId team and unassigned in two different lists
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("queried/splitUsers/{teamId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetSplitUsersByTeamIdQueriedAsync(Guid teamId, [FromQuery] QueriedTeamRequestDto payload)
+        {
+            var result = await _teamService.GetSplitUsersByTeamIdAsync(teamId, payload);
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Users succesfully retrieved successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }
@@ -106,7 +130,7 @@ namespace FlowManager.API.Controllers
         public async Task<IActionResult> PostTeamAsync([FromBody] PostTeamRequestDto payload)
         {
             var result = await _teamService.AddTeamAsync(payload);
-            return CreatedAtAction(nameof(GetTeamAsync), new { id = result.Id }, new
+            return Created($"api/teams/{result.Id}", new
             {
                 Result = result,
                 Success = true,

@@ -22,7 +22,7 @@ namespace FlowManager.Application
             services.AddScoped<ITeamService,TeamService>();
             services.AddScoped<IComponentService, ComponentService>();
             services.AddScoped<IFlowService, FlowService>();
-            
+            services.AddScoped<IFormResponseService, FormResponseService>();
 
             return services;
         }

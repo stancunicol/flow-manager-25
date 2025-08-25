@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FlowManager.Infrastructure.Repositories
 {
@@ -25,15 +26,24 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User)
                 .ToListAsync();
         }
 
-        public async Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? name, QueryParams? queryParams)
+        public async Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globalSearchTerm, string? name, QueryParams? queryParams)
         {
             var query = _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User)
                 .AsQueryable();
+
+            if(!string.IsNullOrWhiteSpace(globalSearchTerm))
+            {
+                query = query.Where(t =>
+                    t.Name.Contains(globalSearchTerm) ||
+                    t.Users.Any(ut => ut.User.Email!.Contains(globalSearchTerm) || ut.User.Name.Contains(globalSearchTerm)));
+            }
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -83,16 +93,21 @@ namespace FlowManager.Infrastructure.Repositories
             return (teams, totalCount);
         }
 
-        public async Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false)
+        public async Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedUserTeams = false)
         {
-            var query = _context.Teams
-                .Include(t => t.Users.Where(u => u.DeletedAt == null))
-                .AsQueryable();
+            var query = _context.Teams.AsQueryable();
 
             if (!includeDeleted)
             {
                 query = query.Where(t => t.DeletedAt == null);
             }
+
+            if (!includeDeletedUserTeams)
+                query = query.Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User);
+            else
+                query = query.Include(t => t.Users)
+                    .ThenInclude(ut => ut.User);
 
             return await query.FirstOrDefaultAsync(t => t.Id == id);
         }
@@ -102,6 +117,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Teams
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User)
                 .FirstOrDefaultAsync(t => t.Name.ToLower() == name.ToLower());
         }
 
@@ -130,6 +146,54 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<(List<User>, List<User>)> GetSplitUsersByTeamIdQueriedAsync(Guid teamId, string? globalSearchTerm, QueryParams? queryParams)
+        {
+            List<User> assignedUsers = await _context.Teams
+                .Where(t => t.Id == teamId && t.DeletedAt == null)
+                .Include(t => t.Users.Where(ut => ut.DeletedAt == null))
+                    .ThenInclude(ut => ut.User)
+                .SelectMany(t => t.Users.Select(ut => ut.User))
+                .ToListAsync();
+
+            List<Guid> assignedUserIds = assignedUsers.Select(u => u.Id).ToList();
+
+            List<User> unassignedUsers = await _context.Users
+                .Where(u => !assignedUserIds.Contains(u.Id))
+                .ToListAsync();
+
+            if(!string.IsNullOrEmpty(globalSearchTerm))
+            {
+                assignedUsers = assignedUsers.Where(u => u.Name.ToUpper() == globalSearchTerm.ToUpper() ||
+                                                         u.NormalizedEmail == globalSearchTerm.ToUpper())
+                                                         .ToList();
+
+                unassignedUsers = unassignedUsers.Where(u => u.Name.ToUpper() == globalSearchTerm.ToUpper() ||
+                                                         u.NormalizedEmail == globalSearchTerm.ToUpper())
+                                                         .ToList();
+            }
+
+            if(queryParams == null)
+            {
+                return (assignedUsers, unassignedUsers);
+            }
+
+            if (queryParams.Page == null || queryParams.Page < 0 ||
+                queryParams.PageSize == null || queryParams.PageSize < 0)
+            {
+                return(assignedUsers, unassignedUsers);
+            }
+            else
+            {
+                assignedUsers = assignedUsers.Skip((int)queryParams.PageSize * ((int)queryParams.Page - 1))
+                                                     .Take((int)queryParams.PageSize).ToList();
+
+                unassignedUsers = unassignedUsers.Skip((int)queryParams.PageSize * ((int)queryParams.Page - 1))
+                                                     .Take((int)queryParams.PageSize).ToList();
+
+                return (assignedUsers, unassignedUsers);
+            }
         }
     }
 }

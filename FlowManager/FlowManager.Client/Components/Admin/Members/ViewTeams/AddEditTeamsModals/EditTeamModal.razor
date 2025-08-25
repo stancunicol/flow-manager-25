@@ -1,0 +1,76 @@
+﻿@using FlowManager.Client.ViewModels;
+
+@if (ShowEditTeamModal)
+{
+    <div class="popup-backdrop" @onclick="() => ShowEditTeamModal = false">
+        <div class="popup-container" @onclick:stopPropagation="true">
+            <form @onsubmit="OnSubmit" @onsubmit:preventDefault="true">
+                <div class="popup-header">
+                    <h3>Edit an existing team</h3>
+                </div>
+
+                <div class="form-content">
+                    <div class="team-name-input">
+                        <label for="team-name">Team Name:</label>
+                        <input type="text"
+                               id="team-name"
+                               @bind="_teamName"
+                               />
+                    </div>
+
+                    <label class="assign-users-label">Assign users: (@_assignedUsers.Count) selected users</label>
+                    <div class="search-users">
+                        <input type="text"
+                               @bind="_searchTerm"
+                               @onkeypress="HandleSearchKeyPress"
+                               placeholder="Search users by name..." />
+                        <button type="button" class="search-btn-users" @onclick="() => LoadUsers()">
+                            Search
+                        </button>
+                    </div>
+
+                    <div class="users-container">
+                        @for (int i = 0; i < _filteredUsers.Count; i++)
+                        {
+                            int index = i;
+
+                            <div class="user-item">
+                                <input type="checkbox"
+                                       class="user-checkbox"
+                                       id="user"
+                                       name="selectedUsers"
+                                       checked="@IsUserAssigned(_filteredUsers[index])"
+                                       @onchange="@((ChangeEventArgs e) => UserAssignStateChanged(e, _filteredUsers[index]))" />
+                                <label for="user" class="user-details">
+                                    <span class="user-name">@_filteredUsers[i].Name</span>
+                                    <span class="user-email">@_filteredUsers[i].Email</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_submitMessage))
+                {
+                    <div class="submit-message @(_submitStatus ? "success" : "fail")">
+                        <span>@_submitMessage</span>
+                    </div>
+                }
+
+                <div class="popup-actions">
+                    <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
+                    <button type="submit" class="create-button" disabled="@_isSubmitting">
+                        @if (_isSubmitting)
+                        {
+                            <span>Editing...</span>
+                        }
+                        else
+                        {
+                            <span>Edit Team</span>
+                        }
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

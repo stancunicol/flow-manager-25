@@ -83,11 +83,17 @@ namespace FlowManager.Infrastructure.Utils
                 var newValue = entry.Value;
 
                 if (!entityDictionary.Contains(key) ||
-                    !AreValuesEqual(entityDictionary[key], newValue))
+                    !AreValuesEqual(entityDictionary[key], newValue) ||
+                    IsArrayOrCollection(newValue))
                 {
                     entityDictionary[key] = newValue;
                 }
             }
+        }
+
+        private static bool IsArrayOrCollection(object value)
+        {
+            return value is IEnumerable && !(value is string) && !(value is IDictionary);
         }
 
         private static bool AreValuesEqual(object existingValue, object newValue)
@@ -97,6 +103,12 @@ namespace FlowManager.Infrastructure.Utils
 
             if (existingValue == null || newValue == null)
                 return false;
+
+            if (existingValue is IEnumerable enum1 && newValue is IEnumerable enum2 &&
+        !(existingValue is string) && !(newValue is string))
+            {
+                return enum1.Cast<object>().SequenceEqual(enum2.Cast<object>());
+            }
 
             return existingValue.Equals(newValue);
         }

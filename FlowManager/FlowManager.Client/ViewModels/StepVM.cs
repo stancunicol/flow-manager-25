@@ -1,4 +1,5 @@
-﻿using FlowManager.Domain.Entities;
+﻿using FlowManager.Client.ViewModels.Team;
+using FlowManager.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace FlowManager.Client.ViewModels

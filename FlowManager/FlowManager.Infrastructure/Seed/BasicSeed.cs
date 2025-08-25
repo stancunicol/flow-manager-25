@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FlowManager.Infrastructure.Context;
 
-namespace FlowManager.Application.Utils
+namespace FlowManager.Infrastructure.Utils
 {
     public static class BasicSeed
     {

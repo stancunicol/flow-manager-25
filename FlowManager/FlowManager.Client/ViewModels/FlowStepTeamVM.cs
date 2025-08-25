@@ -1,4 +1,5 @@
-﻿using FlowManager.Domain.Entities;
+﻿using FlowManager.Client.ViewModels.Team;
+using FlowManager.Domain.Entities;
 
 namespace FlowManager.Client.ViewModels
 {
@@ -7,8 +8,8 @@ namespace FlowManager.Client.ViewModels
         public Guid FlowStepId { get; set; }
         public Guid TeamId { get; set; }
 
-        public virtual FlowStep FlowStep { get; set; }
-        public virtual Team Team { get; set; }
+        public virtual FlowStepVM FlowStep { get; set; }
+        public virtual TeamVM Team { get; set; }
 
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

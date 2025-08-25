@@ -9,8 +9,6 @@ namespace FlowManager.Shared.DTOs.Requests.Flow
 {
     public class PatchFlowRequestDto
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-
         public string? Name { get; set; }
 
         public virtual Guid? FormTemplateId { get; set; }
