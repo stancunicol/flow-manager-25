@@ -1,4 +1,5 @@
-﻿using FlowManager.Application.Interfaces;
+﻿using AutoMapper.Internal;
+using FlowManager.Application.Interfaces;
 using FlowManager.Application.Utils;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
@@ -318,14 +319,14 @@ namespace FlowManager.Infrastructure.Services
             return true;
         }
 
-        public async Task<string> GetUserRoleByEmailAsync(string email)
+        public async Task<List<string>> GetUserRolesByEmailAsync(string email)
         {
-            string role = await _userRepository.GetUserRoleByEmailAsync(email);
-            if (string.IsNullOrEmpty(role))
+            List<string> roles = await _userRepository.GetUserRolesByEmailAsync(email);
+            if (roles.Count() == 0)
             {
-                throw new EntryNotFoundException($"Role for user with email {email} was not found.");
+                throw new EntryNotFoundException($"Roles for user with email {email} were not found.");
             }
-            return role;
+            return roles;
         }
     }
 }

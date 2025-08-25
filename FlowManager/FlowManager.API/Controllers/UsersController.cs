@@ -213,13 +213,13 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        [HttpGet("{email}/role")]
+        [HttpGet("{email}/roles")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetUserRoleByEmailAsync(string email)
+        public async Task<IActionResult> GetUserRolesByEmailAsync(string email)
         {
-            var result = await _userService.GetUserRoleByEmailAsync(email);
+            var result = await _userService.GetUserRolesByEmailAsync(email);
             return Ok(new
             {
                 Result = result,

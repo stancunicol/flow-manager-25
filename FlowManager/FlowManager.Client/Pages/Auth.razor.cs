@@ -56,15 +56,12 @@ namespace FlowManager.Client.Pages
                 Console.WriteLine("[Auth] Login successful, notifying authentication state");
                 var responseContent = await response.Content.ReadAsStringAsync();
 
-                // Notify the authentication state provider first
                 (CookieAuthStateProvider as CookieAuthStateProvider)?.NotifyUserAuthentication();
 
-                // Wait for the state to be processed
                 await Task.Delay(100);
 
                 StateHasChanged();
 
-                // Additional delay to ensure authentication state is fully processed
                 await Task.Delay(200);
 
                 var loginResponse = JsonSerializer.Deserialize<LoginResponseDto>(responseContent, new JsonSerializerOptions
@@ -72,20 +69,13 @@ namespace FlowManager.Client.Pages
                     PropertyNameCaseInsensitive = true
                 });
 
-                switch (loginResponse?.Role?.ToUpperInvariant())
+                if(loginResponse.Roles.Contains("Basic") && loginResponse.Roles.Count() == 1)
                 {
-                    case "ADMIN":
-                        Console.WriteLine("[Auth] Redirecting to admin");
-                        Navigation.NavigateTo("/admin", true); // Force reload
-                        break;
-                    case "BASIC":
-                        Console.WriteLine("[Auth] Redirecting to basic-user");
-                        Navigation.NavigateTo("/basic-user", true); // Force reload
-                        break;
-                    default:
-                        Console.WriteLine($"[Auth] Unknown role '{loginResponse?.Role}', redirecting to home");
-                        Navigation.NavigateTo("/", true); // Force reload
-                        break;
+                    Navigation.NavigateTo("/basic-user", true);
+                }
+                else
+                {
+                    Navigation.NavigateTo("/home", true);
                 }
             }
             else

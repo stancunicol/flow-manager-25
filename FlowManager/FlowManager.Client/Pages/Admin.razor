@@ -52,8 +52,8 @@
             </button>
 
             <!-- STEPS -->
-            <button class="nav-item @(_activeTab == "STEPS" ? "active" : "")"
-            @onclick="@(() => SetActiveTab("STEPS"))">
+            <button class="nav-item @(_activeTab == "DEPARTMENTS" ? "active" : "")"
+            @onclick="@(() => SetActiveTab("DEPARTMENTS"))">
                 <svg xmlns="http://www.w3.org/2000/svg"
                      viewBox="0 0 24 24"
                      fill="currentColor"
@@ -63,7 +63,7 @@
                           clip-rule="evenodd" />
                     <path d="M12.75 2.25a.75.75 0 00-1.5 0v15a2.25 2.25 0 104.5 0V3.375c0-.621-.504-1.125-1.125-1.125H12.75z" />
                 </svg>
-                Steps
+                Departments
             </button>
 
             <!-- FORM TEMPLATES -->
@@ -111,7 +111,7 @@
         {
             <FlowManager.Client.Components.Admin.Flows.Flows></FlowManager.Client.Components.Admin.Flows.Flows>
         }
-        @if (_activeTab == "STEPS")
+        @if (_activeTab == "DEPARTMENTS")
         {
             <FlowManager.Client.Components.Admin.Steps.Steps></FlowManager.Client.Components.Admin.Steps.Steps>
         }

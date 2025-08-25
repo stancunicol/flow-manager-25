@@ -24,6 +24,6 @@ namespace FlowManager.Application.Interfaces
         Task<UserResponseDto> RestoreUserAsync(Guid id);
         Task<bool> ResetPassword(Guid id, string newPassword);
 
-        Task<string> GetUserRoleByEmailAsync(string email);
+        Task<List<string>> GetUserRolesByEmailAsync(string email);
     }
 }

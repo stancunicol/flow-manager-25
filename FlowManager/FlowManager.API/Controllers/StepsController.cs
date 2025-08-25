@@ -99,7 +99,7 @@ namespace FlowManager.API.Controllers
         public async Task<IActionResult> PostStepAsync([FromBody] PostStepRequestDto payload)
         {
             var result = await _stepService.PostStepAsync(payload);
-            return CreatedAtAction(nameof(GetStepAsync), new { id = result.Id }, new
+            return Ok(new
             {
                 Result = result,
                 Success = true,

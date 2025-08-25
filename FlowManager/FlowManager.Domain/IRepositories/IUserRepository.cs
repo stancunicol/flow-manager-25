@@ -21,7 +21,7 @@ namespace FlowManager.Domain.IRepositories
         Task<User?> GetUserByEmailAsync(string email);
         Task SaveChangesAsync();
 
-        Task<string> GetUserRoleByEmailAsync(string email);
+        Task<List<string>> GetUserRolesByEmailAsync(string email);
         Task<List<User>> GetUsersByTeamIdAsync(Guid teamId);
         Task<List<User>> GetUsersWithoutTeamAsync();
         Task<User?> GetUserWithTeamAsync(Guid userId);
