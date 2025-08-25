@@ -54,6 +54,88 @@
                 </button>
             </div>
         }
+
+        @if (_teams.Count > 0 && _totalPages > 1)
+        {
+            <div class="pagination-container">
+                <nav>
+                    <!-- First page btn-->
+                    <button @onclick="GoToFirstPage"
+                            disabled="@(_currentPage == 1)"
+                            class="pagination-btn pagination-btn-first pagination-btn-nav">
+                        <svg class="pagination-icon"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M15.707 15.707a1 1 0 01-1.414 0L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z"
+                                  clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <!-- Previous page btn -->
+                    <button @onclick="GoToPreviousPage"
+                            disabled="@(_currentPage == 1)"
+                            class="pagination-btn pagination-btn-nav">
+                        <svg class="pagination-icon"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                  clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <!-- Paged Numbers - go to page x -->
+                    @foreach (int pageNumber in GetPageNumbers())
+                    {
+                        <button @onclick="() => GoToPage(pageNumber)"
+                                class="pagination-btn pagination-btn-page @(pageNumber == _currentPage ? "pagination-btn-active" : "")">
+                            @pageNumber
+                        </button>
+                    }
+                    <!-- Ellipsis if are more pages available -->
+                    @if (_totalPages > _maxVisiblePages && _currentPage < _totalPages - 2)
+                    {
+                        <span class="pagination-ellipsis">
+                            ...
+                        </span>
+                    }
+                    <!-- Next page button -->
+                    <button @onclick="GoToNextPage"
+                            disabled="@(_currentPage == _totalPages)"
+                            class="pagination-btn pagination-btn-nav">
+                        <svg class="pagination-icon"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                  clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <!-- Last page button -->
+                    <button @onclick="GoToLastPage"
+                            disabled="@(_currentPage == _totalPages)"
+                            class="pagination-btn pagination-btn-last pagination-btn-nav">
+                        <svg class="pagination-icon"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M10.293 15.707a1 1 0 010-1.414L13.586 11H3a1 1 0 110-2h10.586l-3.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
+                                  clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </nav>
+
+                <!-- Pagination info -->
+                <div class="pagination-info">
+                    <span class="pagination-info-text">
+                        Showing @((_currentPage - 1) * _pageSize + 1) - @((_currentPage - 1) * _pageSize + _teams.Count) of @(_totalCount) users
+                    </span>
+                </div>
+            </div>
+        }
     </div>
     
 
@@ -66,7 +148,8 @@
 @if(_showAddTeamModal)
 {
     <FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals.AddTeamModal
-        @bind-ShowAddTeamModal="@_showAddTeamModal"/>
+        @bind-ShowAddTeamModal="@_showAddTeamModal"
+        TeamWasAdded="() => LoadTeams()"/>
 }
 
 @if(_showEditTeamModal)

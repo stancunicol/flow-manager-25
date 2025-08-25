@@ -83,7 +83,8 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersQueriedAsync(QueriedUserRequestDto payload)
         {
-            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.QueryParams?.ToQueryParams(), includeDeleted: true); 
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersQueriedAsync(payload.Email, payload.GlobalSearchTerm,
+                payload.QueryParams?.ToQueryParams(), includeDeleted: true); 
 
             return new PagedResponseDto<UserResponseDto>
             {

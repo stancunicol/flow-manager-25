@@ -23,6 +23,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
         private bool _showEditTeamModal = false;
         private TeamVM _teamToEdit = null;
 
+        private int _pageSize = 8;
+        private int _currentPage = 1;
+        private int _totalPages = 0;
+        private int _maxVisiblePages = 4;
+        private int _totalCount = 0;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadTeams();
@@ -30,12 +36,19 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
 
         private async Task LoadTeams()
         {
-            QueriedTeamRequestDto payload = null;
+            QueriedTeamRequestDto payload = new QueriedTeamRequestDto()
+                ;
             if (!string.IsNullOrEmpty(_searchTerm))
             {
-                payload = new QueriedTeamRequestDto
+                payload.GlobalSearchTerm = _searchTerm;
+            }
+
+            if(_pageSize != 0 && _currentPage != 0)
+            {
+                payload.QueryParams = new QueryParamsDto
                 {
-                    GlobalSearchTerm = _searchTerm
+                    Page = _currentPage,
+                    PageSize = _pageSize
                 };
             }
 
@@ -56,6 +69,9 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
                 }).ToList();
 
                 _dropdownTeamMembersState = new BitArray(_teams.Count, false);
+
+                _totalPages = response.Result.TotalPages;
+                _totalCount = response.Result.TotalCount;
             }
             else
             {
@@ -84,6 +100,58 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
         {
             _showAddTeamModal = true;
             _showEditTeamModal = false;
+        }
+
+        private async Task GoToFirstPage()
+        {
+            _currentPage = 1;
+            await LoadTeams();
+        }
+
+        private async Task GoToPreviousPage()
+        {
+            _currentPage--;
+            await LoadTeams();
+        }
+
+        private List<int> GetPageNumbers()
+        {
+            List<int> pages = new List<int>();
+
+            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
+
+            int start = Math.Max(1, _currentPage - half);
+            int end = Math.Min(_totalPages, start + _maxVisiblePages - 1);
+
+            if (end - start + 1 < _maxVisiblePages)
+            {
+                start = Math.Max(1, end - _maxVisiblePages + 1);
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            return pages;
+        }
+
+        private async Task GoToPage(int page)
+        {
+            _currentPage = page;
+            await LoadTeams();
+        }
+
+        private async Task GoToNextPage()
+        {
+            _currentPage++;
+            await LoadTeams();
+        }
+
+        private async Task GoToLastPage()
+        {
+            _currentPage = _totalPages;
+            await LoadTeams();
         }
     }
 }

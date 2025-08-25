@@ -17,6 +17,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
     {
         [Parameter] public bool ShowAddTeamModal { get; set; }
         [Parameter] public EventCallback<bool> ShowAddTeamModalChanged { get; set; }
+        [Parameter] public EventCallback TeamWasAdded { get; set; }
 
         [Inject] private UserService _userService { get; set; } = default!;
         [Inject] private TeamService _teamService { get;set; } = default!;
@@ -32,19 +33,40 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private List<UserVM> _users = new List<UserVM>();
         private bool[] _selectionStateUser = new bool[0];
 
+        private int _currentPage = 1;
+        private int _pageSize = 10;
+        private int _totalPages = 0;
+        private int _totalCount = 0;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadUsers();
         }
 
-        private async Task LoadUsers()
+        private async Task LoadUsers(bool resetPageSize = false)
         {
-            QueriedUserRequestDto payload = null; 
+            QueriedUserRequestDto payload = new QueriedUserRequestDto(); 
+
             if(!string.IsNullOrEmpty(_searchTerm))
             {
-                payload = new QueriedUserRequestDto
+                payload.GlobalSearchTerm = _searchTerm;
+            }
+
+            if(resetPageSize)
+            {
+                _pageSize = 10;
+                payload.QueryParams = new QueryParamsDto
                 {
-                    Email = _searchTerm,
+                    Page = 1,
+                    PageSize = _pageSize
+                };
+            }
+            else if (_currentPage != 0 && _pageSize != 0)
+            {
+                payload.QueryParams = new QueryParamsDto
+                {
+                    Page = _currentPage,
+                    PageSize = _pageSize
                 };
             }
 
@@ -65,6 +87,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
             }).ToList();
 
             _selectionStateUser = new bool[_users.Count];
+
+            _totalPages = response.Result.TotalPages;
+            _totalCount = response.Result.TotalCount;
+
+            Console.WriteLine($"Total pages: {_totalPages}");
+            Console.WriteLine($"Total count: {_totalCount}");
         }
 
         private async Task OnCancel()
@@ -79,6 +107,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         {
             await PostTeam();
             ClearForm();
+            await LoadUsers();
         }
 
         private async Task PostTeam()
@@ -96,15 +125,24 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
             _submitStatus = result.Success;
             _submitMessage = result.Message;
+
+            if(_submitStatus)
+            {
+                await TeamWasAdded.InvokeAsync();
+            }
         }
 
-        private async Task ClearForm()
+        private void ClearForm()
         {
-            await LoadUsers();
             _searchTerm = string.Empty;
             _teamName = string.Empty;
             _isSubmitting = false;
-            _submitMessage = string.Empty;
+        }
+
+        private async Task LoadMore()
+        {
+            _pageSize += 10;
+            await LoadUsers();
         }
     }
 }

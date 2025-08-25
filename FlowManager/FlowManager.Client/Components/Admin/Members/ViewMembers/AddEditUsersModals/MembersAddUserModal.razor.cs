@@ -17,6 +17,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
         [Parameter] public EventCallback<bool> ShowAddFormChanged { get; set; }
 
         [Parameter] public EventCallback OnUserAdded { get; set; }
+
         private string _onSubmitMessage = string.Empty;
         private bool _onSubmitSuccess;
 

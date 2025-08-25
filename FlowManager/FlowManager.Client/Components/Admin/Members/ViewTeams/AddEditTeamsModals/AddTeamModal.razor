@@ -25,7 +25,7 @@
                                @bind="_searchTerm"
                                @bind:event="oninput"
                                placeholder="Search users by name..." />
-                        <button class="search-btn-users" @onclick="LoadUsers">
+                        <button type="button" class="search-btn-users" @onclick="() => LoadUsers(true)">
                             Search
                         </button>
                     </div>
@@ -61,7 +61,16 @@
                 }
 
                 <div class="popup-actions">
+                    <!-- Load more btn -->
+                    <button type="button" 
+                            @onclick="() => LoadMore()"
+                            disabled="@(_currentPage == _totalPages)"
+                            class="load-more-button">
+                        Load more
+                    </button>
+
                     <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
+
                     <button type="submit" class="create-button" disabled="@_isSubmitting">
                         @if (_isSubmitting)
                         {

@@ -63,7 +63,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await GetUsersWithIncludes(query).ToListAsync();
         }
 
-        public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email, QueryParams parameters, bool includeDeleted = false)
+        public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email,string? globalSearchTerm, QueryParams parameters, bool includeDeleted = false)
         {
             IQueryable<User> query = _context.Users
                 .Where(u => u.DeletedAt == null)
@@ -75,7 +75,13 @@ namespace FlowManager.Infrastructure.Repositories
             if (!includeDeleted)
                 query = query.Where(u => u.DeletedAt == null);
 
-            if (email != null)
+            if(!string.IsNullOrEmpty(globalSearchTerm))
+            {
+                query = query.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) || 
+                                         u.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()));
+            }
+
+            if (!string.IsNullOrEmpty(email))
             {
                 query = query.Where(u => u.NormalizedEmail!.Contains(email.ToUpper()));
             }

@@ -23,6 +23,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
 
         private string _searchTerm = string.Empty;
 
+        private int _pageSize = 10;
+        private int _currentPage = 1;
+        private int _totalPages = 0;
+        private int _maxVisiblePages = 4;
+        private int _totalCount = 0;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadUsers();
@@ -34,7 +40,16 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
 
             if (!string.IsNullOrEmpty(_searchTerm))
             {
-                payload.Email = _searchTerm;
+                payload.GlobalSearchTerm = _searchTerm;
+            }
+
+            if(_currentPage != 0 && _pageSize != 0)
+            {
+                payload.QueryParams = new Shared.DTOs.Requests.QueryParamsDto
+                {
+                    Page = _currentPage,
+                    PageSize = _pageSize,
+                };
             }
 
             ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersQueriedAsync(payload);
@@ -57,6 +72,9 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
                     RoleName = r.Name!
                 }).ToList(),
             }).ToList();
+
+            _totalPages = response.Result.TotalPages;
+            _totalCount = response.Result.TotalCount;
         }
 
         private async Task DeleteUser(UserVM user)
@@ -101,6 +119,58 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
         private async Task SearchFlows()
         {
             _searchTerm = _searchTerm.Trim();
+            await LoadUsers();
+        }
+
+        private async Task GoToFirstPage()
+        {
+            _currentPage = 1;
+            await LoadUsers();
+        }
+
+        private async Task GoToPreviousPage()
+        {
+            _currentPage--;
+            await LoadUsers();
+        }
+
+        private List<int> GetPageNumbers()
+        {
+            List<int> pages = new List<int>();
+
+            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
+
+            int start = Math.Max(1, _currentPage - half);
+            int end = Math.Min(_totalPages, start + _maxVisiblePages - 1);
+
+            if (end - start + 1 < _maxVisiblePages)
+            {
+                start = Math.Max(1, end - _maxVisiblePages + 1);
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            return pages;
+        }
+
+        private async Task GoToPage(int page)
+        {
+            _currentPage = page;
+            await LoadUsers();
+        }
+
+        private async Task GoToNextPage()
+        {
+            _currentPage++;
+            await LoadUsers();
+        }
+
+        private async Task GoToLastPage()
+        {
+            _currentPage = _totalPages;
             await LoadUsers();
         }
     }
