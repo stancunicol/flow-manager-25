@@ -65,7 +65,7 @@
 
             <div class="modal-actions">
                 <button class="action-btn edit-btn" >✎ Edit</button>
-                <button class="action-btn delete-btn" >🗑 Delete</button>
+                <button class="action-btn delete-btn" @onclick="async () => await DeleteDepartment(selectedDepartment.Id)">🗑 Delete</button>
             </div>
         </div>
     </div>

@@ -244,21 +244,5 @@ namespace FlowManager.API.Controllers
                 Timestamp = DateTime.UtcNow
             });
         }
-
-        [HttpPost("assign/{stepId:guid}/{userId:guid}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AssignUserToStep(Guid stepId, Guid userId)
-        {
-            var result = await _userService.AssignUserToStepAsync(stepId, userId);
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "User assigned to step successfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
     }
 }

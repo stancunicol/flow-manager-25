@@ -323,6 +323,7 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException($"User with id {userId} was not found.");
             }
 
+
             Step? step = await _stepRepository.GetStepByIdAsync(id);
 
             if (step == null)

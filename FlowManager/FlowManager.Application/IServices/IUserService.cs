@@ -26,6 +26,5 @@ namespace FlowManager.Application.Interfaces
 
         Task<List<string>> GetUserRolesByEmailAsync(string email);
         Task<bool> VerifyIfAssignedAsync(Guid id);
-        Task<bool> AssignUserToStepAsync(Guid stepId, Guid userId);
     }
 }

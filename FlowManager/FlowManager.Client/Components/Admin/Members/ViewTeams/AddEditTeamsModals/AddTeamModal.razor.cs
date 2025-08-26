@@ -144,5 +144,39 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
             _pageSize += 10;
             await LoadUsers();
         }
+
+        private List<UserVM> GetAssignedUsers()
+        {
+            var assignedUsers = new List<UserVM>();
+            for (int i = 0; i < _users.Count && i < _selectionStateUser.Length; i++)
+            {
+                if (_selectionStateUser[i])
+                {
+                    assignedUsers.Add(_users[i]);
+                }
+            }
+            return assignedUsers;
+        }
+
+        private int GetAssignedUsersCount()
+        {
+            if (_selectionStateUser == null || _selectionStateUser.Length == 0)
+                return 0;
+
+            return _selectionStateUser.Count(selected => selected);
+        }
+
+        private void RemoveUserFromAssignment(Guid userId)
+        {
+            for (int i = 0; i < _users.Count; i++)
+            {
+                if (_users[i].Id == userId && i < _selectionStateUser.Length)
+                {
+                    _selectionStateUser[i] = false;
+                    break;
+                }
+            }
+            StateHasChanged();
+        }
     }
 }

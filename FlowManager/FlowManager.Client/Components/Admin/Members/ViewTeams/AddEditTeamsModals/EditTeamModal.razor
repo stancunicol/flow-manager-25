@@ -8,17 +8,14 @@
                 <div class="popup-header">
                     <h3>Edit an existing team</h3>
                 </div>
-
                 <div class="form-content">
                     <div class="team-name-input">
                         <label for="team-name">Team Name:</label>
                         <input type="text"
                                id="team-name"
-                               @bind="_teamName"
-                               />
+                               @bind="_teamName" />
                     </div>
-
-                    <label class="assign-users-label">Assign users: (@_assignedUsers.Count) selected users</label>
+                    <label class="assign-users-label">Assign users:</label>
                     <div class="search-users">
                         <input type="text"
                                @bind="_searchTerm"
@@ -29,34 +26,67 @@
                         </button>
                     </div>
 
-                    <div class="users-container">
-                        @for (int i = 0; i < _filteredUsers.Count; i++)
-                        {
-                            int index = i;
+                    <div class="users-main-content">
+                        <div class="users-container">
+                            @for (int i = 0; i < _filteredUsers.Count; i++)
+                            {
+                                int index = i;
+                                <div class="user-item @(IsUserAssigned(_filteredUsers[index]) ? "selected" : "")">
+                                    <input type="checkbox"
+                                           class="user-checkbox"
+                                           id="user-@index"
+                                           name="selectedUsers"
+                                           checked="@IsUserAssigned(_filteredUsers[index])"
+                                           @onchange="@((ChangeEventArgs e) => UserAssignStateChanged(e, _filteredUsers[index]))" />
+                                    <label for="user-@index" class="user-details">
+                                        <span class="user-name">@_filteredUsers[i].Name</span>
+                                        <span class="user-email">@_filteredUsers[i].Email</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
 
-                            <div class="user-item">
-                                <input type="checkbox"
-                                       class="user-checkbox"
-                                       id="user"
-                                       name="selectedUsers"
-                                       checked="@IsUserAssigned(_filteredUsers[index])"
-                                       @onchange="@((ChangeEventArgs e) => UserAssignStateChanged(e, _filteredUsers[index]))" />
-                                <label for="user" class="user-details">
-                                    <span class="user-name">@_filteredUsers[i].Name</span>
-                                    <span class="user-email">@_filteredUsers[i].Email</span>
-                                </label>
+                        <!-- Assigned Users Sidebar -->
+                        <div class="assigned-users-sidebar">
+                            <div class="assigned-users-header">
+                                <span>Assigned Users</span>
+                                <div class="assigned-count">@_assignedUsers.Count</div>
                             </div>
-                        }
+                            <div class="assigned-users-list">
+                                @if (_assignedUsers.Any())
+                                {
+                                    @foreach (var user in _assignedUsers)
+                                    {
+                                        <div class="assigned-user-item">
+                                            <div class="assigned-user-details">
+                                                <span class="assigned-user-name">@user.Name</span>
+                                                <span class="assigned-user-email">@user.Email</span>
+                                            </div>
+                                            <button type="button"
+                                                    class="remove-user-btn"
+                                                    @onclick="() => RemoveUserFromAssignment(user.Id)"
+                                                    title="Remove user">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="no-assigned-users">
+                                        No users assigned yet
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
-
                 @if (!string.IsNullOrEmpty(_submitMessage))
                 {
                     <div class="submit-message @(_submitStatus ? "success" : "fail")">
                         <span>@_submitMessage</span>
                     </div>
                 }
-
                 <div class="popup-actions">
                     <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
                     <button type="submit" class="create-button" disabled="@_isSubmitting">

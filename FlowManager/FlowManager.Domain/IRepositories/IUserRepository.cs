@@ -28,6 +28,5 @@ namespace FlowManager.Domain.IRepositories
         Task<List<User>> GetUsersByStepIdAsync(Guid stepId);
         Task<User?> GetUserByEmailIncludeRelationshipsAsync(string email);
         Task<bool> VerifyIfAssigned(Guid id);
-        Task<bool> AssignUserToStepAsync(Guid stepId, Guid userId);
     }
 }
