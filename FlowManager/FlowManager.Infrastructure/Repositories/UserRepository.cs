@@ -256,6 +256,13 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<bool> VerifyIfAssigned(Guid userId)
+        {
+            bool isAssignedToSteps = await _context.StepUsers
+                .AnyAsync(su => su.UserId == userId && su.DeletedAt == null);
+            return isAssignedToSteps;
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

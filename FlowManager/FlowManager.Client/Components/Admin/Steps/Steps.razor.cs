@@ -150,7 +150,7 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                     foreach (var user in selectedUsers)
                     {
-                        var assignResult = await userService.AssignUserToStepAsync(result.Id, user.Id);
+                        var assignResult = await stepService.AssignUserToStepAsync(result.Id, user.Id);
                         if (!assignResult)
                         {
                             Console.WriteLine($"⚠️ Failed to assign user {user.Name} to department {result.Id}");
@@ -204,6 +204,36 @@ namespace FlowManager.Client.Components.Admin.Steps
             catch (Exception ex)
             {
                 Console.WriteLine($"Error refreshing data: {ex.Message}");
+            }
+        }
+
+        private async Task DeleteDepartment(Guid departmentId)
+        {
+            try
+            {
+                var response = await stepService.DeleteStepAsync(departmentId);
+                if (response)
+                {
+                    var departmentToRemove = departments.FirstOrDefault(d => d.Id == departmentId);
+                    if (departmentToRemove != null)
+                    {
+                        departments.Remove(departmentToRemove);
+                    }
+                    isModalOpen = false;
+                    selectedDepartment = null;
+                    StateHasChanged();
+                    Console.WriteLine("✅ Department deleted successfully!");
+                }
+                else
+                {
+                    Console.WriteLine("❌ Failed to delete department");
+                    error = "Could not delete department.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"💥 Error deleting step: {ex.Message}");
+                error = "Unexpected error occurred.";
             }
         }
     }

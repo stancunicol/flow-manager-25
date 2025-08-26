@@ -391,11 +391,5 @@ namespace FlowManager.Infrastructure.Services
             bool assigned = await _userRepository.VerifyIfAssigned(id);
             return assigned;
         }
-
-        public async Task<bool> AssignUserToStepAsync(Guid stepId, Guid userId)
-        {
-            bool assigned = await _userRepository.AssignUserToStepAsync(stepId, userId);
-            return assigned;
-        }
     }
 }
