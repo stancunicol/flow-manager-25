@@ -516,9 +516,6 @@
             </div>
 
             <div class="modal-footer">
-                <div class="form-id-display">
-                    Form ID: @selectedFormResponse.Id
-                </div>
                 <div class="form-status">
                     <span class="status-label">Status:</span>
                     <span class="status-value">@(string.IsNullOrEmpty(selectedFormResponse.RejectReason) ? "Submitted" : "Rejected")</span>
