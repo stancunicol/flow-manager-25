@@ -149,5 +149,15 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 await LoadUsers();
             }
         }
+
+        private void RemoveUserFromAssignment(Guid userId)
+        {
+            var userToRemove = _assignedUsers.FirstOrDefault(u => u.Id == userId);
+            if (userToRemove != null)
+            {
+                _assignedUsers.Remove(userToRemove);
+                StateHasChanged();
+            }
+        }
     }
 }
