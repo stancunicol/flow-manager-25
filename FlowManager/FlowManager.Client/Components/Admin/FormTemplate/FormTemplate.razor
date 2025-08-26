@@ -8,6 +8,7 @@
 @using FlowManager.Client.DTOs
 @using static MudBlazor.CategoryTypes
 @using FlowManager.Client.Services
+@using System.Text.Json
 
 <PageTitle>Form Template Builder</PageTitle>
 
@@ -334,10 +335,10 @@
 
 @code {
     [Parameter] public EventCallback<(Guid Id, string Name)> OnTemplateSaved { get; set; }
+    [Parameter] public bool ShouldSaveToDatabase { get; set; } = false;
     [Inject] private ComponentService ComponentService { get; set; } = default!;
     [Inject] private FormTemplateService FormTemplateService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-   
 
     // Properties
     private List<ComponentResponseDto> availableComponents = new();
@@ -372,7 +373,7 @@
 
     // Debug pentru API call
     private string apiCallStatus = "Not started";
-    
+
 
 
     // Z-index counter for layering
@@ -462,7 +463,7 @@
                 await CreateTextElement(SnapToGrid(100), SnapToGrid(100));
             }
         }
-        
+
     }
 
     private async Task OnElementMouseDown(MouseEventArgs e, Guid elementId)
@@ -721,6 +722,9 @@
             newComponentMaxLength = 0;
             StateHasChanged();
         }
+
+
+
         catch (Exception ex)
         {
             Console.WriteLine($"Error in CloseAddComponentModal: {ex.Message}");
@@ -761,7 +765,6 @@
             await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
         }
     }
-
     private async Task SaveTemplate()
     {
         if (string.IsNullOrWhiteSpace(templateName))
@@ -779,10 +782,207 @@
         isSaving = true;
         try
         {
+            if (ShouldSaveToDatabase)
+            {
+                // Salvează în baza de date (logica originală)
+                await SaveTemplateFromLocalStorageToDatabase();
+            }
+            else
+            {
+                // Salvează în localStorage
+                await SaveToLocalStorage();
+
+                // Trigger event cu un temporary ID pentru navigare
+                var tempId = Guid.NewGuid();
+                await OnTemplateSaved.InvokeAsync((tempId, templateName));
+
+                await JSRuntime.InvokeVoidAsync("alert", "Template saved locally! Continue to build your workflow.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    // Metodă pentru salvare în localStorage
+    private async Task SaveToLocalStorage()
+    {
+        var templateData = new
+        {
+            TemplateName = templateName,
+            CanvasElements = canvasElements.Select(e => new
+            {
+                Id = e.Id,
+                X = e.X,
+                Y = e.Y,
+                ZIndex = e.ZIndex,
+                IsTextElement = e.IsTextElement,
+                TextContent = e.TextContent,
+                ComponentId = e.ComponentId,
+                ComponentType = e.ComponentType,
+                Label = e.Label,
+                Required = e.Required??false,
+                Properties = e.Properties
+            }).ToList(),
+            ZIndexCounter = zIndexCounter
+        };
+
+        var jsonString = System.Text.Json.JsonSerializer.Serialize(templateData);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "formTemplate", jsonString);
+    }
+
+    // Metodă pentru încărcare din localStorage
+    public async Task LoadFromLocalStorage()
+    {
+        try
+        {
+            var jsonString = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "formTemplate");
+
+            if (!string.IsNullOrEmpty(jsonString))
+            {
+                using var document = System.Text.Json.JsonDocument.Parse(jsonString);
+                var root = document.RootElement;
+
+                // Restore template name
+                templateName = root.GetProperty("TemplateName").GetString() ?? "";
+
+                // Restore canvas elements
+                canvasElements.Clear();
+                var elementsJson = root.GetProperty("CanvasElements");
+
+                foreach (var elementJson in elementsJson.EnumerateArray())
+                {
+                    var element = new CanvasElement
+                    {
+                        Id = Guid.Parse(elementJson.GetProperty("Id").GetString()!),
+                        X = elementJson.GetProperty("X").GetDouble(),
+                        Y = elementJson.GetProperty("Y").GetDouble(),
+                        ZIndex = elementJson.GetProperty("ZIndex").GetInt32(),
+                        IsTextElement = elementJson.GetProperty("IsTextElement").GetBoolean()
+                    };
+
+                    // Handle optional properties
+                    if (elementJson.TryGetProperty("TextContent", out var textContentProperty))
+                    {
+                        element.TextContent = textContentProperty.GetString();
+                    }
+
+                    if (elementJson.TryGetProperty("ComponentType", out var compTypeProperty))
+                    {
+                        element.ComponentType = compTypeProperty.GetString();
+                    }
+
+                    if (elementJson.TryGetProperty("Label", out var labelProperty))
+                    {
+                        element.Label = labelProperty.GetString();
+                    }
+
+                    if (elementJson.TryGetProperty("Required", out var requiredProperty))
+                    {
+                        if (requiredProperty.ValueKind == JsonValueKind.True || requiredProperty.ValueKind == JsonValueKind.False)
+                            element.Required = requiredProperty.GetBoolean();
+                        else
+                            element.Required = false;
+                    }
+
+
+                    if (elementJson.TryGetProperty("ComponentId", out var compIdProperty) &&
+                        !compIdProperty.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
+                    {
+                        element.ComponentId = Guid.Parse(compIdProperty.GetString()!);
+                    }
+
+                    if (elementJson.TryGetProperty("Properties", out var propsProperty) &&
+                        !propsProperty.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
+                    {
+                        element.Properties = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(propsProperty.GetRawText());
+                    }
+
+                    canvasElements.Add(element);
+                }
+
+                // Restore z-index counter
+                if (root.TryGetProperty("ZIndexCounter", out var zCounterProperty))
+                {
+                    zIndexCounter = zCounterProperty.GetInt32();
+                }
+
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading template: {ex.Message}");
+        }
+    }
+
+
+
+    public async Task<(Guid Id, string Name)?> SaveTemplateFromLocalStorageToDatabase()
+    {
+        try
+        {
+            // 1. CITEȘTE din localStorage (NU din canvasElements!)
+            var jsonString = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "formTemplate");
+            Console.WriteLine($"JSON from localStorage: {jsonString}");
+
+            if (string.IsNullOrEmpty(jsonString))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No template found in localStorage");
+                return null;
+            }
+
+            // 2. PARSEAZĂ localStorage data
+            using var document = System.Text.Json.JsonDocument.Parse(jsonString);
+            var root = document.RootElement;
+
+            var storedTemplateName = root.GetProperty("TemplateName").GetString(); // DIN localStorage
+            var elementsJson = root.GetProperty("CanvasElements");
+
+            // 3. Convertește elementele din localStorage în CanvasElement objects
+            var storedElements = new List<CanvasElement>();
+
+            foreach (var elementJson in elementsJson.EnumerateArray())
+            {
+                var element = new CanvasElement
+                {
+                    Id = Guid.Parse(elementJson.GetProperty("Id").GetString()!),
+                    X = elementJson.GetProperty("X").GetDouble(),
+                    Y = elementJson.GetProperty("Y").GetDouble(),
+                    ZIndex = elementJson.GetProperty("ZIndex").GetInt32(),
+                    IsTextElement = elementJson.GetProperty("IsTextElement").GetBoolean()
+                };
+
+                // Handle optional properties
+                if (elementJson.TryGetProperty("TextContent", out var textContent))
+                    element.TextContent = textContent.GetString();
+                if (elementJson.TryGetProperty("ComponentType", out var compType))
+                    element.ComponentType = compType.GetString();
+                if (elementJson.TryGetProperty("Label", out var label))
+                    element.Label = label.GetString();
+                if (elementJson.TryGetProperty("Required", out var required))
+                    element.Required = required.GetBoolean();
+                if (elementJson.TryGetProperty("ComponentId", out var compId) &&
+                    !compId.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
+                    element.ComponentId = Guid.Parse(compId.GetString()!);
+                if (elementJson.TryGetProperty("Properties", out var props) &&
+                    !props.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
+                    element.Properties = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(props.GetRawText());
+
+                storedElements.Add(element);
+            }
+
+            // 4. ACUM folosește datele din localStorage (NU din UI!)
             var componentIds = new List<Guid>();
 
-            // Create components that don't exist yet
-            foreach (var element in canvasElements.Where(e => !e.IsTextElement))
+            // Create components folosind storedElements (NU canvasElements!)
+            foreach (var element in storedElements.Where(e => !e.IsTextElement))
             {
                 if (element.ComponentId.HasValue)
                 {
@@ -790,7 +990,6 @@
                 }
                 else
                 {
-                    // Create new component
                     var newComponentRequest = new PostComponentRequestDto
                     {
                         Type = element.ComponentType ?? "TextInput",
@@ -808,11 +1007,13 @@
                 }
             }
 
-            // Create JSON content with layout information
+
+
+            // 5. Create JSON content folosind storedElements (NU canvasElements!)
             var templateContent = System.Text.Json.JsonSerializer.Serialize(new
             {
                 Layout = "FreeCanvas",
-                Elements = canvasElements.Select(e => new
+                Elements = storedElements.Select(e => new
                 {
                     Id = e.Id,
                     X = e.X,
@@ -830,7 +1031,7 @@
 
             var formTemplateRequest = new PostFormTemplateRequestDto
             {
-                Name = templateName,
+                Name = storedTemplateName ?? "Untitled Template", // DIN localStorage (NU templateName!)
                 Content = templateContent,
                 Components = componentIds
             };
@@ -838,27 +1039,28 @@
             var templateResponse = await FormTemplateService.PostFormTemplateAsync(formTemplateRequest);
             if (templateResponse != null)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
-                await OnTemplateSaved.InvokeAsync((templateResponse.Id, templateResponse.Name));
-                // Reset form
+                // Clear localStorage după salvare
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "formTemplate");
+
                 canvasElements.Clear();
                 templateName = "";
                 zIndexCounter = 1;
-                await LoadAvailableComponents();
+                StateHasChanged();
+                return (templateResponse.Id, templateResponse.Name);
             }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Error saving template");
-            }
+
+            return null;
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
-        }
-        finally
-        {
-            isSaving = false;
-            StateHasChanged();
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving template: {ex.Message}");
+            return null;
         }
     }
+
+
+
+
+
+
 }

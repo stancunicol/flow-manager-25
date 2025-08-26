@@ -1,4 +1,6 @@
-﻿@using FlowManager.Client.Components.Admin.Flows
+﻿Workflowcarousel
+
+@using FlowManager.Client.Components.Admin.Flows
 @using FlowManager.Client.Components.Admin.FormTemplate
 @using FlowManager.Client.Components.Admin.Flows.AddFlow
 @namespace FlowManager.Client.Components.Admin.WorkflowCarousel
@@ -30,7 +32,9 @@
             <!-- Page 1: Form Templates -->
             <div class="carousel-page">
                 <div class="page-content">
-                    <FormTemplate OnTemplateSaved="@OnFormTemplateSaved" />
+                    <FormTemplate OnTemplateSaved="@OnFormTemplateSavedLocally"
+                                  @ref="formTemplateRef"
+                                  ShouldSaveToDatabase="false" />
                 </div>
             </div>
 
@@ -38,7 +42,9 @@
             <div class="carousel-page">
                 <div class="page-content">
                     <FlowsAddModal SavedFormTemplateId="_savedFormTemplateId"
-                           SavedFormTemplateName="_savedFormTemplateName" />
+                                   SavedFormTemplateName="_savedFormTemplateName"
+                                   OnSaveWorkflow="@OnSaveWorkflowRequested"
+                                   @ref="flowsAddModalRef" />
                 </div>
             </div>
 
@@ -78,33 +84,90 @@
 @code {
     private int _currentPage = 0;
     private int _totalPages = 3;
-    
+
     private Guid? _savedFormTemplateId = null;
     private string _savedFormTemplateName = "";
 
-    
-    // ADAUGĂ ACEASTĂ METODĂ:
-    private void OnFormTemplateSaved((Guid Id, string Name) templateInfo)
+    // Component references
+    private FormTemplate? formTemplateRef;
+    private FlowsAddModal? flowsAddModalRef;
+
+    // Called when form template is saved locally (triggers navigation to page 2)
+    private async Task OnFormTemplateSavedLocally((Guid Id, string Name) templateInfo)
     {
         _savedFormTemplateId = templateInfo.Id;
         _savedFormTemplateName = templateInfo.Name;
+
+        // Navigate to page 2 (FlowsAddModal)
+        _currentPage = 1;
         StateHasChanged();
-    }   
+    }
+
+    // Called when FlowsAddModal wants to save the workflow
+    private async Task OnSaveWorkflowRequested()
+    {
+        try
+        {
+            // 1. Ask FormTemplate to save the template from localStorage to database
+            if (formTemplateRef != null)
+            {
+                var savedTemplate = await formTemplateRef.SaveTemplateFromLocalStorageToDatabase();
+
+                if (savedTemplate.HasValue)
+                {
+                    _savedFormTemplateId = savedTemplate.Value.Id;
+                    _savedFormTemplateName = savedTemplate.Value.Name;
+
+                    // 2. Ask FlowsAddModal to save the workflow with the template ID
+                    if (flowsAddModalRef != null)
+                    {
+                        await flowsAddModalRef.SaveWorkflowWithTemplate(_savedFormTemplateId.Value);
+
+                        // 3. Navigate to view flows page after successful save
+                        _currentPage = 2;
+                        StateHasChanged();
+                    }
+                }
+                else
+                {
+                    // Handle error - template save failed
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error saving workflow and template: {ex.Message}");
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (_currentPage > 0)
+        {
+            var previousPage = _currentPage - 1;
+
+            // Special handling when going back to FormTemplate from FlowsAddModal
+            if (_currentPage == 1 && previousPage == 0)
+            {
+                // Load template from localStorage when returning to FormTemplate
+                if (formTemplateRef != null)
+                {
+                    await formTemplateRef.LoadFromLocalStorage();
+                }
+            }
+
+            _currentPage = previousPage;
+            StateHasChanged();
+        }
+    }
 
     private void NextPage()
     {
         if (_currentPage < _totalPages - 1)
         {
             _currentPage++;
-            StateHasChanged();
-        }
-    }
-
-    private void PreviousPage()
-    {
-        if (_currentPage > 0)
-        {
-            _currentPage--;
             StateHasChanged();
         }
     }
