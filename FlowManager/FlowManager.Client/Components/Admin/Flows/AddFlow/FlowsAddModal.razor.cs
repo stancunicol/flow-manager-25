@@ -7,6 +7,7 @@ using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 
 namespace FlowManager.Client.Components.Admin.Flows.AddFlow
@@ -14,7 +15,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
     public partial class FlowsAddModal : ComponentBase
     {
         [Inject] private StepService _stepService { get; set; } = default!;
+        [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
         [Inject] private FlowService _flowService { get; set; } = default!;
+        [Parameter] public Guid? SavedFormTemplateId { get; set; }
+        [Parameter] public string SavedFormTemplateName { get; set; } = "";
+        [Parameter] public EventCallback OnSaveWorkflow { get; set; }
 
         private List<StepVM> _availableSteps = new List<StepVM>();
         private List<StepVM> _configuredSteps = new List<StepVM>();
@@ -136,14 +141,46 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 
         public async Task SaveWorkflow()
         {
-            var workflowStepIds = GetConfiguredStepIds();
-
-            await _flowService.PostFlowAsync(new PostFlowRequestDto
+            if (!IsWorkflowValid())
             {
-                Name = _flowName,
-                StepIds = workflowStepIds
-            });
+                await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
+                return;
+            }
+
+            // Trigger the save event - WorkflowCarousel will coordinate the save process
+            if (OnSaveWorkflow.HasDelegate)
+            {
+                await OnSaveWorkflow.InvokeAsync();
+            }
         }
+
+        public async Task SaveWorkflowWithTemplate(Guid templateId)
+        {
+            try
+            {
+                var workflowStepIds = GetConfiguredStepIds();
+
+                await _flowService.PostFlowAsync(new PostFlowRequestDto
+                {
+                    Name = _flowName,
+                    StepIds = workflowStepIds,
+                    FormTemplateId = templateId
+                });
+
+                await _jsRuntime.InvokeVoidAsync("alert", "Workflow saved successfully!");
+
+                // Reset the form
+                ClearConfiguration();
+            }
+            catch (Exception ex)
+            {
+                await _jsRuntime.InvokeVoidAsync("alert", $"Error saving workflow: {ex.Message}");
+                throw; // Re-throw so WorkflowCarousel can handle it
+            }
+        }
+
+
+
 
         public void MoveStepUp(int index)
         {
@@ -175,7 +212,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 
         public bool IsWorkflowValid()
         {
-            return !string.IsNullOrWhiteSpace(_flowName) && 
+            return !string.IsNullOrWhiteSpace(_flowName) &&
                    _configuredSteps.Any() &&
                    _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name));
         }
