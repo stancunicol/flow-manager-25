@@ -32,30 +32,38 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Step?> GetStepByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedStepUser = false, bool includeDeletedStepTeams = false)
+        public async Task<Step?> GetStepByIdAsync(
+    Guid id,
+    bool includeDeleted = false,
+    bool includeDeletedStepUser = false,
+    bool includeDeletedStepTeams = false)
         {
             IQueryable<Step> query = _context.Steps;
 
             if (!includeDeleted)
                 query = query.Where(s => s.DeletedAt == null);
 
+            // încarc colecțiile complete
+            query = query
+                .Include(s => s.Users)
+                    .ThenInclude(su => su.User)
+                .Include(s => s.Teams)
+                    .ThenInclude(st => st.Team)
+                        .ThenInclude(t => t.Users);
+
+            var step = await query.FirstOrDefaultAsync(s => s.Id == id);
+
+            if (step == null)
+                return null;
+
+            // aplic filtrarea după ce EF a încărcat tot
             if (!includeDeletedStepUser)
-                query = query.Include(s => s.Users.Where(su => su.DeletedAt == null))
-                    .ThenInclude(su => su.User);
-            else
-                query = query.Include(s => s.Users)
-                     .ThenInclude(su => su.User);
+                step.Users = step.Users.Where(su => su.DeletedAt == null).ToList();
 
             if (!includeDeletedStepTeams)
-                query = query.Include(s => s.Teams.Where(st => st.DeletedAt == null))
-                    .ThenInclude(st => st.Team)
-                        .ThenInclude(t => t.Users);
-            else
-                query = query.Include(s => s.Teams)
-                    .ThenInclude(st => st.Team)
-                        .ThenInclude(t => t.Users);
+                step.Teams = step.Teams.Where(st => st.DeletedAt == null).ToList();
 
-            return await query.FirstOrDefaultAsync(s => s.Id == id);
+            return step;
         }
 
         public async Task<IEnumerable<Step>> GetStepsByFlowAsync(Guid flowId)
@@ -133,6 +141,12 @@ namespace FlowManager.Infrastructure.Repositories
                                                .ToListAsync();
                 return (steps, totalCount);
             }
+        }
+
+        public async Task AddStepUserAsync(StepUser stepUser)
+        {
+            _context.StepUsers.Add(stepUser);
+            await _context.SaveChangesAsync();
         }
     }
 }

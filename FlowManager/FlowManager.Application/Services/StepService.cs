@@ -10,6 +10,7 @@ using System.Linq;
 using FlowManager.Application.Utils;
 using FlowManager.Shared.DTOs.Responses.User;
 using FlowManager.Shared.DTOs.Responses.Team;
+using Microsoft.AspNetCore.Identity;
 
 namespace FlowManager.Application.Services
 {
@@ -316,56 +317,66 @@ namespace FlowManager.Application.Services
 
         public async Task<StepResponseDto> AssignUserToStepAsync(Guid id, Guid userId)
         {
+            // verific dacă userul există
             User? user = await _userRepository.GetUserByIdAsync(userId);
-
             if (user == null)
             {
                 throw new EntryNotFoundException($"User with id {userId} was not found.");
             }
 
-
+            // verific dacă stepul există
             Step? step = await _stepRepository.GetStepByIdAsync(id);
-
             if (step == null)
             {
                 throw new EntryNotFoundException($"Step with id {id} was not found.");
             }
 
-            if (step.Users.FirstOrDefault(su => su.UserId == userId) != null)
+            // verific dacă relația există deja
+            if (step.Users.Any(su => su.UserId == userId && su.DeletedAt == null))
             {
-                throw new UniqueConstraintViolationException($"Relationship between user id {user.Id} and step id {step.Id} already exists.");
+                throw new UniqueConstraintViolationException(
+                    $"Relationship between user id {user.Id} and step id {step.Id} already exists."
+                );
             }
 
-            step.Users.Add(new StepUser
+            // creez noul StepUser
+            var stepUser = new StepUser
             {
                 UserId = userId,
-                User = user,
                 StepId = step.Id
-            });
+            };
 
-            await _stepRepository.SaveChangesAsync();
+            // adaug prin repository
+            await _stepRepository.AddStepUserAsync(stepUser);
+
+            // reîncarc step-ul ca să am Users și Teams actualizate
+            step = await _stepRepository.GetStepByIdAsync(step.Id);
 
             return new StepResponseDto
             {
                 Id = step.Id,
                 Name = step.Name,
-                Users = step.Users.Where(su => su.User != null).Select(su => new UserResponseDto
-                {
-                    Id = su.UserId,
-                    Name = su.User.Name,
-                    Email = su.User.Email,
-                }).ToList(),
-                Teams = step.Teams.Select(st => new TeamResponseDto
-                {
-                    Id = st.TeamId,
-                    Name = st.Team.Name,
-                    Users = st.Team.Users.Select(ut => new UserResponseDto
+                Users = step.Users
+                    .Where(su => su.DeletedAt == null && su.User != null)
+                    .Select(su => new UserResponseDto
                     {
-                        Id = ut.User.Id,
-                        Name = ut.User.Name,
-                        Email = ut.User.Email
-                    }).ToList()
-                }).ToList(),
+                        Id = su.UserId,
+                        Name = su.User.Name,
+                        Email = su.User.Email,
+                    }).ToList(),
+                Teams = step.Teams
+                    .Where(st => st.DeletedAt == null)
+                    .Select(st => new TeamResponseDto
+                    {
+                        Id = st.TeamId,
+                        Name = st.Team.Name,
+                        Users = st.Team.Users.Select(ut => new UserResponseDto
+                        {
+                            Id = ut.User.Id,
+                            Name = ut.User.Name,
+                            Email = ut.User.Email
+                        }).ToList()
+                    }).ToList(),
             };
         }
 
