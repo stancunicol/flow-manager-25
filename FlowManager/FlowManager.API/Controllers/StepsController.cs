@@ -142,7 +142,7 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        [HttpPost("assign/{stepId:guid}/{userId:guid}")]
+        [HttpPost("{stepId:guid}/assign-user/{userId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
