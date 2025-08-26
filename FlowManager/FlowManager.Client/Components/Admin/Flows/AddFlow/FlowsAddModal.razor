@@ -21,6 +21,14 @@
                        @bind:event="oninput"
                        maxlength="100" />
             </div>
+            @if (SavedFormTemplateId.HasValue && !string.IsNullOrEmpty(SavedFormTemplateName))
+            {
+                <div class="form-template-info">
+                    <span class="template-icon">📋</span>
+                    <span class="template-label">Form Template:</span>
+                    <span class="template-name">@SavedFormTemplateName</span>
+                </div>
+            }
 
             @if (_configuredSteps.Any())
             {

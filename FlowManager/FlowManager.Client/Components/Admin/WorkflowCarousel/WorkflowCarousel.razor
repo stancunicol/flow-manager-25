@@ -1,0 +1,189 @@
+﻿Workflowcarousel
+
+@using FlowManager.Client.Components.Admin.Flows
+@using FlowManager.Client.Components.Admin.FormTemplate
+@using FlowManager.Client.Components.Admin.Flows.AddFlow
+@namespace FlowManager.Client.Components.Admin.WorkflowCarousel
+
+<div class="workflow-carousel-container">
+    <!-- Carousel Header -->
+    <div class="carousel-header">
+        <h2>Workflow Builder</h2>
+        <div class="page-indicators">
+            <div class="indicator @(_currentPage == 0 ? "active" : "")" @onclick="() => GoToPage(0)">
+                <span class="indicator-number">1</span>
+                <span class="indicator-label">Form Templates</span>
+            </div>
+            <div class="indicator @(_currentPage == 1 ? "active" : "")" @onclick="() => GoToPage(1)">
+                <span class="indicator-number">2</span>
+                <span class="indicator-label">Add Flow</span>
+            </div>
+            <div class="indicator @(_currentPage == 2 ? "active" : "")" @onclick="() => GoToPage(2)">
+                <span class="indicator-number">3</span>
+                <span class="indicator-label">View Flows</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carousel Content -->
+    <div class="carousel-content">
+        <div class="carousel-track" style="transform: translateX(-@(_currentPage * 100)%);">
+
+            <!-- Page 1: Form Templates -->
+            <div class="carousel-page">
+                <div class="page-content">
+                    <FormTemplate OnTemplateSaved="@OnFormTemplateSavedLocally"
+                                  @ref="formTemplateRef"
+                                  ShouldSaveToDatabase="false" />
+                </div>
+            </div>
+
+            <!-- Page 2: Flows -->
+            <div class="carousel-page">
+                <div class="page-content">
+                    <FlowsAddModal SavedFormTemplateId="_savedFormTemplateId"
+                                   SavedFormTemplateName="_savedFormTemplateName"
+                                   OnSaveWorkflow="@OnSaveWorkflowRequested"
+                                   @ref="flowsAddModalRef" />
+                </div>
+            </div>
+
+            <div class="carousel-page">
+                <div class="page-content">
+                    <FlowsViewModal />
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="carousel-navigation">
+        <button class="nav-button prev @(_currentPage == 0 ? "disabled" : "")"
+                @onclick="PreviousPage"
+                disabled="@(_currentPage == 0)">
+            <span class="nav-icon">‹</span>
+            <span class="nav-text">Previous</span>
+        </button>
+
+        <div class="page-counter">
+            <span class="current-page">@(_currentPage + 1)</span>
+            <span class="page-separator">of</span>
+            <span class="total-pages">@_totalPages</span>
+        </div>
+
+        <button class="nav-button next @(_currentPage == _totalPages - 1 ? "disabled" : "")"
+                @onclick="NextPage"
+                disabled="@(_currentPage == _totalPages - 1)">
+            <span class="nav-text">Next</span>
+            <span class="nav-icon">›</span>
+        </button>
+    </div>
+</div>
+
+@code {
+    private int _currentPage = 0;
+    private int _totalPages = 3;
+
+    private Guid? _savedFormTemplateId = null;
+    private string _savedFormTemplateName = "";
+
+    // Component references
+    private FormTemplate? formTemplateRef;
+    private FlowsAddModal? flowsAddModalRef;
+
+    // Called when form template is saved locally (triggers navigation to page 2)
+    private async Task OnFormTemplateSavedLocally((Guid Id, string Name) templateInfo)
+    {
+        _savedFormTemplateId = templateInfo.Id;
+        _savedFormTemplateName = templateInfo.Name;
+
+        // Navigate to page 2 (FlowsAddModal)
+        _currentPage = 1;
+        StateHasChanged();
+    }
+
+    // Called when FlowsAddModal wants to save the workflow
+    private async Task OnSaveWorkflowRequested()
+    {
+        try
+        {
+            // 1. Ask FormTemplate to save the template from localStorage to database
+            if (formTemplateRef != null)
+            {
+                var savedTemplate = await formTemplateRef.SaveTemplateFromLocalStorageToDatabase();
+
+                if (savedTemplate.HasValue)
+                {
+                    _savedFormTemplateId = savedTemplate.Value.Id;
+                    _savedFormTemplateName = savedTemplate.Value.Name;
+
+                    // 2. Ask FlowsAddModal to save the workflow with the template ID
+                    if (flowsAddModalRef != null)
+                    {
+                        await flowsAddModalRef.SaveWorkflowWithTemplate(_savedFormTemplateId.Value);
+
+                        // 3. Navigate to view flows page after successful save
+                        _currentPage = 2;
+                        StateHasChanged();
+                    }
+                }
+                else
+                {
+                    // Handle error - template save failed
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error saving workflow and template: {ex.Message}");
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (_currentPage > 0)
+        {
+            var previousPage = _currentPage - 1;
+
+            // Special handling when going back to FormTemplate from FlowsAddModal
+            if (_currentPage == 1 && previousPage == 0)
+            {
+                // Load template from localStorage when returning to FormTemplate
+                if (formTemplateRef != null)
+                {
+                    await formTemplateRef.LoadFromLocalStorage();
+                }
+            }
+
+            _currentPage = previousPage;
+            StateHasChanged();
+        }
+    }
+
+    private void NextPage()
+    {
+        if (_currentPage < _totalPages - 1)
+        {
+            _currentPage++;
+            StateHasChanged();
+        }
+    }
+
+    private void GoToPage(int pageIndex)
+    {
+        if (pageIndex >= 0 && pageIndex < _totalPages)
+        {
+            _currentPage = pageIndex;
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Start on first page (Form Templates)
+        _currentPage = 0;
+    }
+}
