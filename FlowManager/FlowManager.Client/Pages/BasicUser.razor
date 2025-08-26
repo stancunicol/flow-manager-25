@@ -276,50 +276,132 @@
                         <p>Loading form details...</p>
                     </div>
                 }
-                else if (formElements?.Any() == true && formComponents?.Any() == true)
+                else if (formElements?.Any() == true)
                 {
-                    <div class="form-responses">
-                        @foreach (var element in formElements.Where(e => !e.IsTextElement && e.ComponentId.HasValue).OrderBy(e => e.Y).ThenBy(e => e.X))
-                        {
-                            var component = formComponents.FirstOrDefault(c => c.Id == element.ComponentId);
-                            if (component != null)
-                            {
-                                var fieldValue = GetFieldValue(component.Id);
+                    <!-- Form Canvas View -->
+                    <div class="form-canvas-container">
+                        <div class="form-canvas-header">
+                            <h4>Form Preview</h4>
+                            <span class="readonly-indicator">Read Only</span>
+                        </div>
 
-                                <div class="response-field">
-                                    <div class="response-label">
-                                        @component.Label
-                                        @if (component.Required == true)
-                                        {
-                                            <span class="required-indicator">*</span>
-                                        }
-                                    </div>
-                                    <div class="response-value @(fieldValue == null ? "empty" : "")">
-                                        @FormatFieldValue(fieldValue, component.Type)
-                                    </div>
+                        <div class="form-canvas-readonly">
+                            @if (!formElements.Any())
+                            {
+                                <div class="empty-form">
+                                    <p>No form elements to display.</p>
                                 </div>
                             }
-                        }
-
-                        @* Afișează și elementele de text static *@
-                        @if (formElements.Any(e => e.IsTextElement))
-                        {
-                            <div class="static-text-section">
-                                <h4>Form Content</h4>
-                                @foreach (var textElement in formElements.Where(e => e.IsTextElement).OrderBy(e => e.Y).ThenBy(e => e.X))
+                            else
+                            {
+                                <!-- Render all form elements positioned exactly as they were created -->
+                                @foreach (var element in formElements.OrderBy(e => e.ZIndex))
                                 {
-                                    <div class="static-text-item">
-                                        @textElement.TextContent
+                                    <div class="form-element-readonly" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
+                                        @if (element.IsTextElement)
+                                        {
+                                            <!-- Static text elements -->
+                                            <div class="static-text-readonly">
+                                                @element.TextContent
+                                            </div>
+                                        }
+                                        else if (element.ComponentId.HasValue)
+                                        {
+                                            <!-- Form components with values -->
+                                            var component = formComponents?.FirstOrDefault(c => c.Id == element.ComponentId);
+                                            if (component != null)
+                                            {
+                                                var fieldValue = GetFieldValue(component.Id);
+
+                                                <div class="form-field-readonly">
+                                                    <label class="field-label-readonly">
+                                                        @component.Label
+                                                        @if (component.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </label>
+
+                                                    @switch (component.Type?.ToLower())
+                                                    {
+                                                        case "textinput":
+                                                        case "text":
+                                                            <div class="field-value-readonly text-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+
+                                                        case "textarea":
+                                                            <div class="field-value-readonly textarea-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+
+                                                        case "number":
+                                                            <div class="field-value-readonly number-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+
+                                                        case "email":
+                                                            <div class="field-value-readonly email-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+
+                                                        case "datetime":
+                                                        case "date":
+                                                            <div class="field-value-readonly datetime-input-readonly">
+                                                                @(DateTime.TryParse(fieldValue?.ToString(), out var date) ? date.ToString("dd/MM/yyyy HH:mm") : "No response")
+                                                            </div>
+                                                            break;
+
+                                                        case "checkbox":
+                                                            <div class="checkbox-field-readonly">
+                                                                <div class="checkbox-display @(fieldValue?.ToString() == "True" ? "checked" : "unchecked")">
+                                                                    @if (fieldValue?.ToString() == "True")
+                                                                    {
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                                            <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                                                                        </svg>
+                                                                    }
+                                                                </div>
+                                                                <span class="checkbox-label-readonly">@component.Label</span>
+                                                            </div>
+                                                            break;
+
+                                                        case "radio":
+                                                            <div class="field-value-readonly radio-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No selection")
+                                                            </div>
+                                                            break;
+
+                                                        case "select":
+                                                        case "dropdown":
+                                                            <div class="field-value-readonly select-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No selection")
+                                                            </div>
+                                                            break;
+
+                                                        default:
+                                                            <div class="field-value-readonly default-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+                                                    }
+                                                </div>
+                                            }
+                                        }
                                     </div>
                                 }
-                            </div>
-                        }
+                            }
+                        </div>
                     </div>
                 }
                 else
                 {
                     <div class="no-form-data">
-                        <p>Unable to load form structure or no responses found.</p>
+                        <p>Unable to load form structure.</p>
                     </div>
                 }
             </div>
@@ -327,6 +409,10 @@
             <div class="modal-footer">
                 <div class="form-id-display">
                     Form ID: @selectedFormResponse.Id
+                </div>
+                <div class="form-status">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value">@(string.IsNullOrEmpty(selectedFormResponse.RejectReason) ? "Submitted" : "Rejected")</span>
                 </div>
             </div>
         </div>
