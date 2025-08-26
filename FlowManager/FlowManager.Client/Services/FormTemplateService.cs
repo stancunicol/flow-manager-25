@@ -1,6 +1,7 @@
 ﻿using FlowManager.Shared.DTOs.Requests.FormTemplate;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
+using FlowManager.Shared.DTOs.Requests;
 using System.Net.Http.Json;
 using System.Web;
 using System.Text.Json;
@@ -43,6 +44,46 @@ namespace FlowManager.Client.Services
             {
                 Console.WriteLine($"Error getting form templates: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return null;
+            }
+        }
+
+        // METODA NOUĂ pentru search și paginare
+        public async Task<PagedTemplatesResponse?> GetFormTemplatesPagedAsync(int page, int pageSize, string? searchTerm = null)
+        {
+            try
+            {
+                var payload = new QueriedFormTemplateRequestDto
+                {
+                    Name = searchTerm, // Folosesc Name pentru căutare
+                    QueryParams = new QueryParamsDto
+                    {
+                        Page = page,
+                        PageSize = pageSize,
+                        SortBy = "CreatedAt",
+                        SortDescending = true
+                    }
+                };
+
+                var result = await GetAllFormTemplatesQueriedAsync(payload);
+
+                if (result != null)
+                {
+                    return new PagedTemplatesResponse
+                    {
+                        Templates = result.Data?.ToList() ?? new List<FormTemplateResponseDto>(),
+                        TotalCount = result.TotalCount,
+                        Page = result.Page,
+                        PageSize = result.PageSize,
+                        HasMore = result.HasNextPage
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting paged form templates: {ex.Message}");
                 return null;
             }
         }
@@ -205,5 +246,15 @@ namespace FlowManager.Client.Services
         public bool Success { get; set; }
         public string? Message { get; set; }
         public DateTime Timestamp { get; set; }
+    }
+
+    // Clasa pentru răspunsul paginat simplificat
+    public class PagedTemplatesResponse
+    {
+        public List<FormTemplateResponseDto> Templates { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public bool HasMore { get; set; }
     }
 }

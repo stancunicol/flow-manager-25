@@ -82,6 +82,41 @@
                     </div>
                 </div>
 
+                <!-- Search Bar for My Forms -->
+                <div class="user-forms-search-container">
+                    <div class="search-input-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                            <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+                        </svg>
+                        <input type="text"
+                               placeholder="Search your forms by name, step, or reason..."
+                               @bind="userFormsSearchTerm"
+                               @oninput="OnUserFormsSearchInput"
+                               class="search-input" />
+                        @if (!string.IsNullOrEmpty(userFormsSearchTerm))
+                        {
+                            <button class="clear-search-btn" @onclick="ClearUserFormsSearch">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(userFormsSearchTerm))
+                    {
+                        <div class="search-results-info">
+                            @if (filteredUserForms?.Any() == true)
+                            {
+                                <span>Found @filteredUserForms.Count form(s) matching "@userFormsSearchTerm"</span>
+                            }
+                            else if (!isLoadingUserForms)
+                            {
+                                <span>No forms found matching "@userFormsSearchTerm"</span>
+                            }
+                        </div>
+                    }
+                </div>
+
                 @if (isLoadingUserForms)
                 {
                     <div class="loading-container">
@@ -89,10 +124,10 @@
                         <p>Loading your forms...</p>
                     </div>
                 }
-                else if (userForms?.Any() == true)
+                else if (filteredUserForms?.Any() == true)
                 {
                     <div class="forms-grid">
-                        @foreach (var form in userForms.OrderByDescending(f => f.CreatedAt))
+                        @foreach (var form in filteredUserForms.OrderByDescending(f => f.CreatedAt))
                         {
                             <div class="form-card" @onclick="() => ViewFormResponse(form)">
                                 <div class="form-card-header">
@@ -131,7 +166,6 @@
                                 </div>
 
                                 <div class="form-card-footer">
-                                    <div class="form-id">ID: @form.Id.ToString().Substring(0, 8)...</div>
                                     <div class="view-indicator">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
@@ -152,9 +186,16 @@
                                 <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <h4>No forms yet</h4>
-                        <p>You haven't submitted any forms yet. Click "Add Form" to get started.</p>
-                        <button @onclick="ShowFormSelectionModal" class="get-started-btn">Get Started</button>
+                        <h4>@(string.IsNullOrEmpty(userFormsSearchTerm) ? "No forms yet" : "No matching forms")</h4>
+                        <p>@(string.IsNullOrEmpty(userFormsSearchTerm) ? "You haven't submitted any forms yet. Click \"Add Form\" to get started." : $"No forms found matching \"{userFormsSearchTerm}\". Try a different search term.")</p>
+                        @if (string.IsNullOrEmpty(userFormsSearchTerm))
+                        {
+                            <button @onclick="ShowFormSelectionModal" class="get-started-btn">Get Started</button>
+                        }
+                        else
+                        {
+                            <button @onclick="ClearUserFormsSearch" class="get-started-btn">Clear Search</button>
+                        }
                     </div>
                 }
             </div>
@@ -168,7 +209,7 @@
     </main>
 </div>
 
-<!-- Form Selection Modal -->
+<!-- Form Selection Modal cu search și lazy loading -->
 @if (showFormSelectionModal)
 {
     <div class="modal-overlay" @onclick="CloseFormSelectionModal">
@@ -183,17 +224,52 @@
             </div>
 
             <div class="modal-body">
-                @if (isLoadingTemplates)
+                <!-- Search Bar pentru template selection -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                            <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+                        </svg>
+                        <input type="text"
+                               placeholder="Search form templates..."
+                               @bind="searchTerm"
+                               @oninput="OnSearchInput"
+                               class="search-input" />
+                        @if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            <button class="clear-search-btn" @onclick="ClearSearch">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(searchTerm))
+                    {
+                        <div class="search-results-info">
+                            @if (displayedTemplates?.Any() == true)
+                            {
+                                <span>Found @displayedTemplates.Count template(s) matching "@searchTerm"</span>
+                            }
+                            else if (!isLoadingTemplates)
+                            {
+                                <span>No templates found matching "@searchTerm"</span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (isLoadingTemplates && currentPage == 1)
                 {
                     <div class="loading-container">
                         <div class="spinner"></div>
                         <p>Loading form templates...</p>
                     </div>
                 }
-                else if (availableTemplates?.Any() == true)
+                else if (displayedTemplates?.Any() == true)
                 {
                     <div class="templates-list">
-                        @foreach (var template in availableTemplates)
+                        @foreach (var template in displayedTemplates)
                         {
                             <div class="template-item" @onclick="() => SelectTemplate(template)">
                                 <div class="template-icon">
@@ -213,11 +289,44 @@
                             </div>
                         }
                     </div>
+
+                    <!-- Load More Section -->
+                    @if (hasMoreTemplates && !isLoadingTemplates)
+                    {
+                        <div class="load-more-container">
+                            <button class="load-more-btn" @onclick="LoadMoreTemplates">
+                                Load More Templates
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div class="pagination-info">
+                                Showing @displayedTemplates.Count of @totalTemplatesCount templates
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Loading More Indicator -->
+                    @if (isLoadingTemplates && currentPage > 1)
+                    {
+                        <div class="loading-more-container">
+                            <div class="spinner-small"></div>
+                            <span>Loading more templates...</span>
+                        </div>
+                    }
                 }
-                else
+                else if (!isLoadingTemplates)
                 {
                     <div class="no-templates">
-                        <p>No form templates available.</p>
+                        @if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            <p>No form templates found matching your search.</p>
+                            <button class="clear-search-btn-alt" @onclick="ClearSearch">Clear Search</button>
+                        }
+                        else
+                        {
+                            <p>No form templates available.</p>
+                        }
                     </div>
                 }
             </div>
@@ -225,7 +334,7 @@
     </div>
 }
 
-<!-- View Form Modal -->
+<!-- View Form Modal - existent, nu modificat -->
 @if (showViewFormModal && selectedFormResponse != null)
 {
     <div class="modal-overlay" @onclick="CloseViewFormModal">

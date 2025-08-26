@@ -14,7 +14,7 @@ using static FlowManager.Client.Pages.FillForm;
 
 namespace FlowManager.Client.Pages
 {
-    public partial class BasicUser : ComponentBase
+    public partial class BasicUser : ComponentBase, IDisposable
     {
         private string _activeTab = "MYFORMS";
         protected string? errorMessage;
@@ -22,11 +22,22 @@ namespace FlowManager.Client.Pages
         // Form selection modal state
         private bool showFormSelectionModal = false;
         private bool isLoadingTemplates = false;
-        private List<FormTemplateResponseDto>? availableTemplates;
+        private List<FormTemplateResponseDto>? displayedTemplates;
 
-        // User forms state
+        // Search and pagination state for templates
+        private string searchTerm = "";
+        private int currentPage = 1;
+        private const int pageSize = 20;
+        private bool hasMoreTemplates = false;
+        private int totalTemplatesCount = 0;
+        private Timer? searchDebounceTimer;
+
+        // User forms state with search
         private bool isLoadingUserForms = false;
         private List<FormResponseResponseDto>? userForms;
+        private List<FormResponseResponseDto>? filteredUserForms;
+        private string userFormsSearchTerm = "";
+        private Timer? userFormsSearchDebounceTimer;
         private Guid currentUserId = Guid.Empty;
 
         //View Form modal state
@@ -99,6 +110,9 @@ namespace FlowManager.Client.Pages
             {
                 userForms = await FormResponseService.GetFormResponsesByUserAsync(currentUserId);
                 Console.WriteLine($"Loaded {userForms?.Count ?? 0} forms for user {currentUserId}");
+
+                // Apply current search filter
+                ApplyUserFormsFilter();
             }
             catch (Exception ex)
             {
@@ -111,7 +125,158 @@ namespace FlowManager.Client.Pages
             }
         }
 
+        // USER FORMS SEARCH FUNCTIONALITY
+        private void OnUserFormsSearchInput(ChangeEventArgs e)
+        {
+            var newSearchTerm = e.Value?.ToString() ?? "";
 
+            // Debounce search to avoid too many filter operations
+            userFormsSearchDebounceTimer?.Dispose();
+            userFormsSearchDebounceTimer = new Timer(async _ =>
+            {
+                userFormsSearchTerm = newSearchTerm;
+                await InvokeAsync(() =>
+                {
+                    ApplyUserFormsFilter();
+                    StateHasChanged();
+                });
+            }, null, 300, Timeout.Infinite); // 300ms debounce for local filtering
+        }
+
+        private void ApplyUserFormsFilter()
+        {
+            if (userForms == null)
+            {
+                filteredUserForms = new List<FormResponseResponseDto>();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(userFormsSearchTerm))
+            {
+                filteredUserForms = userForms.ToList();
+            }
+            else
+            {
+                var searchLower = userFormsSearchTerm.ToLower();
+                filteredUserForms = userForms.Where(form =>
+                    (form.FormTemplateName?.ToLower().Contains(searchLower) ?? false) ||
+                    (form.StepName?.ToLower().Contains(searchLower) ?? false) ||
+                    (form.RejectReason?.ToLower().Contains(searchLower) ?? false)
+                ).ToList();
+            }
+        }
+
+        private void ClearUserFormsSearch()
+        {
+            userFormsSearchTerm = "";
+            ApplyUserFormsFilter();
+            StateHasChanged();
+        }
+
+        // FORM TEMPLATE SELECTION MODAL FUNCTIONALITY
+        private async Task ShowFormSelectionModal()
+        {
+            showFormSelectionModal = true;
+            searchTerm = "";
+            currentPage = 1;
+            displayedTemplates = new List<FormTemplateResponseDto>();
+            hasMoreTemplates = false;
+            totalTemplatesCount = 0;
+
+            StateHasChanged();
+            await LoadTemplates();
+        }
+
+        private async Task LoadTemplates(bool append = false)
+        {
+            isLoadingTemplates = true;
+            StateHasChanged();
+
+            try
+            {
+                Console.WriteLine($"Loading templates - Page: {currentPage}, Search: '{searchTerm}', Append: {append}");
+
+                var response = await FormTemplateService.GetFormTemplatesPagedAsync(
+                    page: currentPage,
+                    pageSize: pageSize,
+                    searchTerm: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm
+                );
+
+                if (response != null)
+                {
+                    if (append && displayedTemplates != null)
+                    {
+                        displayedTemplates.AddRange(response.Templates);
+                    }
+                    else
+                    {
+                        displayedTemplates = response.Templates.ToList();
+                    }
+
+                    hasMoreTemplates = response.HasMore;
+                    totalTemplatesCount = response.TotalCount;
+
+                    Console.WriteLine($"Loaded {response.Templates.Count} templates. Total: {totalTemplatesCount}, HasMore: {hasMoreTemplates}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading templates: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", $"Error loading form templates: {ex.Message}");
+            }
+            finally
+            {
+                isLoadingTemplates = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task LoadMoreTemplates()
+        {
+            if (isLoadingTemplates || !hasMoreTemplates) return;
+
+            currentPage++;
+            await LoadTemplates(append: true);
+        }
+
+        private void OnSearchInput(ChangeEventArgs e)
+        {
+            var newSearchTerm = e.Value?.ToString() ?? "";
+
+            // Debounce search to avoid too many API calls
+            searchDebounceTimer?.Dispose();
+            searchDebounceTimer = new Timer(async _ =>
+            {
+                searchTerm = newSearchTerm;
+                currentPage = 1;
+                await InvokeAsync(async () =>
+                {
+                    await LoadTemplates();
+                });
+            }, null, 500, Timeout.Infinite); // 500ms debounce
+        }
+
+        private async Task ClearSearch()
+        {
+            searchTerm = "";
+            currentPage = 1;
+            await LoadTemplates();
+        }
+
+        private void CloseFormSelectionModal()
+        {
+            showFormSelectionModal = false;
+            searchDebounceTimer?.Dispose();
+            searchDebounceTimer = null;
+            StateHasChanged();
+        }
+
+        private async Task SelectTemplate(FormTemplateResponseDto template)
+        {
+            Navigation.NavigateTo($"/fill-form/{template.Id}");
+        }
+
+        // EXISTING METHODS
         private async Task ViewFormResponse(FormResponseResponseDto formResponse)
         {
             selectedFormResponse = formResponse;
@@ -222,7 +387,6 @@ namespace FlowManager.Client.Pages
             };
         }
 
-
         private void SetActiveTab(string tab)
         {
             _activeTab = tab;
@@ -248,41 +412,6 @@ namespace FlowManager.Client.Pages
             }
         }
 
-        private async Task ShowFormSelectionModal()
-        {
-            showFormSelectionModal = true;
-            isLoadingTemplates = true;
-            StateHasChanged();
-
-            try
-            {
-                Console.WriteLine("Starting to load form templates using queried endpoint...");
-                availableTemplates = await FormTemplateService.GetAllFormTemplatesAsync();
-                Console.WriteLine($"Loaded {availableTemplates?.Count ?? 0} templates");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading templates: {ex.Message}");
-                await JSRuntime.InvokeVoidAsync("alert", $"Error loading form templates: {ex.Message}");
-            }
-            finally
-            {
-                isLoadingTemplates = false;
-                StateHasChanged();
-            }
-        }
-
-        private void CloseFormSelectionModal()
-        {
-            showFormSelectionModal = false;
-            StateHasChanged();
-        }
-
-        private async Task SelectTemplate(FormTemplateResponseDto template)
-        {
-            Navigation.NavigateTo($"/fill-form/{template.Id}");
-        }
-
         private void AddForm()
         {
             _ = ShowFormSelectionModal();
@@ -291,6 +420,13 @@ namespace FlowManager.Client.Pages
         private async Task RefreshUserForms()
         {
             await LoadUserForms();
+        }
+
+        // Implementează IDisposable
+        public void Dispose()
+        {
+            searchDebounceTimer?.Dispose();
+            userFormsSearchDebounceTimer?.Dispose();
         }
 
         public class FormContent
