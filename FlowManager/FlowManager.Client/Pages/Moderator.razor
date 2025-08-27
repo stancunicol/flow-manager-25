@@ -1,0 +1,143 @@
+﻿@page "/moderator"
+@layout MainLayout
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+@inject CookieAuthStateProvider CookieAuthStateProvider
+@inject HttpClient Http
+@attribute [Authorize(Roles = "Moderator")]
+
+<FlowManager.Client.Components.NavBar.Navbar />
+
+<!-- Page description -->
+<div class="page-description">
+    <h2>Moderator dashboard</h2>
+    <p>Review and manage assigned form submissions</p>
+</div>
+
+<div class="moderator-container">
+    <!-- Left sidebar -->
+    <nav class="sidebar">
+        <!-- Navigation items -->
+        <div class="nav-main">
+            <!-- ASSIGNED FORMS -->
+            <button class="nav-item @(_activeTab == "ASSIGNED" ? "active" : "")"
+                    @onclick="@(() => SetActiveTab("ASSIGNED"))">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd"
+                          d="M7.502 6h7.128A3.375 3.375 0 0118 9.375v9.375a3 3 0 003-3V6.108c0-1.505-1.125-2.811-2.664-2.94a48.972 48.972 0 00-.673-.05A3 3 0 0015 1.5h-1.5a3 3 0 00-2.663 1.618c-.225.015-.45.032-.673.05C8.662 3.295 7.554 4.542 7.502 6zM13.5 3A1.5 1.5 0 0012 4.5h4.5A1.5 1.5 0 0015 3h-1.5z"
+                          clip-rule="evenodd" />
+                    <path fill-rule="evenodd"
+                          d="M3 9.375C3 8.339 3.84 7.5 4.875 7.5h9.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 013 20.625V9.375zM6 12a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H6.75a.75.75 0 01-.75-.75V12zm2.25 0a.75.75 0 01.75-.75h3.75a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zm0 2.25a.75.75 0 01.75-.75h3.75a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75z"
+                          clip-rule="evenodd" />
+                </svg>
+                Assigned Forms
+            </button>
+        </div>
+
+        <!-- Logout -->
+        <div class="nav-bottom">
+            <button class="nav-item logout-btn" @onclick="@(() => Logout())">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd"
+                          d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6z"
+                          clip-rule="evenodd" />
+                    <path fill-rule="evenodd"
+                          d="M19.5 12a.75.75 0 000-1.5l-6-6a.75.75 0 00-1.06 1.06l4.72 4.72H9a.75.75 0 000 1.5h8.16l-4.72 4.72a.75.75 0 101.06 1.06l6-6z"
+                          clip-rule="evenodd" />
+                </svg>
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main content area -->
+    <main class="main-content">
+        @if (_activeTab == "ASSIGNED")
+        {
+            <div class="assigned-content">
+                <!-- Header -->
+                <div class="assigned-header">
+                    <h3>Assigned Forms</h3>
+                    <div class="header-actions">
+                        <button class="action-btn refresh-btn" @onclick="RefreshAssignedForms">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 000 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clip-rule="evenodd" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                            <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+                        </svg>
+                        <input type="text"
+                               placeholder="Search assigned forms by user, form name, or step..."
+                               @bind="searchTerm"
+                               @oninput="OnSearchInput"
+                               class="search-input" />
+                        @if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            <button class="clear-search-btn" @onclick="ClearSearch">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(searchTerm))
+                    {
+                        <div class="search-results-info">
+                            @if (isLoading)
+                            {
+                                <span>Searching...</span>
+                            }
+                            else
+                            {
+                                <span>Search results for "@searchTerm"</span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Content -->
+                @if (isLoading)
+                {
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Loading assigned forms...</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-forms">
+                        <div class="no-forms-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                      d="M7.502 6h7.128A3.375 3.375 0 0118 9.375v9.375a3 3 0 003-3V6.108c0-1.505-1.125-2.811-2.664-2.94a48.972 48.972 0 00-.673-.05A3 3 0 0015 1.5h-1.5a3 3 0 00-2.663 1.618c-.225.015-.45.032-.673.05C8.662 3.295 7.554 4.542 7.502 6zM13.5 3A1.5 1.5 0 0012 4.5h4.5A1.5 1.5 0 0015 3h-1.5z"
+                                      clip-rule="evenodd" />
+                                <path fill-rule="evenodd"
+                                      d="M3 9.375C3 8.339 3.84 7.5 4.875 7.5h9.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 013 20.625V9.375z"
+                                      clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <h4>@(string.IsNullOrEmpty(searchTerm) ? "No forms assigned" : "No matching forms")</h4>
+                        <p>@(string.IsNullOrEmpty(searchTerm) ? "You don't have any forms assigned for review at the moment." : $"No forms found matching \"{searchTerm}\". Try a different search term.")</p>
+                        @if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            <button @onclick="ClearSearch" class="clear-search-btn-alt">Clear Search</button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </main>
+</div>

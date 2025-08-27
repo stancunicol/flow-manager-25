@@ -66,13 +66,12 @@ namespace FlowManager.Client.Pages
 
         private void NavigateToManager()
         {
-            Navigation.NavigateTo("/manager-dashboard");
+            Navigation.NavigateTo("/moderator");
         }
 
         private void NavigateToModerator()
         {
-            // Redirecționează moderatorii către admin sau creați o pagină separată
-            Navigation.NavigateTo("/admin"); // sau "/moderator-dashboard"
+            Navigation.NavigateTo("/moderator");
         }
 
         private bool HasRole(string roleName)
