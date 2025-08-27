@@ -34,8 +34,24 @@
                            required />
                 </div>
 
-                <div class="step-selector">
-
+                <div class="department-selector">
+                    <div class="custom-dropdown" @onclick="ToggleDropdown">
+                        <div class="dropdown-selected">
+                            @(_selectedStepName ?? "Select a department")
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        @if (_isDropdownOpen)
+                        {
+                            <div class="dropdown-options">
+                                @foreach (StepVM step in _availableSteps)
+                                {
+                                    <div class="dropdown-option" @onclick="() => SelectStep(step)">
+                                        @step.Name
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
                 </div>
 
                 <div class="form-field">
@@ -79,7 +95,9 @@
                     <button type="button" @onclick="CancelForm" class="btn btn-secondary">
                         Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" 
+                            class="btn btn-primary"
+                            disabled="@(!IsSubmitValid())">
                         Create User
                     </button>
                 </div>

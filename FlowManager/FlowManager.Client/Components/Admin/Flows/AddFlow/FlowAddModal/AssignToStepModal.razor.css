@@ -1,0 +1,456 @@
+﻿/* Assignment Modal Styles */
+.popup-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.popup-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+    .popup-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+.close-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    color: #6b7280;
+    transition: all 0.2s ease;
+}
+
+    .close-btn:hover {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+/* Tab Container */
+.tab-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Tab Header */
+.tab-header {
+    display: flex;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 16px 20px;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+    .tab-button:hover {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+    .tab-button.active {
+        background-color: white;
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+    }
+
+    .tab-button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+/* Tab Content */
+.tab-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+/* Form Fields */
+.form-field {
+    margin-bottom: 20px;
+}
+
+    .form-field label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+.modern-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111827;
+    background-color: white;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+    .modern-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .modern-input::placeholder {
+        color: #9ca3af;
+    }
+
+/* Lists */
+.teams-list, .users-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+}
+
+/* Team Items */
+.team-item {
+    border-bottom: 1px solid #f3f4f6;
+}
+
+    .team-item:last-child {
+        border-bottom: none;
+    }
+
+.team-header {
+    padding: 16px;
+}
+
+.team-checkbox, .user-checkbox, .member-checkbox {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+}
+
+    .team-checkbox input[type="checkbox"],
+    .user-checkbox input[type="checkbox"],
+    .member-checkbox input[type="checkbox"] {
+        display: none;
+    }
+
+    .team-checkbox label,
+    .user-checkbox label,
+    .member-checkbox label {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+        width: 100%;
+        gap: 12px;
+    }
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    background: white;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.2s ease;
+    margin-top: 2px;
+}
+
+input[type="checkbox"]:checked + label .checkmark {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+    input[type="checkbox"]:checked + label .checkmark::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+/* Team Info */
+.team-info, .user-info, .member-info {
+    flex: 1;
+}
+
+.team-name, .user-name, .member-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 2px;
+}
+
+.team-member-count, .user-email, .member-email {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* Team Members */
+.team-members {
+    background-color: #f9fafb;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.members-header {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+.member-checkbox {
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+    .member-checkbox:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+/* User Items */
+.user-item {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+    .user-item:last-child {
+        border-bottom: none;
+    }
+
+/* No Results */
+.no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    color: #6b7280;
+}
+
+    .no-results svg {
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+
+    .no-results p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 0;
+    margin-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.pagination-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .pagination-btn:hover:not(:disabled) {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.pagination-info {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Info Card */
+.info-card {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.info-icon {
+    color: #0284c7;
+    flex-shrink: 0;
+}
+
+.info-card span {
+    font-size: 14px;
+    color: #0c4a6e;
+    line-height: 1.5;
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 24px;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+    .btn-secondary:hover {
+        background-color: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+.btn-primary {
+    background-color: #2563eb;
+    color: white;
+    border: 1px solid transparent;
+}
+
+    .btn-primary:hover:not(:disabled) {
+        background-color: #1d4ed8;
+    }
+
+    .btn-primary:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+/* Submit Message */
+.onSubmitMessage {
+    text-align: center;
+    margin: 14px 8px;
+}
+
+.onSubmit {
+    display: inline-block;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+    .onSubmit.success {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+
+    .onSubmit.fail {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+/* Scrollbar Styling */
+.teams-list::-webkit-scrollbar,
+.users-list::-webkit-scrollbar,
+.tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.teams-list::-webkit-scrollbar-track,
+.users-list::-webkit-scrollbar-track,
+.tab-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.teams-list::-webkit-scrollbar-thumb,
+.users-list::-webkit-scrollbar-thumb,
+.tab-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+    .teams-list::-webkit-scrollbar-thumb:hover,
+    .users-list::-webkit-scrollbar-thumb:hover,
+    .tab-content::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }

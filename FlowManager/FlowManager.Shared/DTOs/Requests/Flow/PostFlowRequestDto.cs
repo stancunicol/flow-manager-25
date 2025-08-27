@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FlowManager.Shared.DTOs.Requests.FlowStep;
+using FlowManager.Shared.DTOs.Requests.Step;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -13,6 +15,6 @@ namespace FlowManager.Shared.DTOs.Requests.Flow
 
         public virtual Guid? FormTemplateId { get; set; }
 
-        public virtual List<Guid> StepIds { get; set; } = new List<Guid>();
+        public virtual List<PostFlowStepRequestDto> Steps { get; set; } = new List<PostFlowStepRequestDto>();
     }
 }

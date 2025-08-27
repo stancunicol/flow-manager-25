@@ -8,8 +8,10 @@ namespace FlowManager.Domain.Entities
 {
     public class FlowStep
     {
-        public bool? IsApproved { get; set; } = null;
+        public Guid Id { get; set; } = new Guid();
 
+        public bool? IsApproved { get; set; } = null;
+        
         // navigation properties
         public virtual List<FlowStepUser> AssignedUsers { get; set; } = new List<FlowStepUser>();   
         public virtual List<FlowStepTeam> AssignedTeams { get; set; } = new List<FlowStepTeam>();

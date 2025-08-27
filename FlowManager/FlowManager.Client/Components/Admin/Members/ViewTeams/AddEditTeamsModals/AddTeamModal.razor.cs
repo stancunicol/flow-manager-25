@@ -178,5 +178,10 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
             }
             StateHasChanged();
         }
+
+        private bool IsSubmitValid()
+        {
+            return !string.IsNullOrEmpty(_teamName) && _selectionStateUser.Any(state => state == true);
+        }
     }
 }

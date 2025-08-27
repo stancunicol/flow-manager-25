@@ -3,14 +3,16 @@ using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Client.ViewModels.Team;
 using FlowManager.Shared.DTOs.Requests.Flow;
+using FlowManager.Shared.DTOs.Requests.FlowStep;
 using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
 
-namespace FlowManager.Client.Components.Admin.Flows.AddFlow
+namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 {
     public partial class FlowsAddModal : ComponentBase
     {
@@ -27,9 +29,16 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
         private bool _isDragOver = false;
         private string _flowName = string.Empty;
 
+        private bool _showAssignToStepModal = false;
+        private StepVM? _stepToAssign = null;
+
+        private string _onSubmitMessage = string.Empty;
+        private bool _onSubmitSuccess;
+
         protected override async Task OnInitializedAsync()
         {
             ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetStepsQueriedAsync();
+
             if (!response.Success)
             {
                 return;
@@ -141,17 +150,19 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 
         public async Task SaveWorkflow()
         {
-            if (!IsWorkflowValid())
+            ApiResponse<FlowResponseDto> response = await _flowService.PostFlowAsync(new PostFlowRequestDto
             {
-                await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
-                return;
-            }
+                Name = _flowName,
+                Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                {
+                    StepId = configuredStep.Id,
+                    UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
+                    TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                }).ToList()
+            });
 
-            // Trigger the save event - WorkflowCarousel will coordinate the save process
-            if (OnSaveWorkflow.HasDelegate)
-            {
-                await OnSaveWorkflow.InvokeAsync();
-            }
+            _onSubmitMessage = response.Message;
+            _onSubmitSuccess = response.Success;
         }
 
         public async Task SaveWorkflowWithTemplate(Guid templateId)
@@ -223,6 +234,19 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 return "";
 
             return string.IsNullOrWhiteSpace(_flowName) ? "invalid" : "valid";
+        }
+
+        private void ShowAssingToStepModal(StepVM step)
+        {
+            _showAssignToStepModal = true;
+            _stepToAssign = step;
+        }
+
+        private void ConfigureStepsToFlow()
+        {
+            StepVM step = _configuredSteps.First(s => s.Id == _stepToAssign!.Id);
+            step.Users = _stepToAssign!.Users;
+            step.Teams = _stepToAssign!.Teams;
         }
     }
 }

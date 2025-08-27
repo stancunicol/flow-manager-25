@@ -12,6 +12,7 @@ namespace FlowManager.Shared.DTOs.Requests.User
         public string Name { get; set; }
         public string Email { get; set; }
         public List<Guid> Roles { get; set; }
-        public ICollection<Guid> TeamsIds { get; set; }
+        public ICollection<Guid>? TeamsIds { get; set; }
+        public Guid StepId { get; set; }
     }
 }

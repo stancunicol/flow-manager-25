@@ -16,6 +16,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FlowManager.Application.IServices;
 using FlowManager.Shared.DTOs.Requests;
+using FlowManager.Domain.Dtos;
 
 namespace FlowManager.Application.Services
 {
@@ -23,11 +24,13 @@ namespace FlowManager.Application.Services
     {
         private readonly ITeamRepository _teamRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public TeamService(ITeamRepository teamRepository, IUserRepository userRepository)
+        public TeamService(ITeamRepository teamRepository, IUserRepository userRepository, IRoleRepository roleRepository)
         {
             _teamRepository = teamRepository;
             _userRepository = userRepository;
+            _roleRepository = roleRepository;
         }
 
         public async Task<PagedResponseDto<TeamResponseDto>> GetAllTeamsQueriedAsync(QueriedTeamRequestDto payload)
@@ -351,6 +354,34 @@ namespace FlowManager.Application.Services
                     Name = u.Name,
                     Email = u.Email
                 }).ToList()
+            };
+        }
+
+        public async Task<PagedResponseDto<TeamResponseDto>> GetAllModeratorTeamsQueriedAsync(Guid stepId, QueriedTeamRequestDto payload)
+        {
+            QueryParams? parameters = payload.QueryParams?.ToQueryParams();
+            Guid moderatorId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
+
+            (List<Team> moderatorTeams, int totalCount) = await _teamRepository.
+                GetAllModeratorTeamsByStepIdQueriedAsync(
+                stepId,
+                moderatorId,
+                payload.GlobalSearchTerm,
+                parameters);
+
+            return new PagedResponseDto<TeamResponseDto>
+            {
+                Data = moderatorTeams.Select(t => new TeamResponseDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Users = t.Users.Select(ut => new UserResponseDto
+                    {
+                        Id = ut.UserId,
+                        Name = ut.User.Name,
+                        Email = ut.User.Email
+                    }).ToList()
+                })
             };
         }
     }
