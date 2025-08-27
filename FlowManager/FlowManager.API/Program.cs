@@ -94,9 +94,9 @@ using (var scope = app.Services.CreateScope())
     AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-     // BasicSeed.Populate(dbContext, passwordHasher);
-     // UsersAndTeamsSeed.Populate(dbContext, passwordHasher);
-     // FormResponseSeed.Populate(dbContext);
+     BasicSeed.Populate(dbContext, passwordHasher);
+     UsersAndTeamsSeed.Populate(dbContext, passwordHasher);
+     FormResponseSeed.Populate(dbContext);
 }
 
 if (app.Environment.IsDevelopment())
