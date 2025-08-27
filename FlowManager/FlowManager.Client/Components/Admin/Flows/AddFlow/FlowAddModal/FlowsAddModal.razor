@@ -22,7 +22,7 @@
                        @bind:event="oninput"
                        maxlength="100"/>
             </div>
-            @if (SavedFormTemplateId.HasValue && !string.IsNullOrEmpty(SavedFormTemplateName))
+            @if (!string.IsNullOrEmpty(SavedFormTemplateName))
             {
                 <div class="form-template-info">
                     <span class="template-icon">📋</span>
@@ -88,7 +88,9 @@
                 <!-- Action buttons -->
                 <div class="workflow-actions">
                     <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
-                    <button class="btn-save" @onclick="SaveWorkflow" disabled="@(!IsWorkflowValid())">
+                    <button class="btn-save" @onclick="@(() => string.IsNullOrEmpty(SavedFormTemplateName) ?
+                            SaveWorkflow() : SaveWorkflowWithFormTemplateNotice())" 
+                            disabled="@(!IsWorkflowValid())">
                         Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
                     </button>
                 </div>

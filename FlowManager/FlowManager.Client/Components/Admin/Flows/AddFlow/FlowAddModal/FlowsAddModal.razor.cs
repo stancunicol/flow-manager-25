@@ -19,7 +19,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         [Inject] private StepService _stepService { get; set; } = default!;
         [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
         [Inject] private FlowService _flowService { get; set; } = default!;
-        [Parameter] public Guid? SavedFormTemplateId { get; set; }
         [Parameter] public string SavedFormTemplateName { get; set; } = "";
         [Parameter] public EventCallback OnSaveWorkflow { get; set; }
 
@@ -150,7 +149,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         public async Task SaveWorkflow()
         {
-            ApiResponse<FlowResponseDto> response = await _flowService.PostFlowAsync(new PostFlowRequestDto
+            PostFlowRequestDto payload = new PostFlowRequestDto
             {
                 Name = _flowName,
                 Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
@@ -159,40 +158,37 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
                     TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
                 }).ToList()
-            });
+            };
+
+            ApiResponse<FlowResponseDto> response = await _flowService.PostFlowAsync(payload);
 
             _onSubmitMessage = response.Message;
             _onSubmitSuccess = response.Success;
         }
 
-        public async Task SaveWorkflowWithTemplate(Guid templateId)
+        public async Task SaveWorkflowWithFormTemplateNotice()
         {
-            try
-            {
-                var workflowStepIds = GetConfiguredStepIds();
+            await OnSaveWorkflow.InvokeAsync();
+        }
 
-                await _flowService.PostFlowAsync(new PostFlowRequestDto
+        public async Task SaveWorkflowWithFormTemplate(Guid templateId)
+        {
+            PostFlowRequestDto payload = new PostFlowRequestDto
+            {
+                Name = _flowName,
+                Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
                 {
-                    Name = _flowName,
-                    Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
-                    {
-                        StepId = configuredStep.Id,
-                        UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                        TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
-                    }).ToList(),
-                    FormTemplateId = templateId
-                });
+                    StepId = configuredStep.Id,
+                    UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
+                    TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                }).ToList(),
+                FormTemplateId = templateId
+            };
 
-                await _jsRuntime.InvokeVoidAsync("alert", "Workflow saved successfully!");
+            ApiResponse<FlowResponseDto> response = await _flowService.PostFlowAsync(payload);
 
-                // Reset the form
-                ClearConfiguration();
-            }
-            catch (Exception ex)
-            {
-                await _jsRuntime.InvokeVoidAsync("alert", $"Error saving workflow: {ex.Message}");
-                throw; // Re-throw so WorkflowCarousel can handle it
-            }
+            _onSubmitMessage = response.Message;
+            _onSubmitSuccess = response.Success;
         }
 
         public void MoveStepUp(int index)

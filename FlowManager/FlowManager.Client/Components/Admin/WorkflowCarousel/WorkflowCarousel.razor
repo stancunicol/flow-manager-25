@@ -42,10 +42,8 @@
             <!-- Page 2: Flows -->
             <div class="carousel-page">
                 <div class="page-content">
-                    <FlowsAddModal SavedFormTemplateId="_savedFormTemplateId"
-                                   SavedFormTemplateName="_savedFormTemplateName"
-                                   OnSaveWorkflow="@OnSaveWorkflowRequested"
-                                   @ref="flowsAddModalRef" />
+                    <FlowsAddModal SavedFormTemplateName="_savedFormTemplateName"
+                                   OnSaveWorkflow="@OnSaveWorkflowRequested"/>
                 </div>
             </div>
 
@@ -109,6 +107,7 @@
     {
         try
         {
+            Console.WriteLine("aici");
             // 1. Ask FormTemplate to save the template from localStorage to database
             if (formTemplateRef != null)
             {
@@ -121,9 +120,8 @@
 
                     // 2. Ask FlowsAddModal to save the workflow with the template ID
                     if (flowsAddModalRef != null)
-                    {
-                        await flowsAddModalRef.SaveWorkflowWithTemplate(_savedFormTemplateId.Value);
-
+                    {   
+                        await flowsAddModalRef.SaveWorkflowWithFormTemplate(_savedFormTemplateId.Value);
                         // 3. Navigate to view flows page after successful save
                         _currentPage = 2;
                         StateHasChanged();

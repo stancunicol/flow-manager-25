@@ -69,6 +69,7 @@ namespace FlowManager.Client.Services
 
         public async Task<ApiResponse<FlowResponseDto>> PostFlowAsync(PostFlowRequestDto payload)
         {
+            Console.WriteLine("dadadada");
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("api/flows/", payload);
