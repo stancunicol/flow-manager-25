@@ -174,7 +174,12 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 await _flowService.PostFlowAsync(new PostFlowRequestDto
                 {
                     Name = _flowName,
-                    StepIds = workflowStepIds,
+                    Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                    {
+                        StepId = configuredStep.Id,
+                        UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
+                        TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                    }).ToList(),
                     FormTemplateId = templateId
                 });
 
@@ -189,9 +194,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 throw; // Re-throw so WorkflowCarousel can handle it
             }
         }
-
-
-
 
         public void MoveStepUp(int index)
         {
