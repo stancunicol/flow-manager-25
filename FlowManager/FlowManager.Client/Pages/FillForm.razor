@@ -3,11 +3,13 @@
 @using FlowManager.Shared.DTOs.Responses.FormTemplate
 @using FlowManager.Shared.DTOs.Responses.Component
 @using FlowManager.Shared.DTOs.Responses.Step
+@using FlowManager.Shared.DTOs.Responses.Flow
 @using FlowManager.Shared.DTOs.Requests.FormResponse
 @using FlowManager.Shared.DTOs
 @using System.Text.Json
 @inject FlowManager.Client.Services.FormTemplateService FormTemplateService
 @inject FlowManager.Client.Services.ComponentService ComponentService
+@inject FlowManager.Client.Services.FlowService FlowService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject HttpClient Http
@@ -23,7 +25,7 @@
             Back to My Forms
         </button>
         <h1>@(formTemplate?.Name ?? "Loading...")</h1>
-        <button class="submit-btn" @onclick="SubmitForm" disabled="@(isSubmitting || !selectedStepId.HasValue)">
+        <button class="submit-btn" @onclick="SubmitForm" disabled="@(isSubmitting || firstStep == null)">
             @if (isSubmitting)
             {
                 <div class="spinner-small"></div>
@@ -49,20 +51,46 @@
         }
         else if (formTemplate != null && formElements != null)
         {
-            <!-- Step Selection -->
-            <div class="step-selection">
-                <label for="step-select" class="step-label">Select Step:</label>
-                <select id="step-select" class="step-select" @bind="selectedStepId">
-                    <option value="">-- Select a step --</option>
-                    @if (availableSteps != null)
-                    {
-                        @foreach (var step in availableSteps)
+            <!-- Workflow Information -->
+            @if (isLoadingFlow)
+            {
+                <div class="workflow-info loading">
+                    <div class="spinner-small"></div>
+                    <span>Loading workflow information...</span>
+                </div>
+            }
+            else if (associatedFlow != null && firstStep != null)
+            {
+                <div class="workflow-info success">
+                    <div class="workflow-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32L12 13.688 1.894 8.16a.75.75 0 010-1.32l9.75-5.25zM3.265 10.206L12 14.688l8.735-4.482a.75.75 0 11.73 1.312L12 16.738l-9.465-5.22a.75.75 0 01.73-1.312zm0 4.5L12 19.188l8.735-4.482a.75.75 0 11.73 1.312L12 21.238l-9.465-5.22a.75.75 0 01.73-1.312z" />
+                        </svg>
+                    </div>
+                    <div class="workflow-details">
+                        <h4>Workflow: @associatedFlow.Name</h4>
+                        <p>This form will start at step: <strong>@firstStep.Name</strong></p>
+                        @if (associatedFlow.Steps?.Count > 1)
                         {
-                            <option value="@step.Id">@step.Name</option>
+                            <p class="workflow-steps-info">Total workflow steps: @associatedFlow.Steps.Count</p>
                         }
-                    }
-                </select>
-            </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="workflow-info warning">
+                    <div class="workflow-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="workflow-details">
+                        <h4>Warning: No Workflow Configured</h4>
+                        <p>This form template is not associated with any workflow. Please contact an administrator to configure the approval process.</p>
+                    </div>
+                </div>
+            }
 
             <div class="form-canvas">
                 @foreach (var element in formElements.OrderBy(e => e.ZIndex))

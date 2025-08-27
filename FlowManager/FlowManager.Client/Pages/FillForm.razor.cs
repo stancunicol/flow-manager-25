@@ -1,8 +1,10 @@
 ﻿using FlowManager.Client.Services;
 using FlowManager.Client.DTOs;
+using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.Step;
+using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
@@ -23,14 +25,17 @@ namespace FlowManager.Client.Pages
         private bool isSubmitting = false;
         private Dictionary<Guid, object> responses = new();
         private Guid currentUserId = Guid.Empty;
-        private Guid? selectedStepId = null;
-        private List<StepResponseDto>? availableSteps;
+        
+        // Flow și step-uri
+        private FlowResponseDto? associatedFlow;
+        private StepResponseDto? firstStep;
+        private bool isLoadingFlow = false;
 
         protected override async Task OnInitializedAsync()
         {
             await LoadCurrentUser();
             await LoadFormTemplate();
-            await LoadAvailableSteps();
+            await LoadAssociatedFlow();
         }
 
         private async Task LoadCurrentUser()
@@ -77,28 +82,49 @@ namespace FlowManager.Client.Pages
             }
         }
 
-        private async Task LoadAvailableSteps()
+        private async Task LoadAssociatedFlow()
         {
+            if (formTemplate == null) return;
+
+            isLoadingFlow = true;
             try
             {
-                // Încarcă toate step-urile disponibile
-                var response = await Http.GetAsync("api/steps/all");
-                if (response.IsSuccessStatusCode)
+                // Găsește flow-ul care are acest FormTemplateId
+                var flowsResponse = await Http.GetAsync($"api/flows/queried?QueryParams.PageSize=100");
+                if (flowsResponse.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<StepResponseDto>>>();
-                    availableSteps = result?.Result ?? new List<StepResponseDto>();
+                    var flowsData = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
+                    var flows = flowsData?.Result?.Data;
 
-                    // Setează primul step ca default dacă există
-                    if (availableSteps.Any())
+                    if (flows != null)
                     {
-                        selectedStepId = availableSteps.First().Id;
+                        associatedFlow = flows.FirstOrDefault(f => f.FormTemplateId == formTemplate.Id);
+                        
+                        if (associatedFlow?.Steps?.Any() == true)
+                        {
+                            // Primul step din flow (cel cu ordinea cea mai mică sau primul din listă)
+                            firstStep = associatedFlow.Steps.First();
+                            Console.WriteLine($"[DEBUG] Found flow '{associatedFlow.Name}' with first step: '{firstStep.Name}'");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[WARNING] Flow found but has no steps configured");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[WARNING] No flow found for form template: {formTemplate.Name}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading steps: {ex.Message}");
-                availableSteps = new List<StepResponseDto>();
+                Console.WriteLine($"Error loading associated flow: {ex.Message}");
+            }
+            finally
+            {
+                isLoadingFlow = false;
+                StateHasChanged();
             }
         }
 
@@ -176,9 +202,9 @@ namespace FlowManager.Client.Pages
                 return;
             }
 
-            if (!selectedStepId.HasValue)
+            if (firstStep == null)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Please select a step for this form.");
+                await JSRuntime.InvokeVoidAsync("alert", "No workflow configured for this form template. Please contact an administrator.");
                 return;
             }
 
@@ -201,19 +227,19 @@ namespace FlowManager.Client.Pages
                 var formResponseData = new PostFormResponseRequestDto
                 {
                     FormTemplateId = TemplateId,
-                    StepId = selectedStepId.Value,
+                    StepId = firstStep.Id, // Folosește primul step din flow
                     UserId = currentUserId,
                     ResponseFields = responses
                 };
 
-                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, Step={selectedStepId}, User={currentUserId}");
+                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, FirstStep={firstStep.Id} ({firstStep.Name}), User={currentUserId}");
                 Console.WriteLine($"[DEBUG] Response fields count: {responses.Count}");
 
                 var response = await Http.PostAsJsonAsync("api/formresponses", formResponseData);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Form submitted successfully!");
+                    await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully! It will start processing from step: {firstStep.Name}");
                     Navigation.NavigateTo("/basic-user");
                 }
                 else
@@ -261,7 +287,5 @@ namespace FlowManager.Client.Pages
             public bool? Required { get; set; }
             public Dictionary<string, object>? Properties { get; set; }
         }
-
-        
     }
 }

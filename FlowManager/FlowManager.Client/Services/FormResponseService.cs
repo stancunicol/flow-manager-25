@@ -1,6 +1,9 @@
 ﻿using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Client.DTOs;
+using FlowManager.Shared.DTOs.Requests;
 using System.Net.Http.Json;
+using System.Web;
+using System.Text.Json;
 
 namespace FlowManager.Client.Services
 {
@@ -34,6 +37,63 @@ namespace FlowManager.Client.Services
             }
         }
 
+        // METODĂ NOUĂ pentru paginare
+        public async Task<PagedUserFormsResponse?> GetFormResponsesByUserPagedAsync(Guid userId, int page, int pageSize, string? searchTerm = null)
+        {
+            try
+            {
+                var uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
+                {
+                    Path = "api/formresponses/queried"
+                };
+
+                var query = HttpUtility.ParseQueryString(string.Empty);
+
+                query["UserId"] = userId.ToString();
+                query["IncludeDeleted"] = "false";
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                    query["SearchTerm"] = searchTerm;
+
+                query["QueryParams.Page"] = page.ToString();
+                query["QueryParams.PageSize"] = pageSize.ToString();
+                query["QueryParams.SortBy"] = "CreatedAt";
+                query["QueryParams.SortDescending"] = "true";
+
+                uriBuilder.Query = query.ToString();
+
+                var response = await _httpClient.GetAsync(uriBuilder.Uri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<FormResponseApiResponse>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (apiResponse?.Result != null)
+                    {
+                        return new PagedUserFormsResponse
+                        {
+                            FormResponses = apiResponse.Result.Data?.ToList() ?? new List<FormResponseResponseDto>(),
+                            TotalCount = apiResponse.Result.TotalCount,
+                            Page = apiResponse.Result.Page,
+                            PageSize = apiResponse.Result.PageSize,
+                            HasMore = apiResponse.Result.HasNextPage
+                        };
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting paged user forms: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<FormResponseResponseDto?> SubmitFormResponseAsync(PostFormResponseRequestDto formResponse)
         {
             try
@@ -54,5 +114,32 @@ namespace FlowManager.Client.Services
                 return null;
             }
         }
+    }
+
+    // Clase auxiliare pentru deserializare
+    public class FormResponseApiResponse
+    {
+        public PagedFormResponseDto? Result { get; set; }
+        public bool Success { get; set; }
+        public string? Message { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+
+    public class PagedFormResponseDto
+    {
+        public List<FormResponseResponseDto> Data { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public bool HasNextPage { get; set; }
+    }
+
+    public class PagedUserFormsResponse
+    {
+        public List<FormResponseResponseDto> FormResponses { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public bool HasMore { get; set; }
     }
 }
