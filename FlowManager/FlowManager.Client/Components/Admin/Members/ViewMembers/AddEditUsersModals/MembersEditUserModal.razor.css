@@ -245,3 +245,28 @@ form {
     .btn-primary:active {
         transform: translateY(0);
     }
+
+.onSubmitMessage {
+    margin: 16px 0px 8px 0px;
+    border: 2px solid #e5e7eb;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+    .onSubmitMessage:has(.success) {
+        border-color: #16a34a;
+        background-color: #f0fdf4;
+    }
+
+    .onSubmitMessage:has(.fail) {
+        border-color: #dc2626;
+        background-color: #fef2f2;
+    }
+
+    .onSubmitMessage .success {
+        color: #16a34a;
+    }
+
+    .onSubmitMessage .fail {
+        color: #dc2626;
+    }

@@ -47,31 +47,31 @@ namespace FlowManager.Infrastructure.Seed
                     new Step
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Initial Review",
+                        Name = "HR",
                         CreatedAt = DateTime.UtcNow
                     },
                     new Step
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Manager Approval",
+                        Name = "IT",
                         CreatedAt = DateTime.UtcNow
                     },
                     new Step
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Final Processing",
+                        Name = "Hardware development",
                         CreatedAt = DateTime.UtcNow
                     },
                     new Step
                     {
                         Id = Guid.NewGuid(),
-                        Name = "HR Review",
+                        Name = "Finances",
                         CreatedAt = DateTime.UtcNow
                     },
                     new Step
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Completed",
+                        Name = "Software development",
                         CreatedAt = DateTime.UtcNow
                     }
                 };

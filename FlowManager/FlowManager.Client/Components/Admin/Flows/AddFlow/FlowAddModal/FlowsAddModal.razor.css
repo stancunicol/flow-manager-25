@@ -180,18 +180,6 @@
         box-shadow: 0 8px 24px rgba(32, 180, 134, 0.3);
     }
 
-@keyframes slideIn {
-    from {
-        transform: scale(0.8) translateY(-20px);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1) translateY(0);
-        opacity: 1;
-    }
-}
-
 .dropped-step .step-info {
     margin: 0;
     background: transparent;
@@ -340,43 +328,6 @@
         cursor: not-allowed;
     }
 
-@media (max-width: 768px) {
-    .add-flow-container {
-        flex-direction: column;
-        height: auto;
-    }
-
-    .step-configuration {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 10px;
-        min-height: 400px;
-    }
-
-    .steps-navbar {
-        max-height: 500px;
-    }
-
-    .workflow-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .btn-clear, .btn-save {
-        width: 200px;
-    }
-
-    .reorder-buttons {
-        right: 40px;
-    }
-
-    .remove-step {
-        width: 24px;
-        height: 24px;
-        font-size: 14px;
-    }
-}
-
 .flow-name-section {
     display: flex;
     flex-direction: column;
@@ -430,8 +381,32 @@
 }
 
 .workflow-header-title {
-font-size: 18px;
-font-weight: 600;
-color: #333;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
 }
 
+.onSubmitMessage {
+    text-align: center;
+    margin: 14px 8px;
+}
+
+.onSubmit {
+    display: inline-block;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+    .onSubmit.success {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+
+    .onSubmit.fail {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }

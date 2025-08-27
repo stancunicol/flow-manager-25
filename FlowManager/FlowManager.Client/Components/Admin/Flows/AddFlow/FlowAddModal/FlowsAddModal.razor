@@ -1,5 +1,6 @@
 ﻿@using FlowManager.Client.ViewModels;
-@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web;
+@using FlowManager.Client.Components.Admin.Flows.AddFlow;
 
 <div class="add-flow-container">
     <!-- Step configuration area -->
@@ -19,7 +20,7 @@
                        placeholder="Enter workflow name..."
                        @bind="_flowName"
                        @bind:event="oninput"
-                       maxlength="100" />
+                       maxlength="100"/>
             </div>
 
             @if (_configuredSteps.Any())
@@ -42,7 +43,7 @@
                     var step = _configuredSteps[i];
                     var stepIndex = i;
 
-                    <div class="dropped-step" key="@step.Id">
+                    <div class="dropped-step" key="@step.Id" @onclick="() => ShowAssingToStepModal(step)">
                         <!-- Step order indicator -->
                         <div class="step-order">@(stepIndex + 1)</div>
 
@@ -83,6 +84,13 @@
                         Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
                     </button>
                 </div>
+
+                @if (!string.IsNullOrEmpty(_onSubmitMessage))
+                {
+                    <div class="onSubmitMessage">
+                        <span class="onSubmit @(_onSubmitSuccess ? "success" : "fail")">@_onSubmitMessage</span>
+                    </div>
+                }
             }
         </div>
     </div>
@@ -117,4 +125,11 @@
             </div>
         }
     </div>
+
+    @if (_showAssignToStepModal)
+    {
+        <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
+                           @bind-StepToAssign="@_stepToAssign"
+                           OnStepAssigned="ConfigureStepsToFlow"/>
+    }
 </div>

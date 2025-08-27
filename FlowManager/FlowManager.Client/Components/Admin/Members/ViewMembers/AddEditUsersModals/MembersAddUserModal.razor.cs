@@ -2,9 +2,12 @@
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs.Requests.User;
+using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Role;
+using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
+using System.Numerics;
 
 namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersModals
 {
@@ -12,6 +15,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
     {
         [Inject] private UserService _userService { get; set; } = default!;
         [Inject] private RoleService _roleService { get; set; } = default!;
+        [Inject] private StepService _stepService { get; set; } = default!;
 
         [Parameter] public bool ShowAddForm { get; set; }
         [Parameter] public EventCallback<bool> ShowAddFormChanged { get; set; }
@@ -23,25 +27,23 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
         [Inject] private ILogger<MembersAddUserModal> _logger { get; set; } = default!;
 
-        // add/edit a user
         private string _name = "";
         private string _email = "";
         private List<Guid> selectedRoles = new();
+        private Guid _selectedStepId = Guid.Empty;
+        private bool _isDropdownOpen = false;
+        private string? _selectedStepName;
 
-        private List<RoleVM> _availableRoles;
+        private List<RoleVM> _availableRoles = new();
+        private List<StepVM> _availableSteps = new();
 
         private bool _isNewUserAdmin = false;
         private bool _isNewUserModerator = false;
 
         protected override async Task OnInitializedAsync()
         {
-            ApiResponse<List<RoleResponseDto>> response = await _roleService.GetAllRolesAsync();
-
-            _availableRoles = response.Result.Select(r => new RoleVM
-            {
-                Id = r.Id,
-                RoleName = r.Name!
-            }).ToList();
+            await LoadRoles();
+            await LoadSteps();
         }
 
         private async Task RegisterUser()
@@ -61,7 +63,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
                 Email = _email,
                 Name = _name,
                 Username = _email,
-                Roles = selectedRoles
+                Roles = selectedRoles,
+                StepId = _selectedStepId,
             });
 
             _onSubmitMessage = response.Message;
@@ -74,6 +77,46 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
             }
 
             await OnUserAdded.InvokeAsync();
+            selectedRoles.Clear();
+        }
+
+        private void ToggleDropdown()
+        {
+            _isDropdownOpen = !_isDropdownOpen;
+        }
+
+        private void SelectStep(StepVM step)
+        {
+            _selectedStepId = step.Id;
+            _selectedStepName = step.Name;
+            _isDropdownOpen = false;
+        }
+
+        private async Task LoadRoles()
+        {
+            ApiResponse<List<RoleResponseDto>> response = await _roleService.GetAllRolesAsync();
+
+            _availableRoles = response.Result.Select(r => new RoleVM
+            {
+                Id = r.Id,
+                RoleName = r.Name!
+            }).ToList();
+        }
+
+        private async Task LoadSteps()
+        {
+            ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetStepsQueriedAsync();
+
+            if(!response.Success)
+            {
+                _availableSteps = new();
+            }
+
+            _availableSteps = response.Result.Data.Select(s => new StepVM
+            {
+                Id = s.Id,
+                Name = s.Name
+            }).ToList();
         }
 
         private async Task CancelForm()
@@ -89,6 +132,11 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
             selectedRoles.Clear();
             _isNewUserAdmin = false;
             _isNewUserModerator = false;
+        }
+
+        private bool IsSubmitValid()
+        {
+            return !string.IsNullOrEmpty(_name) && !string.IsNullOrEmpty(_email) && !string.IsNullOrEmpty(_selectedStepName); 
         }
     }
 }

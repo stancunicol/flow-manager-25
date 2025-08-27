@@ -66,7 +66,6 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email,string? globalSearchTerm, QueryParams parameters, bool includeDeleted = false)
         {
             IQueryable<User> query = _context.Users
-                .Where(u => u.DeletedAt == null)
                 .Include(u => u.Roles)
                     .ThenInclude(ur => ur.Role)
                 .Include(u => u.Teams)
@@ -266,6 +265,55 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<(List<User> Data, int TotalCount)> GetUnassignedModeratorsByStepIdQueriedAsync(Guid moderatorId, Guid stepId, string? globalSearchTerm, QueryParams? parameters)
+        {
+            IQueryable<User> query = _context.Users
+                .Where(u => u.DeletedAt == null &&
+                            !u.Teams.Any() &&
+                            u.Roles.Any(ur => ur.DeletedAt == null && ur.RoleId == moderatorId))
+                .Include(u => u.Steps.Where(su => su.StepId == stepId && su.DeletedAt == null))
+                    .ThenInclude(su => su.Step);
+
+
+            if (!string.IsNullOrEmpty(globalSearchTerm))
+            {
+                query = query.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) ||
+                                         u.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()));
+            }
+
+            int totalCount = await query.CountAsync();
+
+            if (parameters == null)
+            {
+                var data = await query.ToListAsync();
+                return (data, totalCount);
+            }
+
+            // sorting
+            if (parameters.SortBy != null)
+            {
+                if (parameters.SortDescending is bool SortDesc)
+                    query = query.ApplySorting<User>(parameters.SortBy, SortDesc);
+                else
+                    query = query.ApplySorting<User>(parameters.SortBy, false);
+            }
+
+            // pagination
+            if (parameters.Page == null || parameters.Page < 0 ||
+                parameters.PageSize == null || parameters.PageSize < 0)
+            {
+                List<User> data = await query.ToListAsync();
+                return (data, totalCount);
+            }
+            else
+            {
+                List<User> data = await query.Skip((int)parameters.PageSize * ((int)parameters.Page - 1))
+                                                     .Take((int)parameters.PageSize)
+                                                     .ToListAsync();
+                return (data, totalCount);
+            }
         }
     }
 }

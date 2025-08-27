@@ -47,6 +47,35 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        [HttpGet("moderators/queried/{stepId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetModeratorTeamsQueriedAsync(Guid stepId, [FromQuery] QueriedTeamRequestDto payload)
+        {
+            var result = await _teamService.GetAllModeratorTeamsQueriedAsync(stepId, payload);
+
+            if (result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<TeamResponseDto>(),
+                    Success = false,
+                    Message = "No teams found matching the criteria.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Teams retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
         /// <summary>
         ///  Splits the users in assigned to the teamId team and unassigned in two different lists
         /// </summary>

@@ -195,6 +195,48 @@ namespace FlowManager.Infrastructure.Repositories
                 return (assignedUsers, unassignedUsers);
             }
         }
+
+        public async Task<(List<Team>, int)> GetAllModeratorTeamsByStepIdQueriedAsync(Guid stepId, Guid moderatorId, string? globalSearchTerm, QueryParams? queryParams)
+        {
+            var query = _context.Teams
+                .Where(t => t.DeletedAt == null &&
+                            t.Users.Any(ut => ut.DeletedAt == null &&
+                                              ut.UserId == moderatorId &&
+                                              ut.User.Steps.Any(su => su.StepId == stepId) &&
+                                              ut.Team.Users.Any(ut => ut.DeletedAt == null && ut.UserId == moderatorId)))
+                .Include(t => t.Users)
+                    .ThenInclude(ut => ut.User)
+                        .ThenInclude(u => u.Steps.Where(su => su.StepId == stepId))
+                            .ThenInclude(us => us.Step)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(globalSearchTerm))
+            {
+                query = query.Where(t =>
+                    t.Name.Contains(globalSearchTerm) ||
+                    t.Users.Any(ut => ut.User.Email!.Contains(globalSearchTerm) || ut.User.Name.Contains(globalSearchTerm)));
+            }
+
+            int totalCount = await query.CountAsync();
+
+            // filtering
+            if (!string.IsNullOrEmpty(globalSearchTerm))
+            {
+                query = query.Where(t => t.Name.ToUpper() == globalSearchTerm.ToUpper() ||
+                                                            t.Users.Any(ut => ut.User.NormalizedEmail == globalSearchTerm.ToUpper() ||
+                                                                        ut.User.Name.Contains(globalSearchTerm)));
+            }
+
+            // pagination
+            if (queryParams?.Page.HasValue == true && queryParams?.PageSize.HasValue == true)
+            {
+                int skip = (queryParams.Page.Value - 1) * queryParams.PageSize.Value;
+                query = query.Skip(skip).Take(queryParams.PageSize.Value);
+            }
+
+            var moderatorTeams = await query.ToListAsync();
+            return (moderatorTeams, totalCount);
+        }
     }
 }
 

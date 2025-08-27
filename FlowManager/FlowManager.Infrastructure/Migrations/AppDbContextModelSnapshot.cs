@@ -89,10 +89,8 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStep", b =>
                 {
-                    b.Property<Guid>("FlowId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("StepId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -101,13 +99,21 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("FlowId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool?>("IsApproved")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid>("StepId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("FlowId", "StepId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlowId");
 
                     b.HasIndex("StepId");
 
@@ -126,13 +132,7 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("FlowStepFlowId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("FlowStepId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("FlowStepStepId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("TeamId")
@@ -143,9 +143,9 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TeamId");
+                    b.HasIndex("FlowStepId");
 
-                    b.HasIndex("FlowStepFlowId", "FlowStepStepId");
+                    b.HasIndex("TeamId");
 
                     b.ToTable("FlowStepTeams");
                 });
@@ -162,13 +162,7 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("FlowStepFlowId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("FlowStepId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("FlowStepStepId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -179,9 +173,9 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("FlowStepId");
 
-                    b.HasIndex("FlowStepFlowId", "FlowStepStepId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("FlowStepUsers");
                 });
@@ -700,15 +694,15 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepTeam", b =>
                 {
-                    b.HasOne("FlowManager.Domain.Entities.Team", "Team")
-                        .WithMany("FlowStepTeams")
-                        .HasForeignKey("TeamId")
+                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
+                        .WithMany("AssignedTeams")
+                        .HasForeignKey("FlowStepId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
-                        .WithMany("AssignedTeams")
-                        .HasForeignKey("FlowStepFlowId", "FlowStepStepId")
+                    b.HasOne("FlowManager.Domain.Entities.Team", "Team")
+                        .WithMany("FlowStepTeams")
+                        .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -719,15 +713,15 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepUser", b =>
                 {
-                    b.HasOne("FlowManager.Domain.Entities.User", "User")
-                        .WithMany("FlowStepUsers")
-                        .HasForeignKey("UserId")
+                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
+                        .WithMany("AssignedUsers")
+                        .HasForeignKey("FlowStepId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
-                        .WithMany("AssignedUsers")
-                        .HasForeignKey("FlowStepFlowId", "FlowStepStepId")
+                    b.HasOne("FlowManager.Domain.Entities.User", "User")
+                        .WithMany("FlowStepUsers")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
