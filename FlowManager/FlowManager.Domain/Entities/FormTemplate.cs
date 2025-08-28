@@ -18,7 +18,8 @@ namespace FlowManager.Domain.Entities
 
         // navigation properties
         public virtual ICollection<FormTemplateComponent> Components { get; set; } = new List<FormTemplateComponent>();
-
+        public Guid? FlowId { get; set; }
+        public virtual Flow? Flow { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }

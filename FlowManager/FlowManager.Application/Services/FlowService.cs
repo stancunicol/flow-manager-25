@@ -9,6 +9,8 @@ using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Application.Utils;
 using Microsoft.EntityFrameworkCore;
 using FlowManager.Shared.DTOs.Responses.Step;
+using FlowManager.Shared.DTOs.Responses.FormTemplate;
+using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -18,9 +20,9 @@ namespace FlowManager.Infrastructure.Services
         private readonly IFormTemplateRepository _formTemplateRepository;
         private readonly IStepRepository _stepRepository;
 
-        public FlowService(IFlowRepository flowRepository, IFormTemplateRepository formTemplateRepository,IStepRepository stepRepository)
+        public FlowService(IFlowRepository flowRepository, IFormTemplateRepository formTemplateRepository, IStepRepository stepRepository)
         {
-            _flowRepository = flowRepository;   
+            _flowRepository = flowRepository;
             _formTemplateRepository = formTemplateRepository;
             _stepRepository = stepRepository;
         }
@@ -42,6 +44,8 @@ namespace FlowManager.Infrastructure.Services
                         Name = s.Step.Name,
                     }).ToList(),
                     FormTemplateId = f.FormTemplateId,
+                    ActiveFormTemplate = f.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(f.ActiveFormTemplate) : null,
+                    FormTemplates = f.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
                     CreatedAt = f.CreatedAt,
                     UpdatedAt = f.UpdatedAt,
                     DeletedAt = f.DeletedAt
@@ -54,7 +58,7 @@ namespace FlowManager.Infrastructure.Services
         {
             Flow? flow = await _flowRepository.GetFlowByIdAsync(id);
 
-            if(flow == null)
+            if (flow == null)
             {
                 throw new EntryNotFoundException($"Flow with id {id} was not found.");
             }
@@ -69,6 +73,8 @@ namespace FlowManager.Infrastructure.Services
                     Name = s.Step.Name,
                 }).ToList(),
                 FormTemplateId = flow.FormTemplateId,
+                ActiveFormTemplate = flow.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flow.ActiveFormTemplate) : null,
+                FormTemplates = flow.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flow.CreatedAt,
                 UpdatedAt = flow.UpdatedAt,
                 DeletedAt = flow.DeletedAt
@@ -80,7 +86,6 @@ namespace FlowManager.Infrastructure.Services
             Flow flowToPost = new Flow
             {
                 Name = payload.Name,
-                FormTemplateId = payload.FormTemplateId,
             };
 
             flowToPost.Steps = payload.StepIds.Select(stepId => new FlowStep
@@ -88,6 +93,7 @@ namespace FlowManager.Infrastructure.Services
                 StepId = stepId,
                 FlowId = flowToPost.Id
             }).ToList();
+
 
             await _flowRepository.CreateFlowAsync(flowToPost);
 
@@ -97,12 +103,14 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
-                Steps = flowToPost.Steps.Select(s => new StepResponseDto
+                Steps = postedFlow.Steps.Select(s => new StepResponseDto
                 {
                     Id = s.Step.Id,
                     Name = s.Step.Name,
                 }).ToList(),
-                FormTemplateId = flowToPost.FormTemplateId,
+                FormTemplateId = postedFlow.FormTemplateId,
+                ActiveFormTemplate = postedFlow.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(postedFlow.ActiveFormTemplate) : null,
+                FormTemplates = postedFlow.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flowToPost.CreatedAt,
                 UpdatedAt = flowToPost.UpdatedAt,
                 DeletedAt = flowToPost.DeletedAt
@@ -113,21 +121,17 @@ namespace FlowManager.Infrastructure.Services
         {
             Flow? flowToUpdate = await _flowRepository.GetFlowIncludeDeletedStepsByIdAsync(id);
 
-            if(flowToUpdate == null)
+            if (flowToUpdate == null)
             {
                 throw new EntryNotFoundException($"Flow with id {id} was not found.");
             }
 
-            if(!string.IsNullOrEmpty(payload.Name))
+            if (!string.IsNullOrEmpty(payload.Name))
             {
                 flowToUpdate.Name = payload.Name;
             }
 
-            if(payload.FormTemplateId.HasValue && 
-                await _formTemplateRepository.GetFormTemplateByIdAsync(payload.FormTemplateId.Value) != null)
-            {
-                flowToUpdate.FormTemplateId = payload.FormTemplateId.Value;
-            }
+            // Note: FormTemplateId is removed from PatchFlowRequestDto since Flow versioning handles this automatically
 
             if (payload.StepIds == null || !payload.StepIds.Any())
             {
@@ -142,6 +146,8 @@ namespace FlowManager.Infrastructure.Services
                         Name = s.Step.Name,
                     }).ToList(),
                     FormTemplateId = flowToUpdate.FormTemplateId,
+                    ActiveFormTemplate = flowToUpdate.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToUpdate.ActiveFormTemplate) : null,
+                    FormTemplates = flowToUpdate.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
                     CreatedAt = flowToUpdate.CreatedAt,
                     UpdatedAt = flowToUpdate.UpdatedAt,
                     DeletedAt = flowToUpdate.DeletedAt
@@ -150,23 +156,23 @@ namespace FlowManager.Infrastructure.Services
 
             foreach (Guid stepId in payload.StepIds)
             {
-                if(await _stepRepository.GetStepByIdAsync(stepId) == null)
+                if (await _stepRepository.GetStepByIdAsync(stepId) == null)
                 {
                     throw new EntryNotFoundException($"Step with id {stepId} was not found.");
                 }
             }
 
-            foreach(FlowStep step in flowToUpdate.Steps)
+            foreach (FlowStep step in flowToUpdate.Steps)
             {
                 step.DeletedAt = DateTime.UtcNow;
             }
 
-            foreach(Guid stepId in payload.StepIds)
+            foreach (Guid stepId in payload.StepIds)
             {
-                if(flowToUpdate.Steps.Any(s => s.StepId == stepId))
+                if (flowToUpdate.Steps.Any(s => s.StepId == stepId))
                 {
                     FlowStep? existingStep = flowToUpdate.Steps.FirstOrDefault(fs => fs.StepId == stepId);
-                    if(existingStep != null)
+                    if (existingStep != null)
                     {
                         existingStep.DeletedAt = null;
                     }
@@ -192,6 +198,8 @@ namespace FlowManager.Infrastructure.Services
                     Name = s.Step.Name,
                 }).ToList(),
                 FormTemplateId = flowToUpdate.FormTemplateId,
+                ActiveFormTemplate = flowToUpdate.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToUpdate.ActiveFormTemplate) : null,
+                FormTemplates = flowToUpdate.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flowToUpdate.CreatedAt,
                 UpdatedAt = flowToUpdate.UpdatedAt,
                 DeletedAt = flowToUpdate.DeletedAt
@@ -201,7 +209,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<FlowResponseDto> DeleteFlowAsync(Guid id)
         {
             Flow? flowToDelete = await _flowRepository.GetFlowByIdAsync(id);
-            if(flowToDelete == null)
+            if (flowToDelete == null)
             {
                 throw new EntryNotFoundException($"Flow with id {id} was not found.");
             }
@@ -218,6 +226,8 @@ namespace FlowManager.Infrastructure.Services
                     Name = s.Step.Name,
                 }).ToList(),
                 FormTemplateId = flowToDelete.FormTemplateId,
+                ActiveFormTemplate = flowToDelete.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToDelete.ActiveFormTemplate) : null,
+                FormTemplates = flowToDelete.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flowToDelete.CreatedAt,
                 UpdatedAt = flowToDelete.UpdatedAt,
                 DeletedAt = flowToDelete.DeletedAt
@@ -228,7 +238,7 @@ namespace FlowManager.Infrastructure.Services
         {
             Flow? flow = await _flowRepository.GetFlowByIdAsync(flowId);
 
-            if(flow == null)
+            if (flow == null)
             {
                 throw new EntryNotFoundException($"Flow with id {flowId} was not found.");
             }
@@ -243,6 +253,24 @@ namespace FlowManager.Infrastructure.Services
                     DeletedAt = fs.Step.DeletedAt
                 })
             );
+        }
+
+        private FormTemplateResponseDto MapToFormTemplateResponseDto(FormTemplate ft)
+        {
+            return new FormTemplateResponseDto
+            {
+                Id = ft.Id,
+                Name = ft.Name,
+                Content = ft.Content,
+                FlowId = ft.FlowId,
+                Components = ft.Components?.Where(ftc => ftc.DeletedAt == null).Select(ftc => new FormTemplateComponentResponseDto
+                {
+                    Id = ftc.ComponentId,
+                }).ToList(),
+                CreatedAt = ft.CreatedAt,
+                UpdatedAt = ft.UpdatedAt,
+                DeletedAt = ft.DeletedAt
+            };
         }
     }
 }

@@ -14,11 +14,12 @@ namespace FlowManager.Infrastructure.Seed
         {
             // Verify we have the required data first
             var users = dbContext.Users.ToList();
+            var flows = dbContext.Flows.ToList();
             var formTemplates = dbContext.FormTemplates.ToList();
             var steps = dbContext.Steps.ToList();
             var components = dbContext.Components.ToList();
 
-            if (!users.Any() || !formTemplates.Any() || !steps.Any())
+            if (!users.Any() || !flows.Any() || !steps.Any())
             {
                 // Create basic dependencies if they don't exist
                 CreateBasicDependencies(dbContext);
@@ -26,6 +27,7 @@ namespace FlowManager.Infrastructure.Seed
 
                 // Refresh the lists
                 users = dbContext.Users.ToList();
+                flows = dbContext.Flows.ToList();
                 formTemplates = dbContext.FormTemplates.ToList();
                 steps = dbContext.Steps.ToList();
                 components = dbContext.Components.ToList();
@@ -76,6 +78,7 @@ namespace FlowManager.Infrastructure.Seed
                     }
                 };
                 dbContext.Steps.AddRange(steps);
+                dbContext.SaveChanges(); // Save steps first
             }
 
             // Create Components if they don't exist
@@ -189,51 +192,113 @@ namespace FlowManager.Infrastructure.Seed
                     }
                 };
                 dbContext.Components.AddRange(components);
+                dbContext.SaveChanges(); // Save components
             }
 
-            // Create FormTemplates if they don't exist (respecting MaxLength constraints)
-            if (!dbContext.FormTemplates.Any())
+            // Create Flows if they don't exist
+            if (!dbContext.Flows.Any())
             {
-                var formTemplates = new List<FormTemplate>
+                var flows = new List<Flow>
                 {
-                    new FormTemplate
+                    new Flow
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Employee Registration", // MaxLength 50
-                        Content = "Form for registering new employees in the company system. This form collects basic information including personal details, department assignment, and agreement to company policies.", // MaxLength 1000
+                        Name = "Employee Onboarding Flow",
                         CreatedAt = DateTime.UtcNow
                     },
-                    new FormTemplate
+                    new Flow
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Project Request", // MaxLength 50
-                        Content = "Form for submitting new project requests. Include project details, timeline, budget requirements, and expected outcomes. This form will be reviewed by management for approval.", // MaxLength 1000
+                        Name = "Project Approval Flow",
                         CreatedAt = DateTime.UtcNow
                     },
-                    new FormTemplate
+                    new Flow
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Equipment Request", // MaxLength 50
-                        Content = "Form for requesting office equipment and supplies. Specify the type of equipment needed, justification for the request, and urgency level. All requests require manager approval.", // MaxLength 1000
+                        Name = "Equipment Request Flow",
                         CreatedAt = DateTime.UtcNow
                     },
-                    new FormTemplate
+                    new Flow
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Leave Application", // MaxLength 50
-                        Content = "Form for applying for leave from work. Include leave type, dates, reason, and emergency contact information. Submit at least 2 weeks in advance for planned leave.", // MaxLength 1000
+                        Name = "Leave Management Flow",
                         CreatedAt = DateTime.UtcNow
                     },
-                    new FormTemplate
+                    new Flow
                     {
                         Id = Guid.NewGuid(),
-                        Name = "Performance Review", // MaxLength 50
-                        Content = "Annual performance review form for employees. Self-assessment section followed by manager evaluation. Used for promotion considerations and development planning.", // MaxLength 1000
+                        Name = "Performance Review Flow",
                         CreatedAt = DateTime.UtcNow
                     }
                 };
-                dbContext.FormTemplates.AddRange(formTemplates);
+                dbContext.Flows.AddRange(flows);
+                dbContext.SaveChanges(); // Save flows first
+
+                // Now create FormTemplates for each Flow
+                var savedFlows = dbContext.Flows.ToList();
+                var savedComponents = dbContext.Components.ToList();
+                CreateFormTemplatesForFlows(dbContext, savedFlows, savedComponents);
             }
+        }
+
+        private static void CreateFormTemplatesForFlows(AppDbContext dbContext, List<Flow> flows, List<Component> components)
+        {
+            var random = new Random();
+
+            foreach (var flow in flows)
+            {
+                // Create 1-2 FormTemplate versions for each Flow
+                var templateCount = random.Next(1, 3); // 1 or 2 templates per flow
+
+                for (int i = 0; i < templateCount; i++)
+                {
+                    var templateName = flow.Name.Replace(" Flow", "") + (i == 0 ? " Form" : $" Form v{i + 1}");
+
+                    var formTemplate = new FormTemplate
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = templateName.Length > 50 ? templateName.Substring(0, 50) : templateName,
+                        Content = GenerateFormContent(flow.Name),
+                        FlowId = flow.Id, // Associate with the Flow
+                        CreatedAt = DateTime.UtcNow.AddDays(-i * 5) // Older versions have earlier dates
+                    };
+
+                    dbContext.FormTemplates.Add(formTemplate);
+                    dbContext.SaveChanges(); // Save template to get ID
+
+                    // Add some random components to this template
+                    var selectedComponents = components.Take(random.Next(3, 6)).ToList();
+                    foreach (var component in selectedComponents)
+                    {
+                        var formTemplateComponent = new FormTemplateComponent
+                        {
+                            Id = Guid.NewGuid(),
+                            FormTemplateId = formTemplate.Id,
+                            ComponentId = component.Id,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        dbContext.FormTemplateComponents.Add(formTemplateComponent);
+                    }
+                }
+            }
+
+            dbContext.SaveChanges();
+        }
+
+        private static string GenerateFormContent(string flowName)
+        {
+            var contentTemplates = new Dictionary<string, string>
+            {
+                ["Employee Onboarding Flow"] = "Form for registering new employees. Collects personal information, department assignment, and policy agreements.",
+                ["Project Approval Flow"] = "Form for submitting project requests. Include details, timeline, budget, and expected outcomes for management review.",
+                ["Equipment Request Flow"] = "Form for requesting office equipment. Specify equipment type, justification, and urgency level for approval.",
+                ["Leave Management Flow"] = "Form for leave applications. Include dates, type, reason, and emergency contacts. Submit 2 weeks in advance.",
+                ["Performance Review Flow"] = "Annual performance review form with self-assessment and manager evaluation sections for development planning."
+            };
+
+            return contentTemplates.ContainsKey(flowName)
+                ? contentTemplates[flowName]
+                : "Standard form template for workflow processing and approval.";
         }
 
         private static void CreateSampleFormResponses(AppDbContext dbContext, List<User> users, List<FormTemplate> formTemplates, List<Step> steps, List<Component> components)
@@ -252,31 +317,34 @@ namespace FlowManager.Infrastructure.Seed
                 var template = formTemplates[random.Next(formTemplates.Count)];
                 var step = steps[random.Next(steps.Count)];
 
-                // Create sample response fields using available components
+                // Get components associated with this template
+                var templateComponents = dbContext.FormTemplateComponents
+                    .Where(ftc => ftc.FormTemplateId == template.Id && ftc.DeletedAt == null)
+                    .Select(ftc => ftc.ComponentId)
+                    .ToList();
+
                 var responseFields = new Dictionary<Guid, object>();
 
-                // Add responses for each component type
-                if (components.Any())
+                // Add responses for components in this template
+                foreach (var componentId in templateComponents)
                 {
-                    var selectedComponents = components.Take(random.Next(2, Math.Min(5, components.Count))).ToList();
+                    var component = components.FirstOrDefault(c => c.Id == componentId);
+                    if (component == null) continue;
 
-                    foreach (var component in selectedComponents)
+                    object responseValue = component.Type switch
                     {
-                        object responseValue = component.Type switch
-                        {
-                            "text" => GenerateRandomName(),
-                            "email" => GenerateRandomEmail(),
-                            "number" => random.Next(18, 65),
-                            "select" => new[] { "IT", "HR", "Finance", "Marketing", "Operations", "Sales" }[random.Next(6)],
-                            "checkbox" => random.Next(2) == 1,
-                            "textarea" => GenerateRandomComment(),
-                            "date" => DateTime.Now.AddDays(random.Next(1, 365)).ToString("yyyy-MM-dd"),
-                            "radio" => new[] { "Low", "Medium", "High", "Urgent" }[random.Next(4)],
-                            _ => $"Sample response for {component.Label}"
-                        };
+                        "text" => GenerateRandomName(),
+                        "email" => GenerateRandomEmail(),
+                        "number" => random.Next(18, 65),
+                        "select" => new[] { "IT", "HR", "Finance", "Marketing", "Operations", "Sales" }[random.Next(6)],
+                        "checkbox" => random.Next(2) == 1,
+                        "textarea" => GenerateRandomComment(),
+                        "date" => DateTime.Now.AddDays(random.Next(1, 365)).ToString("yyyy-MM-dd"),
+                        "radio" => new[] { "Low", "Medium", "High", "Urgent" }[random.Next(4)],
+                        _ => $"Sample response for {component.Label}"
+                    };
 
-                        responseFields[component.Id] = responseValue;
-                    }
+                    responseFields[component.Id] = responseValue;
                 }
 
                 var formResponse = new FormResponse
@@ -286,8 +354,8 @@ namespace FlowManager.Infrastructure.Seed
                     StepId = step.Id,
                     UserId = user.Id,
                     ResponseFields = responseFields,
-                    RejectReason = random.Next(10) == 0 ? "Sample rejection reason" : null, // 10% chance of rejection
-                    CreatedAt = DateTime.UtcNow.AddDays(-random.Next(30)), // Random date within last 30 days
+                    RejectReason = random.Next(10) == 0 ? "Sample rejection reason" : null,
+                    CreatedAt = DateTime.UtcNow.AddDays(-random.Next(30)),
                     UpdatedAt = random.Next(5) == 0 ? DateTime.UtcNow.AddDays(-random.Next(10)) : null
                 };
 
@@ -334,4 +402,3 @@ namespace FlowManager.Infrastructure.Seed
         }
     }
 }
-

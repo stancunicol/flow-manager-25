@@ -25,7 +25,8 @@ namespace FlowManager.Infrastructure.Repositories
         {
             IQueryable<FormTemplate> query = _context.FormTemplates
                                                        .Where(ft => ft.DeletedAt == null)
-                                                       .Include(ft => ft.Components);
+                                                       .Include(ft => ft.Components)
+                                                       .Include(ft => ft.Flow);
 
             if (name != null)
             {
@@ -37,8 +38,7 @@ namespace FlowManager.Infrastructure.Repositories
             if (parameters == null)
             {
                 var data = await query.ToListAsync();
-
-                return (data,totalCount);
+                return (data, totalCount);
             }
 
             if (parameters.SortBy != null)
@@ -69,7 +69,17 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.FormTemplates
                 .Where(ft => ft.DeletedAt == null)
                 .Include(ft => ft.Components)
+                .Include(ft => ft.Flow)
                 .FirstOrDefaultAsync(ft => ft.Name == name);
+        }
+
+        public async Task<FormTemplate?> GetFormTemplateByNameAndFlowIdAsync(string name, Guid flowId)
+        {
+            return await _context.FormTemplates
+                .Where(ft => ft.DeletedAt == null && ft.Name == name && ft.FlowId == flowId)
+                .Include(ft => ft.Components)
+                .Include(ft => ft.Flow)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<FormTemplate?> GetFormTemplateByIdAsync(Guid id)
@@ -77,7 +87,26 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.FormTemplates
                 .Where(ft => ft.DeletedAt == null)
                 .Include(ft => ft.Components)
+                .Include(ft => ft.Flow)
                 .FirstOrDefaultAsync(ft => ft.Id == id);
+        }
+
+        public async Task<List<FormTemplate>> GetFormTemplatesByFlowIdAsync(Guid flowId)
+        {
+            return await _context.FormTemplates
+                .Where(ft => ft.DeletedAt == null && ft.FlowId == flowId)
+                .Include(ft => ft.Components)
+                .OrderByDescending(ft => ft.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<FormTemplate?> GetActiveFormTemplateByFlowIdAsync(Guid flowId)
+        {
+            return await _context.FormTemplates
+                .Where(ft => ft.DeletedAt == null && ft.FlowId == flowId)
+                .Include(ft => ft.Components)
+                .OrderByDescending(ft => ft.CreatedAt)
+                .FirstOrDefaultAsync();
         }
 
         public async Task SaveChangesAsync()
@@ -96,7 +125,6 @@ namespace FlowManager.Infrastructure.Repositories
             IQueryable<FormTemplateComponent> query = _context.FormTemplateComponents;
             if (!includeDeleted)
                 query = query.Where(ftc => ftc.DeletedAt == null);
-
             return await query.FirstOrDefaultAsync(ftc => ftc.Id == id);
         }
     }
