@@ -116,6 +116,46 @@ namespace FlowManager.Application.Services
             };
         }
 
+        public async Task<PagedResponseDto<FormResponseResponseDto>> GetFormResponsesAssignedToModeratorAsync(Guid moderatorId, QueriedFormResponseRequestDto payload)
+        {
+            _logger.LogInformation("Getting form responses assigned to moderator: {ModeratorId}", moderatorId);
+
+            QueryParams? queryParams = payload.QueryParams?.ToQueryParams();
+
+            var (data, totalCount) = await _formResponseRepository.GetFormResponsesAssignedToModeratorAsync(
+                moderatorId,
+                payload.SearchTerm,
+                payload.CreatedFrom,
+                payload.CreatedTo,
+                payload.IncludeDeleted,
+                queryParams);
+
+            var items = data.Select(fr => new FormResponseResponseDto
+            {
+                Id = fr.Id,
+                RejectReason = fr.RejectReason,
+                ResponseFields = fr.ResponseFields,
+                FormTemplateId = fr.FormTemplateId,
+                FormTemplateName = fr.FormTemplate?.Name,
+                StepId = fr.StepId,
+                StepName = fr.Step?.Name,
+                UserId = fr.UserId,
+                UserName = fr.User?.Name,
+                UserEmail = fr.User?.Email,
+                CreatedAt = fr.CreatedAt,
+                UpdatedAt = fr.UpdatedAt,
+                DeletedAt = fr.DeletedAt
+            }).ToList();
+
+            return new PagedResponseDto<FormResponseResponseDto>
+            {
+                Data = items,
+                TotalCount = totalCount,
+                Page = payload.QueryParams?.Page ?? 1,
+                PageSize = payload.QueryParams?.PageSize ?? totalCount
+            };
+        }
+
         public async Task<FormResponseResponseDto> PostFormResponseAsync(PostFormResponseRequestDto payload)
         {
             _logger.LogInformation("Creating new form response");

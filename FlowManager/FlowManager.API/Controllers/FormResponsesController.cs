@@ -90,6 +90,34 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        [HttpGet("assigned-to-moderator/{moderatorId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetFormResponsesAssignedToModeratorAsync(Guid moderatorId, [FromQuery] QueriedFormResponseRequestDto payload)
+        {
+            var result = await _formResponseService.GetFormResponsesAssignedToModeratorAsync(moderatorId, payload);
+
+            if (result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<FormResponseResponseDto>(),
+                    Success = false,
+                    Message = "No form responses assigned to this moderator.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Assigned form responses retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

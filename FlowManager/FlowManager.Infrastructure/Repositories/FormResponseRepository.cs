@@ -159,6 +159,70 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<(List<FormResponse> data, int totalCount)> GetFormResponsesAssignedToModeratorAsync(
+            Guid moderatorId,
+            string? searchTerm = null,
+            DateTime? createdFrom = null,
+            DateTime? createdTo = null,
+            bool includeDeleted = false,
+            QueryParams? queryParams = null)
+        {
+            var query = _context.FormResponses
+                .Include(fr => fr.FormTemplate)
+                .Include(fr => fr.Step)
+                    .ThenInclude(s => s.Users.Where(su => su.DeletedAt == null))
+                .Include(fr => fr.Step)
+                    .ThenInclude(s => s.Teams.Where(st => st.DeletedAt == null))
+                        .ThenInclude(st => st.Team.Users.Where(ut => ut.DeletedAt == null))
+                .Include(fr => fr.User)
+                .Where(fr =>
+                    // Doar formularele unde moderatorul este asignat la step-ul curent
+                    fr.Step.Users.Any(su => su.UserId == moderatorId && su.DeletedAt == null) ||
+                    fr.Step.Teams.Any(st => st.Team.Users.Any(ut => ut.UserId == moderatorId && ut.DeletedAt == null) && st.DeletedAt == null)
+                );
+
+            // Exclude deleted unless explicitly requested
+            if (!includeDeleted)
+            {
+                query = query.Where(fr => fr.DeletedAt == null);
+            }
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(fr =>
+                    (fr.FormTemplate != null && fr.FormTemplate.Name.Contains(searchTerm)) ||
+                    (fr.Step != null && fr.Step.Name.Contains(searchTerm)) ||
+                    (fr.User != null && (fr.User.Name.Contains(searchTerm) || fr.User.Email.Contains(searchTerm))) ||
+                    (fr.RejectReason != null && fr.RejectReason.Contains(searchTerm))
+                );
+            }
+
+            // Apply date filters
+            if (createdFrom.HasValue)
+            {
+                query = query.Where(fr => fr.CreatedAt >= createdFrom.Value);
+            }
+
+            if (createdTo.HasValue)
+            {
+                query = query.Where(fr => fr.CreatedAt <= createdTo.Value);
+            }
+
+            // Get total count before pagination
+            var totalCount = await query.CountAsync();
+
+            //// Apply sorting
+            //query = ApplySorting(query, queryParams);
+
+            //// Apply pagination
+            //query = ApplyPagination(query, queryParams);
+
+            var data = await query.ToListAsync();
+
+            return (data, totalCount);
+        }
+
         public async Task<List<FormResponse>> GetPendingFormResponsesAsync()
         {
             return await _context.FormResponses

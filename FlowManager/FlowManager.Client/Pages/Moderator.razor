@@ -3,10 +3,13 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Http
 @using Microsoft.AspNetCore.Authorization
+@using FlowManager.Shared.DTOs.Requests.FormResponse
+@using FlowManager.Client.Services
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthProvider
 @inject CookieAuthStateProvider CookieAuthStateProvider
 @inject HttpClient Http
+@inject FormResponseService FormResponseService
 @attribute [Authorize(Roles = "Moderator")]
 
 <FlowManager.Client.Components.NavBar.Navbar />
@@ -96,25 +99,112 @@
                     @if (!string.IsNullOrEmpty(searchTerm))
                     {
                         <div class="search-results-info">
-                            @if (isLoading)
+                            @if (assignedForms?.Any() == true)
                             {
-                                <span>Searching...</span>
+                                <span>Found @assignedForms.Count form(s) matching "@searchTerm"</span>
                             }
-                            else
+                            else if (!isLoading)
                             {
-                                <span>Search results for "@searchTerm"</span>
+                                <span>No forms found matching "@searchTerm"</span>
                             }
                         </div>
                     }
                 </div>
 
                 <!-- Content -->
-                @if (isLoading)
+                @if (isLoading && currentPage == 1)
                 {
                     <div class="loading-container">
                         <div class="spinner"></div>
                         <p>Loading assigned forms...</p>
                     </div>
+                }
+                else if (assignedForms?.Any() == true)
+                {
+                    <div class="forms-grid">
+                        @foreach (var form in assignedForms.OrderByDescending(f => f.CreatedAt))
+                        {
+                            <div class="form-card" @onclick="() => ViewFormResponse(form)">
+                                <div class="form-card-header">
+                                    <div class="form-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="form-info">
+                                        <h4>@(form.FormTemplateName ?? "Unknown Template")</h4>
+                                        <p class="form-meta">Step: @(form.StepName ?? "Unknown Step")</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-card-body">
+                                    <div class="form-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">User:</span>
+                                            <span class="detail-value">@(form.UserName ?? "Unknown")</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Email:</span>
+                                            <span class="detail-value">@(form.UserEmail ?? "Unknown")</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Submitted:</span>
+                                            <span class="detail-value">@form.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                        @if (form.UpdatedAt.HasValue)
+                                        {
+                                            <div class="detail-item">
+                                                <span class="detail-label">Updated:</span>
+                                                <span class="detail-value">@form.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(form.RejectReason))
+                                        {
+                                            <div class="detail-item reject-reason">
+                                                <span class="detail-label">Reject Reason:</span>
+                                                <span class="detail-value">@form.RejectReason</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="form-card-footer">
+                                    <div class="view-indicator">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                            <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
+                                        </svg>
+                                        Click to review
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Load More Section -->
+                    @if (hasMoreForms && !isLoading)
+                    {
+                        <div class="load-more-container">
+                            <button class="load-more-btn" @onclick="LoadMoreForms">
+                                Load More Forms
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div class="pagination-info">
+                                Showing @assignedForms.Count of @totalFormsCount assigned forms
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Loading More Indicator -->
+                    @if (isLoading && currentPage > 1)
+                    {
+                        <div class="loading-more-container">
+                            <div class="spinner-small"></div>
+                            <span>Loading more forms...</span>
+                        </div>
+                    }
                 }
                 else
                 {
@@ -141,3 +231,29 @@
         }
     </main>
 </div>
+
+<!-- View Form Modal - TODO: Implement later -->
+@if (showViewFormModal && selectedFormResponse != null)
+{
+    <div class="modal-overlay" @onclick="CloseViewFormModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>Review Form: @selectedFormResponse.FormTemplateName</h3>
+                <button class="close-btn" @onclick="CloseViewFormModal">×</button>
+            </div>
+            <div class="modal-body">
+                @if (isLoadingFormDetails)
+                {
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Loading form details...</p>
+                    </div>
+                }
+                else
+                {
+                    <p>Form review functionality will be implemented here.</p>
+                }
+            </div>
+        </div>
+    </div>
+}

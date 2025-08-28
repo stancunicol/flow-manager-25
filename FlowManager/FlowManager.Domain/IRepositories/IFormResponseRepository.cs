@@ -20,6 +20,13 @@ namespace FlowManager.Domain.IRepositories
         Task<List<FormResponse>> GetFormResponsesByUserAsync(Guid userId);
         Task<List<FormResponse>> GetFormResponsesByStepAsync(Guid stepId);
         Task<List<FormResponse>> GetFormResponsesByTemplateAsync(Guid formTemplateId);
+        Task<(List<FormResponse> data, int totalCount)> GetFormResponsesAssignedToModeratorAsync(
+            Guid moderatorId,
+            string? searchTerm = null,
+            DateTime? createdFrom = null,
+            DateTime? createdTo = null,
+            bool includeDeleted = false,
+            QueryParams? queryParams = null);
         Task<List<FormResponse>> GetPendingFormResponsesAsync();
         Task<List<FormResponse>> GetRejectedFormResponsesAsync();
         Task<List<FormResponse>> GetFormResponsesByDateRangeAsync(DateTime startDate, DateTime endDate);

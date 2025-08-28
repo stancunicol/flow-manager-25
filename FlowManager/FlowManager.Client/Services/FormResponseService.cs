@@ -94,6 +94,61 @@ namespace FlowManager.Client.Services
             }
         }
 
+        public async Task<PagedModeratorFormsResponse?> GetFormResponsesAssignedToModeratorAsync(Guid moderatorId, int page, int pageSize, string? searchTerm = null)
+        {
+            try
+            {
+                var uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
+                {
+                    Path = $"api/formresponses/assigned-to-moderator/{moderatorId}"
+                };
+
+                var query = HttpUtility.ParseQueryString(string.Empty);
+
+                query["IncludeDeleted"] = "false";
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                    query["SearchTerm"] = searchTerm;
+
+                query["QueryParams.Page"] = page.ToString();
+                query["QueryParams.PageSize"] = pageSize.ToString();
+                query["QueryParams.SortBy"] = "CreatedAt";
+                query["QueryParams.SortDescending"] = "true";
+
+                uriBuilder.Query = query.ToString();
+
+                var response = await _httpClient.GetAsync(uriBuilder.Uri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<FormResponseApiResponse>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (apiResponse?.Result != null)
+                    {
+                        return new PagedModeratorFormsResponse
+                        {
+                            FormResponses = apiResponse.Result.Data?.ToList() ?? new List<FormResponseResponseDto>(),
+                            TotalCount = apiResponse.Result.TotalCount,
+                            Page = apiResponse.Result.Page,
+                            PageSize = apiResponse.Result.PageSize,
+                            HasMore = apiResponse.Result.HasNextPage
+                        };
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting assigned forms to moderator: {ex.Message}");
+                return null;
+            }
+        }
+
         public async Task<FormResponseResponseDto?> SubmitFormResponseAsync(PostFormResponseRequestDto formResponse)
         {
             try
@@ -135,6 +190,15 @@ namespace FlowManager.Client.Services
     }
 
     public class PagedUserFormsResponse
+    {
+        public List<FormResponseResponseDto> FormResponses { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public bool HasMore { get; set; }
+    }
+
+    public class PagedModeratorFormsResponse
     {
         public List<FormResponseResponseDto> FormResponses { get; set; } = new();
         public int TotalCount { get; set; }

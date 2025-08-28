@@ -14,5 +14,6 @@ namespace FlowManager.Application.Interfaces
         Task<List<FormResponseResponseDto>> GetFormResponsesByUserAsync(Guid userId);
         Task<List<FormResponseResponseDto>> GetFormResponsesByStepAsync(Guid stepId);
         Task<List<FormResponseResponseDto>> GetFormResponsesByTemplateAsync(Guid formTemplateId);
+        Task<PagedResponseDto<FormResponseResponseDto>> GetFormResponsesAssignedToModeratorAsync(Guid moderatorId, QueriedFormResponseRequestDto payload);
     }
 }
