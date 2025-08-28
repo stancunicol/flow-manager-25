@@ -3,6 +3,14 @@
 @using FlowManager.Client.Components.Admin.Flows.AddFlow;
 
 <div class="add-flow-container">
+
+    @if (_showAssignToStepModal)
+    {
+        <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
+                           @bind-StepToAssign="@_stepToAssign"
+                           OnStepAssigned="ConfigureStepsToFlow" />
+    }
+
     <!-- Step configuration area -->
     <div class="step-configuration @(_isDragOver ? "drag-over" : "")"
          @ondrop="HandleDrop"
@@ -135,11 +143,4 @@
             </div>
         }
     </div>
-
-    @if (_showAssignToStepModal)
-    {
-        <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
-                           @bind-StepToAssign="@_stepToAssign"
-                           OnStepAssigned="ConfigureStepsToFlow"/>
-    }
 </div>
