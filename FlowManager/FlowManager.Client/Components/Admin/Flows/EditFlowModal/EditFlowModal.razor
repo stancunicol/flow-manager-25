@@ -1,0 +1,134 @@
+﻿@using FlowManager.Shared.DTOs.Responses.Flow
+@using FlowManager.Client.Components.Admin.FormTemplate
+@using FlowManager.Client.Components.Admin.EditFormTemplate
+<div class="flow-edit-modal-overlay" @onclick="@(() => OnClose.InvokeAsync())" @onclick:stopPropagation="false">
+    <div class="flow-edit-modal-container" @onclick:stopPropagation="true">
+        
+        <!-- Modal Header -->
+        <div class="modal-header">
+            <h2>Edit Form Template: @Flow?.Name</h2>
+            <button class="modal-close" @onclick="@(() => OnClose.InvokeAsync())">×</button>
+        </div>
+
+        <!-- Content -->
+        <div class="modal-content">
+            @if (Flow?.FormTemplateId != null)
+            {
+                <EditFormTemplate FlowId="@Flow.Id" 
+                                  FormTemplateId="@Flow.FormTemplateId.Value"
+                                  OnTemplateSaved="@OnTemplateSaved"
+                                  @ref="editFormTemplateRef" />
+            }
+            else
+            {
+                <div class="no-template-state">
+                    <div class="no-template-icon">📄</div>
+                    <h3>No Form Template</h3>
+                    <p>This flow doesn't have a form template associated with it.</p>
+                    <button class="create-template-btn" @onclick="CreateNewTemplate">
+                        Create Form Template
+                    </button>
+                </div>
+            }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <button class="btn-secondary" @onclick="@(() => OnClose.InvokeAsync())">
+                Cancel
+            </button>
+            <button class="btn-warning" @onclick="SaveTextOnly" disabled="@_isSaving">
+                @if (_isSaving)
+                {
+                    <span class="loading-spinner"></span>
+                }
+                Edit Text Only
+            </button>
+
+            <!-- Pentru modificări de componente -->
+            <button class="btn-primary" @onclick="SaveAsNewTemplate" disabled="@_isSaving">
+                @if (_isSaving)
+                {
+                    <span class="loading-spinner"></span>
+                }
+                Save as New Template
+            </button>
+        </div>
+
+    </div>
+</div>
+
+@code{
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Parameter] public FlowResponseDto? Flow { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<FlowResponseDto> OnFlowUpdated { get; set; }
+
+    private bool _isSaving = false;
+
+    // Component reference
+    private EditFormTemplate? editFormTemplateRef;
+
+    private async Task CreateNewTemplate()
+    {
+        // TODO: Implement creating new template for existing flow
+        await JSRuntime.InvokeVoidAsync("alert", "Create new template functionality will be implemented soon!");
+    }
+
+    private async Task OnTemplateSaved()
+    {
+        // Called when form template is saved
+        await JSRuntime.InvokeVoidAsync("alert", "Form template updated successfully!");
+    }
+
+    private async Task SaveChanges()
+    {
+        if (_isSaving) return;
+
+        _isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            if (editFormTemplateRef != null)
+            {
+                await editFormTemplateRef.SaveTemplate();
+            }
+
+            // Notify parent component that flow was updated
+            if (Flow != null && OnFlowUpdated.HasDelegate)
+            {
+                await OnFlowUpdated.InvokeAsync(Flow);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving changes: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
+            StateHasChanged();
+        }
+    }
+    private async Task SaveTextOnly()
+    {
+        // Permite doar editarea textelor existente
+        // Nu permite adăugarea de componente noi
+        if (editFormTemplateRef != null)
+        {
+            await editFormTemplateRef.SaveTextOnlyChanges();
+        }
+    }
+
+    private async Task SaveAsNewTemplate()
+    {
+        // Creează un template nou cu toate modificările
+        if (editFormTemplateRef != null)
+        {
+            await editFormTemplateRef.SaveAsNewTemplate();
+        }
+    }
+
+}

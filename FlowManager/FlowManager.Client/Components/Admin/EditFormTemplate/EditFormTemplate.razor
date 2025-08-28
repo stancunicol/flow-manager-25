@@ -1,0 +1,870 @@
+﻿@using FlowManager.Shared.DTOs.Requests.Component
+@using FlowManager.Shared.DTOs.Requests.FormTemplate
+@using FlowManager.Shared.DTOs.Responses.Component
+@using FlowManager.Shared.DTOs.Responses.FormTemplate
+@using FlowManager.Client.ViewModels
+@using FlowManager.Client.Services
+@using FlowManager.Client.DTOs
+
+<div class="edit-form-template-container">
+    @if (_isLoading)
+    {
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading form template...</p>
+        </div>
+    }
+    else if (_hasError)
+    {
+        <div class="error-state">
+            <div class="error-icon">⚠️</div>
+            <h3>Failed to Load Template</h3>
+            <p>@_errorMessage</p>
+            <button class="retry-btn" @onclick="LoadFormTemplate">Retry</button>
+        </div>
+    }
+    else
+    {
+        <div class="form-template-content">
+            <!-- Template Header -->
+            <div class="template-header">
+                <div class="template-info">
+                    <input @bind="templateName"
+                           placeholder="Enter template name..."
+                           class="template-name-input" />
+                    <span class="element-count">@canvasElements.Count elements</span>
+                </div>
+            </div>
+
+            <!-- Canvas and Components Layout -->
+            <div class="template-editor">
+                <!-- Form Canvas - Left Side -->
+                <div class="form-canvas"
+                     @onclick="OnCanvasClick"
+                     @ondrop="@OnDrop"
+                     @ondragover="@OnDragOver"
+                     @ondragover:preventDefault="true"
+                     @ref="canvasRef">
+
+                    <div class="canvas-workspace"
+                         @onclick="OnWorkspaceClick"
+                         @onmousemove="OnMouseMove"
+                         @onmouseup="OnMouseUp">
+
+                        @if (!canvasElements.Any())
+                        {
+                            <div class="empty-workspace">
+                                <div class="empty-icon">📋</div>
+                                <h3>Click anywhere to start writing</h3>
+                                <p>Or drag components from the sidebar</p>
+                            </div>
+                        }
+
+                        <!-- Render all canvas elements -->
+                        @foreach (var element in canvasElements)
+                        {
+                            <div class="canvas-element @(element.IsTextElement ? "text-element" : "component-element")"
+                                 style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @(element.ZIndex);"
+                                 @onmousedown="@((e) => OnElementMouseDown(e, element.Id))"
+                                 @onclick:stopPropagation="true">
+
+                                @if (element.IsTextElement)
+                                {
+                                    @if (isEditingText && editingElementId == element.Id)
+                                    {
+                                        <!-- Inline text editor -->
+                                        <div class="inline-text-editor" style="min-width: 200px;">
+                                            <textarea @bind="editingText"
+                                                      @onblur="SaveTextEdit"
+                                                      @onkeydown="@((e) => HandleTextKeyDown(e))"
+                                                      class="inline-textarea"
+                                                      placeholder="Type here..."
+                                                      @ref="textareaRef"
+                                                      style="width: auto; min-width: 200px; height: auto;"></textarea>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <!-- Text display -->
+                                        <div class="text-display" @onclick="@(() => EditTextElement(element.Id))" @onmousedown:stopPropagation="false">
+                                            @if (string.IsNullOrWhiteSpace(element.TextContent))
+                                            {
+                                                <span class="placeholder-text">Click to edit...</span>
+                                            }
+                                            else
+                                            {
+                                                @((MarkupString)element.TextContent.Replace("\n", "<br>"))
+                                            }
+                                            <button class="delete-element-btn" @onclick="@(() => RemoveElement(element.Id))" @onclick:stopPropagation="true">×</button>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <!-- Component display -->
+                                    <div class="component-display" @onmousedown:stopPropagation="false">
+                                        @if (element.ComponentType == "TextInput" || element.ComponentType == "email" || element.ComponentType == "text")
+                                        {
+                                            <div class="form-field">
+                                                <label class="field-label">
+                                                    @element.Label
+                                                    @if (element.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </label>
+                                                <input type="text" class="field-input" placeholder="@element.Label" readonly />
+                                            </div>
+                                        }
+                                        @if (element.ComponentType == "Checkbox" || element.ComponentType == "checkbox")
+                                        {
+                                            <div class="form-field">
+                                                <label class="checkbox-field">
+                                                    <input type="checkbox" disabled />
+                                                    <span class="checkbox-label">
+                                                        @element.Label
+                                                        @if (element.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        }
+                                        @if (element.ComponentType == "DateTime" || element.ComponentType == "date")
+                                        {
+                                            <div class="form-field">
+                                                <label class="field-label">
+                                                    @element.Label
+                                                    @if (element.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </label>
+                                                <input type="date" class="field-input" readonly />
+                                            </div>
+                                        }
+                                        @if (element.ComponentType == "RadioButton" || element.ComponentType == "radio")
+                                        {
+                                            <div class="form-field">
+                                                <label class="field-label">
+                                                    @element.Label
+                                                    @if (element.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </label>
+                                                <div class="radio-group">
+                                                    <label class="radio-option">
+                                                        <input type="radio" name="radio_@element.Id" disabled />
+                                                        <span>Option 1</span>
+                                                    </label>
+                                                    <label class="radio-option">
+                                                        <input type="radio" name="radio_@element.Id" disabled />
+                                                        <span>Option 2</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (element.ComponentType == "number")
+                                        {
+                                            <div class="form-field">
+                                                <label class="field-label">
+                                                    @element.Label
+                                                    @if (element.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </label>
+                                                <input type="number" class="field-input" placeholder="@element.Label" readonly />
+                                            </div>
+                                        }
+                                        @if (element.ComponentType == "textarea")
+                                        {
+                                            <div class="form-field">
+                                                <label class="field-label">
+                                                    @element.Label
+                                                    @if (element.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </label>
+                                                <textarea class="field-input textarea-input" placeholder="@element.Label" readonly></textarea>
+                                            </div>
+                                        }
+                                        @if (element.ComponentType == "select")
+                                        {
+                                            <div class="form-field">
+                                                <label class="field-label">
+                                                    @element.Label
+                                                    @if (element.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </label>
+                                                <select class="field-input" disabled>
+                                                    <option>Select an option</option>
+                                                    <option>Option 1</option>
+                                                    <option>Option 2</option>
+                                                </select>
+                                            </div>
+                                        }
+
+                                        <button class="delete-element-btn" @onclick="@(() => RemoveElement(element.Id))" @onclick:stopPropagation="true">×</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Available Components - Right Side -->
+                <div class="components-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Available Components</h3>
+                        <span class="component-count">@availableComponents.Count available</span>
+                    </div>
+
+                    <div class="component-list">
+                        @if (_componentsLoading)
+                        {
+                            <div class="loading-components">
+                                <div class="loading-spinner-small"></div>
+                                <p>Loading components...</p>
+                            </div>
+                        }
+                        else if (!availableComponents.Any())
+                        {
+                            <div class="no-components">
+                                <p>No components available</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var component in availableComponents)
+                            {
+                                <div class="component-item"
+                                     draggable="true"
+                                     @ondragstart="@(() => OnDragStart(component))">
+                                    <div class="component-icon">
+                                        @GetComponentIcon(component.Type)
+                                    </div>
+                                    <div class="component-info">
+                                        <div class="component-name">@component.Label</div>
+                                        <div class="component-type">@component.Type</div>
+                                    </div>
+                                    <div class="drag-handle">⋮⋮</div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code{
+    [Inject] private ComponentService ComponentService { get; set; } = default!;
+    [Inject] private FormTemplateService FormTemplateService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Parameter] public Guid FlowId { get; set; }
+    [Parameter] public Guid FormTemplateId { get; set; }
+    [Parameter] public EventCallback OnTemplateSaved { get; set; }
+
+    // State
+    private bool _isLoading = true;
+    private bool _hasError = false;
+    private string _errorMessage = "";
+    private bool _componentsLoading = false;
+
+    // Template data
+    private string templateName = "";
+    private List<CanvasElement> canvasElements = new();
+    private int zIndexCounter = 1;
+
+    // Available components
+    private List<ComponentResponseDto> availableComponents = new();
+    private ComponentResponseDto? draggedComponent;
+
+    // Text editing state
+    private bool isEditingText = false;
+    private string editingText = "";
+    private Guid? editingElementId = null;
+
+    // Canvas interaction
+    private ElementReference canvasRef;
+    private ElementReference textareaRef;
+
+    // Drag state
+    private bool isDragging = false;
+    private Guid? draggedElementId = null;
+    private double dragOffsetX = 0;
+    private double dragOffsetY = 0;
+    private bool justFinishedDragging = false;
+
+    // Grid settings
+    private const int GRID_SIZE = 25;
+
+    // Canvas element model (same as FormTemplate)
+    public class CanvasElement
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public double X { get; set; }
+        public double Y { get; set; }
+        public int ZIndex { get; set; }
+        public bool IsTextElement { get; set; }
+
+        // For text elements
+        public string? TextContent { get; set; }
+
+        // For components
+        public Guid? ComponentId { get; set; }
+        public string? ComponentType { get; set; }
+        public string? Label { get; set; }
+        public bool? Required { get; set; }
+        public Dictionary<string, object>? Properties { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFormTemplate();
+        await LoadAvailableComponents();
+    }
+
+    private async Task LoadFormTemplate()
+    {
+        try
+        {
+            _isLoading = true;
+            _hasError = false;
+            StateHasChanged();
+            var template = await FormTemplateService.GetFormTemplateByIdAsync(FormTemplateId);
+            if (template != null)
+            {
+                templateName = template.Name ?? "";
+                // Deserialize content JSON to restore canvas elements
+                if (!string.IsNullOrEmpty(template.Content))
+                {
+                    await DeserializeTemplateContent(template.Content);
+                }
+            }
+            else
+            {
+                _hasError = true;
+                _errorMessage = "Failed to load form template from server";
+            }
+        }
+        catch (Exception ex)
+        {
+            _hasError = true;
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeserializeTemplateContent(string contentJson)
+    {
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(contentJson);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("Elements", out var elementsProperty))
+            {
+                canvasElements.Clear();
+
+                foreach (var elementJson in elementsProperty.EnumerateArray())
+                {
+                    var element = new CanvasElement
+                    {
+                        Id = Guid.Parse(elementJson.GetProperty("Id").GetString()!),
+                        X = elementJson.GetProperty("X").GetDouble(),
+                        Y = elementJson.GetProperty("Y").GetDouble(),
+                        ZIndex = elementJson.GetProperty("ZIndex").GetInt32(),
+                        IsTextElement = elementJson.GetProperty("IsTextElement").GetBoolean()
+                    };
+
+                    // Handle optional properties
+                    if (elementJson.TryGetProperty("TextContent", out var textContent))
+                        element.TextContent = textContent.GetString();
+
+                    if (elementJson.TryGetProperty("ComponentType", out var compType))
+                        element.ComponentType = compType.GetString();
+
+                    if (elementJson.TryGetProperty("Label", out var label))
+                        element.Label = label.GetString();
+
+                    if (elementJson.TryGetProperty("Required", out var required))
+                        element.Required = required.GetBoolean();
+
+                    if (elementJson.TryGetProperty("ComponentId", out var compId) &&
+                        !compId.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
+                        element.ComponentId = Guid.Parse(compId.GetString()!);
+
+                    if (elementJson.TryGetProperty("Properties", out var props) &&
+                        !props.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
+                        element.Properties = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(props.GetRawText());
+
+                    canvasElements.Add(element);
+                }
+
+                // Update zIndexCounter to be higher than any existing element
+                if (canvasElements.Any())
+                {
+                    zIndexCounter = canvasElements.Max(e => e.ZIndex) + 1;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error parsing template content: {ex.Message}");
+        }
+    }
+
+    private async Task LoadAvailableComponents()
+    {
+        try
+        {
+            _componentsLoading = true;
+            StateHasChanged();
+
+            var result = await ComponentService.GetAllComponentsQueriedAsync(new QueriedComponentRequestDto());
+            if (result?.Data != null)
+            {
+                availableComponents = result.Data.ToList();
+            }
+            else
+            {
+                availableComponents = new List<ComponentResponseDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            availableComponents = new List<ComponentResponseDto>();
+        }
+        finally
+        {
+            _componentsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+
+
+    public async Task SaveTextOnlyChanges()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(templateName))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please enter a template name");
+                return;
+            }
+
+            // Verifică dacă s-au adăugat componente noi
+            var hasNewComponents = canvasElements.Any(e => !e.IsTextElement && !e.ComponentId.HasValue);
+            if (hasNewComponents)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Cannot save new components in text-only mode. Use 'Save as New Template' instead.");
+                return;
+            }
+
+            // Doar componentele existente (fără crearea unora noi)
+            var existingComponentIds = canvasElements
+                .Where(e => !e.IsTextElement && e.ComponentId.HasValue)
+                .Select(e => e.ComponentId.Value)
+                .ToList();
+
+            // Creează JSON content cu layout information
+            var templateContent = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Layout = "FreeCanvas",
+                Elements = canvasElements.Select(e => new
+                {
+                    Id = e.Id,
+                    X = e.X,
+                    Y = e.Y,
+                    ZIndex = e.ZIndex,
+                    IsTextElement = e.IsTextElement,
+                    TextContent = e.TextContent,
+                    ComponentId = e.ComponentId,
+                    ComponentType = e.ComponentType,
+                    Label = e.Label,
+                    Required = e.Required,
+                    Properties = e.Properties
+                }).ToList()
+            });
+
+            var updateRequest = new PatchFormTemplateRequestDto
+            {
+                Name = templateName,
+                Content = templateContent,
+                Components = existingComponentIds
+            };
+
+            var response = await FormTemplateService.PatchFormTemplateAsync(FormTemplateId, updateRequest);
+            if (response != null)
+            {
+                await OnTemplateSaved.InvokeAsync();
+                await JSRuntime.InvokeVoidAsync("alert", "Text changes saved successfully!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error saving text changes");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    public async Task SaveAsNewTemplate()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(templateName))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please enter a template name");
+                return;
+            }
+
+            // Adaugă suffix pentru a diferenția template-ul nou
+            var newTemplateName = $"{templateName} - Copy";
+
+            var componentIds = new List<Guid>();
+
+            // Procesează toate componentele (inclusiv cele noi)
+            foreach (var element in canvasElements.Where(e => !e.IsTextElement))
+            {
+                if (element.ComponentId.HasValue)
+                {
+                    componentIds.Add(element.ComponentId.Value);
+                }
+                else
+                {
+                    // Creează componentă nouă
+                    var newComponentRequest = new PostComponentRequestDto
+                    {
+                        Type = element.ComponentType ?? "TextInput",
+                        Label = element.Label ?? "Unnamed Component",
+                        Required = element.Required ?? false,
+                        Properties = element.Properties ?? new Dictionary<string, object>()
+                    };
+
+                    var componentResponse = await ComponentService.PostComponentAsync(newComponentRequest);
+                    if (componentResponse != null)
+                    {
+                        componentIds.Add(componentResponse.Id);
+                        element.ComponentId = componentResponse.Id;
+                    }
+                }
+            }
+
+            // Creează JSON content
+            var templateContent = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Layout = "FreeCanvas",
+                Elements = canvasElements.Select(e => new
+                {
+                    Id = e.Id,
+                    X = e.X,
+                    Y = e.Y,
+                    ZIndex = e.ZIndex,
+                    IsTextElement = e.IsTextElement,
+                    TextContent = e.TextContent,
+                    ComponentId = e.ComponentId,
+                    ComponentType = e.ComponentType,
+                    Label = e.Label,
+                    Required = e.Required,
+                    Properties = e.Properties
+                }).ToList()
+            });
+
+            // Creează un template nou în loc să actualizeze pe cel existent
+            var createRequest = new PostFormTemplateRequestDto
+            {
+                Name = newTemplateName,
+                Content = templateContent,
+                Components = componentIds
+            };
+
+            var response = await FormTemplateService.PostFormTemplateAsync(createRequest);
+            if (response != null)
+            {
+                await OnTemplateSaved.InvokeAsync();
+                await JSRuntime.InvokeVoidAsync("alert", $"New template '{newTemplateName}' created successfully!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error creating new template");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private bool HasComponentChanges()
+    {
+        return canvasElements.Any(e => !e.IsTextElement && !e.ComponentId.HasValue);
+    }
+
+    public async Task SaveTemplate()
+    {
+        // Redirect către una din metodele noi în funcție de context
+        if (HasComponentChanges())
+        {
+            await SaveAsNewTemplate();
+        }
+        else
+        {
+            await SaveTextOnlyChanges();
+        }
+    }
+
+    private async Task OnWorkspaceClick(MouseEventArgs e)
+    {
+        if (justFinishedDragging)
+        {
+            justFinishedDragging = false;
+            return;
+        }
+
+        if (!isDragging && !isEditingText)
+        {
+            try
+            {
+                var gridX = SnapToGrid(e.OffsetX);
+                var gridY = SnapToGrid(e.OffsetY - 60);
+                await CreateTextElement(gridX, gridY);
+            }
+            catch (Exception)
+            {
+                await CreateTextElement(SnapToGrid(100), SnapToGrid(100));
+            }
+        }
+    }
+
+    private async Task CreateTextElement(double x, double y)
+    {
+        var textElement = new CanvasElement
+        {
+            X = x,
+            Y = y,
+            ZIndex = ++zIndexCounter,
+            IsTextElement = true,
+            TextContent = ""
+        };
+
+        canvasElements.Add(textElement);
+        await EditTextElement(textElement.Id);
+        StateHasChanged();
+    }
+
+    private async Task EditTextElement(Guid elementId)
+    {
+        var element = canvasElements.FirstOrDefault(e => e.Id == elementId);
+        if (element != null && element.IsTextElement)
+        {
+            editingElementId = elementId;
+            editingText = element.TextContent ?? "";
+            isEditingText = true;
+            StateHasChanged();
+
+            await Task.Delay(50);
+            await textareaRef.FocusAsync();
+        }
+    }
+
+    private void SaveTextEdit()
+    {
+        if (editingElementId.HasValue)
+        {
+            var element = canvasElements.FirstOrDefault(e => e.Id == editingElementId.Value);
+            if (element != null)
+            {
+                element.TextContent = editingText;
+
+                if (string.IsNullOrWhiteSpace(editingText))
+                {
+                    canvasElements.Remove(element);
+                }
+            }
+        }
+
+        isEditingText = false;
+        editingText = "";
+        editingElementId = null;
+        StateHasChanged();
+    }
+
+    private async Task HandleTextKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            SaveTextEdit();
+        }
+    }
+
+    private void RemoveElement(Guid elementId)
+    {
+        var element = canvasElements.FirstOrDefault(e => e.Id == elementId);
+        if (element != null)
+        {
+            canvasElements.Remove(element);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnElementMouseDown(MouseEventArgs e, Guid elementId)
+    {
+        if (isEditingText && editingElementId == elementId)
+        {
+            return;
+        }
+
+        isDragging = true;
+        draggedElementId = elementId;
+
+        var element = canvasElements.FirstOrDefault(el => el.Id == elementId);
+        if (element != null)
+        {
+            dragOffsetX = e.OffsetX;
+            dragOffsetY = e.OffsetY;
+        }
+    }
+
+    private async Task OnMouseMove(MouseEventArgs e)
+    {
+        if (isDragging && draggedElementId.HasValue)
+        {
+            var element = canvasElements.FirstOrDefault(el => el.Id == draggedElementId.Value);
+            if (element != null)
+            {
+                var newX = e.OffsetX - dragOffsetX;
+                var newY = e.OffsetY - dragOffsetY - 60;
+
+                element.X = SnapToGrid(newX);
+                element.Y = SnapToGrid(newY);
+
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task OnMouseUp(MouseEventArgs e)
+    {
+        if (isDragging)
+        {
+            justFinishedDragging = true;
+            _ = Task.Delay(100).ContinueWith(_ =>
+            {
+                justFinishedDragging = false;
+                InvokeAsync(StateHasChanged);
+            });
+        }
+
+        isDragging = false;
+        draggedElementId = null;
+        dragOffsetX = 0;
+        dragOffsetY = 0;
+    }
+
+    private double SnapToGrid(double value)
+    {
+        return Math.Round(value / GRID_SIZE) * GRID_SIZE;
+    }
+
+    private async Task OnCanvasClick(MouseEventArgs e)
+    {
+        // Handle canvas container clicks
+    }
+
+    // Component drag and drop
+    private void OnDragStart(ComponentResponseDto component)
+    {
+        draggedComponent = component;
+    }
+
+    private void OnDragOver()
+    {
+        // Allow drop
+    }
+
+    private async Task OnDrop(DragEventArgs e)
+    {
+        if (draggedComponent != null)
+        {
+            try
+            {
+                var gridX = SnapToGrid(e.OffsetX);
+                var gridY = SnapToGrid(e.OffsetY - 60);
+
+                var componentElement = new CanvasElement
+                {
+                    X = gridX,
+                    Y = gridY,
+                    ZIndex = ++zIndexCounter,
+                    IsTextElement = false,
+                    ComponentId = draggedComponent.Id,
+                    ComponentType = draggedComponent.Type,
+                    Label = draggedComponent.Label,
+                    Required = draggedComponent.Required,
+                    Properties = draggedComponent.Properties != null ?
+                        new Dictionary<string, object>(draggedComponent.Properties) :
+                        new Dictionary<string, object>()
+                };
+
+                canvasElements.Add(componentElement);
+                draggedComponent = null;
+                StateHasChanged();
+            }
+            catch (Exception)
+            {
+                // Fallback positioning
+                var componentElement = new CanvasElement
+                {
+                    X = SnapToGrid(150),
+                    Y = SnapToGrid(150),
+                    ZIndex = ++zIndexCounter,
+                    IsTextElement = false,
+                    ComponentId = draggedComponent.Id,
+                    ComponentType = draggedComponent.Type,
+                    Label = draggedComponent.Label,
+                    Required = draggedComponent.Required,
+                    Properties = draggedComponent.Properties != null ?
+                        new Dictionary<string, object>(draggedComponent.Properties) :
+                        new Dictionary<string, object>()
+                };
+
+                canvasElements.Add(componentElement);
+                draggedComponent = null;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private string GetComponentIcon(string? componentType)
+    {
+        return componentType switch
+        {
+            "TextInput" or "text" or "email" => "📝",
+            "Checkbox" or "checkbox" => "☑️",
+            "DateTime" or "date" => "📅",
+            "RadioButton" or "radio" => "🔘",
+            "number" => "🔢",
+            "textarea" => "📄",
+            "select" => "📋",
+            _ => "📄"
+        };
+    }
+
+}
