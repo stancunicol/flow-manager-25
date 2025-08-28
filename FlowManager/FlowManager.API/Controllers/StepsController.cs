@@ -157,5 +157,21 @@ namespace FlowManager.API.Controllers
                 Timestamp = DateTime.UtcNow
             });
         }
+
+        [HttpDelete("{stepId:guid}/unassign-user/{userId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UnassignUserFromStep(Guid stepId, Guid userId)
+        {
+            var result = await _stepService.UnassignUserFromStepAsync(stepId, userId);
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "User unassigned to step successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
     }
 }

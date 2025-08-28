@@ -389,3 +389,104 @@
     font-size: 14px;
     font-style: italic;
 }
+
+.edit-dep-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    animation: fadeIn 0.3s ease;
+}
+
+.edit-dep-modal {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    z-index: 100000;
+    width: 600px;
+    max-width: 90%;
+    animation: slideUp 0.35s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+    .edit-dep-modal h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #1f2937;
+        text-align: center;
+    }
+
+    .edit-dep-modal input,
+    .edit-dep-modal textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: all 0.2s ease;
+    }
+
+        .edit-dep-modal input:focus,
+        .edit-dep-modal textarea:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+            transform: scale(1.01);
+        }
+
+    .edit-dep-modal .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 10px;
+    }
+
+    .edit-dep-modal .btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 22px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.25s ease, transform 0.15s ease;
+        justify-content: center;
+    }
+
+        .edit-dep-modal .btn:active {
+            transform: scale(0.96);
+        }
+
+    .edit-dep-modal .save-btn {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+    }
+
+        .edit-dep-modal .save-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+        }
+
+    .edit-dep-modal .cancel-btn {
+        background: #ffffff;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+        .edit-dep-modal .cancel-btn:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-2px);
+        }

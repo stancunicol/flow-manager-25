@@ -23,7 +23,7 @@ namespace FlowManager.Infrastructure.Repositories
 
         public async Task<IEnumerable<Step>> GetStepsAsync()
         {
-            return await _context.Steps
+            return await _context.Steps.Where(s => s.DeletedAt == null)
                 .Include(s => s.Users)
                     .ThenInclude(su => su.User)
                 .Include(s => s.Teams)
@@ -32,38 +32,43 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Step?> GetStepByIdAsync(
-    Guid id,
-    bool includeDeleted = false,
-    bool includeDeletedStepUser = false,
-    bool includeDeletedStepTeams = false)
+        public async Task<Step?> GetStepByIdAsync(Guid stepId, bool includeDeletedStepUser = false, bool includeDeletedStepTeams = false, bool includeUsers = false, bool includeTeams = false)
         {
-            IQueryable<Step> query = _context.Steps;
+            var query = _context.Steps.AsQueryable();
 
-            if (!includeDeleted)
-                query = query.Where(s => s.DeletedAt == null);
+            if (includeUsers)
+            {
+                if (includeDeletedStepUser)
+                {
+                    query = query.Include(s => s.Users)
+                                 .ThenInclude(su => su.User);
+                }
+                else
+                {
+                    query = query.Include(s => s.Users.Where(u => u.DeletedAt == null))
+                                 .ThenInclude(su => su.User);
+                }
+            }
 
-            // încarc colecțiile complete
-            query = query
-                .Include(s => s.Users)
-                    .ThenInclude(su => su.User)
-                .Include(s => s.Teams)
-                    .ThenInclude(st => st.Team)
-                        .ThenInclude(t => t.Users);
+            if (includeTeams)
+            {
+                if (includeDeletedStepTeams)
+                {
+                    query = query.Include(s => s.Teams)
+                                 .ThenInclude(st => st.Team)
+                                 .ThenInclude(t => t.Users)
+                                 .ThenInclude(ut => ut.User);
+                }
+                else
+                {
+                    query = query.Include(s => s.Teams.Where(t => t.DeletedAt == null))
+                                 .ThenInclude(st => st.Team)
+                                 .ThenInclude(t => t.Users)
+                                 .ThenInclude(ut => ut.User);
+                }
+            }
 
-            var step = await query.FirstOrDefaultAsync(s => s.Id == id);
-
-            if (step == null)
-                return null;
-
-            // aplic filtrarea după ce EF a încărcat tot
-            if (!includeDeletedStepUser)
-                step.Users = step.Users.Where(su => su.DeletedAt == null).ToList();
-
-            if (!includeDeletedStepTeams)
-                step.Teams = step.Teams.Where(st => st.DeletedAt == null).ToList();
-
-            return step;
+            return await query.FirstOrDefaultAsync(s => s.Id == stepId);
         }
 
         public async Task<IEnumerable<Step>> GetStepsByFlowAsync(Guid flowId)
@@ -102,13 +107,18 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(string? name, QueryParams? parameters)
         {
             IQueryable<Step> query = _context.Steps
-                .Include(s => s.Users.Where(su => su.DeletedAt == null))
-                    .ThenInclude(su => su.User)
-                .Include(s => s.Teams.Where(st => st.DeletedAt == null))
-                    .Include(st => st.Users)
-                        .ThenInclude(su => su.User);
+    .Include(s => s.Users
+        .Where(su => su.DeletedAt == null))
+        .ThenInclude(su => su.User)
+    .Include(s => s.Teams
+        .Where(st => st.DeletedAt == null))
+        .ThenInclude(st => st.Team)
+            .ThenInclude(t => t.Users)
+                .ThenInclude(tu => tu.User);
 
-            // filtering
+
+            query = query.Where(s => s.DeletedAt == null);
+
             if (!string.IsNullOrEmpty(name))
             {
                 query = query.Where(s => s.Name.Contains(name));
@@ -147,6 +157,20 @@ namespace FlowManager.Infrastructure.Repositories
         {
             _context.StepUsers.Add(stepUser);
             await _context.SaveChangesAsync();
+        }
+
+        public void AttachStepUser(StepUser stepUser)
+        {
+            var entry = _context.Entry(stepUser);
+            if (entry.State == EntityState.Detached)
+            {
+                _context.StepUsers.Attach(stepUser);
+            }
+        }
+
+        public void DettachStepUser(StepUser stepUser)
+        {
+            _context.Update(stepUser);
         }
     }
 }

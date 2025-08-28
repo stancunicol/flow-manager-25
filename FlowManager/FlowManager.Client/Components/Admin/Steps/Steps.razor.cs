@@ -11,6 +11,7 @@ using StepService = FlowManager.Client.Services.StepService;
 using UserService = FlowManager.Client.Services.UserService;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Linq.Expressions;
+using FlowManager.Shared.DTOs.Requests.Step;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
@@ -21,9 +22,14 @@ namespace FlowManager.Client.Components.Admin.Steps
         private bool isCreateModalOpen = false;
         private StepResponseDto? selectedDepartment;
         private string newDepName = string.Empty;
-        private string error;
+        private string error = string.Empty;
         private List<UserResponseDto> unsignedUsers = new();
         private List<UserResponseDto> selectedUsers = new();
+        private bool isEditModalOpen = false;
+        private string editDepName = string.Empty;
+        private List<UserResponseDto> allUsersList = new();
+        private List<UserResponseDto> allUsers = new();
+
 
         [Inject]
         private StepService stepService { get; set; } = default!;
@@ -43,7 +49,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                 var response = await stepService.GetStepsQueriedAsync();
                 if (response != null && response.Success && response.Result != null)
                 {
-                    departments = (List<StepResponseDto>)response.Result.Data;
+                    departments = response.Result.Data.Where(d => d.DeletedAt == null).ToList();
                 }
             }
             catch (Exception ex)
@@ -137,6 +143,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                 var step = new Step
                 {
                     Name = newDepName.Trim(),
+                    DeletedAt = null,
                     FlowSteps = new List<FlowStep>(),
                     Users = new List<StepUser>(),
                     Teams = new List<StepTeam>()
@@ -146,12 +153,12 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                 if (result != null)
                 {
-                    departments.Add(new StepResponseDto { Id = result.Id, Name = newDepName.Trim() });
+                    await LoadDepartments();
 
                     foreach (var user in selectedUsers)
                     {
                         var assignResult = await stepService.AssignUserToStepAsync(result.Id, user.Id);
-                        if (!assignResult)
+                        if (assignResult == null)
                         {
                             Console.WriteLine($"⚠️ Failed to assign user {user.Name} to department {result.Id}");
                             error = $"Failed to assign user {user.Name}.";
@@ -183,9 +190,14 @@ namespace FlowManager.Client.Components.Admin.Steps
         private void ToggleUserSelection(UserResponseDto user, bool isChecked)
         {
             if (isChecked)
-                selectedUsers.Add(user);
+            {
+                if (!selectedUsers.Any(u => u.Id == user.Id))
+                    selectedUsers.Add(user);
+            }
             else
-                selectedUsers.Remove(user);
+            {
+                selectedUsers.RemoveAll(u => u.Id == user.Id);
+            }
         }
 
         private async Task RefreshAllData()
@@ -194,7 +206,6 @@ namespace FlowManager.Client.Components.Admin.Steps
             {
                 departments.Clear();
                 unsignedUsers.Clear();
-                selectedUsers.Clear();
 
                 await LoadDepartments();
                 await LoadUnsignedUsers();
@@ -215,10 +226,17 @@ namespace FlowManager.Client.Components.Admin.Steps
                 if (response)
                 {
                     var departmentToRemove = departments.FirstOrDefault(d => d.Id == departmentId);
+
                     if (departmentToRemove != null)
                     {
+                        foreach (var user in departmentToRemove.Users)
+                        {
+                            await stepService.UnassignUserFromStepAsync(departmentId, user.Id);
+                        }
+
                         departments.Remove(departmentToRemove);
                     }
+                    await LoadDepartments();
                     isModalOpen = false;
                     selectedDepartment = null;
                     StateHasChanged();
@@ -235,6 +253,122 @@ namespace FlowManager.Client.Components.Admin.Steps
                 Console.WriteLine($"💥 Error deleting step: {ex.Message}");
                 error = "Unexpected error occurred.";
             }
+        }
+
+        private async Task OpenEditModal(StepResponseDto department)
+        {
+            var stepDetails = await stepService.GetStepAsync(department.Id);
+
+            if (stepDetails != null)
+            {
+                selectedDepartment = stepDetails;
+                editDepName = stepDetails.Name;
+                selectedUsers = stepDetails.Users.ToList();
+
+                var response = await userService.GetAllUsersQueriedAsync();
+                if (response != null && response.Success && response.Result != null)
+                {
+                    allUsersList = ((List<UserResponseDto>)response.Result.Data);
+
+                    var filteredUsers = new List<UserResponseDto>();
+
+                    foreach (var u in allUsersList)
+                    {
+                        var isAssigned = await userService.VerifyIfAssigned(u.Id);
+
+                        if ((isAssigned.Success && !isAssigned.Result) || selectedDepartment.Users.Any(su => su.Id == u.Id))
+                        {
+                            filteredUsers.Add(u);
+                        }
+                    }
+
+                    allUsers = filteredUsers;
+
+                }
+
+                isEditModalOpen = true;
+                StateHasChanged();
+            }
+        }
+
+        private async Task SaveEditDepartment()
+        {
+            if (selectedDepartment == null)
+                return;
+
+            try
+            {
+                selectedDepartment = await stepService.GetStepAsync(selectedDepartment.Id);
+                Console.WriteLine($"{selectedDepartment.Id}");
+                selectedUsers ??= new List<UserResponseDto>();
+
+                var currentUserIds = (selectedDepartment?.Users ?? new List<UserResponseDto>())
+                        .Select(u => u.Id)
+                        .ToList();
+
+                var newUserIds = (selectedUsers ?? new List<UserResponseDto>())
+                                        .Select(u => u.Id)
+                                        .ToList();
+
+                var usersToAssign = newUserIds.Except(currentUserIds).ToList();
+
+                var usersToUnassign = currentUserIds.Except(newUserIds).ToList();
+
+                foreach (var userId in usersToAssign)
+                {
+                    var updatedStep = await stepService.AssignUserToStepAsync(selectedDepartment.Id, userId);
+                    Console.WriteLine($"{userId} assigned to {selectedDepartment.Id}");
+                    if (updatedStep != null)
+                        selectedDepartment = updatedStep;
+                }
+
+                Console.WriteLine($"Users to unassign: {string.Join(", ", usersToUnassign)}");
+                foreach (var userId in usersToUnassign)
+                {
+                    var updatedStep = await stepService.UnassignUserFromStepAsync(selectedDepartment.Id, userId);
+                    Console.WriteLine($"{userId} unassigned from {selectedDepartment.Id}");
+                    if (updatedStep != null)
+                        selectedDepartment = updatedStep;
+                }
+
+                selectedUsers = selectedDepartment.Users.ToList();
+
+                await RefreshAllData();
+                await LoadDepartments();
+
+                StateHasChanged();
+
+                CloseEditModal();
+                Console.WriteLine("✅ Department updated successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"💥 Error updating department: {ex.Message}");
+                error = "Unexpected error occurred.";
+            }
+        }
+
+        private void CloseEditModal()
+        {
+            isEditModalOpen = false;
+            selectedDepartment = null;
+            editDepName = string.Empty;
+            selectedUsers.Clear();
+            allUsers.Clear();
+        }
+
+        private string GetRandomGradient()
+        {
+            var colors = new string[]
+            {
+        "#f87171", "#fbbf24", "#34d399", "#60a5fa", "#a78bfa", "#f472b6", "#facc15"
+            };
+
+            var rnd = new Random();
+            var c1 = colors[rnd.Next(colors.Length)];
+            var c2 = colors[rnd.Next(colors.Length)];
+
+            return $"linear-gradient(135deg, {c1}, {c2})";
         }
     }
 }

@@ -126,11 +126,11 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<bool> UpdateStepAsync(Guid id, Step step)
+        public async Task<bool> UpdateStepAsync(Guid id, PatchStepRequestDto payload)
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync($"api/steps/{id}", step);
+                var response = await _httpClient.PatchAsJsonAsync($"api/steps/{id}", payload);
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -178,29 +178,37 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<bool> AssignUserToStepAsync(Guid stepId, Guid userId)
+        public async Task<StepResponseDto?> AssignUserToStepAsync(Guid stepId, Guid userId)
         {
             try
             {
                 var response = await _httpClient.PostAsync($"api/steps/{stepId}/assign-user/{userId}", null);
-                return response.IsSuccessStatusCode;
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
+                return apiResponse?.Result;
             }
             catch
             {
-                return false;
+                return null;
             }
         }
 
-        public async Task<bool> UnassignUserFromStepAsync(Guid stepId, Guid userId)
+        public async Task<StepResponseDto?> UnassignUserFromStepAsync(Guid stepId, Guid userId)
         {
             try
             {
                 var response = await _httpClient.DeleteAsync($"api/steps/{stepId}/unassign-user/{userId}");
-                return response.IsSuccessStatusCode;
+                if (!response.IsSuccessStatusCode) 
+                    return null;
+
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
+                return apiResponse?.Result;
             }
             catch
             {
-                return false;
+                return null;
             }
         }
     }

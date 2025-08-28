@@ -11,7 +11,7 @@ namespace FlowManager.Domain.IRepositories
     public interface IStepRepository
     {
         Task<IEnumerable<Step>> GetStepsAsync();
-        Task<Step?> GetStepByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedStepUser = false, bool includeDeletedStepTeams = false);
+        Task<Step?> GetStepByIdAsync(Guid stepId, bool includeDeletedStepUser = false, bool includeDeletedStepTeams = false, bool includeUsers = false, bool includeTeams = false);
         Task<IEnumerable<Step>> GetStepsByFlowAsync(Guid flowId);
         Task<Step> PostStepAsync(Step step);
         Task<Step> DeleteStepAsync(Step step);
@@ -19,5 +19,7 @@ namespace FlowManager.Domain.IRepositories
         Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(string? name, QueryParams? parameters);
 
         Task AddStepUserAsync(StepUser stepUser);
+        void AttachStepUser(StepUser stepUser);
+        void DettachStepUser(StepUser stepUser);
     }
 }

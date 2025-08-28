@@ -19,7 +19,7 @@
     {
         @foreach (var department in departments)
         {
-            <div class="department-card" @onclick="() => OpenModal(department)">
+            <div class="department-card" style="background:@GetRandomGradient()" @onclick="() => OpenModal(department)">
                 <span class="department-name">@department.Name</span>
 
             </div>
@@ -64,7 +64,7 @@
             }
 
             <div class="modal-actions">
-                <button class="action-btn edit-btn" >✎ Edit</button>
+                <button class="action-btn edit-btn" @onclick="async () => await OpenEditModal(selectedDepartment)">✎ Edit</button>
                 <button class="action-btn delete-btn" @onclick="async () => await DeleteDepartment(selectedDepartment.Id)">🗑 Delete</button>
             </div>
         </div>
@@ -108,6 +108,42 @@
             <div class="modal-actions">
                 <button class="btn save-btn" @onclick="SaveDepartment">💾 Save</button>
                 <button class="btn cancel-btn" @onclick="CloseCreateModal">✕ Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (isEditModalOpen && selectedDepartment != null)
+{
+    <div class="edit-dep-modal-overlay" @onclick="CloseEditModal">
+        <div class="edit-dep-modal" @onclick:stopPropagation="true">
+
+            <h2>Edit Department</h2>
+
+            <div class="users-list">
+                <h3>Assigned Users</h3>
+                @if (allUsers?.Any() == true)
+                {
+                    @foreach (var user in allUsers)
+                    {
+                        <label class="user-checkbox">
+                            <input type="checkbox"
+                                   value="@user.Id"
+                                   checked="@selectedUsers.Any(u => u.Id == user.Id)"
+                                   @onchange="e => ToggleUserSelection(user, (bool)e.Value)" />
+                            <span>@user.Name (@user.Email)</span>
+                        </label>
+                    }
+                }
+                else
+                {
+                    <p class="no-users">No users found</p>
+                }
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn save-btn" @onclick="SaveEditDepartment">💾 Save</button>
+                <button class="btn cancel-btn" @onclick="CloseEditModal">✕ Cancel</button>
             </div>
         </div>
     </div>
