@@ -39,8 +39,6 @@ namespace FlowManager.Infrastructure.Context
             UniqueFormTemplateConstraintConfiguration(builder);
             UniqueTeamNameConstraintConfiguration(builder);
 
-            UniqueFlowStepKeyConstraintConfiguration(builder);
-
             StepUserKeyConstraintConfiguration(builder); 
             StepTeamKeyConstraintConfiguration(builder);
 
@@ -158,12 +156,6 @@ namespace FlowManager.Infrastructure.Context
                           v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
                       .HasColumnType("jsonb"); // PostgreSQL jsonb type
             });
-        }
-
-        private void UniqueFlowStepKeyConstraintConfiguration(ModelBuilder builder)
-        {
-            builder.Entity<FlowStep>()
-                .HasKey(fs => new { fs.FlowId, fs.StepId });
         }
 
         private void StepUserKeyConstraintConfiguration(ModelBuilder builder)

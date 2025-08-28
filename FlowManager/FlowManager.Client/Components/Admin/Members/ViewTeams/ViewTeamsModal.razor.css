@@ -170,9 +170,9 @@
     border: 1px solid #e0e6ed;
 }
 
-.edit-team-btn{
-    background: #01ffbe;
-    color: white;
+.edit-team-btn {
+    background: white;
+    color: #20B486;
     padding: 6px 10px;
     text-align: center;
     float: right;
@@ -288,4 +288,9 @@
     font-size: 14px;
     color: #6b7280;
     font-weight: 500;
+}
+
+.icon-small {
+    width: 1rem;
+    height: 1rem;
 }

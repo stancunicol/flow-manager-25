@@ -83,15 +83,28 @@ namespace FlowManager.Infrastructure.Services
                 FormTemplateId = payload.FormTemplateId,
             };
 
-            flowToPost.Steps = payload.StepIds.Select(stepId => new FlowStep
+            flowToPost.Steps = payload.Steps.Select(step => new FlowStep
             {
-                StepId = stepId,
-                FlowId = flowToPost.Id
+                StepId = step.StepId,
+                FlowId = flowToPost.Id,
             }).ToList();
 
-            await _flowRepository.CreateFlowAsync(flowToPost);
+            foreach(var step in flowToPost.Steps)
+            {
+                step.AssignedUsers = payload.Steps.First(s => s.StepId == step.StepId).UserIds.Select(uId => new FlowStepUser
+                {
+                    FlowStepId = step.Id,
+                    UserId = uId,
+                }).ToList();
 
-            Flow postedFlow = (await _flowRepository.GetFlowByIdAsync(flowToPost.Id))!;
+                step.AssignedTeams = payload.Steps.First(s => s.StepId == step.StepId).TeamIds.Select(tId => new FlowStepTeam
+                {
+                    FlowStepId = step.Id,
+                    TeamId = tId,
+                }).ToList();
+            }
+
+            await _flowRepository.CreateFlowAsync(flowToPost);
 
             return new FlowResponseDto
             {
@@ -99,8 +112,19 @@ namespace FlowManager.Infrastructure.Services
                 Name = flowToPost.Name,
                 Steps = flowToPost.Steps.Select(s => new StepResponseDto
                 {
-                    Id = s.Step.Id,
-                    Name = s.Step.Name,
+                    Id = s.StepId,
+                    Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                    {
+                        Id = u.UserId,
+                    }).ToList(),
+                    Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
+                    {
+                        Id = t.TeamId,
+                        Users = t.Team.Users?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                        {
+                            Id = u.UserId,
+                        }).ToList(),
+                    }).ToList(),
                 }).ToList(),
                 FormTemplateId = flowToPost.FormTemplateId,
                 CreatedAt = flowToPost.CreatedAt,

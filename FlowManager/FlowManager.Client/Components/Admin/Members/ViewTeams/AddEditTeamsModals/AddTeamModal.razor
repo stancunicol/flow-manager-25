@@ -98,7 +98,7 @@
                         Load more
                     </button>
                     <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
-                    <button type="submit" class="create-button" disabled="@_isSubmitting">
+                    <button type="submit" class="create-button" disabled="@(_isSubmitting || !IsSubmitValid())">
                         @if (_isSubmitting)
                         {
                             <span>Creating...</span>

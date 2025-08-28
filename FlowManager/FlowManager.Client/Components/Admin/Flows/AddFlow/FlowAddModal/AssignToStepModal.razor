@@ -1,0 +1,237 @@
+﻿@if (ShowAssignToStepModal)
+{
+    <div class="popup-backdrop" @onclick="CancelForm">
+        <div class="popup-container" @onclick:stopPropagation="true">
+            <div class="popup-header">
+                <h3>Assign to Step: @StepToAssign?.Name</h3>
+                <button type="button" @onclick="CancelForm" class="close-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="tab-container">
+                <div class="tab-header">
+                    <button class="tab-button @(_isTeamsTabSelected ? "active" : "")"
+                            @onclick="() => SelectTab(true)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Teams
+                    </button>
+                    <button class="tab-button @(!_isTeamsTabSelected ? "active" : "")"
+                            @onclick="() => SelectTab(false)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Individual Users
+                    </button>
+                </div>
+
+                <form @onsubmit="SubmitAssignment" @onsubmit:preventDefault="true">
+                    <div class="tab-content">
+                        @if (_isTeamsTabSelected)
+                        {
+                            <!-- Teams Tab -->
+                            <div class="form-field">
+                                <label for="teamsSearch">Search Teams:</label>
+                                <input @bind="_teamsSearchTerm"
+                                       @bind:event="oninput"
+                                       @onkeyup="OnTeamsSearchChanged"
+                                       type="text"
+                                       id="teamsSearch"
+                                       class="modern-input"
+                                       placeholder="Search for teams..." />
+                            </div>
+
+                            <div class="teams-list">
+                                @if (_availableTeams.Any())
+                                {
+                                    @foreach (var team in _availableTeams)
+                                    {
+                                        <div class="team-item">
+                                            <div class="team-header">
+                                                <div class="team-checkbox">
+                                                    <input type="checkbox"
+                                                           id="team_@team.Id"
+                                                           @onchange="@((ChangeEventArgs e) => ToggleTeamSelection(team.Id, (bool)e.Value))" />
+                                                    <label for="team_@team.Id">
+                                                        <div class="checkmark"></div>
+                                                        <div class="team-info">
+                                                            <div class="team-name">@team.Name</div>
+                                                            <div class="team-member-count">@team.Users.Count members</div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            @if (_assignedTeamIds.Contains(team.Id))
+                                            {
+                                                <div class="team-members">
+                                                    <div class="members-header">Select specific members (optional):</div>
+                                                    @foreach (var user in team.Users)
+                                                    {
+                                                        <div class="member-checkbox">
+                                                            <input type="checkbox"
+                                                                   id="member_@user.Id"
+                                                                   checked="@_assignedTeamIds.Contains(team.Id)"
+                                                                   @onchange="@((ChangeEventArgs e) => ToggleUserSelection(user.Id, (bool)e.Value))" />
+                                                            <label for="member_@user.Id">
+                                                                <div class="checkmark"></div>
+                                                                <div class="member-info">
+                                                                    <div class="member-name">@user.Name</div>
+                                                                    <div class="member-email">@user.Email</div>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="no-results">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                        <p>No teams found</p>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (_teamsTotalPages > 1)
+                            {
+                                <div class="pagination">
+                                    <button type="button" @onclick="PreviousTeamsPage"
+                                            disabled="@(_teamsPage <= 1)" class="pagination-btn">
+                                        Previous
+                                    </button>
+                                    <span class="pagination-info">
+                                        Page @_teamsPage of @_teamsTotalPages
+                                    </span>
+                                    <button type="button" @onclick="NextTeamsPage"
+                                            disabled="@(_teamsPage >= _teamsTotalPages)" class="pagination-btn">
+                                        Next
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Individual Users Tab -->
+                            <div class="form-field">
+                                <label for="usersSearch">Search Users:</label>
+                                <input @bind="_usersSearchTerm"
+                                       @bind:event="oninput"
+                                       @onkeyup="OnUsersSearchChanged"
+                                       type="text"
+                                       id="usersSearch"
+                                       class="modern-input"
+                                       placeholder="Search for users..." />
+                            </div>
+
+                            <div class="users-list">
+                                @if (_availableModerators.Any())
+                                {
+                                    @foreach (var user in _availableModerators)
+                                    {
+                                        <div class="user-item">
+                                            <div class="user-checkbox">
+                                                <input type="checkbox"
+                                                       id="user_@user.Id"
+                                                       checked="@_assignedModeratorIds.Contains(user.Id)"
+                                                       @onchange="@((ChangeEventArgs e) => ToggleUserSelection(user.Id, (bool)e.Value))" />
+                                                <label for="user_@user.Id">
+                                                    <div class="checkmark"></div>
+                                                    <div class="user-info">
+                                                        <div class="user-name">@user.Name</div>
+                                                        <div class="user-email">@user.Email</div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="no-results">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        <p>No users found</p>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (_usersTotalPages > 1)
+                            {
+                                <div class="pagination">
+                                    <button type="button" @onclick="PreviousUsersPage"
+                                            disabled="@(_usersPage <= 1)" class="pagination-btn">
+                                        Previous
+                                    </button>
+                                    <span class="pagination-info">
+                                        Page @_usersPage of @_usersTotalPages
+                                    </span>
+                                    <button type="button" @onclick="NextUsersPage"
+                                            disabled="@(_usersPage >= _usersTotalPages)" class="pagination-btn">
+                                        Next
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            @if (_isTeamsTabSelected)
+                            {
+                                <span>Select teams to assign. You can optionally select specific members from each team.</span>
+                            }
+                            else
+                            {
+                                <span>Select individual users to assign to this step.</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" @onclick="CancelForm" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary"
+                                disabled="@(!_assignedTeamIds.Any() && !_assignedModeratorIds.Any())">
+                            Assign to Step
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_onSubmitMessage))
+                    {
+                        <div class="onSubmitMessage">
+                            <span class="onSubmit @(_onSubmitSuccess ? "success" : "fail")">@_onSubmitMessage</span>
+                        </div>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+}

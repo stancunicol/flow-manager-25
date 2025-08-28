@@ -156,23 +156,32 @@ namespace FlowManager.Infrastructure.Services
                 Email = payload.Email,
                 EmailConfirmed = false,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                ConcurrencyStamp = Guid.NewGuid().ToString()
+                ConcurrencyStamp = Guid.NewGuid().ToString(),
             };
 
-            foreach(Guid teamId in payload.TeamsIds)
+            userToAdd.Steps.Add(new StepUser
             {
-                if(await _teamRepostiory.GetTeamByIdAsync(teamId) == null)
+                StepId = payload.StepId,
+                UserId = userToAdd.Id
+            });
+
+            if (payload.TeamsIds != null)
+            {
+                foreach (Guid teamId in payload.TeamsIds)
                 {
-                    throw new EntryNotFoundException($"Team with id {teamId} was not found (trying to create a new user).");
+                    if (await _teamRepostiory.GetTeamByIdAsync(teamId) == null)
+                    {
+                        throw new EntryNotFoundException($"Team with id {teamId} was not found (trying to create a new user).");
+                    }
+
+                    UserTeam userTeam = new UserTeam
+                    {
+                        UserId = userToAdd.Id,
+                        TeamId = teamId,
+                    };
+
+                    userToAdd.Teams.Add(userTeam);
                 }
-
-                UserTeam userTeam = new UserTeam
-                {
-                    UserId = userToAdd.Id,
-                    TeamId = teamId,
-                };
-
-                userToAdd.Teams.Add(userTeam);
             }
 
             foreach (Guid roleId in payload.Roles)
@@ -211,7 +220,6 @@ namespace FlowManager.Infrastructure.Services
             {
                 throw new EmailNotSentException($"Failed to send welcome email to {userToAdd.Email}. Invalid email address.");
             }
-
 
             var result = await _userRepository.AddUserAsync(userToAdd);
 
@@ -390,6 +398,31 @@ namespace FlowManager.Infrastructure.Services
         {
             bool assigned = await _userRepository.VerifyIfAssigned(id);
             return assigned;
+        }
+
+        public async Task<PagedResponseDto<UserResponseDto>> GetUnassignedModeratorsByStepIdQueriedAsync(Guid stepId, QueriedUserRequestDto payload)
+        {
+            QueryParams? parameters = payload.QueryParams?.ToQueryParams();
+            Guid moderatorId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
+
+            (List<User> unassignedUsers, int totalCount) = await _userRepository.GetUnassignedModeratorsByStepIdQueriedAsync(
+                moderatorId,
+                stepId,
+                payload.GlobalSearchTerm,
+                parameters);
+
+            return new PagedResponseDto<UserResponseDto>
+            {
+                Data = unassignedUsers.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email, 
+                }).ToList(),
+                Page = payload.QueryParams?.Page ?? 1,
+                PageSize = payload.QueryParams?.PageSize ?? totalCount,
+                TotalCount = totalCount
+            };
         }
     }
 }

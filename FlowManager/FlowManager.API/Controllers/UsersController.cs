@@ -1,5 +1,6 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Shared.DTOs.Requests.User;
+using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -227,8 +228,37 @@ namespace FlowManager.API.Controllers
                 Message = "Role retrieved successfully.",
                 Timestamp = DateTime.UtcNow
             });
-
         }
+
+        [HttpGet("unassignedModerators/queried/{stepId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUnassignedModeratorsByStepIdQueriedAsync(Guid stepId,[FromQuery] QueriedUserRequestDto payload)
+        {
+            var result = await _userService.GetUnassignedModeratorsByStepIdQueriedAsync(stepId, payload);
+
+            if (result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<TeamResponseDto>(),
+                    Success = false,
+                    Message = "No unassigned users matching the criteria.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Unassigned users retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
 
         [HttpGet("{id}/assigned")]
         [ProducesResponseType(StatusCodes.Status200OK)]
