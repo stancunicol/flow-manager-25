@@ -31,7 +31,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private bool _submitStatus { get; set; } = false;
 
         private List<UserVM> _users = new List<UserVM>();
-        private bool[] _selectionStateUser = new bool[0];
+        private HashSet<UserVM> _selectedUsers = new HashSet<UserVM>();
 
         private int _currentPage = 1;
         private int _pageSize = 10;
@@ -45,14 +45,13 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         private async Task LoadUsers(bool resetPageSize = false)
         {
-            QueriedUserRequestDto payload = new QueriedUserRequestDto(); 
-
-            if(!string.IsNullOrEmpty(_searchTerm))
+            QueriedUserRequestDto payload = new QueriedUserRequestDto();
+            if (!string.IsNullOrEmpty(_searchTerm))
             {
                 payload.GlobalSearchTerm = _searchTerm;
             }
 
-            if(resetPageSize)
+            if (resetPageSize)
             {
                 _pageSize = 10;
                 payload.QueryParams = new QueryParamsDto
@@ -72,10 +71,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
             ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersQueriedAsync(payload);
 
-            if(!response.Success)
+            if (!response.Success || response.Result?.Data == null)
             {
+                Console.WriteLine("No users found or request failed");
                 _users = new List<UserVM>();
-                _selectionStateUser = new bool[0];
+                _totalPages = 0;
+                _totalCount = 0;
                 return;
             }
 
@@ -86,11 +87,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 Email = u.Email
             }).ToList();
 
-            _selectionStateUser = new bool[_users.Count];
-
             _totalPages = response.Result.TotalPages;
             _totalCount = response.Result.TotalCount;
-
             Console.WriteLine($"Total pages: {_totalPages}");
             Console.WriteLine($"Total count: {_totalCount}");
         }
@@ -116,7 +114,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
             PostTeamRequestDto payload = new PostTeamRequestDto
             {
                 Name = _teamName,
-                UserIds = _selectionStateUser.Where(state => state == true).Select((selectedUser, index) => _users[index].Id).ToList()
+                UserIds = _selectedUsers.Select(u => u.Id).ToList()
             };
 
             _isSubmitting = false;
@@ -147,41 +145,44 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         private List<UserVM> GetAssignedUsers()
         {
-            var assignedUsers = new List<UserVM>();
-            for (int i = 0; i < _users.Count && i < _selectionStateUser.Length; i++)
-            {
-                if (_selectionStateUser[i])
-                {
-                    assignedUsers.Add(_users[i]);
-                }
-            }
-            return assignedUsers;
+            return _selectedUsers.ToList();
         }
 
         private int GetAssignedUsersCount()
         {
-            if (_selectionStateUser == null || _selectionStateUser.Length == 0)
+            if (_selectedUsers == null || _selectedUsers.Count == 0)
                 return 0;
 
-            return _selectionStateUser.Count(selected => selected);
+            return _selectedUsers.Count;
         }
 
         private void RemoveUserFromAssignment(Guid userId)
         {
-            for (int i = 0; i < _users.Count; i++)
-            {
-                if (_users[i].Id == userId && i < _selectionStateUser.Length)
-                {
-                    _selectionStateUser[i] = false;
-                    break;
-                }
-            }
+            UserVM? userToDelete = _selectedUsers.FirstOrDefault(u => u.Id == userId);
+
+            _selectedUsers.Remove(userToDelete);
             StateHasChanged();
         }
 
         private bool IsSubmitValid()
         {
-            return !string.IsNullOrEmpty(_teamName) && _selectionStateUser.Any(state => state == true);
+            return !string.IsNullOrEmpty(_teamName) && _selectedUsers.Count > 0;
+        }
+
+        private void ToggleUserSelection(Guid userId, bool isSelected)
+        {
+            UserVM? user = _users.FirstOrDefault(u => u.Id == userId);
+
+            if (isSelected)
+            {
+                _selectedUsers.Add(user);
+            }
+            else
+            {
+                _selectedUsers.Remove(user); 
+            }
+
+            StateHasChanged();
         }
     }
 }

@@ -165,12 +165,12 @@ namespace FlowManager.Infrastructure.Repositories
 
             if(!string.IsNullOrEmpty(globalSearchTerm))
             {
-                assignedUsers = assignedUsers.Where(u => u.Name.ToUpper() == globalSearchTerm.ToUpper() ||
-                                                         u.NormalizedEmail == globalSearchTerm.ToUpper())
+                assignedUsers = assignedUsers.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) ||
+                                                         u.NormalizedEmail.Contains(globalSearchTerm.ToUpper()))
                                                          .ToList();
 
-                unassignedUsers = unassignedUsers.Where(u => u.Name.ToUpper() == globalSearchTerm.ToUpper() ||
-                                                         u.NormalizedEmail == globalSearchTerm.ToUpper())
+                unassignedUsers = unassignedUsers.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) ||
+                                                         u.NormalizedEmail.Contains(globalSearchTerm.ToUpper()))
                                                          .ToList();
             }
 

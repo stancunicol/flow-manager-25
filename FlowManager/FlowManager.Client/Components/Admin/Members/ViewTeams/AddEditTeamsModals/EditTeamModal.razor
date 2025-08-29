@@ -19,7 +19,6 @@
                     <div class="search-users">
                         <input type="text"
                                @bind="_searchTerm"
-                               @onkeypress="HandleSearchKeyPress"
                                placeholder="Search users by name..." />
                         <button type="button" class="search-btn-users" @onclick="() => LoadUsers()">
                             Search
@@ -28,19 +27,19 @@
 
                     <div class="users-main-content">
                         <div class="users-container">
-                            @for (int i = 0; i < _filteredUsers.Count; i++)
+                            @for (int i = 0; i < _users.Count; i++)
                             {
                                 int index = i;
-                                <div class="user-item @(IsUserAssigned(_filteredUsers[index]) ? "selected" : "")">
+                                <div class="user-item @(IsUserAssigned(_users[index]) ? "selected" : "")">
                                     <input type="checkbox"
                                            class="user-checkbox"
                                            id="user-@index"
                                            name="selectedUsers"
-                                           checked="@IsUserAssigned(_filteredUsers[index])"
-                                           @onchange="@((ChangeEventArgs e) => UserAssignStateChanged(e, _filteredUsers[index]))" />
+                                           checked="@_selectedUsers.Contains(_users[index])"
+                                           @onchange="(e) => ToggleUserSelection(_users[index].Id, (bool)e.Value)"/>
                                     <label for="user-@index" class="user-details">
-                                        <span class="user-name">@_filteredUsers[i].Name</span>
-                                        <span class="user-email">@_filteredUsers[i].Email</span>
+                                        <span class="user-name">@_users[i].Name</span>
+                                        <span class="user-email">@_users[i].Email</span>
                                     </label>
                                 </div>
                             }
@@ -50,12 +49,12 @@
                         <div class="assigned-users-sidebar">
                             <div class="assigned-users-header">
                                 <span>Assigned Users</span>
-                                <div class="assigned-count">@_assignedUsers.Count</div>
+                                <div class="assigned-count">@_selectedUsers.Count</div>
                             </div>
                             <div class="assigned-users-list">
-                                @if (_assignedUsers.Any())
+                                @if (_selectedUsers.Any())
                                 {
-                                    @foreach (var user in _assignedUsers)
+                                    @foreach (var user in _selectedUsers)
                                     {
                                         <div class="assigned-user-item">
                                             <div class="assigned-user-details">
@@ -88,6 +87,13 @@
                     </div>
                 }
                 <div class="popup-actions">
+                    <!-- Load more btn -->
+                    <button type="button"
+                            @onclick="() => LoadMore()"
+                            disabled="@(_currentPage == _totalPages)"
+                            class="load-more-button">
+                        Load more
+                    </button>
                     <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
                     <button type="submit" class="create-button" disabled="@_isSubmitting">
                         @if (_isSubmitting)

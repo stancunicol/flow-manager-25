@@ -1,7 +1,10 @@
-﻿using FlowManager.Client.DTOs;
+﻿using Azure;
+using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Client.ViewModels.Team;
+using FlowManager.Domain.Entities;
+using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
@@ -31,25 +34,74 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private string _submitMessage { get; set; } = string.Empty;
         private bool _submitStatus { get; set; } = false;
 
-        private List<UserVM> _assignedUsers = new List<UserVM>();
-        private List<UserVM> _filteredUsers = new List<UserVM>();
+        private HashSet<UserVM> _selectedUsers = new HashSet<UserVM>();
+        private List<UserVM> _users = new List<UserVM>();
 
-        private bool _showAssignedUsersTab { get; set; } = true;
+        private int _currentPage = 1;
+        private int _pageSize = 10;
+        private int _totalPages = 0;
+        private int _totalCount = 0;
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadUsers(reset: true);
+            await LoadAssignedUsersInit();
             _teamName = TeamToEdit.Name!;
         }
 
-        private async Task LoadUsers(bool reset = false)
+        private async Task LoadAssignedUsersInit()
         {
-            QueriedTeamRequestDto payload = null;
+            QueriedTeamRequestDto payload = new QueriedTeamRequestDto();
             if (!string.IsNullOrEmpty(_searchTerm))
-            { 
-                payload = new QueriedTeamRequestDto
-                { 
-                    GlobalSearchTerm = _searchTerm
+            {
+                payload.GlobalSearchTerm = _searchTerm;
+            }
+
+            payload.QueryParams = new QueryParamsDto
+            {
+                Page = _currentPage,
+                PageSize = _pageSize
+            };
+
+            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamToEdit.Id, payload);
+
+            _selectedUsers = response.Result.AssignedToTeamUsers.Select(u => new UserVM
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+            }).ToHashSet();
+
+            _users = response.Result.AssignedToTeamUsers.Concat(response.Result.UnassignedToTeamUsers).Select(u => new UserVM
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+            }).ToList();
+        }
+
+        private async Task LoadUsers(bool resetPageSize = false)
+        {
+            QueriedTeamRequestDto payload = new QueriedTeamRequestDto();
+            if (!string.IsNullOrEmpty(_searchTerm))
+            {
+                payload.GlobalSearchTerm = _searchTerm;
+            }
+
+            if (resetPageSize)
+            {
+                _pageSize = 10;
+                payload.QueryParams = new QueryParamsDto
+                {
+                    Page = 1,
+                    PageSize = _pageSize
+                };
+            }
+            else if (_currentPage != 0 && _pageSize != 0)
+            {
+                payload.QueryParams = new QueryParamsDto
+                {
+                    Page = _currentPage,
+                    PageSize = _pageSize
                 };
             }
 
@@ -57,27 +109,24 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
             if (!response.Success)
             {
-                _assignedUsers.Clear();
-                _filteredUsers.Clear();
+                Console.WriteLine("No users found");
+                _users = new List<UserVM>();
+                _totalPages = 0;
+                _totalCount = 0;
                 return;
             }
 
-            if(reset)
-            {
-                _assignedUsers = response.Result.AssignedToTeamUsers.Select(u => new UserVM
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
-                }).ToList();
-            }
-
-            _filteredUsers = response.Result.AssignedToTeamUsers.Concat(response.Result.UnassignedToTeamUsers).Select(u => new UserVM
+            _users = response.Result.AssignedToTeamUsers.Concat(response.Result.UnassignedToTeamUsers).Select(u => new UserVM
             {
                 Id = u.Id,
                 Name = u.Name,
                 Email = u.Email,
             }).ToList();
+
+            _totalPages = response.Result.TotalPages;
+            _totalCount = response.Result.TotalCountUnassigned + response.Result.TotalCountAssigned;
+            Console.WriteLine($"Total pages: {_totalPages}");
+            Console.WriteLine($"Total count: {_totalCount}");
         }
 
         private async Task OnCancel()
@@ -105,9 +154,9 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 payload.Name = _teamName;
             }
 
-            if(_assignedUsers != null && _assignedUsers.Count > 0)
+            if(_selectedUsers != null && _selectedUsers.Count > 0)
             {
-                payload.UserIds = _assignedUsers.Select(u => u.Id).ToList();
+                payload.UserIds = _selectedUsers.Select(u => u.Id).ToList();
             }
 
             _isSubmitting = false;
@@ -125,39 +174,39 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         private bool IsUserAssigned(UserVM user)
         {
-            return _assignedUsers.Any(u => u.Id == user.Id);
+            return _selectedUsers.Contains(user);
         }
 
-        private void UserAssignStateChanged(ChangeEventArgs e, UserVM user)
+        private void ToggleUserSelection(Guid userId, bool isSelected)
         {
-            var existingUser = _assignedUsers.FirstOrDefault(u => u.Id == user.Id);
+            UserVM? user = _users.FirstOrDefault(u => u.Id == userId);
 
-            if (existingUser != null)
+            if (isSelected)
             {
-                _assignedUsers.Remove(existingUser);
+                _selectedUsers.Add(user);
             }
             else
             {
-                _assignedUsers.Add(user);
+                _selectedUsers.Remove(user);
             }
-        }
 
-        private async Task HandleSearchKeyPress(KeyboardEventArgs e)
-        {
-            if (e.Key == "Enter")
-            {
-                await LoadUsers();
-            }
+            StateHasChanged();
         }
 
         private void RemoveUserFromAssignment(Guid userId)
         {
-            var userToRemove = _assignedUsers.FirstOrDefault(u => u.Id == userId);
+            var userToRemove = _selectedUsers.FirstOrDefault(u => u.Id == userId);
             if (userToRemove != null)
             {
-                _assignedUsers.Remove(userToRemove);
+                _selectedUsers.Remove(userToRemove);
                 StateHasChanged();
             }
+        }
+
+        private async Task LoadMore()
+        {
+            _pageSize += 10;
+            await LoadUsers();
         }
     }
 }

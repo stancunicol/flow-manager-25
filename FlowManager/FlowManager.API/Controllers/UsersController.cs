@@ -1,5 +1,6 @@
 ﻿using FlowManager.Application.Interfaces;
 using FlowManager.Shared.DTOs.Requests.User;
+using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Authorization;
@@ -113,7 +114,7 @@ namespace FlowManager.API.Controllers
             {
                 return NotFound(new
                 {
-                    Result = new List<UserResponseDto>(),
+                    Result = new PagedResponseDto<UserResponseDto>(),
                     Success = false,
                     Message = "No users found matching the criteria.",
                     Timestamp = DateTime.UtcNow

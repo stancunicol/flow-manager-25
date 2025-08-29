@@ -15,5 +15,6 @@ namespace FlowManager.Shared.DTOs.Responses.Team
         public List<UserResponseDto> UnassignedToTeamUsers { get; set; }
         public int TotalCountAssigned { get; set; }
         public int TotalCountUnassigned { get; set; }
+        public int TotalPages { get; set; }
     }
 }

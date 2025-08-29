@@ -353,7 +353,10 @@ namespace FlowManager.Application.Services
                     Id = u.Id,
                     Name = u.Name,
                     Email = u.Email
-                }).ToList()
+                }).ToList(),
+                TotalCountAssigned = assignedToTeam.Count,
+                TotalCountUnassigned = unassignedToTeam.Count,
+                TotalPages = (int)Math.Ceiling((double)((assignedToTeam.Count + unassignedToTeam.Count)) / (payload.QueryParams?.PageSize ?? 1))
             };
         }
 
