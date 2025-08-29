@@ -203,6 +203,9 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
+                    b.Property<string>("Status")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("StepId")
                         .HasColumnType("uuid");
 

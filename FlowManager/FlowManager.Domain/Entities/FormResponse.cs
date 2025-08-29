@@ -13,6 +13,7 @@ namespace FlowManager.Domain.Entities
 
         [MaxLength(100)]
         public string? RejectReason { get; set; }
+        public string? Status { get; set; } = "Pending";
         public Dictionary<Guid, object> ResponseFields { get; set; }
 
         // navigation fields

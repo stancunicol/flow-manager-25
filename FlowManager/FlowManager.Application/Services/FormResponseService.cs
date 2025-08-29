@@ -43,6 +43,7 @@ namespace FlowManager.Application.Services
             {
                 Id = fr.Id,
                 RejectReason = fr.RejectReason,
+                Status = fr.Status,
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
@@ -75,6 +76,7 @@ namespace FlowManager.Application.Services
             {
                 Id = fr.Id,
                 RejectReason = fr.RejectReason,
+                Status = fr.Status,
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
@@ -102,6 +104,7 @@ namespace FlowManager.Application.Services
             {
                 Id = formResponse.Id,
                 RejectReason = formResponse.RejectReason,
+                Status = formResponse.Status,
                 ResponseFields = formResponse.ResponseFields,
                 FormTemplateId = formResponse.FormTemplateId,
                 FormTemplateName = formResponse.FormTemplate?.Name,
@@ -134,6 +137,7 @@ namespace FlowManager.Application.Services
             {
                 Id = fr.Id,
                 RejectReason = fr.RejectReason,
+                Status = fr.Status,
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
@@ -175,6 +179,7 @@ namespace FlowManager.Application.Services
             {
                 Id = formResponse.Id,
                 RejectReason = formResponse.RejectReason,
+                Status = formResponse.Status,
                 ResponseFields = formResponse.ResponseFields,
                 FormTemplateId = formResponse.FormTemplateId,
                 FormTemplateName = formResponse.FormTemplate?.Name,
@@ -205,14 +210,35 @@ namespace FlowManager.Application.Services
                 formResponse.ResponseFields = payload.ResponseFields;
             }
 
+            // ACTUALIZEAZĂ LOGICA PENTRU STATUS
             if (!string.IsNullOrEmpty(payload.RejectReason))
             {
                 formResponse.RejectReason = payload.RejectReason;
+                formResponse.Status = "Rejected";
+            }
+            else if (payload.RejectReason == null && !string.IsNullOrEmpty(formResponse.RejectReason))
+            {
+                // Dacă se elimină reject reason-ul, resetează la Pending
+                formResponse.RejectReason = null;
+                formResponse.Status = "Pending";
             }
 
-            if (payload.StepId.HasValue)
+            //if (payload.StepId.HasValue)
+            //{
+            //    formResponse.StepId = payload.StepId.Value;
+
+            //    // Verifică dacă este ultimul step pentru a seta status-ul ca Approved
+            //    var step = await _formResponseRepository.GetStepWithFlowInfoAsync(payload.StepId.Value);
+            //    if (step != null && IsLastStepInFlow(step))
+            //    {
+            //        formResponse.Status = "Approved";
+            //    }
+            //}
+
+            // Override manual pentru status dacă este specificat explicit
+            if (!string.IsNullOrEmpty(payload.Status))
             {
-                formResponse.StepId = payload.StepId.Value;
+                formResponse.Status = payload.Status;
             }
 
             await _formResponseRepository.UpdateAsync(formResponse);
@@ -221,6 +247,7 @@ namespace FlowManager.Application.Services
             {
                 Id = formResponse.Id,
                 RejectReason = formResponse.RejectReason,
+                Status = formResponse.Status, // ADAUGĂ ACEASTĂ LINIE
                 ResponseFields = formResponse.ResponseFields,
                 FormTemplateId = formResponse.FormTemplateId,
                 FormTemplateName = formResponse.FormTemplate?.Name,
@@ -233,6 +260,21 @@ namespace FlowManager.Application.Services
                 UpdatedAt = formResponse.UpdatedAt,
                 DeletedAt = formResponse.DeletedAt
             };
+        }
+
+        private bool IsLastStepInFlow(Step step)
+        {
+            // Implementează logica pentru a verifica dacă este ultimul step
+            // Poți verifica prin ordinea step-urilor în flow sau prin alte criterii
+            return step.Name?.ToLower().Contains("final") == true ||
+                   step.Name?.ToLower().Contains("approval") == true;
+        }
+
+        private int GetMaxOrderInFlow(Guid flowId)
+        {
+            // Implementează logica pentru a obține ordinea maximă din flow
+            // Această metodă ar trebui să acceseze repository-ul pentru steps
+            return 999; // Placeholder - implementează corect
         }
 
         public async Task<FormResponseResponseDto> DeleteFormResponseAsync(Guid id)

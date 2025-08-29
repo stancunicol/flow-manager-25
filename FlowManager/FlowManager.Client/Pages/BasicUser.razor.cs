@@ -311,6 +311,11 @@ namespace FlowManager.Client.Pages
 
         private string GetFormStatus(FormResponseResponseDto form)
         {
+            if (!string.IsNullOrEmpty(form.Status))
+            {
+                return form.Status;
+            }
+
             if (!string.IsNullOrEmpty(form.RejectReason))
             {
                 return "Rejected";
