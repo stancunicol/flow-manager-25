@@ -3,6 +3,7 @@ using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -178,6 +179,48 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
             }
         }
 
+        public async Task<(Guid Id, string Name)?> SaveWorkflowFirst()
+        {
+            try
+            {
+                if (!IsWorkflowValid())
+                {
+                    await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
+                    return null;
+                }
+
+                var workflowStepIds = GetConfiguredStepIds();
+
+                var apiResponse = await _flowService.PostFlowAsync(new PostFlowRequestDto
+                {
+                    Name = _flowName,
+                    StepIds = workflowStepIds,
+                    FormTemplateId = null
+                });
+
+                if (apiResponse != null && apiResponse.Success && apiResponse.Result != null)
+                {
+                    Console.WriteLine($"Flow created: Id={apiResponse.Result.Id}");
+
+                    ClearConfiguration();
+
+                    return (apiResponse.Result.Id, apiResponse.Result.Name ?? "Unnamed Flow");
+                }
+
+                // Log error message if available
+                if (apiResponse != null && !apiResponse.Success)
+                {
+                    Console.WriteLine($"Flow creation failed: {apiResponse.Message}");
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating flow: {ex.Message}");
+                throw;
+            }
+        }
 
 
 
@@ -223,5 +266,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 
             return string.IsNullOrWhiteSpace(_flowName) ? "invalid" : "valid";
         }
+      
+
     }
 }

@@ -2,24 +2,28 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 9999;
+    backdrop-filter: blur(2px);
 }
 
 .flow-edit-modal-container {
     background: white;
     border-radius: 12px;
-    width: 95%;
-    height: 90%;
+    width: 95vw;
+    height: 90vh;
     max-width: 1400px;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
 .modal-header {
@@ -28,33 +32,52 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
+    background: white;
 }
 
     .modal-header h2 {
         margin: 0;
         font-size: 1.5rem;
         color: #333;
+        font-weight: 600;
     }
 
 .modal-close {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 28px;
     cursor: pointer;
     color: #666;
-    padding: 5px;
-    border-radius: 4px;
+    padding: 8px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 
     .modal-close:hover {
         background: #f5f5f5;
         color: #333;
+        transform: scale(1.1);
     }
+
+.modal-content {
+    flex: 1;
+    overflow: auto;
+    background: #f8f9fa;
+    padding: 20px 30px;
+}
 
 .tab-navigation {
     display: flex;
     border-bottom: 1px solid #e5e5e5;
     padding: 0 30px;
+    background: white;
+    flex-shrink: 0;
 }
 
 .tab-button {
@@ -90,10 +113,12 @@
 .tab-content {
     flex: 1;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .tab-panel {
-    height: 100%;
+    flex: 1;
     overflow: auto;
 }
 
@@ -105,6 +130,7 @@
     height: 100%;
     text-align: center;
     padding: 40px;
+    min-height: 300px;
 }
 
 .no-template-icon {
@@ -117,12 +143,14 @@
     margin: 0 0 10px 0;
     color: #333;
     font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .no-template-state p {
     margin: 0 0 30px 0;
     color: #666;
     font-size: 1rem;
+    line-height: 1.5;
 }
 
 .create-template-btn {
@@ -134,11 +162,13 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
     .create-template-btn:hover {
         background: #4338ca;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
 
 .modal-footer {
@@ -147,6 +177,8 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+    background: white;
+    flex-shrink: 0;
 }
 
 .btn-secondary {
@@ -157,11 +189,13 @@
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
+    font-size: 14px;
     transition: all 0.2s ease;
 }
 
     .btn-secondary:hover {
         background: #e5e5e5;
+        transform: translateY(-1px);
     }
 
 .btn-primary {
@@ -172,19 +206,52 @@
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
+    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
     .btn-primary:hover:not(:disabled) {
         background: #4338ca;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
 
     .btn-primary:disabled {
         background: #9ca3af;
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+    .btn-warning:hover:not(:disabled) {
+        background: #d97706;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-warning:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
 .loading-spinner {
@@ -206,3 +273,56 @@
     }
 }
 
+/* Responsive Design */
+@media (max-width: 768px) {
+    .flow-edit-modal-container {
+        width: 98vw;
+        height: 95vh;
+        margin: 10px;
+    }
+
+    .modal-header,
+    .modal-content,
+    .modal-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+        }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-secondary,
+    .btn-primary,
+    .btn-warning {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .flow-edit-modal-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .modal-header,
+    .modal-content,
+    .modal-footer {
+        padding: 16px;
+    }
+
+    .no-template-state {
+        padding: 20px;
+    }
+
+    .no-template-icon {
+        font-size: 48px;
+    }
+}
