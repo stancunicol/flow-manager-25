@@ -276,7 +276,6 @@ namespace FlowManager.Client.Pages
             Navigation.NavigateTo($"/fill-form/{template.Id}");
         }
 
-        // EXISTING METHODS
         private async Task ViewFormResponse(FormResponseResponseDto formResponse)
         {
             selectedFormResponse = formResponse;
@@ -310,6 +309,35 @@ namespace FlowManager.Client.Pages
             }
         }
 
+        private string GetFormStatus(FormResponseResponseDto form)
+        {
+            if (!string.IsNullOrEmpty(form.RejectReason))
+            {
+                return "Rejected";
+            }
+
+            // Verifică dacă este la ultimul step (final approval)
+            // Aceasta ar trebui să fie o proprietate din backend, dar pentru acum facem o verificare simplă
+            if (form.StepName?.ToLower().Contains("final") == true ||
+                form.StepName?.ToLower().Contains("approval") == true ||
+                form.StepName?.ToLower().Contains("complete") == true)
+            {
+                return "Approved";
+            }
+
+            return "Pending";
+        }
+
+        private string GetStatusColor(string status)
+        {
+            return status switch
+            {
+                "Pending" => "#f59e0b", // galben
+                "Rejected" => "#ef4444", // roșu
+                "Approved" => "#10b981", // verde
+                _ => "#6b7280" // gri default
+            };
+        }
         private async Task ParseFormContent()
         {
             if (string.IsNullOrEmpty(selectedFormTemplate?.Content))
