@@ -1614,6 +1614,158 @@ body {
         color: #1f2937;
     }
 
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Review Status Info Messages */
+.review-status-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.status-info-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+}
+
+    .status-info-message.rejected {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .status-info-message.approved {
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+
+    .status-info-message svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+/* Enhanced modal footer layout */
+.modal-footer {
+    padding: 1rem 1.5rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    min-height: 60px;
+}
+
+.form-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-id-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.status-value {
+    font-weight: 600;
+    border: none !important;
+}
+
+/* Enhanced footer pentru diferite stări */
+.modal-footer.review-available {
+    justify-content: space-between;
+}
+
+.modal-footer.review-complete {
+    justify-content: center;
+    text-align: center;
+}
+
+/* Responsive pentru modal footer cu status */
+@media (max-width: 768px) {
+    .modal-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .form-status,
+    .form-id-display {
+        justify-content: center;
+    }
+
+    .review-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .review-btn {
+        flex: 1;
+    }
+
+    .status-info-message {
+        padding: 1rem;
+        text-align: center;
+    }
+}
+
+/* Enhanced view indicator pentru status */
+.view-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.form-card.can-review .view-indicator {
+    color: var(--primary-color);
+}
+
+.form-card.cannot-review .view-indicator {
+    color: #6b7280;
+}
+
+.form-card.status-approved .view-indicator {
+    color: #10b981;
+}
+
+.form-card.status-rejected .view-indicator {
+    color: #ef4444;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .moderator-container {

@@ -381,22 +381,23 @@ namespace FlowManager.Client.Pages
             {
                 var updateData = new PatchFormResponseRequestDto
                 {
-                    Id = selectedFormResponse.Id
+                    Id = selectedFormResponse.Id,
+                    RejectReason = null // Clear any existing reject reason
                 };
 
                 bool isFinalApproval = false;
 
                 if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId.HasValue)
                 {
-                    // Move to next step
+                    // Move to next step - backend will set status to "Pending"
                     updateData.StepId = nextStepInfo.NextStepId.Value;
-                    updateData.RejectReason = null;
+                    // Nu setăm Status explicit, să lase backend-ul să decidă
                 }
                 else
                 {
-                    // Final approval
-                    updateData.StepId = selectedFormResponse.StepId;
-                    updateData.RejectReason = null;
+                    // Final approval - backend will set status to "Approved"
+                    updateData.StepId = selectedFormResponse.StepId; // Keep same step
+                    updateData.Status = "Approved"; // Force final approval status
                     isFinalApproval = true;
                 }
 
@@ -410,7 +411,7 @@ namespace FlowManager.Client.Pages
 
                     await JSRuntime.InvokeVoidAsync("alert", successMessage);
 
-                    // Elimină din lista locală dacă e final approval sau s-a mutat la alt step
+                    // Elimină din lista locală doar dacă e final approval sau s-a mutat la alt step
                     if (isFinalApproval || nextStepInfo?.HasNextStep == true)
                     {
                         if (assignedForms != null)
@@ -421,7 +422,7 @@ namespace FlowManager.Client.Pages
                     }
 
                     CloseViewFormModal();
-                    StateHasChanged(); // Re-render fără form-ul aprobat
+                    StateHasChanged();
                 }
                 else
                 {
@@ -456,6 +457,7 @@ namespace FlowManager.Client.Pages
                 {
                     Id = selectedFormResponse.Id,
                     RejectReason = rejectReason.Trim()
+                    // Nu setăm Status explicit - backend-ul va seta automat la "Rejected"
                 };
 
                 var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", updateData);
@@ -474,7 +476,7 @@ namespace FlowManager.Client.Pages
                     showRejectModal = false;
                     showViewFormModal = false;
                     CloseViewFormModal();
-                    StateHasChanged(); // Re-render fără form-ul rejected
+                    StateHasChanged();
                 }
                 else
                 {
@@ -493,6 +495,47 @@ namespace FlowManager.Client.Pages
                 isSubmittingReview = false;
                 StateHasChanged();
             }
+        }
+
+        private string GetFormStatus(FormResponseResponseDto form)
+        {
+            // Folosește statusul din baza de date direct
+            if (!string.IsNullOrEmpty(form.Status))
+            {
+                return form.Status;
+            }
+
+            // Fallback pentru compatibilitate
+            if (!string.IsNullOrEmpty(form.RejectReason))
+            {
+                return "Rejected";
+            }
+
+            return "Pending";
+        }
+
+        private string GetStatusColor(string status)
+        {
+            return status switch
+            {
+                "Pending" => "#f59e0b", // galben
+                "Rejected" => "#ef4444", // roșu
+                "Approved" => "#10b981", // verde
+                _ => "#6b7280" // gri default
+            };
+        }
+
+        private bool CanReviewForm(FormResponseResponseDto form)
+        {
+            var status = GetFormStatus(form);
+            // Permite review doar pentru formularele Pending
+            return status == "Pending";
+        }
+
+        private bool ShouldShowReviewButtons(FormResponseResponseDto form)
+        {
+            // Arată butoanele doar pentru formularele care pot fi reviewed
+            return CanReviewForm(form);
         }
 
         protected async Task Logout()

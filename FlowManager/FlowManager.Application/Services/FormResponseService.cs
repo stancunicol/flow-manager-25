@@ -170,27 +170,33 @@ namespace FlowManager.Application.Services
                 StepId = payload.StepId,
                 UserId = payload.UserId,
                 ResponseFields = payload.ResponseFields,
+                Status = "Pending", // Toate formularele noi încep cu Pending
                 CreatedAt = DateTime.UtcNow
             };
 
             await _formResponseRepository.AddAsync(formResponse);
 
+            _logger.LogInformation("Form response {Id} created with status: Pending", formResponse.Id);
+
+            // Reîncarcă pentru a avea relațiile populate
+            var createdFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(formResponse.Id);
+
             return new FormResponseResponseDto
             {
-                Id = formResponse.Id,
-                RejectReason = formResponse.RejectReason,
-                Status = formResponse.Status,
-                ResponseFields = formResponse.ResponseFields,
-                FormTemplateId = formResponse.FormTemplateId,
-                FormTemplateName = formResponse.FormTemplate?.Name,
-                StepId = formResponse.StepId,
-                StepName = formResponse.Step?.Name,
-                UserId = formResponse.UserId,
-                UserName = formResponse.User?.Name,
-                UserEmail = formResponse.User?.Email,
-                CreatedAt = formResponse.CreatedAt,
-                UpdatedAt = formResponse.UpdatedAt,
-                DeletedAt = formResponse.DeletedAt
+                Id = createdFormResponse.Id,
+                RejectReason = createdFormResponse.RejectReason,
+                Status = createdFormResponse.Status,
+                ResponseFields = createdFormResponse.ResponseFields,
+                FormTemplateId = createdFormResponse.FormTemplateId,
+                FormTemplateName = createdFormResponse.FormTemplate?.Name,
+                StepId = createdFormResponse.StepId,
+                StepName = createdFormResponse.Step?.Name,
+                UserId = createdFormResponse.UserId,
+                UserName = createdFormResponse.User?.Name,
+                UserEmail = createdFormResponse.User?.Email,
+                CreatedAt = createdFormResponse.CreatedAt,
+                UpdatedAt = createdFormResponse.UpdatedAt,
+                DeletedAt = createdFormResponse.DeletedAt
             };
         }
 
@@ -205,76 +211,117 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException($"Form response with id {payload.Id} was not found.");
             }
 
+            // Salvează statusul anterior pentru logging
+            var previousStatus = formResponse.Status;
+            var previousStepId = formResponse.StepId;
+
+            // Actualizează ResponseFields dacă sunt furnizate
             if (payload.ResponseFields != null)
             {
                 formResponse.ResponseFields = payload.ResponseFields;
             }
 
-            // ACTUALIZEAZĂ LOGICA PENTRU STATUS
+            // LOGICA PENTRU REJECT
             if (!string.IsNullOrEmpty(payload.RejectReason))
             {
                 formResponse.RejectReason = payload.RejectReason;
                 formResponse.Status = "Rejected";
+                _logger.LogInformation("Form response {Id} rejected with reason: {RejectReason}", payload.Id, payload.RejectReason);
             }
+            // LOGICA PENTRU CLEAR REJECT (approve după reject anterior)
             else if (payload.RejectReason == null && !string.IsNullOrEmpty(formResponse.RejectReason))
             {
-                // Dacă se elimină reject reason-ul, resetează la Pending
                 formResponse.RejectReason = null;
-                formResponse.Status = "Pending";
+                // Verifică dacă e ultimul step pentru a decide statusul
+                if (payload.StepId.HasValue)
+                {
+                    var isLastStep = await _formResponseRepository.IsLastStepInFlowAsync(payload.StepId.Value);
+                    formResponse.Status = isLastStep ? "Approved" : "Pending";
+                }
+                else
+                {
+                    formResponse.Status = "Pending";
+                }
+                _logger.LogInformation("Form response {Id} reject reason cleared, status set to: {Status}", payload.Id, formResponse.Status);
             }
 
-            //if (payload.StepId.HasValue)
-            //{
-            //    formResponse.StepId = payload.StepId.Value;
+            // LOGICA PENTRU SCHIMBAREA STEP-ULUI (approve și move to next step)
+            if (payload.StepId.HasValue && payload.StepId.Value != formResponse.StepId)
+            {
+                var isLastStep = await _formResponseRepository.IsLastStepInFlowAsync(payload.StepId.Value);
 
-            //    // Verifică dacă este ultimul step pentru a seta status-ul ca Approved
-            //    var step = await _formResponseRepository.GetStepWithFlowInfoAsync(payload.StepId.Value);
-            //    if (step != null && IsLastStepInFlow(step))
-            //    {
-            //        formResponse.Status = "Approved";
-            //    }
-            //}
+                formResponse.StepId = payload.StepId.Value;
 
-            // Override manual pentru status dacă este specificat explicit
+                // Doar dacă nu e reject, actualizează statusul
+                if (string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
+                {
+                    formResponse.Status = isLastStep ? "Approved" : "Pending";
+                }
+
+                _logger.LogInformation("Form response {Id} moved from step {PreviousStepId} to step {NewStepId}, status: {Status}",
+                    payload.Id, previousStepId, payload.StepId.Value, formResponse.Status);
+            }
+
+            // OVERRIDE EXPLICIT PENTRU STATUS (dacă e specificat explicit în payload)
             if (!string.IsNullOrEmpty(payload.Status))
             {
                 formResponse.Status = payload.Status;
+                _logger.LogInformation("Form response {Id} status explicitly set to: {Status}", payload.Id, payload.Status);
             }
+
+            // Actualizează timestamp
+            formResponse.UpdatedAt = DateTime.UtcNow;
 
             await _formResponseRepository.UpdateAsync(formResponse);
 
+            _logger.LogInformation("Form response {Id} updated. Previous status: {PreviousStatus}, New status: {NewStatus}",
+                payload.Id, previousStatus, formResponse.Status);
+
+            // Reîncarcă entitatea cu toate relațiile pentru response
+            var updatedFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
+
             return new FormResponseResponseDto
             {
-                Id = formResponse.Id,
-                RejectReason = formResponse.RejectReason,
-                Status = formResponse.Status, // ADAUGĂ ACEASTĂ LINIE
-                ResponseFields = formResponse.ResponseFields,
-                FormTemplateId = formResponse.FormTemplateId,
-                FormTemplateName = formResponse.FormTemplate?.Name,
-                StepId = formResponse.StepId,
-                StepName = formResponse.Step?.Name,
-                UserId = formResponse.UserId,
-                UserName = formResponse.User?.Name,
-                UserEmail = formResponse.User?.Email,
-                CreatedAt = formResponse.CreatedAt,
-                UpdatedAt = formResponse.UpdatedAt,
-                DeletedAt = formResponse.DeletedAt
+                Id = updatedFormResponse.Id,
+                RejectReason = updatedFormResponse.RejectReason,
+                Status = updatedFormResponse.Status,
+                ResponseFields = updatedFormResponse.ResponseFields,
+                FormTemplateId = updatedFormResponse.FormTemplateId,
+                FormTemplateName = updatedFormResponse.FormTemplate?.Name,
+                StepId = updatedFormResponse.StepId,
+                StepName = updatedFormResponse.Step?.Name,
+                UserId = updatedFormResponse.UserId,
+                UserName = updatedFormResponse.User?.Name,
+                UserEmail = updatedFormResponse.User?.Email,
+                CreatedAt = updatedFormResponse.CreatedAt,
+                UpdatedAt = updatedFormResponse.UpdatedAt,
+                DeletedAt = updatedFormResponse.DeletedAt
             };
         }
 
-        private bool IsLastStepInFlow(Step step)
+        public async Task<List<FormResponseResponseDto>> GetFormResponsesByStatusAsync(string status)
         {
-            // Implementează logica pentru a verifica dacă este ultimul step
-            // Poți verifica prin ordinea step-urilor în flow sau prin alte criterii
-            return step.Name?.ToLower().Contains("final") == true ||
-                   step.Name?.ToLower().Contains("approval") == true;
-        }
+            _logger.LogInformation("Getting form responses with status: {Status}", status);
 
-        private int GetMaxOrderInFlow(Guid flowId)
-        {
-            // Implementează logica pentru a obține ordinea maximă din flow
-            // Această metodă ar trebui să acceseze repository-ul pentru steps
-            return 999; // Placeholder - implementează corect
+            var data = await _formResponseRepository.GetFormResponsesByStatusAsync(status);
+
+            return data.Select(fr => new FormResponseResponseDto
+            {
+                Id = fr.Id,
+                RejectReason = fr.RejectReason,
+                Status = fr.Status,
+                ResponseFields = fr.ResponseFields,
+                FormTemplateId = fr.FormTemplateId,
+                FormTemplateName = fr.FormTemplate?.Name,
+                StepId = fr.StepId,
+                StepName = fr.Step?.Name,
+                UserId = fr.UserId,
+                UserName = fr.User?.Name,
+                UserEmail = fr.User?.Email,
+                CreatedAt = fr.CreatedAt,
+                UpdatedAt = fr.UpdatedAt,
+                DeletedAt = fr.DeletedAt
+            }).ToList();
         }
 
         public async Task<FormResponseResponseDto> DeleteFormResponseAsync(Guid id)
@@ -318,6 +365,7 @@ namespace FlowManager.Application.Services
             {
                 Id = fr.Id,
                 RejectReason = fr.RejectReason,
+                Status = fr.Status,
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,

@@ -321,15 +321,6 @@ namespace FlowManager.Client.Pages
                 return "Rejected";
             }
 
-            // Verifică dacă este la ultimul step (final approval)
-            // Aceasta ar trebui să fie o proprietate din backend, dar pentru acum facem o verificare simplă
-            if (form.StepName?.ToLower().Contains("final") == true ||
-                form.StepName?.ToLower().Contains("approval") == true ||
-                form.StepName?.ToLower().Contains("complete") == true)
-            {
-                return "Approved";
-            }
-
             return "Pending";
         }
 

@@ -218,5 +218,21 @@ namespace FlowManager.API.Controllers
                 Timestamp = DateTime.UtcNow
             });
         }
+
+        [HttpGet("status/{status}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetFormResponsesByStatusAsync(string status)
+        {
+            var result = await _formResponseService.GetFormResponsesByStatusAsync(status);
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = $"Form responses with status '{status}' retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
     }
 }

@@ -131,7 +131,7 @@
                     <div class="forms-grid">
                         @foreach (var form in assignedForms.OrderByDescending(f => f.CreatedAt))
                         {
-                            <div class="form-card" @onclick="() => ViewFormResponse(form)">
+                            <div class="form-card @(CanReviewForm(form) ? "can-review" : "cannot-review") status-@(GetFormStatus(form).ToLower())" @onclick="() => ViewFormResponse(form)">
                                 <div class="form-card-header">
                                     <div class="form-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -165,6 +165,12 @@
                                                 <span class="detail-value">@form.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
                                             </div>
                                         }
+                                        <div class="detail-item">
+                                            <span class="detail-label">Status:</span>
+                                            <span class="detail-value status-badge" style="background: @GetStatusColor(GetFormStatus(form)); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                                @GetFormStatus(form)
+                                            </span>
+                                        </div>
                                         @if (!string.IsNullOrEmpty(form.RejectReason))
                                         {
                                             <div class="detail-item reject-reason">
@@ -177,11 +183,27 @@
 
                                 <div class="form-card-footer">
                                     <div class="view-indicator">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                                            <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
-                                        </svg>
-                                        Click to review
+                                        @{
+                                            var status = GetFormStatus(form);
+                                            var canReview = CanReviewForm(form);
+                                        }
+
+                                        @if (canReview)
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                                <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span>Click to review</span>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                                <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span>@(status == "Approved" ? "View approved" : "View rejected")</span>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -425,37 +447,70 @@
 
             <!-- Modal Footer -->
             <div class="modal-footer">
+                <!-- Status Display -->
                 <div class="form-status">
-                    <span class="status-label">Form ID:</span>
-                    <code style="background: #f3f4f6; color: #374151; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: 'Courier New', monospace;">@selectedFormResponse.Id</code>
+                    <span class="status-label">Status:</span>
+                    <span class="status-value" style="background: @GetStatusColor(GetFormStatus(selectedFormResponse)); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 12px; font-weight: 600; border: none;">
+                        @GetFormStatus(selectedFormResponse)
+                    </span>
                 </div>
 
-                <!-- Review Actions Buttons -->
-                <div class="review-actions">
-                    @if (isSubmittingReview)
-                    {
-                        <div class="submitting-indicator">
-                            <div class="spinner-small"></div>
-                            <span>Processing...</span>
-                        </div>
-                    }
-                    else
-                    {
-                        <button class="review-btn reject-btn" @onclick="ShowRejectModal" disabled="@isSubmittingReview">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                            </svg>
-                            Reject
-                        </button>
+                <!-- Review Actions - doar pentru formulare cu status Pending -->
+                @if (ShouldShowReviewButtons(selectedFormResponse))
+                {
+                    <div class="review-actions">
+                        @if (isSubmittingReview)
+                        {
+                            <div class="submitting-indicator">
+                                <div class="spinner-small"></div>
+                                <span>Processing...</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="review-btn reject-btn" @onclick="ShowRejectModal" disabled="@isSubmittingReview">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                                </svg>
+                                Reject
+                            </button>
 
-                        <button class="review-btn approve-btn" @onclick="ApproveForm" disabled="@isSubmittingReview">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
-                            </svg>
-                            @(nextStepInfo?.HasNextStep == true ? $"Approve & Send to {nextStepInfo.NextStepName}" : "Final Approval")
-                        </button>
-                    }
-                </div>
+                            <button class="review-btn approve-btn" @onclick="ApproveForm" disabled="@isSubmittingReview">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                                </svg>
+                                @(nextStepInfo?.HasNextStep == true ? $"Approve & Send to {nextStepInfo.NextStepName}" : "Final Approval")
+                            </button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <!-- Mesaj informativ pentru formulare finalizate -->
+                    <div class="review-status-info">
+                        @{
+                            var status = GetFormStatus(selectedFormResponse);
+                        }
+                        @if (status == "Rejected")
+                        {
+                            <div class="status-info-message rejected">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12 6.615 2.25 12 2.25zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                                </svg>
+                                <span>This form has been rejected and cannot be reviewed again.</span>
+                            </div>
+                        }
+                        else if (status == "Approved")
+                        {
+                            <div class="status-info-message approved">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM12 13.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm-2.53-1.72a.75.75 0 00-1.06-1.06l-1.72 1.72a.75.75 0 001.06 1.06l1.72-1.72zm6.78-1.72a.75.75 0 00-1.06 1.06l1.72 1.72a.75.75 0 001.06-1.06l-1.72-1.72z" clip-rule="evenodd" />
+                                </svg>
+                                <span>This form has been approved and the review process is complete.</span>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>

@@ -223,7 +223,46 @@ namespace FlowManager.Infrastructure.Repositories
             return (data, totalCount);
         }
 
+        public async Task<Step?> GetStepWithFlowInfoAsync(Guid stepId)
+        {
+            return await _context.Steps
+                .Include(s => s.FlowSteps)
+                    .ThenInclude(fs => fs.Flow)
+                        .ThenInclude(f => f.Steps.Where(fs => fs.DeletedAt == null))
+                            .ThenInclude(fs => fs.Step)
+                .FirstOrDefaultAsync(s => s.Id == stepId && s.DeletedAt == null);
+        }
 
+        public async Task<bool> IsLastStepInFlowAsync(Guid stepId)
+        {
+            var step = await _context.Steps
+                .Include(s => s.FlowSteps)
+                    .ThenInclude(fs => fs.Flow)
+                        .ThenInclude(f => f.Steps.Where(fs => fs.DeletedAt == null))
+                            .ThenInclude(fs => fs.Step)
+                .FirstOrDefaultAsync(s => s.Id == stepId && s.DeletedAt == null);
+
+            if (step?.FlowSteps?.FirstOrDefault()?.Flow?.Steps == null)
+                return false;
+
+            var orderedSteps = step.FlowSteps.First().Flow.Steps
+                .OrderBy(fs => fs.CreatedAt)
+                .Select(fs => fs.Step)
+                .ToList();
+
+            return orderedSteps.LastOrDefault()?.Id == stepId;
+        }
+
+        public async Task<List<FormResponse>> GetFormResponsesByStatusAsync(string status)
+        {
+            return await _context.FormResponses
+                .Include(fr => fr.FormTemplate)
+                .Include(fr => fr.Step)
+                .Include(fr => fr.User)
+                .Where(fr => fr.Status == status && fr.DeletedAt == null)
+                .OrderByDescending(fr => fr.CreatedAt)
+                .ToListAsync();
+        }
 
         public async Task<List<FormResponse>> GetPendingFormResponsesAsync()
         {
