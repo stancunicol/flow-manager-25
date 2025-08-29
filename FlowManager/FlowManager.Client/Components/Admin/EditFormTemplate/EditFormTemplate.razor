@@ -264,7 +264,7 @@
     }
 </div>
 
-@code{
+@code {
     [Inject] private ComponentService ComponentService { get; set; } = default!;
     [Inject] private FormTemplateService FormTemplateService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
@@ -400,8 +400,14 @@
                     if (elementJson.TryGetProperty("Label", out var label))
                         element.Label = label.GetString();
 
-                    if (elementJson.TryGetProperty("Required", out var required))
-                        element.Required = required.GetBoolean();
+                    if (elementJson.TryGetProperty("Required", out var requiredProperty))
+                    {
+                        if (requiredProperty.ValueKind == System.Text.Json.JsonValueKind.True ||
+                            requiredProperty.ValueKind == System.Text.Json.JsonValueKind.False)
+                            element.Required = requiredProperty.GetBoolean();
+                        else
+                            element.Required = false; // pentru valorile null
+                    }
 
                     if (elementJson.TryGetProperty("ComponentId", out var compId) &&
                         !compId.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
@@ -455,9 +461,8 @@
         }
     }
 
-
-
-    public async Task SaveTextOnlyChanges()
+    // SINGURA FUNCȚIE DE SALVARE - Creează întotdeauna un template nou
+    public async Task SaveTemplate()
     {
         try
         {
@@ -466,77 +471,6 @@
                 await JSRuntime.InvokeVoidAsync("alert", "Please enter a template name");
                 return;
             }
-
-            // Verifică dacă s-au adăugat componente noi
-            var hasNewComponents = canvasElements.Any(e => !e.IsTextElement && !e.ComponentId.HasValue);
-            if (hasNewComponents)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Cannot save new components in text-only mode. Use 'Save as New Template' instead.");
-                return;
-            }
-
-            // Doar componentele existente (fără crearea unora noi)
-            var existingComponentIds = canvasElements
-                .Where(e => !e.IsTextElement && e.ComponentId.HasValue)
-                .Select(e => e.ComponentId.Value)
-                .ToList();
-
-            // Creează JSON content cu layout information
-            var templateContent = System.Text.Json.JsonSerializer.Serialize(new
-            {
-                Layout = "FreeCanvas",
-                Elements = canvasElements.Select(e => new
-                {
-                    Id = e.Id,
-                    X = e.X,
-                    Y = e.Y,
-                    ZIndex = e.ZIndex,
-                    IsTextElement = e.IsTextElement,
-                    TextContent = e.TextContent,
-                    ComponentId = e.ComponentId,
-                    ComponentType = e.ComponentType,
-                    Label = e.Label,
-                    Required = e.Required,
-                    Properties = e.Properties
-                }).ToList()
-            });
-
-            var updateRequest = new PatchFormTemplateRequestDto
-            {
-                Name = templateName,
-                Content = templateContent,
-                Components = existingComponentIds
-            };
-
-            var response = await FormTemplateService.PatchFormTemplateAsync(FormTemplateId, updateRequest);
-            if (response != null)
-            {
-                await OnTemplateSaved.InvokeAsync();
-                await JSRuntime.InvokeVoidAsync("alert", "Text changes saved successfully!");
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Error saving text changes");
-            }
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
-        }
-    }
-
-    public async Task SaveAsNewTemplate()
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(templateName))
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Please enter a template name");
-                return;
-            }
-
-            // Adaugă suffix pentru a diferenția template-ul nou
-            var newTemplateName = $"{templateName} - Copy";
 
             var componentIds = new List<Guid>();
 
@@ -582,16 +516,17 @@
                     ComponentId = e.ComponentId,
                     ComponentType = e.ComponentType,
                     Label = e.Label,
-                    Required = e.Required,
+                    Required = e.Required ?? false,
                     Properties = e.Properties
                 }).ToList()
             });
 
-            // Creează un template nou în loc să actualizeze pe cel existent
+            // Creează template nou și îl atribuie la flow
             var createRequest = new PostFormTemplateRequestDto
             {
-                Name = newTemplateName,
+                Name = templateName,
                 Content = templateContent,
+                FlowId = FlowId, // Atribuie la flow-ul curent
                 Components = componentIds
             };
 
@@ -599,11 +534,11 @@
             if (response != null)
             {
                 await OnTemplateSaved.InvokeAsync();
-                await JSRuntime.InvokeVoidAsync("alert", $"New template '{newTemplateName}' created successfully!");
+                await JSRuntime.InvokeVoidAsync("alert", $"Template '{templateName}' saved successfully and assigned to flow!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error creating new template");
+                await JSRuntime.InvokeVoidAsync("alert", "Error saving template");
             }
         }
         catch (Exception ex)
@@ -612,24 +547,7 @@
         }
     }
 
-    private bool HasComponentChanges()
-    {
-        return canvasElements.Any(e => !e.IsTextElement && !e.ComponentId.HasValue);
-    }
-
-    public async Task SaveTemplate()
-    {
-        // Redirect către una din metodele noi în funcție de context
-        if (HasComponentChanges())
-        {
-            await SaveAsNewTemplate();
-        }
-        else
-        {
-            await SaveTextOnlyChanges();
-        }
-    }
-
+    // Metodele pentru interacțiunea cu canvas-ul rămân la fel
     private async Task OnWorkspaceClick(MouseEventArgs e)
     {
         if (justFinishedDragging)
@@ -866,5 +784,4 @@
             _ => "📄"
         };
     }
-
 }

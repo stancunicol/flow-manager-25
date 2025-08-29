@@ -40,26 +40,20 @@
             </button>
             @if (Flow?.FormTemplateId != null)
             {
-                <button class="btn-warning" @onclick="SaveTextOnly" disabled="@_isSaving">
+                <button class="btn-primary" @onclick="SaveTemplate" disabled="@_isSaving">
                     @if (_isSaving)
                     {
                         <span class="loading-spinner"></span>
                     }
-                    Edit Text Only
-                </button>
-
-                <button class="btn-primary" @onclick="SaveAsNewTemplate" disabled="@_isSaving">
-                    @if (_isSaving)
-                    {
-                        <span class="loading-spinner"></span>
-                    }
-                    Save as New Template
+                    Save Changes
                 </button>
             }
         </div>
 
     </div>
 </div>
+
+
 
 @code {
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
@@ -94,7 +88,7 @@
         await OnClose.InvokeAsync();
     }
 
-    private async Task SaveTextOnly()
+    private async Task SaveTemplate()
     {
         if (_isSaving || editFormTemplateRef == null) return;
 
@@ -103,47 +97,21 @@
 
         try
         {
-            await editFormTemplateRef.SaveTextOnlyChanges();
-            await JSRuntime.InvokeVoidAsync("alert", "Text changes saved successfully!");
+            await editFormTemplateRef.SaveTemplate();
+            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
 
             // Notify parent that flow was updated
             if (Flow != null && OnFlowUpdated.HasDelegate)
             {
                 await OnFlowUpdated.InvokeAsync(Flow);
             }
+
+            // Close the modal
+            await OnClose.InvokeAsync();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving text changes: {ex.Message}");
-        }
-        finally
-        {
-            _isSaving = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task SaveAsNewTemplate()
-    {
-        if (_isSaving || editFormTemplateRef == null) return;
-
-        _isSaving = true;
-        StateHasChanged();
-
-        try
-        {
-            await editFormTemplateRef.SaveAsNewTemplate();
-            await JSRuntime.InvokeVoidAsync("alert", "New template created successfully!");
-
-            // Notify parent that flow was updated
-            if (Flow != null && OnFlowUpdated.HasDelegate)
-            {
-                await OnFlowUpdated.InvokeAsync(Flow);
-            }
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error creating new template: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving template: {ex.Message}");
         }
         finally
         {
