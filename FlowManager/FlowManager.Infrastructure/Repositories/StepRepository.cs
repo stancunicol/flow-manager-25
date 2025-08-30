@@ -167,10 +167,5 @@ namespace FlowManager.Infrastructure.Repositories
                 _context.StepUsers.Attach(stepUser);
             }
         }
-
-        public void DettachStepUser(StepUser stepUser)
-        {
-            _context.Update(stepUser);
-        }
     }
 }

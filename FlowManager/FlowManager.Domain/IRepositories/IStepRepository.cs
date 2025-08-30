@@ -20,6 +20,5 @@ namespace FlowManager.Domain.IRepositories
 
         Task AddStepUserAsync(StepUser stepUser);
         void AttachStepUser(StepUser stepUser);
-        void DettachStepUser(StepUser stepUser);
     }
 }
