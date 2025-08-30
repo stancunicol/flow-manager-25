@@ -36,6 +36,7 @@ namespace FlowManager.Infrastructure.Repositories
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
                     .ThenInclude(ut => ut.User)
+                        .ThenInclude(u => u.Step)
                 .AsQueryable();
 
             if(!string.IsNullOrWhiteSpace(globalSearchTerm))
@@ -148,7 +149,7 @@ namespace FlowManager.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(List<User>, List<User>)> GetSplitUsersByTeamIdQueriedAsync(Guid teamId, string? globalSearchTerm, QueryParams? queryParams)
+        public async Task<(List<User>, List<User>)> GetSplitUsersByTeamIdQueriedAsync(Guid stepId, Guid teamId, string? globalSearchTerm, QueryParams? queryParams)
         {
             List<User> assignedUsers = await _context.Teams
                 .Where(t => t.Id == teamId && t.DeletedAt == null)
@@ -160,17 +161,17 @@ namespace FlowManager.Infrastructure.Repositories
             List<Guid> assignedUserIds = assignedUsers.Select(u => u.Id).ToList();
 
             List<User> unassignedUsers = await _context.Users
-                .Where(u => !assignedUserIds.Contains(u.Id))
+                .Where(u => !assignedUserIds.Contains(u.Id) && u.StepId == stepId)
                 .ToListAsync();
 
             if(!string.IsNullOrEmpty(globalSearchTerm))
             {
                 assignedUsers = assignedUsers.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) ||
-                                                         u.NormalizedEmail.Contains(globalSearchTerm.ToUpper()))
+                                                         u.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()))
                                                          .ToList();
 
                 unassignedUsers = unassignedUsers.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) ||
-                                                         u.NormalizedEmail.Contains(globalSearchTerm.ToUpper()))
+                                                         u.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()))
                                                          .ToList();
             }
 
@@ -201,13 +202,11 @@ namespace FlowManager.Infrastructure.Repositories
             var query = _context.Teams
                 .Where(t => t.DeletedAt == null &&
                             t.Users.Any(ut => ut.DeletedAt == null &&
-                                              ut.UserId == moderatorId &&
-                                              ut.User.Steps.Any(su => su.StepId == stepId) &&
-                                              ut.Team.Users.Any(ut => ut.DeletedAt == null && ut.UserId == moderatorId)))
+                                              ut.User.StepId == stepId &&
+                                              ut.Team.Users.Any(ut => ut.DeletedAt == null && ut.User.Roles.Any(ur => ur.RoleId == moderatorId))))
                 .Include(t => t.Users)
                     .ThenInclude(ut => ut.User)
-                        .ThenInclude(u => u.Steps.Where(su => su.StepId == stepId))
-                            .ThenInclude(us => us.Step)
+                        .ThenInclude(u => u.Step)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(globalSearchTerm))

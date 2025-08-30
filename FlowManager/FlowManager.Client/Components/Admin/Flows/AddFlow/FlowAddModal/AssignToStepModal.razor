@@ -60,6 +60,7 @@
                                                 <div class="team-checkbox">
                                                     <input type="checkbox"
                                                            id="team_@team.Id"
+                                                           checked="@IsTeamFullySelected(team)"
                                                            @onchange="@((ChangeEventArgs e) => ToggleTeamSelection(team.Id, (bool)e.Value))" />
                                                     <label for="team_@team.Id">
                                                         <div class="checkmark"></div>
@@ -71,17 +72,27 @@
                                                 </div>
                                             </div>
 
-                                            @if (_assignedTeamIds.Contains(team.Id))
+                                            @if (IsTeamFullySelected(team) || team.Users.Any(u => IsUserFromTeamSelected(team, u)))
                                             {
                                                 <div class="team-members">
-                                                    <div class="members-header">Select specific members (optional):</div>
+                                                    <div class="members-header">
+                                                        @if (_assignedTeamIds.Contains(team.Id))
+                                                        {
+                                                            <span>All team members selected</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Select specific members:</span>
+                                                        }
+                                                    </div>
+
                                                     @foreach (var user in team.Users)
                                                     {
                                                         <div class="member-checkbox">
                                                             <input type="checkbox"
                                                                    id="member_@user.Id"
-                                                                   checked="@_assignedTeamIds.Contains(team.Id)"
-                                                                   @onchange="@((ChangeEventArgs e) => ToggleUserSelection(user.Id, (bool)e.Value))" />
+                                                                   checked="@IsUserFromTeamSelected(team, user)"
+                                                                   @onchange="@((ChangeEventArgs e) => ToggleUserSelectionFromTeam(team, user, (bool)e.Value))" />
                                                             <label for="member_@user.Id">
                                                                 <div class="checkmark"></div>
                                                                 <div class="member-info">

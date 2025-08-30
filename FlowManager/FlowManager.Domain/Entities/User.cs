@@ -10,12 +10,14 @@ namespace FlowManager.Domain.Entities
     {   
         public string Name { get; set; } = string.Empty;
         
+        public virtual Step Step { get; set; }
+        public Guid StepId { get; set; }
+
         // navigation properties
         public virtual ICollection<FormResponse> FormResponses { get; set; } = new List<FormResponse>();
         public virtual ICollection<UserRole> Roles { get; set; } = new List<UserRole>();
 
         public virtual ICollection<UserTeam> Teams { get; set; } = new List<UserTeam>();
-        public virtual ICollection<StepUser> Steps { get; set; } = new List<StepUser>();
         public virtual ICollection<FlowStepUser> FlowStepUsers { get; set; } = new List<FlowStepUser>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

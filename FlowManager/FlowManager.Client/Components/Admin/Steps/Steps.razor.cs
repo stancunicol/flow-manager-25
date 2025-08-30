@@ -145,8 +145,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                     Name = newDepName.Trim(),
                     DeletedAt = null,
                     FlowSteps = new List<FlowStep>(),
-                    Users = new List<StepUser>(),
-                    Teams = new List<StepTeam>()
+                    Users = new List<User>(),
                 };
 
                 var result = await stepService.CreateStepAsync(step);

@@ -20,8 +20,7 @@ namespace FlowManager.Application.IServices
         Task<TeamResponseDto> UpdateTeamAsync(Guid id, PatchTeamRequestDto payload);
         Task<TeamResponseDto> DeleteTeamAsync(Guid id);
         Task<TeamResponseDto> RestoreTeamAsync(Guid id);
-        Task<SplitUsersByTeamIdResponseDto> GetSplitUsersByTeamIdAsync(Guid id, QueriedTeamRequestDto payload);
+        Task<SplitUsersByTeamIdResponseDto> GetSplitUsersByTeamIdAsync(Guid stepId, Guid teamId, QueriedTeamRequestDto payload);
         Task<PagedResponseDto<TeamResponseDto>> GetAllModeratorTeamsQueriedAsync(Guid stepId, QueriedTeamRequestDto payload);
-
     }
 }

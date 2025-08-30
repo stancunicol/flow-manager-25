@@ -54,25 +54,62 @@ namespace FlowManager.Infrastructure.Utils
 
             dbContext.SaveChanges();
 
+            Step? basicStep = dbContext.Steps.FirstOrDefault(s => s.Name == "Basic Dept");
+            if (basicStep == null)
+            {
+                basicStep = new Step
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Basic Dept",
+                    CreatedAt = DateTime.UtcNow
+                };
+                dbContext.Steps.Add(basicStep);
+            }
+
+            Step? moderatorStep = dbContext.Steps.FirstOrDefault(s => s.Name == "Moderator Dept");
+            if (moderatorStep == null)
+            {
+                moderatorStep = new Step
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Moderator Dept",
+                    CreatedAt = DateTime.UtcNow
+                };
+                dbContext.Steps.Add(moderatorStep);
+            }
+
+            Step? adminStep = dbContext.Steps.FirstOrDefault(s => s.Name == "Admin Dept");
+            if (adminStep == null)
+            {
+                adminStep = new Step
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Admin Dept",
+                    CreatedAt = DateTime.UtcNow
+                };
+                dbContext.Steps.Add(adminStep);
+            }
+
+            dbContext.SaveChanges();
+
             User? basicUser = dbContext.Users.FirstOrDefault(u => u.NormalizedUserName == "BASICUSER");
             if (basicUser == null)
             {
                 basicUser = new User
                 {
-                    Id = Guid.NewGuid(),             
-                    UserName = "BasicUser",        
+                    Id = Guid.NewGuid(),
+                    UserName = "BasicUser",
                     NormalizedUserName = "BASICUSER",
-                    Email = "basic.user@simulator.com",   
-                    NormalizedEmail = "BASIC.USER@SIMULATOR.COM",   
-                    EmailConfirmed = true,           
-                    Name = "Basic User",                
+                    Email = "basic.user@simulator.com",
+                    NormalizedEmail = "BASIC.USER@SIMULATOR.COM",
+                    EmailConfirmed = true,
+                    Name = "Basic User",
+                    StepId = basicStep.Id, 
                     SecurityStamp = Guid.NewGuid().ToString(),
                     ConcurrencyStamp = Guid.NewGuid().ToString()
                 };
                 basicUser.PasswordHash = passwordHasher.HashPassword(basicUser, "basic123");
-
                 dbContext.Users.Add(basicUser);
-
                 dbContext.UserRoles.Add(new UserRole
                 {
                     UserId = basicUser.Id,
@@ -80,7 +117,7 @@ namespace FlowManager.Infrastructure.Utils
                 });
             }
 
-            User ? moderatorUser = dbContext.Users.FirstOrDefault(u => u.NormalizedUserName == "MODERATORUSER");
+            User? moderatorUser = dbContext.Users.FirstOrDefault(u => u.NormalizedUserName == "MODERATORUSER");
             if (moderatorUser == null)
             {
                 moderatorUser = new User
@@ -92,19 +129,17 @@ namespace FlowManager.Infrastructure.Utils
                     NormalizedEmail = "MODERATOR.USER@SIMULATOR.COM",
                     EmailConfirmed = true,
                     Name = "Moderator User",
+                    StepId = moderatorStep.Id,
                     SecurityStamp = Guid.NewGuid().ToString(),
                     ConcurrencyStamp = Guid.NewGuid().ToString()
                 };
-                moderatorUser.PasswordHash = passwordHasher.HashPassword(moderatorUser,"moderator123");
-
+                moderatorUser.PasswordHash = passwordHasher.HashPassword(moderatorUser, "moderator123");
                 dbContext.Users.Add(moderatorUser);
-
                 dbContext.UserRoles.Add(new UserRole
                 {
                     UserId = moderatorUser.Id,
                     RoleId = moderatorRole.Id
                 });
-
                 dbContext.UserRoles.Add(new UserRole
                 {
                     UserId = moderatorUser.Id,
@@ -123,20 +158,18 @@ namespace FlowManager.Infrastructure.Utils
                     Email = "admin.user@simulator.com",
                     NormalizedEmail = "ADMIN.USER@SIMULATOR.COM",
                     EmailConfirmed = true,
-                    Name = "Basic User",
+                    Name = "Admin User",
+                    StepId = adminStep.Id,
                     SecurityStamp = Guid.NewGuid().ToString(),
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                    ConcurrencyStamp = Guid.NewGuid().ToString(),
                 };
                 adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "admin123");
-
                 dbContext.Users.Add(adminUser);
-
                 dbContext.UserRoles.Add(new UserRole
                 {
                     UserId = adminUser.Id,
                     RoleId = adminRole.Id
                 });
-
                 dbContext.UserRoles.Add(new UserRole
                 {
                     UserId = adminUser.Id,

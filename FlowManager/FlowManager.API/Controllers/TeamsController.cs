@@ -81,14 +81,14 @@ namespace FlowManager.API.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpGet("queried/splitUsers/{teamId}")]
+        [HttpGet("queried/splitUsers/{teamId}/byStep/{stepId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetSplitUsersByTeamIdQueriedAsync(Guid teamId, [FromQuery] QueriedTeamRequestDto payload)
+        public async Task<IActionResult> GetSplitUsersByTeamIdQueriedAsync(Guid stepId, Guid teamId, [FromQuery] QueriedTeamRequestDto payload)
         {
-            var result = await _teamService.GetSplitUsersByTeamIdAsync(teamId, payload);
+            var result = await _teamService.GetSplitUsersByTeamIdAsync(stepId, teamId, payload);
 
             return Ok(new
             {

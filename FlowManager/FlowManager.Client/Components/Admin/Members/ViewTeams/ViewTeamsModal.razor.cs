@@ -31,10 +31,10 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadTeams();
+            await LoadTeamsAsync();
         }
 
-        private async Task LoadTeams()
+        private async Task LoadTeamsAsync()
         {
             QueriedTeamRequestDto payload = new QueriedTeamRequestDto()
                 ;
@@ -64,8 +64,14 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
                     {
                         Id = u.Id,
                         Name = u.Name!,
-                        Email = u.Email!
+                        Email = u.Email!,
+                        Step = new StepVM
+                        {
+                            Id = u.Step!.Id,
+                            Name = u.Step!.Name
+                        }
                     }).ToList(),
+                    IsActive = t.DeletedAt == null
                 }).ToList();
 
                 _dropdownTeamMembersState = new BitArray(_teams.Count, false);
@@ -105,13 +111,13 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
         private async Task GoToFirstPage()
         {
             _currentPage = 1;
-            await LoadTeams();
+            await LoadTeamsAsync();
         }
 
         private async Task GoToPreviousPage()
         {
             _currentPage--;
-            await LoadTeams();
+            await LoadTeamsAsync();
         }
 
         private List<int> GetPageNumbers()
@@ -139,19 +145,31 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
         private async Task GoToPage(int page)
         {
             _currentPage = page;
-            await LoadTeams();
+            await LoadTeamsAsync();
         }
 
         private async Task GoToNextPage()
         {
             _currentPage++;
-            await LoadTeams();
+            await LoadTeamsAsync();
         }
 
         private async Task GoToLastPage()
         {
             _currentPage = _totalPages;
-            await LoadTeams();
+            await LoadTeamsAsync();
+        }
+
+        private async Task DeleteTeam(Guid teamId)
+        {
+            await _teamService.DeleteTeamAsync(teamId);
+            await LoadTeamsAsync();
+        }
+
+        private async Task RestoreTeam(Guid teamId)
+        {
+            await _teamService.RestoreTeamAsync(teamId);
+            await LoadTeamsAsync();
         }
     }
 }

@@ -1,18 +1,11 @@
-﻿using Azure;
-using FlowManager.Client.DTOs;
+﻿using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Client.ViewModels.Team;
-using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Shared.DTOs.Requests.Team;
-using FlowManager.Shared.DTOs.Requests.User;
-using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Team;
-using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using System.Linq;
 
 namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals
 {
@@ -22,8 +15,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         [Parameter] public EventCallback<bool> ShowEditTeamModalChanged { get; set; }
         [Parameter] public TeamVM TeamToEdit { get; set; }
         [Parameter] public EventCallback TeamWasEdited { get; set; }
- 
-        [Inject] private UserService _userService { get; set; } = default!;
+        [Parameter] public StepVM TeamStep { get; set; }
+
         [Inject] private TeamService _teamService { get; set; } = default!;
 
         private string _searchTerm { get; set; } = string.Empty;
@@ -62,7 +55,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 PageSize = _pageSize
             };
 
-            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamToEdit.Id, payload);
+            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id, TeamToEdit.Id, payload);
 
             _selectedUsers = response.Result.AssignedToTeamUsers.Select(u => new UserVM
             {
@@ -77,9 +70,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 Name = u.Name,
                 Email = u.Email,
             }).ToList();
+
+            _totalPages = response.Result.TotalPages;
+            _totalCount = response.Result.TotalCountUnassigned + response.Result.TotalCountAssigned;
         }
 
-        private async Task LoadUsers(bool resetPageSize = false)
+        private async Task LoadUsersAsync(bool resetPageSize = false)
         {
             QueriedTeamRequestDto payload = new QueriedTeamRequestDto();
             if (!string.IsNullOrEmpty(_searchTerm))
@@ -105,7 +101,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 };
             }
 
-            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamToEdit.Id, payload);
+            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id, TeamToEdit.Id, payload);
 
             if (!response.Success)
             {
@@ -139,11 +135,11 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         private async Task OnSubmit()
         {
-            await EditTeam();
-            await LoadUsers();
+            await EditTeamAsync();
+            await LoadUsersAsync();
         }
 
-        private async Task EditTeam()
+        private async Task EditTeamAsync()
         {
             _isSubmitting = true;
 
@@ -206,7 +202,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private async Task LoadMore()
         {
             _pageSize += 10;
-            await LoadUsers();
+            await LoadUsersAsync();
         }
     }
 }

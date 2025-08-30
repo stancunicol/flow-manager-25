@@ -17,13 +17,35 @@
                                placeholder="Enter team name..."
                                required />
                     </div>
+
+                    <div class="department-selector">
+                        <label class="department-label">*Department:</label>
+                        <div class="custom-dropdown" @onclick="ToggleDropdown">
+                            <div class="dropdown-selected">
+                                @(_selectedStepName ?? "Select a department")
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            @if (_isDropdownOpen)
+                            {
+                                <div class="dropdown-options">
+                                    @foreach (StepVM step in _availableSteps)
+                                    {
+                                        <div class="dropdown-option" @onclick="() => SelectStep(step)" @onclick:stopPropagation="true">
+                                            @step.Name
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
                     <label class="assign-users-label">Assign users:</label>
                     <div class="search-users">
                         <input type="text"
                                @bind="_searchTerm"
                                @bind:event="oninput"
                                placeholder="Search users by name..." />
-                        <button type="button" class="search-btn-users" @onclick="() => LoadUsers(true)">
+                        <button type="button" class="search-btn-users" @onclick="() => LoadUsersAsync(true)" disabled="@(IsSearchInvalid())">
                             Search
                         </button>
                     </div>

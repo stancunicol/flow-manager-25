@@ -25,10 +25,8 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.Steps.Where(s => s.DeletedAt == null)
                 .Include(s => s.Users)
-                    .ThenInclude(su => su.User)
-                .Include(s => s.Teams)
-                    .ThenInclude(st => st.Team)
-                        .ThenInclude(t => t.Users)
+                    .ThenInclude(u => u.Teams)
+                        .ThenInclude(ut => ut.Team)
                 .ToListAsync();
         }
 
@@ -40,13 +38,11 @@ namespace FlowManager.Infrastructure.Repositories
             {
                 if (includeDeletedStepUser)
                 {
-                    query = query.Include(s => s.Users)
-                                 .ThenInclude(su => su.User);
+                    query = query.Include(s => s.Users);
                 }
                 else
                 {
-                    query = query.Include(s => s.Users.Where(u => u.DeletedAt == null))
-                                 .ThenInclude(su => su.User);
+                    query = query.Include(s => s.Users.Where(u => u.DeletedAt == null));
                 }
             }
 
@@ -54,17 +50,15 @@ namespace FlowManager.Infrastructure.Repositories
             {
                 if (includeDeletedStepTeams)
                 {
-                    query = query.Include(s => s.Teams)
-                                 .ThenInclude(st => st.Team)
-                                 .ThenInclude(t => t.Users)
-                                 .ThenInclude(ut => ut.User);
+                    query = query.Include(s => s.Users)
+                                .ThenInclude(u => u.Teams)
+                                    .ThenInclude(ut => ut.Team);
                 }
                 else
                 {
-                    query = query.Include(s => s.Teams.Where(t => t.DeletedAt == null))
-                                 .ThenInclude(st => st.Team)
-                                 .ThenInclude(t => t.Users)
-                                 .ThenInclude(ut => ut.User);
+                    query = query.Include(s => s.Users)
+                                .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                                    .ThenInclude(ut => ut.Team);
                 }
             }
 
@@ -107,14 +101,9 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(string? name, QueryParams? parameters)
         {
             IQueryable<Step> query = _context.Steps
-    .Include(s => s.Users
-        .Where(su => su.DeletedAt == null))
-        .ThenInclude(su => su.User)
-    .Include(s => s.Teams
-        .Where(st => st.DeletedAt == null))
-        .ThenInclude(st => st.Team)
-            .ThenInclude(t => t.Users)
-                .ThenInclude(tu => tu.User);
+                .Include(s => s.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                        .ThenInclude(ut => ut.Team);
 
 
             query = query.Where(s => s.DeletedAt == null);
@@ -151,26 +140,6 @@ namespace FlowManager.Infrastructure.Repositories
                                                .ToListAsync();
                 return (steps, totalCount);
             }
-        }
-
-        public async Task AddStepUserAsync(StepUser stepUser)
-        {
-            _context.StepUsers.Add(stepUser);
-            await _context.SaveChangesAsync();
-        }
-
-        public void AttachStepUser(StepUser stepUser)
-        {
-            var entry = _context.Entry(stepUser);
-            if (entry.State == EntityState.Detached)
-            {
-                _context.StepUsers.Attach(stepUser);
-            }
-        }
-
-        public void DettachStepUser(StepUser stepUser)
-        {
-            _context.Update(stepUser);
         }
     }
 }

@@ -62,8 +62,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 {
                     Name = newStepName.Trim(),
                     FlowSteps = new List<FlowStep>(),
-                    Users = new List<StepUser>(),
-                    Teams = new List<StepTeam>()
+                    Users = new List<User>(),
                 };
 
                 var result = await stepService.CreateStepAsync(step);

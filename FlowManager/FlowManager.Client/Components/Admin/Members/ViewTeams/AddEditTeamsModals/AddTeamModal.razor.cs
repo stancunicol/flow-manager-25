@@ -5,6 +5,7 @@ using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
@@ -21,6 +22,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         [Inject] private UserService _userService { get; set; } = default!;
         [Inject] private TeamService _teamService { get;set; } = default!;
+        [Inject] private StepService _stepService { get; set; } = default!;
 
         private string _searchTerm { get; set; } = string.Empty;
 
@@ -30,7 +32,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private string _submitMessage { get; set; } = string.Empty;
         private bool _submitStatus { get; set; } = false;
 
+        private bool _isDropdownOpen = false;
+        private string _selectedStepName = string.Empty;
+        private Guid _selectedStepId = Guid.Empty;
+
         private List<UserVM> _users = new List<UserVM>();
+        private List<StepVM> _availableSteps = new List<StepVM>();
         private HashSet<UserVM> _selectedUsers = new HashSet<UserVM>();
 
         private int _currentPage = 1;
@@ -40,10 +47,27 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadUsers();
+            await LoadUsersAsync();
+            await LoadStepsAsync();
         }
 
-        private async Task LoadUsers(bool resetPageSize = false)
+        private async Task LoadStepsAsync()
+        {
+            ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetStepsQueriedAsync();
+
+            if (!response.Success)
+            {
+                _availableSteps = new();
+            }
+
+            _availableSteps = response.Result.Data.Select(s => new StepVM
+            {
+                Id = s.Id,
+                Name = s.Name
+            }).ToList();
+        }
+
+        private async Task LoadUsersAsync(bool resetPageSize = false)
         {
             QueriedUserRequestDto payload = new QueriedUserRequestDto();
             if (!string.IsNullOrEmpty(_searchTerm))
@@ -69,7 +93,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 };
             }
 
-            ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersQueriedAsync(payload);
+            ApiResponse<PagedResponseDto<UserResponseDto>> response = await _userService.GetAllUsersByStepQueriedAsync(_selectedStepId, payload);
 
             if (!response.Success || response.Result?.Data == null)
             {
@@ -103,12 +127,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         private async Task OnSubmit()
         {
-            await PostTeam();
+            await PostTeamAsync();
             ClearForm();
-            await LoadUsers();
+            await LoadUsersAsync();
         }
 
-        private async Task PostTeam()
+        private async Task PostTeamAsync()
         {
             _isSubmitting = true;
             PostTeamRequestDto payload = new PostTeamRequestDto
@@ -140,7 +164,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private async Task LoadMore()
         {
             _pageSize += 10;
-            await LoadUsers();
+            await LoadUsersAsync();
         }
 
         private List<UserVM> GetAssignedUsers()
@@ -166,7 +190,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         private bool IsSubmitValid()
         {
-            return !string.IsNullOrEmpty(_teamName) && _selectedUsers.Count > 0;
+            return !string.IsNullOrEmpty(_teamName) && _selectedUsers.Count > 0 && _selectedStepId != Guid.Empty;
         }
 
         private void ToggleUserSelection(Guid userId, bool isSelected)
@@ -183,6 +207,28 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
             }
 
             StateHasChanged();
+        }
+
+        private void ToggleDropdown()
+        {
+            _isDropdownOpen = !_isDropdownOpen;
+        }
+
+        private async Task SelectStep(StepVM step)
+        {
+            if (_selectedStepId != step.Id)
+            {
+                _selectedStepId = step.Id;
+                _selectedStepName = step.Name;
+                _selectedUsers.Clear();
+                await LoadUsersAsync(resetPageSize: true);
+            }
+            _isDropdownOpen = false;
+        }
+
+        private bool IsSearchInvalid()
+        {
+            return _selectedStepId == Guid.Empty;
         }
     }
 }

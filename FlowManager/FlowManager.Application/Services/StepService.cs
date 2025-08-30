@@ -38,22 +38,16 @@ namespace FlowManager.Application.Services
             {
                 Id = s.Id,
                 Name = s.Name,
-                Users = s.Users.Select(su => new UserResponseDto
+                Users = s.Users.Select(u => new UserResponseDto
                 {
-                    Id = su.UserId,
-                    Name = su.User.Name,
-                    Email = su.User.Email,
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
                 }).ToList(),
-                Teams = s.Teams.Select(st => new TeamResponseDto
+                Teams = s.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
                 {
-                    Id = st.TeamId,
-                    Name = st.Team.Name,
-                    Users = st.Team.Users.Select(u => new UserResponseDto
-                    {
-                        Id = u.User.Id,
-                        Name = u.User.Name,
-                        Email = u.User.Email
-                    }).ToList()
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
                 }).ToList(),
             }).ToList();
         }
@@ -71,24 +65,18 @@ namespace FlowManager.Application.Services
             {
                 Id = step.Id,
                 Name = step.Name,
-                DeletedAt = step.DeletedAt,
-                Users = step.Users.Select(su => new UserResponseDto
+                Users = step.Users.Select(u => new UserResponseDto
                 {
-                    Id = su.UserId,
-                    Name = su.User.Name,
-                    Email = su.User.Email,
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
                 }).ToList(),
-                Teams = step.Teams.Select(st => new TeamResponseDto
+                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
                 {
-                    Id = st.TeamId,
-                    Name = st.Team.Name,
-                    Users = st.Team.Users.Select(u => new UserResponseDto
-                    {
-                        Id = u.User.Id,
-                        Name = u.User.Name,
-                        Email = u.User.Email
-                    }).ToList()
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
                 }).ToList(),
+                DeletedAt = step.DeletedAt
             };
         }
 
@@ -108,11 +96,7 @@ namespace FlowManager.Application.Services
                 }
                 else
                 {
-                    stepToPost.Users.Add(new StepUser
-                    {
-                        StepId = stepToPost.Id,
-                        UserId = userId
-                    });
+                    stepToPost.Users.Add(user);
                 }
             }
 
@@ -133,45 +117,22 @@ namespace FlowManager.Application.Services
                 }
             }
 
-            foreach (Guid teamId in payload.TeamIds)
-            {
-                Team? team = await _teamRepository.GetTeamByIdAsync(teamId);
-                if (team == null)
-                {
-                    throw new EntryNotFoundException($"Team with id {teamId} not found.");
-                }
-                else
-                {
-                    stepToPost.Teams.Add(new StepTeam
-                    {
-                        StepId = stepToPost.Id,
-                        TeamId = teamId
-                    });
-                }
-            }
-
             await _stepRepository.PostStepAsync(stepToPost);
 
             return new StepResponseDto
             {
                 Id = stepToPost.Id,
                 Name = stepToPost.Name,
-                Users = stepToPost.Users.Select(su => new UserResponseDto
+                Users = stepToPost.Users.Select(u => new UserResponseDto
                 {
-                    Id = su.UserId,
-                    Name = su.User.Name,
-                    Email = su.User.Email,
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
                 }).ToList(),
-                Teams = stepToPost.Teams.Select(st => new TeamResponseDto
+                Teams = stepToPost.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
                 {
-                    Id = st.TeamId,
-                    Name = st.Team.Name,
-                    Users = st.Team.Users.Select(u => new UserResponseDto
-                    {
-                        Id = u.User.Id,
-                        Name = u.User.Name,
-                        Email = u.User.Email
-                    }).ToList()
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
                 }).ToList(),
             };
         }
@@ -201,66 +162,12 @@ namespace FlowManager.Application.Services
                     }
                 }
 
-                foreach (StepUser stepUser in stepToPatch.Users)
-                {
-                    if (stepUser.DeletedAt == null)
-                    {
-                        stepUser.DeletedAt = DateTime.UtcNow;
-                    }
-                }
+                stepToPatch.Users.Clear();
 
                 foreach (Guid userId in payload.UserIds)
                 {
-                    if (stepToPatch.Users.Any(su => su.UserId == userId))
-                    {
-                        StepUser existingUser = stepToPatch.Users.First(su => su.UserId == userId);
-                        existingUser!.DeletedAt = null;
-                    }
-                    else
-                    {
-                        stepToPatch.Users.Add(new StepUser
-                        {
-                            UserId = userId,
-                            StepId = stepToPatch.Id
-                        });
-                    }
-                }
-            }
-
-            if (payload.TeamIds != null && payload.TeamIds.Any())
-            {
-                foreach (Guid teamId in payload.TeamIds)
-                {
-                    var team = await _teamRepository.GetTeamWithUsersAsync(teamId);
-                    if (team == null)
-                    {
-                        throw new EntryNotFoundException($"Team with id {teamId} was not found.");
-                    }
-                }
-
-                foreach (StepTeam stepTeam in stepToPatch.Teams)
-                {
-                    if (stepTeam.DeletedAt == null)
-                    {
-                        stepTeam.DeletedAt = DateTime.UtcNow;
-                    }
-                }
-
-                foreach (Guid teamId in payload.TeamIds)
-                {
-                    if (stepToPatch.Teams.Any(st => st.TeamId == teamId))
-                    {
-                        StepTeam existingTeam = stepToPatch.Teams.First(st => st.TeamId == teamId);
-                        existingTeam!.DeletedAt = null;
-                    }
-                    else
-                    {
-                        stepToPatch.Teams.Add(new StepTeam
-                        {
-                            TeamId = teamId,
-                            StepId = stepToPatch.Id
-                        });
-                    }
+                    User existingUser = (await _userRepository.GetUserByIdAsync(userId))!;
+                    stepToPatch.Users.Add(existingUser);
                 }
             }
 
@@ -270,58 +177,45 @@ namespace FlowManager.Application.Services
             {
                 Id = stepToPatch.Id,
                 Name = stepToPatch.Name,
-                Users = stepToPatch.Users.Select(su => new UserResponseDto
+                Users = stepToPatch.Users.Select(u => new UserResponseDto
                 {
-                    Id = su.UserId,
-                    Name = su.User.Name,
-                    Email = su.User.Email,
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
                 }).ToList(),
-                Teams = stepToPatch.Teams.Select(st => new TeamResponseDto
+                Teams = stepToPatch.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
                 {
-                    Id = st.TeamId,
-                    Name = st.Team.Name,
-                    Users = st.Team.Users.Select(u => new UserResponseDto
-                    {
-                        Id = u.User.Id,
-                        Name = u.User.Name,
-                        Email = u.User.Email
-                    }).ToList()
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
                 }).ToList(),
             };
         }
 
         public async Task<StepResponseDto> DeleteStepAsync(Guid id)
         {
-            Step? step = await _stepRepository.GetStepByIdAsync(id);
+            Step? stepToDelete = await _stepRepository.GetStepByIdAsync(id);
 
-            if (step == null)
+            if (stepToDelete == null)
             {
                 throw new EntryNotFoundException($"Step with id {id} was not found.");
             }
 
-            await _stepRepository.DeleteStepAsync(step);
+            await _stepRepository.DeleteStepAsync(stepToDelete);
 
             return new StepResponseDto
             {
-                Id = step.Id,
-                Name = step.Name,
-                DeletedAt = step.DeletedAt,
-                Users = step.Users.Select(su => new UserResponseDto
+                Id = stepToDelete.Id,
+                Name = stepToDelete.Name,
+                Users = stepToDelete.Users.Select(u => new UserResponseDto
                 {
-                    Id = su.UserId,
-                    Name = su.User.Name,
-                    Email = su.User.Email,
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
                 }).ToList(),
-                Teams = step.Teams.Select(st => new TeamResponseDto
+                Teams = stepToDelete.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
                 {
-                    Id = st.TeamId,
-                    Name = st.Team.Name,
-                    Users = st.Team.Users.Select(u => new UserResponseDto
-                    {
-                        Id = u.User.Id,
-                        Name = u.User.Name,
-                        Email = u.User.Email
-                    }).ToList()
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
                 }).ToList(),
             };
         }
@@ -336,23 +230,19 @@ namespace FlowManager.Application.Services
             if (step == null)
                 throw new EntryNotFoundException($"Step with id {stepId} was not found.");
 
-            var existingActive = step.Users.FirstOrDefault(su => su.UserId == userId && su.DeletedAt == null);
+            var existingActive = step.Users.FirstOrDefault(u => u.Id == userId && u.DeletedAt == null);
             if (existingActive != null)
                 throw new UniqueConstraintViolationException($"User {user.Name} is already assigned to step {step.Name}.");
 
-            var existingDeleted = step.Users.FirstOrDefault(su => su.UserId == userId && su.DeletedAt != null);
+            var existingDeleted = step.Users.FirstOrDefault(u => u.Id == userId && u.DeletedAt != null);
             if (existingDeleted != null)
             {
-                _stepRepository.AttachStepUser(existingDeleted);
                 existingDeleted.DeletedAt = null;
+                step.Users.Add(existingDeleted);
             }
             else
             {
-                await _stepRepository.AddStepUserAsync(new StepUser
-                {
-                    StepId = step.Id,
-                    UserId = userId
-                });
+                step.Users.Add(user);
             }
 
             await _stepRepository.SaveChangesAsync();
@@ -363,29 +253,17 @@ namespace FlowManager.Application.Services
             {
                 Id = step.Id,
                 Name = step.Name,
-                Users = step.Users
-                    .Where(su => su.DeletedAt == null && su.User != null)
-                    .Select(su => new UserResponseDto
-                    {
-                        Id = su.UserId,
-                        Name = su.User.Name,
-                        Email = su.User.Email
-                    }).ToList(),
-                Teams = step.Teams
-                    .Where(st => st.DeletedAt == null)
-                    .Select(st => new TeamResponseDto
-                    {
-                        Id = st.TeamId,
-                        Name = st.Team.Name,
-                        Users = st.Team.Users
-                            .Where(ut => ut.User != null)
-                            .Select(ut => new UserResponseDto
-                            {
-                                Id = ut.User.Id,
-                                Name = ut.User.Name,
-                                Email = ut.User.Email
-                            }).ToList()
-                    }).ToList()
+                Users = step.Users.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                }).ToList(),
+                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
+                {
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
+                }).ToList(),
             };
         }
 
@@ -404,15 +282,12 @@ namespace FlowManager.Application.Services
             if (step == null)
                 throw new EntryNotFoundException($"Step with id {stepId} was not found.");
 
-            var stepUser = step.Users.FirstOrDefault(su => su.UserId == userId && su.DeletedAt == null);
-            if (stepUser == null)
+            if (!step.Users.Contains(user))
                 throw new EntryNotFoundException($"User {user.Name} is not assigned to step {step.Name}.");
-
-            stepUser.DeletedAt = DateTime.UtcNow;
+            else
+                step.Users.Remove(user);
 
             await _stepRepository.SaveChangesAsync();
-
-            Console.WriteLine($"User {userId} unassigned from step {stepId} at {stepUser.DeletedAt}");
 
             step = await _stepRepository.GetStepByIdAsync(stepId, includeUsers: true, includeTeams: true);
 
@@ -420,30 +295,17 @@ namespace FlowManager.Application.Services
             {
                 Id = step.Id,
                 Name = step.Name,
-                DeletedAt = DateTime.UtcNow,
-                Users = step.Users
-                    .Where(su => su.DeletedAt == null && su.User != null)
-                    .Select(su => new UserResponseDto
-                    {
-                        Id = su.UserId,
-                        Name = su.User.Name,
-                        Email = su.User.Email
-                    }).ToList(),
-                Teams = step.Teams
-                    .Where(st => st.DeletedAt == null)
-                    .Select(st => new TeamResponseDto
-                    {
-                        Id = st.TeamId,
-                        Name = st.Team.Name,
-                        Users = st.Team.Users
-                            .Where(ut => ut.User != null)
-                            .Select(ut => new UserResponseDto
-                            {
-                                Id = ut.User.Id,
-                                Name = ut.User.Name,
-                                Email = ut.User.Email
-                            }).ToList()
-                    }).ToList()
+                Users = step.Users.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                }).ToList(),
+                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
+                {
+                    Id = ut.Team.Id,
+                    Name = ut.Team.Name,
+                }).ToList(),
             };
         }
 
@@ -459,22 +321,16 @@ namespace FlowManager.Application.Services
                 {
                     Id = step.Id,
                     Name = step.Name,
-                    Users = step.Users.Select(su => new UserResponseDto
+                    Users = step.Users.Select(u => new UserResponseDto
                     {
-                        Id = su.UserId,
-                        Name = su.User.Name,
-                        Email = su.User.Email,
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email,
                     }).ToList(),
-                    Teams = step.Teams.Select(st => new TeamResponseDto
+                    Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
                     {
-                        Id = st.TeamId,
-                        Name = st.Team.Name,
-                        Users = st.Team.Users.Select(u => new UserResponseDto
-                        {
-                            Id = u.User.Id,
-                            Name = u.User.Name,
-                            Email = u.User.Email
-                        }).ToList()
+                        Id = ut.Team.Id,
+                        Name = ut.Team.Name,
                     }).ToList(),
                 }).ToList(),
                 TotalCount = totalCount,

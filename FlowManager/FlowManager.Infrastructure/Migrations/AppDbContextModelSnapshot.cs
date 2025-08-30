@@ -352,70 +352,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.ToTable("Steps");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.StepTeam", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("StepId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TeamId");
-
-                    b.HasIndex("StepId", "TeamId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_StepTeams_StepId_TeamId");
-
-                    b.ToTable("StepTeams");
-                });
-
-            modelBuilder.Entity("FlowManager.Domain.Entities.StepUser", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("StepId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("StepId", "UserId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_StepUsers_StepId_UserId");
-
-                    b.ToTable("StepUsers");
-                });
-
             modelBuilder.Entity("FlowManager.Domain.Entities.Team", b =>
                 {
                     b.Property<Guid>("Id")
@@ -501,6 +437,9 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("StepId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
 
@@ -524,6 +463,8 @@ namespace FlowManager.Infrastructure.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("StepId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -776,26 +717,7 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("FormTemplate");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.StepTeam", b =>
-                {
-                    b.HasOne("FlowManager.Domain.Entities.Step", "Step")
-                        .WithMany("Teams")
-                        .HasForeignKey("StepId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FlowManager.Domain.Entities.Team", "Team")
-                        .WithMany("Steps")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Step");
-
-                    b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("FlowManager.Domain.Entities.StepUser", b =>
+            modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
                 {
                     b.HasOne("FlowManager.Domain.Entities.Step", "Step")
                         .WithMany("Users")
@@ -803,15 +725,7 @@ namespace FlowManager.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.User", "User")
-                        .WithMany("Steps")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Step");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.UserRole", b =>
@@ -919,16 +833,12 @@ namespace FlowManager.Infrastructure.Migrations
                 {
                     b.Navigation("FlowSteps");
 
-                    b.Navigation("Teams");
-
                     b.Navigation("Users");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Team", b =>
                 {
                     b.Navigation("FlowStepTeams");
-
-                    b.Navigation("Steps");
 
                     b.Navigation("Users");
                 });
@@ -940,8 +850,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("FormResponses");
 
                     b.Navigation("Roles");
-
-                    b.Navigation("Steps");
 
                     b.Navigation("Teams");
                 });

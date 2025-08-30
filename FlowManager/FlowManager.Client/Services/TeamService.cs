@@ -17,13 +17,13 @@ namespace FlowManager.Client.Services
             _httpClient = httpClient;
         }
 
-        public async Task<ApiResponse<SplitUsersByTeamIdResponseDto>> GetSplitUsersByTeamIdAsync(Guid teamId, QueriedTeamRequestDto? payload = null)
+        public async Task<ApiResponse<SplitUsersByTeamIdResponseDto>> GetSplitUsersByTeamIdAsync(Guid stepId, Guid teamId, QueriedTeamRequestDto? payload = null)
         {
             try
             {
                 UriBuilder uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
                 {
-                    Path = $"api/teams/queried/splitUsers/{teamId}"
+                    Path = $"api/teams/queried/splitUsers/{teamId}/byStep/{stepId}"
                 };
 
                 var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
@@ -243,6 +243,34 @@ namespace FlowManager.Client.Services
             HttpResponseMessage response = await _httpClient.PatchAsJsonAsync($"api/teams/{teamId}", payload);
 
             return await response.Content.ReadFromJsonAsync<ApiResponse<TeamResponseDto>>() ?? new ApiResponse<TeamResponseDto>();
+        }
+
+
+        public async Task<ApiResponse<TeamResponseDto>> DeleteTeamAsync(Guid teamId)
+        {
+            UriBuilder uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
+            {
+                Path = $"api/teams/{teamId}"
+            };
+
+            HttpResponseMessage? response = await _httpClient.DeleteAsync(uriBuilder.Uri);
+
+            return await response.Content.ReadFromJsonAsync<ApiResponse<TeamResponseDto>>() ?? new ApiResponse<TeamResponseDto>();
+        }
+
+        public async Task<ApiResponse<TeamResponseDto>> RestoreTeamAsync(Guid teamId)
+        {
+            UriBuilder uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
+            {
+                Path = $"api/teams/{teamId}/restore"
+            };
+
+            var content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await _httpClient.PatchAsync(uriBuilder.Uri, content);
+
+            return await response.Content.ReadFromJsonAsync<ApiResponse<TeamResponseDto>>()
+                   ?? new ApiResponse<TeamResponseDto>();
         }
     }
 }

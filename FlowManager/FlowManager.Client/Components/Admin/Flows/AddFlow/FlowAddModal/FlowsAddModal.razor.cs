@@ -236,7 +236,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         private void ShowAssingToStepModal(StepVM step)
         {
-            Console.WriteLine("showing modal");
             _showAssignToStepModal = true;
             _stepToAssign = step;
             StateHasChanged();

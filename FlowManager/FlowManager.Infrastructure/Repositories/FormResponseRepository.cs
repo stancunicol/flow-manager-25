@@ -172,13 +172,11 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(fr => fr.Step)
                     .ThenInclude(s => s.Users.Where(su => su.DeletedAt == null))
                 .Include(fr => fr.Step)
-                    .ThenInclude(s => s.Teams.Where(st => st.DeletedAt == null))
-                        .ThenInclude(st => st.Team.Users.Where(ut => ut.DeletedAt == null))
                 .Include(fr => fr.User)
                 .Where(fr =>
                     // Doar formularele unde moderatorul este asignat la step-ul curent
-                    fr.Step.Users.Any(su => su.UserId == moderatorId && su.DeletedAt == null) ||
-                    fr.Step.Teams.Any(st => st.Team.Users.Any(ut => ut.UserId == moderatorId && ut.DeletedAt == null) && st.DeletedAt == null)
+                    fr.Step.Users.Any(u => u.Id == moderatorId && u.DeletedAt == null) ||
+                    fr.Step.Users.SelectMany(ut => ut.Teams).Any(st => st.Team.Users.Any(ut => ut.UserId == moderatorId && ut.DeletedAt == null) && st.DeletedAt == null)
                 );
 
             // Exclude deleted unless explicitly requested
