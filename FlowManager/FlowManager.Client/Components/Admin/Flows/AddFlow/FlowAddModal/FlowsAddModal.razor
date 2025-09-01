@@ -97,7 +97,7 @@
                 <div class="workflow-actions">
                     <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
                     <button class="btn-save" @onclick="@(() => string.IsNullOrEmpty(SavedFormTemplateName) ?
-                            SaveWorkflow() : SaveWorkflowWithFormTemplateNotice())" 
+                            SaveWorkflow() : SaveWorkflowFirst())" 
                             disabled="@(!IsWorkflowValid())">
                         Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
                     </button>

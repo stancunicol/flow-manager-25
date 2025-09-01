@@ -181,7 +181,12 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 var apiResponse = await _flowService.PostFlowAsync(new PostFlowRequestDto
                 {
                     Name = _flowName,
-                    StepIds = workflowStepIds,
+                    Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                    {
+                        StepId = configuredStep.Id,
+                        UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
+                        TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                    }).ToList(),
                     FormTemplateId = null
                 });
 

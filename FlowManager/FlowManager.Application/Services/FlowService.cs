@@ -115,7 +115,7 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
-                Steps = postedFlow.Steps.Select(s => new StepResponseDto
+                Steps = flowToPost.Steps.Select(s => new StepResponseDto
                 {
                     Id = s.StepId,
                     Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
@@ -131,9 +131,9 @@ namespace FlowManager.Infrastructure.Services
                         }).ToList(),
                     }).ToList(),
                 }).ToList(),
-                FormTemplateId = postedFlow.FormTemplateId,
-                ActiveFormTemplate = postedFlow.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(postedFlow.ActiveFormTemplate) : null,
-                FormTemplates = postedFlow.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
+                FormTemplateId = flowToPost.FormTemplateId,
+                ActiveFormTemplate = flowToPost.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToPost.ActiveFormTemplate) : null,
+                FormTemplates = flowToPost.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flowToPost.CreatedAt,
                 UpdatedAt = flowToPost.UpdatedAt,
                 DeletedAt = flowToPost.DeletedAt
