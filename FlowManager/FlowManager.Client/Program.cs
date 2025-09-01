@@ -31,6 +31,8 @@ builder.Services.AddScoped(sp =>
     return httpClient;
 });
 
+builder.Services.AddScoped<FlowService>();
+
 builder.Services.AddServices();
 
 builder.Services.AddBlazorBootstrap();

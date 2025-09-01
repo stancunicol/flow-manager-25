@@ -1,0 +1,349 @@
+﻿.flow-visualizer {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    overflow: hidden;
+}
+
+.flow-header {
+    background: #f3f4f6;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+    .flow-header h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+.flow-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.spinner-small {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f4f6;
+    border-top: 2px solid #6b7280;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.flow-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 2rem 1rem;
+    min-height: 140px;
+}
+
+.step-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-width: 100px;
+    flex-shrink: 0;
+}
+
+.step-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 2;
+}
+
+.step-initials {
+    text-align: center;
+    line-height: 1;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Status Colors pentru cercuri */
+.step-circle.inactive {
+    background: #9ca3af;
+    border-color: #d1d5db;
+    color: #f9fafb;
+}
+
+.step-circle.pending {
+    background: #f59e0b;
+    border-color: #fbbf24;
+    animation: pulse-yellow 2s infinite;
+}
+
+.step-circle.completed {
+    background: #10b981;
+    border-color: #059669;
+}
+
+.step-circle.rejected {
+    background: #ef4444;
+    border-color: #dc2626;
+    animation: pulse-red 2s infinite;
+}
+
+/* Pulse animations */
+@keyframes pulse-yellow {
+    0%, 100% {
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(245, 158, 11, 0.7);
+    }
+
+    50% {
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1), 0 0 0 10px rgba(245, 158, 11, 0);
+    }
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    50% {
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1), 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+}
+
+.step-label {
+    margin-top: 0.75rem;
+    text-align: center;
+    min-height: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.step-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1.2;
+    max-width: 90px;
+    word-wrap: break-word;
+    hyphens: auto;
+    margin-bottom: 0.25rem;
+}
+
+.step-status {
+    font-size: 11px;
+    color: #6b7280;
+    line-height: 1;
+    font-weight: 500;
+}
+
+/* Flow Connectors - liniile dintre cercuri */
+.flow-connector {
+    position: absolute;
+    top: 30px; /* Centrat pe cercuri (60px / 2) */
+    left: 60px; /* Începe de la marginea cercului */
+    width: 40px; /* Lungimea liniei */
+    height: 4px;
+    z-index: 1;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+    .flow-connector.active {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.4);
+    }
+
+    .flow-connector.inactive {
+        background: #d1d5db;
+    }
+
+/* Flow Legend */
+.flow-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 1rem 1.5rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.legend-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+}
+
+    .legend-circle.pending {
+        background: #f59e0b;
+        border-color: #fbbf24;
+    }
+
+    .legend-circle.completed {
+        background: #10b981;
+        border-color: #059669;
+    }
+
+    .legend-circle.rejected {
+        background: #ef4444;
+        border-color: #dc2626;
+    }
+
+    .legend-circle.inactive {
+        background: #9ca3af;
+        border-color: #d1d5db;
+    }
+
+.flow-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    color: #6b7280;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Hover Effects */
+.step-circle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.step-circle.completed:hover {
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+}
+
+.step-circle.pending:hover {
+    box-shadow: 0 6px 12px rgba(245, 158, 11, 0.3);
+}
+
+.step-circle.rejected:hover {
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+}
+
+.step-circle.inactive:hover {
+    box-shadow: 0 6px 12px rgba(156, 163, 175, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .flow-container {
+        gap: 0;
+        padding: 1.5rem 0.5rem;
+    }
+
+    .step-wrapper {
+        min-width: 80px;
+    }
+
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 12px;
+    }
+
+    .flow-connector {
+        top: 25px;
+        left: 50px;
+        width: 30px;
+        height: 3px;
+    }
+
+    .step-name {
+        font-size: 12px;
+        max-width: 75px;
+    }
+
+    .step-status {
+        font-size: 10px;
+    }
+
+    .flow-legend {
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .legend-item {
+        font-size: 11px;
+    }
+
+    .legend-circle {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .flow-container {
+        padding: 1rem 0.25rem;
+    }
+
+    .step-wrapper {
+        min-width: 70px;
+    }
+
+    .step-circle {
+        width: 45px;
+        height: 45px;
+        font-size: 11px;
+    }
+
+    .flow-connector {
+        top: 22px;
+        left: 45px;
+        width: 25px;
+        height: 2px;
+    }
+
+    .step-name {
+        font-size: 11px;
+        max-width: 65px;
+    }
+
+    .flow-legend {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+}

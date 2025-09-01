@@ -1,0 +1,191 @@
+﻿@using FlowManager.Shared.DTOs.Responses.Step
+@using FlowManager.Shared.DTOs.Requests.FormResponse
+
+<div class="flow-visualizer">
+    <div class="flow-header">
+        <h5>Workflow Progress</h5>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="flow-loading">
+            <div class="spinner-small"></div>
+            <span>Loading workflow...</span>
+        </div>
+    }
+    else if (FlowSteps?.Any() == true && FormResponse != null)
+    {
+        <div class="flow-container">
+            @for (int i = 0; i < FlowSteps.Count; i++)
+            {
+                var step = FlowSteps[i];
+                var stepStatus = GetStepStatus(step, i);
+                var isLastStep = i == FlowSteps.Count - 1;
+
+                <div class="step-wrapper">
+                    <!-- Step Circle -->
+                    <div class="step-circle @GetStepStatusClass(stepStatus)"
+                         title="@step.Name - @GetStepStatusText(stepStatus)">
+                        <span class="step-initials">@GetStepInitials(step.Name)</span>
+                    </div>
+
+                    <!-- Step Label -->
+                    <div class="step-label">
+                        <span class="step-name">@step.Name</span>
+                        <span class="step-status">@GetStepStatusText(stepStatus)</span>
+                    </div>
+
+                    <!-- Connection Line (nu pentru ultimul step) -->
+                    @if (!isLastStep)
+                    {
+                        <div class="flow-connector @GetConnectorClass(stepStatus)"></div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Status Legend -->
+        <div class="flow-legend">
+            <div class="legend-item">
+                <div class="legend-circle pending"></div>
+                <span>Current Step</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle completed"></div>
+                <span>Completed</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle rejected"></div>
+                <span>Rejected</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle inactive"></div>
+                <span>Not Started</span>
+            </div>
+        </div>
+    }
+    else if (!IsLoading)
+    {
+        <div class="flow-error">
+            <span>Unable to load workflow information</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<StepResponseDto>? FlowSteps { get; set; }
+    [Parameter] public FormResponseResponseDto? FormResponse { get; set; }
+    [Parameter] public bool IsLoading { get; set; } = false;
+
+    public enum StepStatus
+    {
+        Inactive,    // Gri - nu s-a ajuns încă la acest step
+        Pending,     // Galben - step-ul curent în așteptare
+        Completed,   // Verde - step-ul a fost completat/aprobat
+        Rejected     // Roșu - step-ul a fost respins
+    }
+
+    private StepStatus GetStepStatus(StepResponseDto step, int stepIndex)
+    {
+        if (FormResponse == null || FlowSteps == null) return StepStatus.Inactive;
+
+        // Găsește indexul step-ului curent al formularului
+        var currentStepIndex = FlowSteps.FindIndex(s => s.Id == FormResponse.StepId);
+
+        if (currentStepIndex == -1) return StepStatus.Inactive;
+
+        // Verifică dacă formularul a fost respins la acest step
+        if (stepIndex == currentStepIndex && !string.IsNullOrEmpty(FormResponse.RejectReason))
+        {
+            return StepStatus.Rejected;
+        }
+
+        // Verifică statusul general al formularului
+        if (FormResponse.Status == "Approved")
+        {
+            // Toate step-urile sunt completate dacă formularul e aprobat final
+            return StepStatus.Completed;
+        }
+
+        if (FormResponse.Status == "Rejected")
+        {
+            // Step-ul curent e rejected, restul inactive
+            if (stepIndex == currentStepIndex)
+                return StepStatus.Rejected;
+            else if (stepIndex < currentStepIndex)
+                return StepStatus.Completed;
+            else
+                return StepStatus.Inactive;
+        }
+
+        // Pentru formulare în progres (Pending)
+        if (stepIndex < currentStepIndex)
+        {
+            // Step-urile anterioare sunt completate
+            return StepStatus.Completed;
+        }
+        else if (stepIndex == currentStepIndex)
+        {
+            // Step-ul curent e în așteptare
+            return StepStatus.Pending;
+        }
+        else
+        {
+            // Step-urile următoare sunt inactive
+            return StepStatus.Inactive;
+        }
+    }
+
+    private string GetStepStatusClass(StepStatus status)
+    {
+        return status switch
+        {
+            StepStatus.Pending => "pending",
+            StepStatus.Completed => "completed",
+            StepStatus.Rejected => "rejected",
+            StepStatus.Inactive => "inactive",
+            _ => "inactive"
+        };
+    }
+
+    private string GetStepStatusText(StepStatus status)
+    {
+        return status switch
+        {
+            StepStatus.Pending => "Pending",
+            StepStatus.Completed => "Completed",
+            StepStatus.Rejected => "Rejected",
+            StepStatus.Inactive => "Not Started",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetConnectorClass(StepStatus currentStepStatus)
+    {
+        // Conectorul este activ doar dacă step-ul curent e completat
+        return currentStepStatus == StepStatus.Completed ? "active" : "inactive";
+    }
+
+    private string GetStepInitials(string? stepName)
+    {
+        if (string.IsNullOrWhiteSpace(stepName))
+            return "??";
+
+        stepName = stepName.Trim();
+
+        // Împarte în cuvinte
+        var words = stepName.Split(new char[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (words.Length == 1)
+        {
+            // Un singur cuvânt - ia primele 2 litere
+            return stepName.Length >= 2 ? stepName.Substring(0, 2).ToUpper() : stepName.ToUpper();
+        }
+        else
+        {
+            // Mai multe cuvinte - ia prima literă din fiecare cuvânt (max 3)
+            var initials = string.Join("", words.Take(3).Select(w => w.Length > 0 ? w[0].ToString() : ""));
+            return initials.ToUpper();
+        }
+    }
+}

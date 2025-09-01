@@ -1,8 +1,12 @@
-﻿using FlowManager.Client.Services;
+﻿using FlowManager.Client.DTOs;
+using FlowManager.Client.Services;
 using FlowManager.Shared.DTOs;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
+using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
+using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
+using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
@@ -43,11 +47,14 @@ namespace FlowManager.Client.Pages
         //View Form modal state
         private bool showViewFormModal = false;
         private bool isLoadingFormDetails = false;
+        private bool isLoadingFlowSteps = false;
+        private List<StepResponseDto>? flowSteps;
         private FormResponseResponseDto? selectedFormResponse;
         private FormTemplateResponseDto? selectedFormTemplate;
         private List<ComponentResponseDto>? formComponents;
         private List<FormElement>? formElements;
 
+        [Inject] protected FlowService FlowService { get; set; } = default!;
         [Inject] protected FormTemplateService FormTemplateService { get; set; } = default!;
         [Inject] protected FormResponseService FormResponseService { get; set; } = default!;
         [Inject] protected ComponentService ComponentService { get; set; } = default!;
@@ -281,6 +288,7 @@ namespace FlowManager.Client.Pages
             selectedFormResponse = formResponse;
             showViewFormModal = true;
             isLoadingFormDetails = true;
+            isLoadingFlowSteps = true; // ADAUGĂ
             StateHasChanged();
 
             try
@@ -295,6 +303,9 @@ namespace FlowManager.Client.Pages
 
                     // Încarcă componentele
                     await LoadFormComponents();
+
+                    // ADAUGĂ - Încarcă step-urile flow-ului
+                    await LoadFlowSteps();
                 }
             }
             catch (Exception ex)
@@ -305,6 +316,76 @@ namespace FlowManager.Client.Pages
             finally
             {
                 isLoadingFormDetails = false;
+                isLoadingFlowSteps = false; // ADAUGĂ
+                StateHasChanged();
+            }
+        }
+
+        private async Task LoadFlowSteps()
+        {
+            if (selectedFormResponse == null)
+            {
+                flowSteps = new List<StepResponseDto>();
+                return;
+            }
+
+            try
+            {
+                isLoadingFlowSteps = true;
+                Console.WriteLine($"[FlowVisualizer] Loading steps for form response step: {selectedFormResponse.StepId}");
+
+                var stepResponse = await Http.GetAsync($"api/steps/{selectedFormResponse.StepId}");
+
+                if (stepResponse.IsSuccessStatusCode)
+                {
+                    var stepApiResponse = await stepResponse.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
+                    var step = stepApiResponse?.Result;
+
+                    if (step != null)
+                    {
+                        Console.WriteLine($"[FlowVisualizer] Found step: {step.Name}");
+
+                        if (selectedFormTemplate != null)
+                        {
+                            var flowsResponse = await Http.GetAsync("api/flows/queried?QueryParams.PageSize=100");
+                            if (flowsResponse.IsSuccessStatusCode)
+                            {
+                                var flowsApiResponse = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
+                                var flows = flowsApiResponse?.Result?.Data;
+
+                                if (flows?.Any() == true)
+                                {
+                                    var matchingFlow = flows.FirstOrDefault(f => f.Steps?.Any(s => s.Id == selectedFormResponse.StepId) == true);
+
+                                    if (matchingFlow != null)
+                                    {
+                                        flowSteps = matchingFlow.Steps?.OrderBy(s => s.CreatedAt).ToList() ?? new List<StepResponseDto>();
+                                        Console.WriteLine($"[FlowVisualizer] Loaded {flowSteps.Count} steps from flow: {matchingFlow.Name}");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("[FlowVisualizer] No matching flow found for this step");
+                                        flowSteps = new List<StepResponseDto> { step };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[FlowVisualizer] Failed to load step info: {stepResponse.StatusCode}");
+                    flowSteps = new List<StepResponseDto>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FlowVisualizer] Error loading flow steps: {ex.Message}");
+                flowSteps = new List<StepResponseDto>();
+            }
+            finally
+            {
+                isLoadingFlowSteps = false;
                 StateHasChanged();
             }
         }
@@ -387,6 +468,7 @@ namespace FlowManager.Client.Pages
             selectedFormTemplate = null;
             formComponents = null;
             formElements = null;
+            flowSteps = null;
             StateHasChanged();
         }
 
