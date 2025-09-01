@@ -10,6 +10,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 {
     public partial class FlowsViewModal : ComponentBase
     {
+        [Parameter] public EventCallback<FlowResponseDto> OnEditFlowRequested { get; set; }
         [Inject] private FlowService _flowService { get; set; } = default!;
 
         private List<FlowResponseDto> _flows = new();
@@ -17,6 +18,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
         private string _searchTerm = string.Empty;
         private bool _showEditModal = false;
         private FlowResponseDto? _selectedFlow = null;
+
 
         protected override async Task OnInitializedAsync()
         {
@@ -63,6 +65,10 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 StateHasChanged();
             }
         }
+        public async Task RefreshFlows()
+        {
+            await LoadFlows();
+        }
 
         private async Task SearchFlows()
         {
@@ -91,11 +97,19 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 
         private void OpenEditModal(FlowResponseDto flow)
         {
-            _selectedFlow = flow;
-            _showEditModal = true;
-            StateHasChanged();
+            if (OnEditFlowRequested.HasDelegate)
+            {
+                OnEditFlowRequested.InvokeAsync(flow);
+                StateHasChanged();
+            }
+            else
+            {
+                // Altfel funcționăm local (pentru Flows.razor)
+                _selectedFlow = flow;
+                _showEditModal = true;
+                StateHasChanged();
+            }
         }
-
         private async Task CloseEditModal()
         {
             _showEditModal = false;
@@ -112,8 +126,9 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
             }
 
             await CloseEditModal();
-
             await LoadFlows();
         }
+
+
     }
 }

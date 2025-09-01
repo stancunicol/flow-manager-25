@@ -3,6 +3,7 @@
 @using FlowManager.Client.Components.Admin.Flows.AddFlow
 @using FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal;
 @using FlowManager.Client
+@using FlowManager.Shared.DTOs.Responses.Flow
  
 @namespace FlowManager.Client.Components.Admin.WorkflowCarousel
 
@@ -50,7 +51,7 @@
 
             <div class="carousel-page">
                 <div class="page-content">
-                    <FlowsViewModal />
+                    <FlowsViewModal OnEditFlowRequested="@OnEditFlowRequested" @ref="flowsViewModalRef" />
                 </div>
             </div>
 
@@ -80,7 +81,12 @@
         </button>
     </div>
 </div>
-
+@if (_showEditModal && _selectedFlow != null)
+{
+    <FlowManager.Client.Components.Admin.Flows.EditFlowModal.EditFlowModal Flow="_selectedFlow"
+                                                                           OnClose="@CloseEditModal"
+                                                                           OnFlowUpdated="@OnFlowUpdatedInCarousel" />
+}
 @code {
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     private int _currentPage = 0;
@@ -92,6 +98,12 @@
     // Component references
     private FormTemplate? formTemplateRef;
     private FlowsAddModal? flowsAddModalRef;
+    private FlowsViewModal? flowsViewModalRef;
+
+
+    private bool _showEditModal = false;
+    private FlowResponseDto? _selectedFlow = null;
+    
 
     // Called when form template is saved locally (triggers navigation to page 2)
     private async Task OnFormTemplateSavedLocally((Guid Id, string Name) templateInfo)
@@ -198,5 +210,29 @@
     {
         // Start on first page (Form Templates)
         _currentPage = 0;
+    }
+    private void OnEditFlowRequested(FlowResponseDto flow)
+    {
+        _selectedFlow = flow;
+        _showEditModal = true;
+        StateHasChanged();
+    }
+
+    private async Task CloseEditModal()
+    {
+        _showEditModal = false;
+        _selectedFlow = null;
+        StateHasChanged();
+    }
+
+    private async Task OnFlowUpdatedInCarousel(FlowResponseDto updatedFlow)
+    {
+        if (flowsViewModalRef != null)
+        {
+            await flowsViewModalRef.RefreshFlows();
+        }
+
+        await CloseEditModal();
+        StateHasChanged();
     }
 }
