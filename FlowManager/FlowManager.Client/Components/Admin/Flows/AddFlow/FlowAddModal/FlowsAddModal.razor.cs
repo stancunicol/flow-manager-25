@@ -1,4 +1,5 @@
-﻿using FlowManager.Client.DTOs;
+﻿using Azure;
+using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Client.ViewModels.Team;
@@ -166,6 +167,21 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             _onSubmitSuccess = response.Success;
         }
 
+        public async Task SaveWorkflowInvokeAsync()
+        {
+            if (!IsWorkflowValid())
+            {
+                await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
+                return;
+            }
+
+            // Trigger the save event - WorkflowCarousel will coordinate the save process
+            if (OnSaveWorkflow.HasDelegate)
+            {
+                await OnSaveWorkflow.InvokeAsync();
+            }
+        }
+
         public async Task<(Guid Id, string Name)?> SaveWorkflowFirst()
         {
             try
@@ -204,6 +220,9 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 {
                     Console.WriteLine($"Flow creation failed: {apiResponse.Message}");
                 }
+
+                _onSubmitMessage = apiResponse.Message;
+                _onSubmitSuccess = apiResponse.Success;
 
                 return null;
             }

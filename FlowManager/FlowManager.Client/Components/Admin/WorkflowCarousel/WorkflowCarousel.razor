@@ -110,18 +110,22 @@
     {   
         try
         {
+            Console.WriteLine("flows modal");
             // PASUL 1: Creează Flow-ul (FormTemplateId = null)
             if (flowsAddModalRef != null)
             {
+                Console.WriteLine("calling save flow");
                 var savedFlow = await flowsAddModalRef.SaveWorkflowFirst();
-
+                Console.WriteLine("saved flow");
                 if (savedFlow.HasValue)
                 {
+                    Console.WriteLine("saved flow has value");
                     // PASUL 2: Creează Template-ul cu FlowId (GATA!)
                     if (formTemplateRef != null)
                     {
+                        Console.WriteLine("ft ref not null");
                         var savedTemplate = await formTemplateRef.SaveTemplateFromLocalStorageToDatabase(savedFlow.Value.Id);
-
+                        Console.WriteLine("ft saved");
                         if (savedTemplate.HasValue)
                         {
                             _savedFormTemplateId = savedTemplate.Value.Id;

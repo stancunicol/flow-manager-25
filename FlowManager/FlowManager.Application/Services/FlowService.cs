@@ -88,6 +88,19 @@ namespace FlowManager.Infrastructure.Services
                 Name = payload.Name,
             };
 
+            if(payload.FormTemplateId != null)
+            {
+                FormTemplate? ft = await _formTemplateRepository.GetFormTemplateByIdAsync((Guid)payload.FormTemplateId);
+                if (ft != null)
+                {
+                    flowToPost.FormTemplates.Add(ft);
+                }
+                else
+                {
+                    throw new EntryNotFoundException($"Form template with id {payload.FormTemplateId} not found.");
+                }
+            }
+
             flowToPost.Steps = payload.Steps.Select(step => new FlowStep
             {
                 StepId = step.StepId,
@@ -124,11 +137,7 @@ namespace FlowManager.Infrastructure.Services
                     }).ToList(),
                     Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
                     {
-                        Id = t.TeamId,
-                        Users = t.Team.Users?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
-                        {
-                            Id = u.UserId,
-                        }).ToList(),
+                        Id = t.TeamId,  
                     }).ToList(),
                 }).ToList(),
                 FormTemplateId = flowToPost.FormTemplateId,

@@ -44,7 +44,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/access-denied";
     options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.HttpOnly = false; // Must be false for Blazor WASM to access
+    options.Cookie.HttpOnly = false;
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = 401;
@@ -94,8 +94,8 @@ using (var scope = app.Services.CreateScope())
     AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-      BasicSeed.Populate(dbContext, passwordHasher);
-      MockDataSeed.Populate(dbContext, passwordHasher);
+    BasicSeed.Populate(dbContext, passwordHasher);
+    MockDataSeed.Populate(dbContext, passwordHasher);
 }
 
 if (app.Environment.IsDevelopment())
