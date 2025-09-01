@@ -29,11 +29,16 @@ namespace FlowManager.Client.Pages
 
         // Assigned forms data
         private List<FormResponseResponseDto>? assignedForms;
-        private int currentPage = 1;
-        private const int pageSize = 12;
         private bool hasMoreForms = false;
         private int totalFormsCount = 0;
         private Guid currentModeratorId = Guid.Empty;
+
+        // Pagination state for assigned forms
+        private int _pageSize = 8;
+        private int _currentPage = 1;
+        private int _totalPages = 0;
+        private int _maxVisiblePages = 4;
+        private int _totalCount = 0;
 
         // View Form modal state
         private bool showViewFormModal = false;
@@ -122,14 +127,28 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                Console.WriteLine($"Loading assigned forms - Page: {currentPage}, Search: '{searchTerm}', Append: {append}");
+                var payload = new QueriedFormResponseRequestDto
+                {
+                    IncludeDeleted = false,
+                    QueryParams = new Shared.DTOs.Requests.QueryParamsDto
+                    {
+                        Page = _currentPage,
+                        PageSize = _pageSize, // SCHIMBAT: folosește _pageSize în loc de pageSize
+                        SortBy = "CreatedAt",
+                        SortDescending = true
+                    }
+                };
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    payload.SearchTerm = searchTerm;
+                }
 
                 var response = await FormResponseService.GetFormResponsesAssignedToModeratorAsync(
-                    moderatorId: currentModeratorId,
-                    page: currentPage,
-                    pageSize: pageSize,
-                    searchTerm: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm
-                );
+                    currentModeratorId,
+                    _currentPage,
+                    _pageSize, // SCHIMBAT: folosește _pageSize în loc de pageSize
+                    searchTerm);
 
                 if (response != null)
                 {
@@ -139,18 +158,33 @@ namespace FlowManager.Client.Pages
                     }
                     else
                     {
-                        assignedForms = response.FormResponses.ToList();
+                        assignedForms = response.FormResponses;
                     }
 
+                    _totalCount = response.TotalCount;
+                    _totalPages = (int)Math.Ceiling((double)_totalCount / _pageSize); // SCHIMBAT: folosește _pageSize
                     hasMoreForms = response.HasMore;
                     totalFormsCount = response.TotalCount;
 
-                    Console.WriteLine($"Loaded {response.FormResponses.Count} assigned forms. Total: {totalFormsCount}, HasMore: {hasMoreForms}");
+                    Console.WriteLine($"[Moderator] Loaded {assignedForms?.Count ?? 0} assigned forms (page {_currentPage}/{_totalPages})");
+                }
+                else
+                {
+                    assignedForms = new List<FormResponseResponseDto>();
+                    _totalCount = 0;
+                    _totalPages = 0;
+                    hasMoreForms = false;
+                    totalFormsCount = 0;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[Moderator] Error loading assigned forms: {ex.Message}");
+                assignedForms = new List<FormResponseResponseDto>();
+                _totalCount = 0;
+                _totalPages = 0;
+                hasMoreForms = false;
+                totalFormsCount = 0;
             }
             finally
             {
@@ -159,18 +193,10 @@ namespace FlowManager.Client.Pages
             }
         }
 
-        private async Task LoadMoreForms()
-        {
-            if (isLoading || !hasMoreForms) return;
-
-            currentPage++;
-            await LoadAssignedForms(append: true);
-        }
-
         private async Task RefreshAssignedForms()
         {
             searchTerm = "";
-            currentPage = 1;
+            _currentPage = 1;
             await LoadAssignedForms();
         }
 
@@ -182,19 +208,71 @@ namespace FlowManager.Client.Pages
             searchDebounceTimer?.Dispose();
             searchDebounceTimer = new Timer(async _ =>
             {
-                searchTerm = newSearchTerm;
-                currentPage = 1;
                 await InvokeAsync(async () =>
                 {
+                    searchTerm = newSearchTerm;
+                    _currentPage = 1; // Reset la prima pagină la search nou
                     await LoadAssignedForms();
                 });
             }, null, 500, Timeout.Infinite); // 500ms debounce
         }
 
+        private async Task GoToFirstPage()
+        {
+            _currentPage = 1;
+            await LoadAssignedForms();
+        }
+
+        private async Task GoToPreviousPage()
+        {
+            _currentPage--;
+            await LoadAssignedForms();
+        }
+
+        private List<int> GetPageNumbers()
+        {
+            List<int> pages = new List<int>();
+
+            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
+
+            int start = Math.Max(1, _currentPage - half);
+            int end = Math.Min(_totalPages, start + _maxVisiblePages - 1);
+
+            if (end - start + 1 < _maxVisiblePages)
+            {
+                start = Math.Max(1, end - _maxVisiblePages + 1);
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            return pages;
+        }
+
+        private async Task GoToPage(int page)
+        {
+            _currentPage = page;
+            await LoadAssignedForms();
+        }
+
+        private async Task GoToNextPage()
+        {
+            _currentPage++;
+            await LoadAssignedForms();
+        }
+
+        private async Task GoToLastPage()
+        {
+            _currentPage = _totalPages;
+            await LoadAssignedForms();
+        }
+
         private async Task ClearSearch()
         {
             searchTerm = "";
-            currentPage = 1;
+            _currentPage = 1;
             await LoadAssignedForms();
         }
 
@@ -379,62 +457,58 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                var updateData = new PatchFormResponseRequestDto
-                {
-                    Id = selectedFormResponse.Id,
-                    RejectReason = null // Clear any existing reject reason
-                };
-
-                bool isFinalApproval = false;
+                var nextStepId = nextStepInfo?.NextStepId;
+                var isFinalApproval = nextStepInfo?.HasNextStep != true;
 
                 if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId.HasValue)
                 {
-                    // Move to next step - backend will set status to "Pending"
-                    updateData.StepId = nextStepInfo.NextStepId.Value;
-                    // Nu setăm Status explicit, să lase backend-ul să decidă
-                }
-                else
-                {
-                    // Final approval - backend will set status to "Approved"
-                    updateData.StepId = selectedFormResponse.StepId; // Keep same step
-                    updateData.Status = "Approved"; // Force final approval status
-                    isFinalApproval = true;
-                }
-
-                var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", updateData);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var successMessage = nextStepInfo?.HasNextStep == true
-                        ? $"Form approved and moved to {nextStepInfo.NextStepName}"
-                        : "Form approved successfully!";
-
-                    await JSRuntime.InvokeVoidAsync("alert", successMessage);
-
-                    // Elimină din lista locală doar dacă e final approval sau s-a mutat la alt step
-                    if (isFinalApproval || nextStepInfo?.HasNextStep == true)
+                    var payload = new PatchFormResponseRequestDto
                     {
-                        if (assignedForms != null)
-                        {
-                            assignedForms.RemoveAll(f => f.Id == selectedFormResponse.Id);
-                            totalFormsCount = Math.Max(0, totalFormsCount - 1);
-                        }
-                    }
+                        Id = selectedFormResponse.Id,
+                        StepId = nextStepInfo.NextStepId.Value,
+                        Status = "Pending"
+                    };
 
-                    CloseViewFormModal();
-                    StateHasChanged();
+                    var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await JSRuntime.InvokeVoidAsync("alert", "Form approved and moved to next step successfully!");
+                    }
+                    else
+                    {
+                        await JSRuntime.InvokeVoidAsync("alert", "Failed to approve form. Please try again.");
+                    }
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[ERROR] Approve failed: {response.StatusCode} - {errorContent}");
-                    await JSRuntime.InvokeVoidAsync("alert", "Error approving form. Please try again.");
+                    var payload = new PatchFormResponseRequestDto
+                    {
+                        Id = selectedFormResponse.Id,
+                        Status = "Approved"
+                    };
+
+                    var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await JSRuntime.InvokeVoidAsync("alert", "Form approved successfully!");
+                    }
+                    else
+                    {
+                        await JSRuntime.InvokeVoidAsync("alert", "Failed to approve form. Please try again.");
+                    }
                 }
+
+                // Refresh și întoarce la prima pagină pentru consistență
+                CloseViewFormModal();
+                _currentPage = 1;
+                await LoadAssignedForms();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Exception during approve: {ex.Message}");
-                await JSRuntime.InvokeVoidAsync("alert", "Error approving form. Please try again.");
+                Console.WriteLine($"[Moderator] Error approving form: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while approving the form.");
             }
             finally
             {
@@ -453,42 +527,34 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                var updateData = new PatchFormResponseRequestDto
+                var payload = new PatchFormResponseRequestDto
                 {
                     Id = selectedFormResponse.Id,
-                    RejectReason = rejectReason.Trim()
-                    // Nu setăm Status explicit - backend-ul va seta automat la "Rejected"
+                    RejectReason = rejectReason.Trim(),
+                    Status = "Rejected"
                 };
 
-                var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", updateData);
+                var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Form rejected successfully. The user will be notified.");
+                    await JSRuntime.InvokeVoidAsync("alert", "Form rejected successfully!");
 
-                    // Elimină din lista locală pentru feedback imediat
-                    if (assignedForms != null)
-                    {
-                        assignedForms.RemoveAll(f => f.Id == selectedFormResponse.Id);
-                        totalFormsCount = Math.Max(0, totalFormsCount - 1);
-                    }
-
-                    showRejectModal = false;
-                    showViewFormModal = false;
+                    // Refresh și întoarce la prima pagină pentru consistență
+                    CloseRejectModal();
                     CloseViewFormModal();
-                    StateHasChanged();
+                    _currentPage = 1;
+                    await LoadAssignedForms();
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[ERROR] Reject failed: {response.StatusCode} - {errorContent}");
-                    await JSRuntime.InvokeVoidAsync("alert", "Error rejecting form. Please try again.");
+                    await JSRuntime.InvokeVoidAsync("alert", "Failed to reject form. Please try again.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Exception during reject: {ex.Message}");
-                await JSRuntime.InvokeVoidAsync("alert", "Error rejecting form. Please try again.");
+                Console.WriteLine($"[Moderator] Error rejecting form: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while rejecting the form.");
             }
             finally
             {

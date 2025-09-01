@@ -1,6 +1,7 @@
 ﻿using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Client.DTOs;
 using FlowManager.Shared.DTOs.Requests;
+using FlowManager.Shared.DTOs.Responses;
 using System.Net.Http.Json;
 using System.Web;
 using System.Text.Json;
@@ -61,6 +62,8 @@ namespace FlowManager.Client.Services
 
                 uriBuilder.Query = query.ToString();
 
+                Console.WriteLine($"[FormResponseService] Request URL: {uriBuilder.Uri}");
+
                 var response = await _httpClient.GetAsync(uriBuilder.Uri);
 
                 if (response.IsSuccessStatusCode)
@@ -73,15 +76,23 @@ namespace FlowManager.Client.Services
 
                     if (apiResponse?.Result != null)
                     {
+                        var formsList = apiResponse.Result.Data != null ?
+                            new List<FormResponseResponseDto>(apiResponse.Result.Data) :
+                            new List<FormResponseResponseDto>();
+
                         return new PagedUserFormsResponse
                         {
-                            FormResponses = apiResponse.Result.Data?.ToList() ?? new List<FormResponseResponseDto>(),
+                            FormResponses = formsList,
                             TotalCount = apiResponse.Result.TotalCount,
                             Page = apiResponse.Result.Page,
                             PageSize = apiResponse.Result.PageSize,
                             HasMore = apiResponse.Result.HasNextPage
                         };
                     }
+                }
+                else
+                {
+                    Console.WriteLine($"[FormResponseService] Request failed: {response.StatusCode}");
                 }
 
                 return null;
@@ -99,7 +110,7 @@ namespace FlowManager.Client.Services
             {
                 var uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
                 {
-                    Path = $"api/formresponses/assigned-to-moderator/{moderatorId}"
+                    Path = "api/formresponses/queried"
                 };
 
                 var query = HttpUtility.ParseQueryString(string.Empty);
@@ -116,6 +127,8 @@ namespace FlowManager.Client.Services
 
                 uriBuilder.Query = query.ToString();
 
+                Console.WriteLine($"[FormResponseService] Moderator Request URL: {uriBuilder.Uri}");
+
                 var response = await _httpClient.GetAsync(uriBuilder.Uri);
 
                 if (response.IsSuccessStatusCode)
@@ -128,15 +141,26 @@ namespace FlowManager.Client.Services
 
                     if (apiResponse?.Result != null)
                     {
+                        // CORECTEAZĂ și această linie:
+                        var allForms = apiResponse.Result.Data != null ?
+                            new List<FormResponseResponseDto>(apiResponse.Result.Data) :
+                            new List<FormResponseResponseDto>();
+
+                        Console.WriteLine($"[FormResponseService] Moderator received {allForms.Count} forms, Total: {apiResponse.Result.TotalCount}");
+
                         return new PagedModeratorFormsResponse
                         {
-                            FormResponses = apiResponse.Result.Data?.ToList() ?? new List<FormResponseResponseDto>(),
+                            FormResponses = allForms,
                             TotalCount = apiResponse.Result.TotalCount,
                             Page = apiResponse.Result.Page,
                             PageSize = apiResponse.Result.PageSize,
                             HasMore = apiResponse.Result.HasNextPage
                         };
                     }
+                }
+                else
+                {
+                    Console.WriteLine($"[FormResponseService] Moderator request failed: {response.StatusCode}");
                 }
 
                 return null;
@@ -170,22 +194,12 @@ namespace FlowManager.Client.Services
         }
     }
 
-    // Clase auxiliare pentru deserializare
     public class FormResponseApiResponse
     {
-        public PagedFormResponseDto? Result { get; set; }
+        public PagedResponseDto<FormResponseResponseDto>? Result { get; set; }
         public bool Success { get; set; }
         public string? Message { get; set; }
         public DateTime Timestamp { get; set; }
-    }
-
-    public class PagedFormResponseDto
-    {
-        public List<FormResponseResponseDto> Data { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public bool HasNextPage { get; set; }
     }
 
     public class PagedUserFormsResponse

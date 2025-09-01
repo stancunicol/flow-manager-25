@@ -31,7 +31,7 @@ namespace FlowManager.Client.Pages
         // Search and pagination state for templates
         private string searchTerm = "";
         private int currentPage = 1;
-        private const int pageSize = 20;
+        private const int pageSize = 8;
         private bool hasMoreTemplates = false;
         private int totalTemplatesCount = 0;
         private Timer? searchDebounceTimer;
