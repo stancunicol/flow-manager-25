@@ -371,48 +371,47 @@
             </div>
 
             <div class="modal-body">
-                @if (!string.IsNullOrEmpty(selectedFormResponse.RejectReason))
+    @if (!string.IsNullOrEmpty(selectedFormResponse.RejectReason))
+    {
+        <div class="reject-reason-banner">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+            </svg>
+            <div>
+                <strong>Form Rejected</strong>
+                <p>@selectedFormResponse.RejectReason</p>
+            </div>
+        </div>
+    }
+
+    @if (isLoadingFormDetails)
+    {
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Loading form details...</p>
+        </div>
+    }
+    else if (formElements?.Any() == true)
+    {
+        <!-- Form Canvas View -->
+        <div class="form-canvas-container">
+            <div class="form-canvas-header">
+                <h4>Form Preview</h4>
+                <span class="readonly-indicator">🔒 Read Only</span>
+            </div>
+
+            <div class="form-canvas-readonly">
+                @if (!formElements.Any())
                 {
-                    <div class="reject-reason-banner">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
-                        </svg>
-                        <div>
-                            <strong>Form Rejected</strong>
-                            <p>@selectedFormResponse.RejectReason</p>
-                        </div>
+                    <div class="empty-form">
+                        <p>No form elements to display</p>
                     </div>
                 }
-
-                @if (isLoadingFormDetails)
+                else
                 {
-                    <div class="loading-container">
-                        <div class="spinner"></div>
-                        <p>Loading form details...</p>
-                    </div>
-                }
-                else if (formElements?.Any() == true)
-                {
-                    <!-- Form Canvas View -->
-                    <div class="form-canvas-container">
-                        <div class="form-canvas-header">
-                            <h4>Form Preview</h4>
-                            <span class="readonly-indicator">Read Only</span>
-                        </div>
-
-                        <div class="form-canvas-readonly">
-                            @if (!formElements.Any())
-                            {
-                                <div class="empty-form">
-                                    <p>No form elements to display.</p>
-                                </div>
-                            }
-                            else
-                            {
-                                <!-- Render all form elements positioned exactly as they were created -->
-                                @foreach (var element in formElements.OrderBy(e => e.ZIndex))
-                                {
-                                    <div class="form-element-readonly" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
+                    @foreach (var element in formElements)
+                    {
+                        <div class="form-element-readonly" style="left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
                                         @if (element.IsTextElement)
                                         {
                                             <!-- Static text elements -->
@@ -519,6 +518,11 @@
                         <p>Unable to load form structure.</p>
                     </div>
                 }
+
+                <FlowManager.Client.Components.FlowVisualizer.FlowVisualizer 
+        FlowSteps="flowSteps" 
+        FormResponse="selectedFormResponse" 
+        IsLoading="isLoadingFlowSteps" />
             </div>
 
             <div class="modal-footer">
