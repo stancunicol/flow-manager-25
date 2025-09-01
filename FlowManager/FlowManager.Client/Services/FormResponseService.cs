@@ -108,22 +108,24 @@ namespace FlowManager.Client.Services
         {
             try
             {
+                // SCHIMBAT: Folosește endpoint-ul specific pentru moderator
                 var uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
                 {
-                    Path = "api/formresponses/queried"
+                    Path = $"api/formresponses/assigned-to-moderator/{moderatorId}"
                 };
 
                 var query = HttpUtility.ParseQueryString(string.Empty);
+
+                // Parametrii pentru paginare
+                query["QueryParams.Page"] = page.ToString();
+                query["QueryParams.PageSize"] = pageSize.ToString();
+                query["QueryParams.SortBy"] = "CreatedAt";
+                query["QueryParams.SortDescending"] = "true";
 
                 query["IncludeDeleted"] = "false";
 
                 if (!string.IsNullOrEmpty(searchTerm))
                     query["SearchTerm"] = searchTerm;
-
-                query["QueryParams.Page"] = page.ToString();
-                query["QueryParams.PageSize"] = pageSize.ToString();
-                query["QueryParams.SortBy"] = "CreatedAt";
-                query["QueryParams.SortDescending"] = "true";
 
                 uriBuilder.Query = query.ToString();
 
@@ -141,16 +143,15 @@ namespace FlowManager.Client.Services
 
                     if (apiResponse?.Result != null)
                     {
-                        // CORECTEAZĂ și această linie:
-                        var allForms = apiResponse.Result.Data != null ?
+                        var moderatorForms = apiResponse.Result.Data != null ?
                             new List<FormResponseResponseDto>(apiResponse.Result.Data) :
                             new List<FormResponseResponseDto>();
 
-                        Console.WriteLine($"[FormResponseService] Moderator received {allForms.Count} forms, Total: {apiResponse.Result.TotalCount}");
+                        Console.WriteLine($"[FormResponseService] Moderator {moderatorId} received {moderatorForms.Count} assigned forms, Total: {apiResponse.Result.TotalCount}");
 
                         return new PagedModeratorFormsResponse
                         {
-                            FormResponses = allForms,
+                            FormResponses = moderatorForms,
                             TotalCount = apiResponse.Result.TotalCount,
                             Page = apiResponse.Result.Page,
                             PageSize = apiResponse.Result.PageSize,
@@ -161,6 +162,8 @@ namespace FlowManager.Client.Services
                 else
                 {
                     Console.WriteLine($"[FormResponseService] Moderator request failed: {response.StatusCode}");
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[FormResponseService] Error details: {errorContent}");
                 }
 
                 return null;
