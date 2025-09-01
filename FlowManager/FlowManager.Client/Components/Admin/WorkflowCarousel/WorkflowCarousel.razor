@@ -82,6 +82,7 @@
 </div>
 
 @code {
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     private int _currentPage = 0;
     private int _totalPages = 3;
 
@@ -104,44 +105,49 @@
     }
 
     // Called when FlowsAddModal wants to save the workflow
+    // WorkflowCarousel.razor - OnSaveWorkflowRequested()
     private async Task OnSaveWorkflowRequested()
     {   
         try
         {
-            Console.WriteLine("aici");
-            // 1. Ask FormTemplate to save the template from localStorage to database
-            if (formTemplateRef != null)
+            // PASUL 1: Creează Flow-ul (FormTemplateId = null)
+            if (flowsAddModalRef != null)
             {
-                var savedTemplate = await formTemplateRef.SaveTemplateFromLocalStorageToDatabase();
-                Console.WriteLine("saved template !null");
+                var savedFlow = await flowsAddModalRef.SaveWorkflowFirst();
 
-                if (savedTemplate.HasValue)
+                if (savedFlow.HasValue)
                 {
-                    Console.WriteLine("saved template has value");
-                    _savedFormTemplateId = savedTemplate.Value.Id;
-                    _savedFormTemplateName = savedTemplate.Value.Name;
-
-                    // 2. Ask FlowsAddModal to save the workflow with the template ID
-                    if (flowsAddModalRef != null)
+                    // PASUL 2: Creează Template-ul cu FlowId (GATA!)
+                    if (formTemplateRef != null)
                     {
-                        Console.WriteLine("saving flow");
-                        await flowsAddModalRef.SaveWorkflowWithFormTemplate(_savedFormTemplateId.Value);
-                        // 3. Navigate to view flows page after successful save
-                        _currentPage = 2;
-                        StateHasChanged();
+                        var savedTemplate = await formTemplateRef.SaveTemplateFromLocalStorageToDatabase(savedFlow.Value.Id);
+
+                        if (savedTemplate.HasValue)
+                        {
+                            _savedFormTemplateId = savedTemplate.Value.Id;
+                            _savedFormTemplateName = savedTemplate.Value.Name;
+
+                            await JSRuntime.InvokeVoidAsync("alert", "Workflow and template saved successfully!");
+
+                            // Navighează la vizualizare
+                            _currentPage = 2;
+                            StateHasChanged();
+                        }
+                        else
+                        {
+                            // Flow creat, dar template a eșuat
+                            await JSRuntime.InvokeVoidAsync("alert", "Workflow saved, but template creation failed.");
+                            _currentPage = 2;
+                            StateHasChanged();
+                        }
                     }
-                }
-                else
-                {
-                    // Handle error - template save failed
-                    StateHasChanged();
                 }
             }
         }
         catch (Exception ex)
         {
-            // Handle error
-            Console.WriteLine($"Error saving workflow and template: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
         }
     }
 

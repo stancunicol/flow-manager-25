@@ -15,6 +15,8 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
         private List<FlowResponseDto> _flows = new();
         private bool _isLoading = false;
         private string _searchTerm = string.Empty;
+        private bool _showEditModal = false;
+        private FlowResponseDto? _selectedFlow = null;
 
         protected override async Task OnInitializedAsync()
         {
@@ -83,6 +85,35 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 (step.Users?.Count() ?? 0) +
                 (step.Teams?.Sum(t => t.Users?.Count() ?? 0) ?? 0)
             );
+        }
+        
+
+
+        private void OpenEditModal(FlowResponseDto flow)
+        {
+            _selectedFlow = flow;
+            _showEditModal = true;
+            StateHasChanged();
+        }
+
+        private async Task CloseEditModal()
+        {
+            _showEditModal = false;
+            _selectedFlow = null;
+            StateHasChanged();
+        }
+
+        private async Task OnFlowUpdated(FlowResponseDto updatedFlow)
+        {
+            var index = _flows.FindIndex(f => f.Id == updatedFlow.Id);
+            if (index >= 0)
+            {
+                _flows[index] = updatedFlow;
+            }
+
+            await CloseEditModal();
+
+            await LoadFlows();
         }
     }
 }

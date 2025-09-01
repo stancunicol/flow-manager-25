@@ -335,4 +335,29 @@
     .stat-value {
         font-size: 18px;
     }
+
+    .edit-btn {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+    }
+
+        .edit-btn:hover {
+            background: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .edit-btn .edit-icon {
+            font-size: 14px;
+        }
 }

@@ -166,9 +166,47 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             _onSubmitSuccess = response.Success;
         }
 
-        public async Task SaveWorkflowWithFormTemplateNotice()
+        public async Task<(Guid Id, string Name)?> SaveWorkflowFirst()
         {
-            await OnSaveWorkflow.InvokeAsync();
+            try
+            {
+                if (!IsWorkflowValid())
+                {
+                    await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
+                    return null;
+                }
+
+                var workflowStepIds = GetConfiguredStepIds();
+
+                var apiResponse = await _flowService.PostFlowAsync(new PostFlowRequestDto
+                {
+                    Name = _flowName,
+                    StepIds = workflowStepIds,
+                    FormTemplateId = null
+                });
+
+                if (apiResponse != null && apiResponse.Success && apiResponse.Result != null)
+                {
+                    Console.WriteLine($"Flow created: Id={apiResponse.Result.Id}");
+
+                    ClearConfiguration();
+
+                    return (apiResponse.Result.Id, apiResponse.Result.Name ?? "Unnamed Flow");
+                }
+
+                // Log error message if available
+                if (apiResponse != null && !apiResponse.Success)
+                {
+                    Console.WriteLine($"Flow creation failed: {apiResponse.Message}");
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating flow: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task SaveWorkflowWithFormTemplate(Guid templateId)

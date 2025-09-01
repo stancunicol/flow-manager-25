@@ -924,7 +924,7 @@
 
 
 
-    public async Task<(Guid Id, string Name)?> SaveTemplateFromLocalStorageToDatabase()
+    public async Task<(Guid Id, string Name)?> SaveTemplateFromLocalStorageToDatabase(Guid? flowId = null)
     {
         try
         {
@@ -1033,6 +1033,7 @@
             {
                 Name = storedTemplateName ?? "Untitled Template", // DIN localStorage (NU templateName!)
                 Content = templateContent,
+                FlowId = flowId,
                 Components = componentIds
             };
 

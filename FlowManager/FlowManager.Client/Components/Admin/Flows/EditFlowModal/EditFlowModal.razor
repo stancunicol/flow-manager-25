@@ -1,0 +1,122 @@
+﻿@using FlowManager.Shared.DTOs.Responses.Flow
+@using FlowManager.Client.Components.Admin.FormTemplate
+@using FlowManager.Client.Components.Admin.EditFormTemplate
+
+<div class="flow-edit-modal-overlay" @onclick="@(() => OnClose.InvokeAsync())" @onclick:stopPropagation="false">
+    <div class="flow-edit-modal-container" @onclick:stopPropagation="true">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+            <h2>Edit Form Template: @Flow?.Name</h2>
+            <button class="modal-close" @onclick="@(() => OnClose.InvokeAsync())" aria-label="Close modal">×</button>
+        </div>
+
+        <!-- Content -->
+        <div class="modal-content">
+            @if (Flow?.FormTemplateId != null)
+            {
+                <EditFormTemplate FlowId="@Flow.Id"
+                                  FormTemplateId="@Flow.FormTemplateId.Value"
+                                  OnTemplateSaved="@OnTemplateSaved"
+                                  @ref="editFormTemplateRef" />
+            }
+            else
+            {
+                <div class="no-template-state">
+                    <div class="no-template-icon">📄</div>
+                    <h3>No Form Template</h3>
+                    <p>This flow doesn't have a form template associated with it.</p>
+                    <button class="create-template-btn" @onclick="CreateNewTemplate">
+                        Create Form Template
+                    </button>
+                </div>
+            }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <button class="btn-secondary" @onclick="@(() => OnClose.InvokeAsync())">
+                Cancel
+            </button>
+            @if (Flow?.FormTemplateId != null)
+            {
+                <button class="btn-primary" @onclick="SaveTemplate" disabled="@_isSaving">
+                    @if (_isSaving)
+                    {
+                        <span class="loading-spinner"></span>
+                    }
+                    Save Changes
+                </button>
+            }
+        </div>
+
+    </div>
+</div>
+
+
+
+@code {
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Parameter] public FlowResponseDto? Flow { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<FlowResponseDto> OnFlowUpdated { get; set; }
+
+    private bool _isSaving = false;
+
+    // Component reference
+    private EditFormTemplate? editFormTemplateRef;
+
+    private async Task CreateNewTemplate()
+    {
+        // TODO: Implement creating new template for existing flow
+        await JSRuntime.InvokeVoidAsync("alert", "Create new template functionality will be implemented soon!");
+    }
+
+    private async Task OnTemplateSaved()
+    {
+        // Called when form template is saved
+        await JSRuntime.InvokeVoidAsync("alert", "Form template updated successfully!");
+
+        // Notify parent that flow was updated
+        if (Flow != null && OnFlowUpdated.HasDelegate)
+        {
+            await OnFlowUpdated.InvokeAsync(Flow);
+        }
+
+        // Close the modal
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task SaveTemplate()
+    {
+        if (_isSaving || editFormTemplateRef == null) return;
+
+        _isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            await editFormTemplateRef.SaveTemplate();
+            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
+
+            // Notify parent that flow was updated
+            if (Flow != null && OnFlowUpdated.HasDelegate)
+            {
+                await OnFlowUpdated.InvokeAsync(Flow);
+            }
+
+            // Close the modal
+            await OnClose.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving template: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
+            StateHasChanged();
+        }
+    }
+}

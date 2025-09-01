@@ -100,7 +100,7 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchFormTemplateAsync(Guid id)
+        public async Task<IActionResult> DeleteFormTemplateAsync(Guid id)
         {
             var result = await _formTemplateService.DeleteFormTemplateAsync(id);
 

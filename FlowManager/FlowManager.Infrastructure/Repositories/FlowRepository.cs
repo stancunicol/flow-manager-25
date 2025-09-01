@@ -25,7 +25,7 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.Flows
                 .Include(f => f.Steps)
-                .Include(f => f.FormTemplate)
+                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null))
                 .ToListAsync();
         }
 
@@ -34,7 +34,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Flows
                 .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.Step)
-                .Include(f => f.FormTemplate)
+                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null))
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
@@ -48,11 +48,12 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<(List<Flow> Data, int TotalCount)> GetAllFlowsQueriedAsync(string? name, QueryParams? parameters)
         {
             IQueryable<Flow> query = _context.Flows
-                .Include(f => f.Steps.Where(s => s.DeletedAt == null))
-                    .ThenInclude(fs => fs.Step);
+                .Include(f => f.Steps)
+                    .ThenInclude(fs => fs.Step)
+                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null));
 
             // filtering
-            if(!string.IsNullOrEmpty(name))
+            if (!string.IsNullOrEmpty(name))
             {
                 query = query.Where(f => f.Name.ToUpper().Contains(name.ToUpper()));
             }
@@ -65,9 +66,9 @@ namespace FlowManager.Infrastructure.Repositories
             }
 
             // sorting
-            if(!string.IsNullOrEmpty(parameters.SortBy))
+            if (!string.IsNullOrEmpty(parameters.SortBy))
             {
-                if(parameters.SortDescending is bool sortDesc)
+                if (parameters.SortDescending is bool sortDesc)
                 {
                     query = query.ApplySorting<Flow>(parameters.SortBy, sortDesc);
                 }
@@ -102,7 +103,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Flows
                 .Include(f => f.Steps.Where(s => s.DeletedAt == null))
                     .ThenInclude(fs => fs.Step)
-                .Include(f => f.FormTemplate)
+                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null))
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
     }

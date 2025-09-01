@@ -10,6 +10,7 @@ namespace FlowManager.Shared.DTOs.Requests.FormTemplate
     {
         public string Name { get; set; }
         public string Content { get; set; }
+        public Guid? FlowId { get; set; } = null;
         public List<Guid> Components { get; set; } = new List<Guid>();
     }
 }
