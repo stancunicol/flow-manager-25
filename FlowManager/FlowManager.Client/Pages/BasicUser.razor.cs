@@ -44,6 +44,13 @@ namespace FlowManager.Client.Pages
         private Timer? userFormsSearchDebounceTimer;
         private Guid currentUserId = Guid.Empty;
 
+        // Pagination state for user forms
+        private int _pageSize = 8; 
+        private int _currentPage = 1;
+        private int _totalPages = 0;
+        private int _maxVisiblePages = 4;
+        private int _totalCount = 0;
+
         //View Form modal state
         private bool showViewFormModal = false;
         private bool isLoadingFormDetails = false;
@@ -115,15 +122,53 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                userForms = await FormResponseService.GetFormResponsesByUserAsync(currentUserId);
-                Console.WriteLine($"Loaded {userForms?.Count ?? 0} forms for user {currentUserId}");
+                var payload = new QueriedFormResponseRequestDto
+                {
+                    UserId = currentUserId,
+                    IncludeDeleted = false,
+                    QueryParams = new Shared.DTOs.Requests.QueryParamsDto
+                    {
+                        Page = _currentPage,
+                        PageSize = _pageSize,
+                        SortBy = "CreatedAt",
+                        SortDescending = true
+                    }
+                };
 
-                // Apply current search filter
-                ApplyUserFormsFilter();
+                if (!string.IsNullOrEmpty(userFormsSearchTerm))
+                {
+                    payload.SearchTerm = userFormsSearchTerm;
+                }
+
+                var response = await FormResponseService.GetFormResponsesByUserPagedAsync(
+                    currentUserId,
+                    _currentPage,
+                    _pageSize,
+                    userFormsSearchTerm);
+
+                if (response != null)
+                {
+                    userForms = response.FormResponses;
+                    _totalCount = response.TotalCount;
+                    _totalPages = (int)Math.Ceiling((double)_totalCount / _pageSize);
+
+                    Console.WriteLine($"Loaded {userForms?.Count ?? 0} forms for user {currentUserId} (page {_currentPage}/{_totalPages})");
+                }
+                else
+                {
+                    userForms = new List<FormResponseResponseDto>();
+                    _totalCount = 0;
+                    _totalPages = 0;
+                }
+
+                // Nu mai e nevoie de ApplyUserFormsFilter() pentru că search-ul se face server-side
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading user forms: {ex.Message}");
+                userForms = new List<FormResponseResponseDto>();
+                _totalCount = 0;
+                _totalPages = 0;
             }
             finally
             {
@@ -137,47 +182,76 @@ namespace FlowManager.Client.Pages
         {
             var newSearchTerm = e.Value?.ToString() ?? "";
 
-            // Debounce search to avoid too many filter operations
+            // Debounce search to avoid too many API calls
             userFormsSearchDebounceTimer?.Dispose();
             userFormsSearchDebounceTimer = new Timer(async _ =>
             {
-                userFormsSearchTerm = newSearchTerm;
-                await InvokeAsync(() =>
+                await InvokeAsync(async () =>
                 {
-                    ApplyUserFormsFilter();
-                    StateHasChanged();
+                    userFormsSearchTerm = newSearchTerm;
+                    _currentPage = 1; // Reset la prima pagină la search nou
+                    await LoadUserForms();
                 });
-            }, null, 300, Timeout.Infinite); // 300ms debounce for local filtering
+            }, null, 500, Timeout.Infinite); // 500ms debounce
         }
 
-        private void ApplyUserFormsFilter()
-        {
-            if (userForms == null)
-            {
-                filteredUserForms = new List<FormResponseResponseDto>();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(userFormsSearchTerm))
-            {
-                filteredUserForms = userForms.ToList();
-            }
-            else
-            {
-                var searchLower = userFormsSearchTerm.ToLower();
-                filteredUserForms = userForms.Where(form =>
-                    (form.FormTemplateName?.ToLower().Contains(searchLower) ?? false) ||
-                    (form.StepName?.ToLower().Contains(searchLower) ?? false) ||
-                    (form.RejectReason?.ToLower().Contains(searchLower) ?? false)
-                ).ToList();
-            }
-        }
-
-        private void ClearUserFormsSearch()
+        private async Task ClearUserFormsSearch()
         {
             userFormsSearchTerm = "";
-            ApplyUserFormsFilter();
-            StateHasChanged();
+            _currentPage = 1;
+            await LoadUserForms();
+        }
+
+        private async Task GoToFirstPage()
+        {
+            _currentPage = 1;
+            await LoadUserForms();
+        }
+
+        private async Task GoToPreviousPage()
+        {
+            _currentPage--;
+            await LoadUserForms();
+        }
+
+        private List<int> GetPageNumbers()
+        {
+            List<int> pages = new List<int>();
+
+            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
+
+            int start = Math.Max(1, _currentPage - half);
+            int end = Math.Min(_totalPages, start + _maxVisiblePages - 1);
+
+            if (end - start + 1 < _maxVisiblePages)
+            {
+                start = Math.Max(1, end - _maxVisiblePages + 1);
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            return pages;
+        }
+
+        private async Task GoToPage(int page)
+        {
+            _currentPage = page;
+            await LoadUserForms();
+        }
+
+        private async Task GoToNextPage()
+        {
+            _currentPage++;
+            await LoadUserForms();
+        }
+
+        private async Task GoToLastPage()
+        {
+            _currentPage = _totalPages;
+            await LoadUserForms();
         }
 
         // FORM TEMPLATE SELECTION MODAL FUNCTIONALITY
@@ -525,6 +599,8 @@ namespace FlowManager.Client.Pages
 
         private async Task RefreshUserForms()
         {
+            Console.WriteLine("[BasicUser] Refreshing user forms...");
+            _currentPage = 1;
             await LoadUserForms();
         }
 

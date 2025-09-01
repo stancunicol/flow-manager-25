@@ -37,7 +37,6 @@ namespace FlowManager.Client.Services
             }
         }
 
-        // METODĂ NOUĂ pentru paginare
         public async Task<PagedUserFormsResponse?> GetFormResponsesByUserPagedAsync(Guid userId, int page, int pageSize, string? searchTerm = null)
         {
             try

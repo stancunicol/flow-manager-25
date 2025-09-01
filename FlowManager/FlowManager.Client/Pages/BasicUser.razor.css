@@ -196,6 +196,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
+    margin-bottom: 2rem; 
 }
 
 .form-card {
@@ -1198,27 +1199,35 @@ body {
     justify-content: center;
     font-weight: 600;
     font-size: 11px;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    border: none;
+    min-width: 70px;
 }
 
-.status-pending {
-    background: #f59e0b;
-    color: white;
-}
+    /* Culori pentru status-uri */
+    .status-badge.pending {
+        background: #f59e0b;
+        color: white;
+    }
 
-.status-rejected {
-    background: #ef4444;
-    color: white;
-}
+    .status-badge.rejected {
+        background: #ef4444;
+        color: white;
+    }
 
-.status-approved {
-    background: #10b981;
-    color: white;
-}
+    .status-badge.approved {
+        background: #10b981;
+        color: white;
+    }
+
+    .status-badge:not(.pending):not(.rejected):not(.approved) {
+        background: #6b7280;
+        color: white;
+    }
 
 /* Enhanced detail items for status */
 .detail-item.status-item {
@@ -1312,5 +1321,138 @@ body {
     .field-value-readonly,
     .checkbox-field-readonly {
         width: 160px;
+    }
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 1.5rem 0 1rem 0;
+    padding: 0 1rem;
+}
+
+    .pagination-container nav {
+        display: inline-flex;
+        align-items: center;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        padding: 4px;
+        gap: 2px;
+    }
+
+.pagination-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+
+    .pagination-btn:hover {
+        background-color: #f9fafb;
+    }
+
+    .pagination-btn:disabled {
+        background-color: #f3f4f6;
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+.pagination-btn-first {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.pagination-btn-last {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.pagination-btn-nav {
+    padding: 6px;
+}
+
+.pagination-btn-page {
+    padding: 6px 14px;
+    color: #374151;
+}
+
+    .pagination-btn-page:hover {
+        background-color: #f9fafb;
+    }
+
+.pagination-btn-active {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
+    color: white;
+}
+
+    .pagination-btn-active:hover {
+        background-color: var(--primary-color-dark, #1a9c75);
+    }
+
+.pagination-ellipsis {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.pagination-icon {
+    height: 20px;
+    width: 20px;
+}
+
+.pagination-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: auto;
+    padding-left: 1rem;
+}
+
+.pagination-info-text {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Responsive pentru paginare */
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .pagination-info {
+        margin-left: 0;
+        padding-left: 0;
+        justify-content: center;
+    }
+
+    .pagination-container nav {
+        justify-content: center;
+    }
+
+    .pagination-btn-page {
+        padding: 8px 12px;
+    }
+
+    .pagination-btn-nav {
+        padding: 8px;
     }
 }
