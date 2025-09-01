@@ -21,7 +21,7 @@
                            id="name"
                            name="name"
                            class="modern-input"
-                           placeholder="Enter full name" />
+                           placeholder="e.g. John Doe" />
                 </div>
 
                 <div class="form-field">
@@ -31,7 +31,28 @@
                            id="email"
                            name="email"
                            class="modern-input"
-                           placeholder="Enter email address" />
+                           placeholder="e.g. john.doe@example.com" />
+                </div>
+
+                <div class="department-selector">
+                    <label class="department-label">Department:</label>
+                    <div class="custom-dropdown" @onclick="ToggleDropdown">
+                        <div class="dropdown-selected">
+                            @(UserToEdit.Step?.Name)
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        @if (_isDropdownOpen)
+                        {
+                            <div class="dropdown-options">
+                                @foreach (StepVM step in _availableSteps)
+                                {
+                                    <div class="dropdown-option" @onclick="() => SelectStep(step)" @onclick:stopPropagation="true">
+                                        @step.Name
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
                 </div>
 
                 <div class="form-field">

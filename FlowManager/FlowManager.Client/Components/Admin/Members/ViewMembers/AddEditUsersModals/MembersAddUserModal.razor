@@ -15,26 +15,27 @@
 
             <form @onsubmit="RegisterUser" @onsubmit:preventDefault="true">
                 <div class="form-field">
-                    <label for="name">*Name</label>
+                    <label for="name">*Name:</label>
                     <input @bind="_name"
                            type="text"
                            id="name"
                            name="name"
-                           placeholder=" Enter full name"
+                           placeholder="e.g. John Doe"
                            required />
                 </div>
 
                 <div class="form-field">
-                    <label for="email">*Email</label>
+                    <label for="email">*Email:</label>
                     <input @bind="_email"
                            type="email"
                            id="email"
                            name="email"
-                           placeholder=" user@example.com"
+                           placeholder="e.g. john.doe@example.com"
                            required />
                 </div>
 
                 <div class="department-selector">
+                    <label class="department-label">*Department:</label>
                     <div class="custom-dropdown" @onclick="ToggleDropdown">
                         <div class="dropdown-selected">
                             @(_selectedStepName ?? "Select a department")
@@ -45,7 +46,7 @@
                             <div class="dropdown-options">
                                 @foreach (StepVM step in _availableSteps)
                                 {
-                                    <div class="dropdown-option" @onclick="() => SelectStep(step)">
+                                    <div class="dropdown-option" @onclick="() => SelectStep(step)" @onclick:stopPropagation="true">
                                         @step.Name
                                     </div>
                                 }

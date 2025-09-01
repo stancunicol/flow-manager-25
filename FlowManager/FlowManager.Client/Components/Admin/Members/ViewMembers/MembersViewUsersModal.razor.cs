@@ -71,6 +71,11 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
                     Id = r.Id,
                     RoleName = r.Name!
                 }).ToList(),
+                Step = new StepVM
+                {
+                    Id = u.Step?.Id ?? Guid.Empty,
+                    Name = u.Step?.Name ?? string.Empty
+                }
             }).ToList();
 
             _totalPages = response.Result.TotalPages;

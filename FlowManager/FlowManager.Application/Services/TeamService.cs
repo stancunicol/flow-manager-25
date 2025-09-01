@@ -51,6 +51,11 @@ namespace FlowManager.Application.Services
                         Id = ut.User.Id,
                         Name = ut.User.Name,
                         Email = ut.User.Email,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            Id = ut.User.StepId,
+                            Name = ut.User.Step.Name
+                        }
                     }).ToList(),
                     UsersCount = t.Users?.Count(u => u.DeletedAt == null) ?? 0,
                     CreatedAt = t.CreatedAt,
@@ -218,11 +223,9 @@ namespace FlowManager.Application.Services
             {
                 UserTeam userTeamToDelete = user.Teams.First(ut => ut.TeamId == id);
                 userTeamToDelete.DeletedAt = DateTime.UtcNow;
-                user.UpdatedAt = DateTime.UtcNow;
             }
 
             teamToDelete.DeletedAt = DateTime.UtcNow;
-            teamToDelete.UpdatedAt = DateTime.UtcNow;
 
             await _teamRepository.SaveChangesAsync();
 
@@ -252,8 +255,14 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException($"Team with id {id} was not found.");
             }
 
+            var users = await _userRepository.GetUsersByTeamIdAsync(id, includeDeleted: true);
+            foreach (var user in users)
+            {
+                UserTeam userTeamDeleted = user.Teams.First(ut => ut.TeamId == id);
+                userTeamDeleted.DeletedAt = null;
+            }
+
             teamToRestore.DeletedAt = null;
-            teamToRestore.UpdatedAt = DateTime.UtcNow;
 
             await _teamRepository.SaveChangesAsync();
 
@@ -327,7 +336,7 @@ namespace FlowManager.Application.Services
             };
         }
 
-        public async Task<SplitUsersByTeamIdResponseDto> GetSplitUsersByTeamIdAsync(Guid teamId, QueriedTeamRequestDto payload)
+        public async Task<SplitUsersByTeamIdResponseDto> GetSplitUsersByTeamIdAsync(Guid stepId, Guid teamId, QueriedTeamRequestDto payload)
         {
             var team = await _teamRepository.GetTeamWithUsersAsync(teamId);
 
@@ -337,7 +346,7 @@ namespace FlowManager.Application.Services
             }
 
             (List<User> assignedToTeam, List<User> unassignedToTeam) = 
-                await _teamRepository.GetSplitUsersByTeamIdQueriedAsync(teamId, payload.GlobalSearchTerm, payload.QueryParams?.ToQueryParams());
+                await _teamRepository.GetSplitUsersByTeamIdQueriedAsync(stepId, teamId, payload.GlobalSearchTerm, payload.QueryParams?.ToQueryParams());
 
             return new SplitUsersByTeamIdResponseDto
             {

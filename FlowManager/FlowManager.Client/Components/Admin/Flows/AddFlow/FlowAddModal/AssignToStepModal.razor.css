@@ -454,3 +454,16 @@ input[type="checkbox"]:checked + label .checkmark {
     .tab-content::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
     }
+
+.member-checkbox input:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.members-header span {
+    font-weight: 500;
+    color: #495057;
+    font-size: 13px;
+    margin-bottom: 8px;
+    display: block;
+}

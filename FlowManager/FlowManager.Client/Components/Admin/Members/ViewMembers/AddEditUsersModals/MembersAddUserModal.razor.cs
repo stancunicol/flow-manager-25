@@ -42,8 +42,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadRoles();
-            await LoadSteps();
+            await LoadRolesAsync();
+            await LoadStepsAsync();
         }
 
         private async Task RegisterUser()
@@ -92,7 +92,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
             _isDropdownOpen = false;
         }
 
-        private async Task LoadRoles()
+        private async Task LoadRolesAsync()
         {
             ApiResponse<List<RoleResponseDto>> response = await _roleService.GetAllRolesAsync();
 
@@ -103,7 +103,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
             }).ToList();
         }
 
-        private async Task LoadSteps()
+        private async Task LoadStepsAsync()
         {
             ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetStepsQueriedAsync();
 

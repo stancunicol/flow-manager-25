@@ -5,9 +5,9 @@
     <div class="popup-backdrop" @onclick="() => ShowEditTeamModal = false">
         <div class="popup-container" @onclick:stopPropagation="true">
             <form @onsubmit="OnSubmit" @onsubmit:preventDefault="true">
-                <div class="popup-header">
-                    <h3>Edit an existing team</h3>
-                </div>
+             <div class="popup-header">
+                    <h3>Edit an existing team (Departemnt: @TeamStep.Name)</h3>
+             </div>
                 <div class="form-content">
                     <div class="team-name-input">
                         <label for="team-name">Team Name:</label>
@@ -20,7 +20,7 @@
                         <input type="text"
                                @bind="_searchTerm"
                                placeholder="Search users by name..." />
-                        <button type="button" class="search-btn-users" @onclick="() => LoadUsers()">
+                        <button type="button" class="search-btn-users" @onclick="() => LoadUsersAsync()">
                             Search
                         </button>
                     </div>
@@ -35,8 +35,8 @@
                                            class="user-checkbox"
                                            id="user-@index"
                                            name="selectedUsers"
-                                           checked="@_selectedUsers.Contains(_users[index])"
-                                           @onchange="(e) => ToggleUserSelection(_users[index].Id, (bool)e.Value)"/>
+                                           checked="@IsUserAssigned(_users[index])"
+                                           @onchange="@((ChangeEventArgs e) => ToggleUserSelection(_users[index].Id, (bool)e.Value))" />
                                     <label for="user-@index" class="user-details">
                                         <span class="user-name">@_users[i].Name</span>
                                         <span class="user-email">@_users[i].Email</span>
@@ -95,10 +95,14 @@
                         Load more
                     </button>
                     <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
-                    <button type="submit" class="create-button" disabled="@_isSubmitting">
+                    <button type="submit" class="submit-button" disabled="@_isSubmitting || _users.Count == 0">
                         @if (_isSubmitting)
                         {
                             <span>Editing...</span>
+                        }
+                        else if(_selectedUsers.Count == 0)
+                        {
+                            <span>Delete Team</span>
                         }
                         else
                         {

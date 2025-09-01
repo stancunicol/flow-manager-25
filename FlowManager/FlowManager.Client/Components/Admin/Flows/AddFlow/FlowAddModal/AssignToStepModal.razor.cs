@@ -59,10 +59,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         {
             _isTeamsTabSelected = isTeamsTab;
 
-            _assignedModeratorIds.Clear();
-            _assignedTeamIds.Clear();
-            _onSubmitMessage = string.Empty;
-
             if (isTeamsTab)
             {
                 _teamsSearchTerm = string.Empty;
@@ -81,30 +77,89 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         private void ToggleTeamSelection(Guid teamId, bool isSelected)
         {
+            var team = _availableTeams.FirstOrDefault(t => t.Id == teamId);
+            if (team == null) return;
+
             if (isSelected)
             {
                 if (!_assignedTeamIds.Contains(teamId))
                 {
                     _assignedTeamIds.Add(teamId);
                 }
+
+                foreach (var user in team.Users)
+                {
+                    _assignedModeratorIds.Remove(user.Id);
+                }
             }
             else
             {
                 _assignedTeamIds.Remove(teamId);
+            }
 
-                // Remove all users from this team from individual selections
-                var team = _availableTeams.FirstOrDefault(t => t.Id == teamId);
-                if (team != null)
+            _onSubmitMessage = string.Empty;
+            StateHasChanged();
+        }
+
+        private void ToggleUserSelectionFromTeam(TeamVM team, UserVM user, bool isSelected)
+        {
+            if (isSelected)
+            {
+                if (!_assignedModeratorIds.Contains(user.Id))
                 {
-                    foreach (var user in team.Users)
+                    _assignedModeratorIds.Add(user.Id);
+                }
+
+                var allTeamUsersSelected = team.Users.All(u => _assignedModeratorIds.Contains(u.Id));
+
+                if (allTeamUsersSelected)
+                {
+                    if (!_assignedTeamIds.Contains(team.Id))
                     {
-                        _assignedModeratorIds.Remove(user.Id);
+                        _assignedTeamIds.Add(team.Id);
+                    }
+
+                    foreach (var teamUser in team.Users)
+                    {
+                        _assignedModeratorIds.Remove(teamUser.Id);
+                    }
+                }
+                else
+                {
+                    _assignedTeamIds.Remove(team.Id);
+                }
+            }
+            else
+            {
+                _assignedModeratorIds.Remove(user.Id);
+
+                if (_assignedTeamIds.Contains(team.Id))
+                {
+                    _assignedTeamIds.Remove(team.Id);
+
+                    foreach (var teamUser in team.Users)
+                    {
+                        if (teamUser.Id != user.Id && !_assignedModeratorIds.Contains(teamUser.Id))
+                        {
+                            _assignedModeratorIds.Add(teamUser.Id);
+                        }
                     }
                 }
             }
 
             _onSubmitMessage = string.Empty;
             StateHasChanged();
+        }
+
+        private bool IsTeamFullySelected(TeamVM team)
+        {
+            return _assignedTeamIds.Contains(team.Id) ||
+                   team.Users.All(u => _assignedModeratorIds.Contains(u.Id));
+        }
+
+        private bool IsUserFromTeamSelected(TeamVM team, UserVM user)
+        {
+            return _assignedTeamIds.Contains(team.Id) || _assignedModeratorIds.Contains(user.Id);
         }
 
         private void ToggleUserSelection(Guid userId, bool isSelected)
@@ -246,6 +301,8 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
                 _usersTotalCount = response.Result.TotalCount;
                 _usersTotalPages = response.Result.TotalPages;
+
+                Console.WriteLine();
             }
             catch (Exception ex)
             {

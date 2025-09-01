@@ -130,6 +130,35 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        [HttpGet("queried/byStep/{stepId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllUsersByStepQueriedAsync(Guid stepId, [FromQuery] QueriedUserRequestDto payload)
+        {
+            var result = await _userService.GetAllUsersByStepQueriedAsync(stepId, payload);
+
+            if (result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new PagedResponseDto<UserResponseDto>(),
+                    Success = false,
+                    Message = "No users found matching the criteria.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Users retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

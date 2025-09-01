@@ -27,5 +27,6 @@ namespace FlowManager.Application.Interfaces
         Task<List<string>> GetUserRolesByEmailAsync(string email);
         Task<bool> VerifyIfAssignedAsync(Guid id);
         Task<PagedResponseDto<UserResponseDto>> GetUnassignedModeratorsByStepIdQueriedAsync(Guid stepId, QueriedUserRequestDto payload);
+        Task<PagedResponseDto<UserResponseDto>> GetAllUsersByStepQueriedAsync(Guid stepId, QueriedUserRequestDto payload);
     }
 }

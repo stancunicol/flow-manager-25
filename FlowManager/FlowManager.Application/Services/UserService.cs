@@ -25,18 +25,21 @@ namespace FlowManager.Infrastructure.Services
         private readonly IEmailService _emailService;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ITeamRepository _teamRepostiory;
+        private readonly IStepRepository _stepRepository;
 
         public UserService(IUserRepository userRepository,
             IRoleRepository roleRepository,
             IEmailService emailService, 
             IPasswordHasher<User> password,
-            ITeamRepository teamRepository)
+            ITeamRepository teamRepository,
+            IStepRepository stepRepository)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _emailService = emailService;
             _passwordHasher = password;
             _teamRepostiory = teamRepository;
+            _stepRepository = stepRepository;
         }
 
         private UserResponseDto MapToUserResponseDto(User user)
@@ -94,6 +97,11 @@ namespace FlowManager.Infrastructure.Services
                     Name = u.Name,
                     Email = u.Email,
                     UserName = u.UserName,
+                    Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                    {
+                        Id = u.StepId,
+                        Name = u.Step.Name
+                    },
                     Teams = u.Teams.Select(ut => new TeamResponseDto
                     {
                         Id = ut.Team.Id,
@@ -159,11 +167,7 @@ namespace FlowManager.Infrastructure.Services
                 ConcurrencyStamp = Guid.NewGuid().ToString(),
             };
 
-            userToAdd.Steps.Add(new StepUser
-            {
-                StepId = payload.StepId,
-                UserId = userToAdd.Id
-            });
+            userToAdd.StepId = payload.StepId;
 
             if (payload.TeamsIds != null)
             {
@@ -265,6 +269,12 @@ namespace FlowManager.Infrastructure.Services
                 userToUpdate.UserName = payload.Email;
             }
 
+            if(payload.StepId != null && (await _stepRepository.GetStepByIdAsync((Guid)payload.StepId)) != null)
+            {
+                userToUpdate.StepId = (Guid)
+                    payload.StepId;
+            }
+
             if (payload.TeamsIds != null && payload.TeamsIds.Count() != 0)
             {
                 foreach(UserTeam userTeam in userToUpdate.Teams)
@@ -330,11 +340,16 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<UserResponseDto> DeleteUserAsync(Guid id)
         {
-            var userToDelete = await _userRepository.GetUserByIdAsync(id);
+            var userToDelete = await _userRepository.GetUserByIdAsync(id, includeDeletedUserTeams: true);
 
             if (userToDelete == null)
             {
                 throw new EntryNotFoundException($"User with id {id} was not found.");
+            }
+
+            foreach(UserTeam userTeam in userToDelete.Teams)
+            {
+                userTeam.DeletedAt = DateTime.UtcNow;
             }
 
             userToDelete.DeletedAt = DateTime.UtcNow;
@@ -419,6 +434,44 @@ namespace FlowManager.Infrastructure.Services
                     Name = u.Name,
                     Email = u.Email, 
                 }).ToList(),
+                Page = payload.QueryParams?.Page ?? 1,
+                PageSize = payload.QueryParams?.PageSize ?? totalCount,
+                TotalCount = totalCount
+            };
+        }
+
+        public async Task<PagedResponseDto<UserResponseDto>> GetAllUsersByStepQueriedAsync(Guid stepId, QueriedUserRequestDto payload)
+        {
+            (List<User> result, int totalCount) = await _userRepository.GetAllUsersByStepQueriedAsync(stepId, payload.GlobalSearchTerm,
+                payload.QueryParams?.ToQueryParams());
+
+            return new PagedResponseDto<UserResponseDto>
+            {
+                Data = result.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    UserName = u.UserName,
+                    Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                    {
+                        Id = u.StepId,
+                        Name = u.Step.Name
+                    },
+                    Teams = u.Teams.Select(ut => new TeamResponseDto
+                    {
+                        Id = ut.Team.Id,
+                        Name = ut.Team.Name,
+                    }).ToList(),
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt,
+                    DeletedAt = u.DeletedAt,
+                    Roles = u.Roles.Select(r => new RoleResponseDto
+                    {
+                        Id = r.RoleId,
+                        Name = r.Role.Name
+                    }).ToList()
+                }),
                 Page = payload.QueryParams?.Page ?? 1,
                 PageSize = payload.QueryParams?.PageSize ?? totalCount,
                 TotalCount = totalCount

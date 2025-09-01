@@ -12,6 +12,5 @@ namespace FlowManager.Shared.DTOs.Requests.Step
 
         public virtual List<Guid> UserIds { get; set; } = new List<Guid>();
         public virtual List<Guid> FlowIds { get; set; } = new List<Guid>();
-        public virtual  List<Guid> TeamIds { get; set; } = new List<Guid>();
     }
 }

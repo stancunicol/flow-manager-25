@@ -22,12 +22,13 @@ namespace FlowManager.Domain.IRepositories
         Task SaveChangesAsync();
 
         Task<List<string>> GetUserRolesByEmailAsync(string email);
-        Task<List<User>> GetUsersByTeamIdAsync(Guid teamId);
+        Task<List<User>> GetUsersByTeamIdAsync(Guid teamId, bool includeDeleted = false);
         Task<User?> GetUserWithTeamAsync(Guid userId);
         Task<User?> GetUserWithTeamAndStepsAsync(Guid userId);
         Task<List<User>> GetUsersByStepIdAsync(Guid stepId);
         Task<User?> GetUserByEmailIncludeRelationshipsAsync(string email);
         Task<bool> VerifyIfAssigned(Guid id);
         Task<(List<User> Data, int TotalCount)> GetUnassignedModeratorsByStepIdQueriedAsync(Guid moderatorId, Guid stepId, string? globalSearchTerm, QueryParams? paramters);
+        Task<(List<User> Data, int TotalCount)> GetAllUsersByStepQueriedAsync(Guid stepId, string? globalSearchTerm, QueryParams? parameters);
     }
 }

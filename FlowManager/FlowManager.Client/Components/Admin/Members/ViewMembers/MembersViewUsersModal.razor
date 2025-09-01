@@ -23,6 +23,7 @@
                 <tr>
                     <th class="table-header-item">User</th>
                     <th class="table-header-item">Email</th>
+                    <th class="table-header-item">Department</th>
                     <th class="table-header-item">Roles</th>
                     <th class="table-header-item">Status</th>
                     <th class="table-header-item">Actions</th>
@@ -45,6 +46,9 @@
                         </td>
                         <td class="table-data-item">
                             <div class="text-sm">@user.Email</div>
+                        </td>
+                        <td class="table-data-item">
+                            <div class="text-sm">@user.Step!.Name</div>
                         </td>
                         <td class="table-data-item">
                             <div class="text-sm">@string.Join(", ", user.Roles!.Select(r => r.RoleName))</div>
