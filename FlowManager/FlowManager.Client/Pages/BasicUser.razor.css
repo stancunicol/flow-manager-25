@@ -720,12 +720,12 @@ body {
     font-size: 12px;
     font-weight: 500;
     border: 1px solid #fbbf24;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* ADAUGAT - shadow pentru evidențiere */
 }
 
 .form-canvas-readonly {
     position: relative;
     background: #fafafa;
-    /* EXACT dimensions from FormTemplate Builder */
     width: 1000px;
     height: 700px;
     border: 1px solid #dee2e6;
@@ -746,35 +746,23 @@ body {
 
 .form-element-readonly {
     position: absolute;
-}
 
-.static-text-readonly {
-    font-size: 14px;
-    color: #000;
-    line-height: 1.4;
-    white-space: pre-wrap;
-    /* Match FormTemplate text styling exactly */
-    cursor: default;
-    user-select: text;
-    word-wrap: break-word;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 2px 4px;
-    border-radius: 2px;
-    font-family: inherit;
 }
+    
 
 .form-field-readonly {
     display: flex;
     flex-direction: column;
-    /* EXACT width from FormTemplate Builder */
     width: 180px;
+    position: relative; /* ADAUGAT - pentru tooltip positioning */
 }
+
 
 .field-label-readonly {
     display: block;
     font-size: 12px;
     font-weight: 600;
-    color: #374151;
+    color: #6b7280; /* SCHIMBAT - text cenușiu în loc de negru */
     margin-bottom: 4px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
@@ -792,40 +780,48 @@ body {
     border: 2px solid #e5e7eb;
     border-radius: 4px;
     font-size: 14px;
-    background: white;
-    color: #1f2937;
+    background: #f9fafb; /* SCHIMBAT - fundal cenușiu deschis */
+    color: #6b7280; /* SCHIMBAT - text cenușiu */
     display: flex;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: none; /* ELIMINAT - fără shadow pentru aspect plat */
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    cursor: not-allowed; /* ADAUGAT - cursor care arată că nu e editabil */
+    opacity: 0.8; /* ADAUGAT - ușor transparent */
+    user-select: none; /* ADAUGAT - nu se poate selecta textul */
 }
 
 .text-input-readonly,
 .email-input-readonly,
 .number-input-readonly {
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
+    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
 }
 
 .textarea-readonly {
     height: 72px;
     align-items: flex-start;
-    border-left: 4px solid #8b5cf6;
+    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
     line-height: 1.4;
     padding-top: 8px;
+    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
 }
 
 .datetime-input-readonly {
-    border-left: 4px solid #10b981;
+    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
+    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
 }
 
 .select-input-readonly,
 .radio-input-readonly {
-    border-left: 4px solid #f59e0b;
+    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
+    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
 }
 
 .default-input-readonly {
-    border-left: 4px solid #6b7280;
+    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
+    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
 }
 
 .checkbox-field-readonly {
@@ -835,10 +831,13 @@ body {
     width: 180px;
     height: 36px;
     padding: 8px 12px;
-    background: white;
+    background: #f9fafb; /* SCHIMBAT - fundal cenușiu deschis */
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: none; /* ELIMINAT - fără shadow */
     box-sizing: border-box;
+    border: 2px solid #e5e7eb; /* ADAUGAT - border consistent */
+    cursor: not-allowed; /* ADAUGAT - cursor disabled */
+    opacity: 0.8; /* ADAUGAT - ușor transparent */
 }
 
 .checkbox-display {
@@ -850,28 +849,25 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    cursor: not-allowed; /* ADAUGAT - cursor disabled */
 }
 
     .checkbox-display.checked {
-        background: #10b981;
-        border-color: #10b981;
+        background: #9ca3af; /* SCHIMBAT - culoare mai cenușie */
+        border-color: #9ca3af; /* SCHIMBAT - culoare mai cenușie */
         color: white;
     }
 
     .checkbox-display.unchecked {
-        background: #f9fafb;
+        background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
         border-color: #d1d5db;
-    }
-
-    .checkbox-display svg {
-        width: 12px;
-        height: 12px;
     }
 
 .checkbox-label-readonly {
     font-size: 14px;
-    color: #374151;
+    color: #6b7280; /* SCHIMBAT - text cenușiu */
     font-weight: normal;
+    cursor: not-allowed; /* ADAUGAT - cursor disabled */
 }
 
 .no-form-data {
