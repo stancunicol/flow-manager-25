@@ -340,11 +340,16 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<UserResponseDto> DeleteUserAsync(Guid id)
         {
-            var userToDelete = await _userRepository.GetUserByIdAsync(id);
+            var userToDelete = await _userRepository.GetUserByIdAsync(id, includeDeletedUserTeams: true);
 
             if (userToDelete == null)
             {
                 throw new EntryNotFoundException($"User with id {id} was not found.");
+            }
+
+            foreach(UserTeam userTeam in userToDelete.Teams)
+            {
+                userTeam.DeletedAt = DateTime.UtcNow;
             }
 
             userToDelete.DeletedAt = DateTime.UtcNow;
