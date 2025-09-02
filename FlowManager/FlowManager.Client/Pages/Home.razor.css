@@ -11,9 +11,13 @@ body {
 }
 
 .page-description {
+    position: fixed;
+    top: 55px;
+    left: 0;
+    right: 0;
+    height: 90px;
     border-top: 1px solid var(--primary-color);
     background: linear-gradient(180deg, #2c8e90 0%,#003d5c 100%);
-    position: relative;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(44, 142, 144, 0.15);
 }
@@ -54,7 +58,7 @@ body {
     padding: 3rem 2rem;
     max-width: 1200px;
     margin: 0 auto;
-    min-height: 70vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
