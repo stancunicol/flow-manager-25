@@ -95,14 +95,10 @@
                         Load more
                     </button>
                     <button type="button" class="cancel-button" @onclick="OnCancel">Cancel</button>
-                    <button type="submit" class="submit-button" disabled="@_isSubmitting || _users.Count == 0">
+                    <button type="submit" class="submit-button" disabled="@(!IsSubmitValid())">
                         @if (_isSubmitting)
                         {
                             <span>Editing...</span>
-                        }
-                        else if(_selectedUsers.Count == 0)
-                        {
-                            <span>Delete Team</span>
                         }
                         else
                         {

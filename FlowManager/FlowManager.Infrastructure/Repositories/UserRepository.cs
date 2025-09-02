@@ -65,9 +65,9 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email,string? globalSearchTerm, QueryParams? parameters, bool includeDeleted = false)
         {
             IQueryable<User> query = _context.Users
-                .Include(u => u.Roles)
+                .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
                     .ThenInclude(ur => ur.Role)
-                .Include(u => u.Teams)
+                .Include(u => u.Teams.Where(ut => ut.DeletedAt == null))
                     .ThenInclude(ut => ut.Team)
                 .Include(u => u.Step);
 
@@ -78,7 +78,8 @@ namespace FlowManager.Infrastructure.Repositories
             {
                 query = query.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) || 
                                          u.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()) || 
-                                         u.Step.Name.ToUpper().Contains(globalSearchTerm));
+                                         u.Step.Name.ToUpper().Contains(globalSearchTerm) || 
+                                         u.Roles.Any(ur => ur.Role.Name.ToUpper().Contains(globalSearchTerm)));
             }
 
             if (!string.IsNullOrEmpty(email))

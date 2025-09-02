@@ -19,7 +19,7 @@
     border-radius: 12px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
@@ -149,16 +149,17 @@
 
 /* Lists */
 .teams-list, .users-list {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: white;
 }
 
-/* Team Items */
+/* Team Items - Improved Structure */
 .team-item {
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 2px solid #e5e7eb;
+    background: #fafafa;
 }
 
     .team-item:last-child {
@@ -166,14 +167,27 @@
     }
 
 .team-header {
-    padding: 16px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.team-checkbox, .user-checkbox, .member-checkbox {
+.team-checkbox, .user-checkbox {
     display: flex;
     align-items: flex-start;
     cursor: pointer;
 }
+
+.member-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 6px 0;
+    margin-left: 20px;
+    position: relative;
+}
+
+    /* Tree structure lines removed */
 
     .team-checkbox input[type="checkbox"],
     .user-checkbox input[type="checkbox"],
@@ -192,15 +206,21 @@
     }
 
 .checkmark {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border: 2px solid #d1d5db;
     border-radius: 4px;
     background: white;
     flex-shrink: 0;
     position: relative;
     transition: all 0.2s ease;
-    margin-top: 2px;
+    margin-top: 1px;
+}
+
+/* Smaller checkmark for team members */
+.member-checkbox .checkmark {
+    width: 16px;
+    height: 16px;
 }
 
 input[type="checkbox"]:checked + label .checkmark {
@@ -211,8 +231,8 @@ input[type="checkbox"]:checked + label .checkmark {
     input[type="checkbox"]:checked + label .checkmark::after {
         content: '';
         position: absolute;
-        left: 6px;
-        top: 2px;
+        left: 5px;
+        top: 1px;
         width: 6px;
         height: 10px;
         border: solid white;
@@ -220,52 +240,102 @@ input[type="checkbox"]:checked + label .checkmark {
         transform: rotate(45deg);
     }
 
-/* Team Info */
-.team-info, .user-info, .member-info {
-    flex: 1;
+/* Smaller checkmark for members */
+.member-checkbox input[type="checkbox"]:checked + label .checkmark::after {
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 8px;
 }
 
-.team-name, .user-name, .member-name {
+.team-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.team-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-name, .user-name {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: #111827;
     margin-bottom: 2px;
 }
 
-.team-member-count, .user-email, .member-email {
-    font-size: 13px;
-    color: #6b7280;
-}
-
-/* Team Members */
-.team-members {
-    background-color: #f9fafb;
-    padding: 16px;
-    margin-top: 12px;
-}
-
-.members-header {
+.member-name {
     font-size: 13px;
     font-weight: 500;
     color: #374151;
-    margin-bottom: 12px;
+    margin-bottom: 1px;
 }
 
-.member-checkbox {
-    padding: 8px 0;
-    border-bottom: 1px solid #e5e7eb;
+.team-member-count, .user-email {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
-    .member-checkbox:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
+.member-email {
+    font-size: 12px;
+    color: #8b8b8b;
+}
+
+.team-dropdown-button {
+    display: flex;
+    align-items: center;
+}
+
+    .team-dropdown-button button {
+        border: none;
+        padding: 6px 10px;
+        cursor: pointer;
+        border-radius: 6px;
+        background: rgba(37, 99, 235, 0.1);
+        color: #2563eb;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        font-size: 12px;
     }
+
+        .team-dropdown-button button:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+/* Team Members - Tree Structure */
+.team-members {
+    background-color: #ffffff;
+    padding: 12px 16px 16px 16px;
+    border-top: 1px solid #f0f0f0;
+    position: relative;
+}
+
+/* Vertical line for tree structure removed */
+
+.members-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 8px;
+    padding-left: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
 /* User Items */
 .user-item {
-    padding: 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
 }
+
+    .user-item:hover {
+        background-color: #f9fafb;
+    }
 
     .user-item:last-child {
         border-bottom: none;
@@ -338,7 +408,7 @@ input[type="checkbox"]:checked + label .checkmark {
     background-color: #f0f9ff;
     border: 1px solid #bae6fd;
     border-radius: 8px;
-    margin: 20px 0;
+    margin: 20px 30px;
 }
 
 .info-icon {
@@ -460,10 +530,211 @@ input[type="checkbox"]:checked + label .checkmark {
     opacity: 0.6;
 }
 
-.members-header span {
+.main-content-with-sidebar {
+    display: flex;
+    gap: 20px;
+    min-height: 400px;
+}
+
+.tab-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.assigned-items-sidebar {
+    width: 320px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.assigned-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+    .assigned-header span {
+        font-weight: 600;
+        font-size: 14px;
+        color: #495057;
+    }
+
+.assigned-count {
+    background: #007bff;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.assigned-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.assigned-section {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.assigned-section-header {
+    background: #e9ecef;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #495057;
+}
+
+.assigned-teams-list, .assigned-users-list {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.assigned-team-item {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+}
+
+.assigned-team-header {
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.assigned-team-info {
+    flex: 1;
+}
+
+.assigned-team-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #212529;
+}
+
+.assigned-team-status {
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.status-complete {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.status-partial {
+    color: #ffc107;
+    font-weight: 500;
+}
+
+.assigned-team-members {
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.assigned-team-member {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    background: #f8f9fa;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.member-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.member-name {
     font-weight: 500;
     color: #495057;
-    font-size: 13px;
-    margin-bottom: 8px;
-    display: block;
 }
+
+.member-email {
+    color: #6c757d;
+    font-size: 10px;
+}
+
+.assigned-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.assigned-user-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.assigned-user-name {
+    font-weight: 500;
+    font-size: 13px;
+    color: #212529;
+}
+
+.assigned-user-email {
+    color: #6c757d;
+    font-size: 11px;
+}
+
+.remove-team-btn, .remove-user-btn, .remove-member-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+    .remove-team-btn:hover, .remove-user-btn:hover, .remove-member-btn:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+.no-assigned-items {
+    text-align: center;
+    padding: 32px 16px;
+    color: #6c757d;
+}
+
+    .no-assigned-items svg {
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+
+    .no-assigned-items p {
+        margin: 0;
+        font-size: 14px;
+    }

@@ -2,6 +2,7 @@
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Client.ViewModels.Team;
+using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
@@ -24,11 +25,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         private bool _isTeamsTabSelected = true;
 
-        private List<Guid> _assignedModeratorIds = new List<Guid>();
-        private List<Guid> _assignedTeamIds = new List<Guid>();
+        private List<UserVM> _assignedModerators = new List<UserVM>();
+        private List<TeamVM> _assignedTeams = new List<TeamVM>();
 
         private List<UserVM> _availableModerators = new List<UserVM>();
-        private List<TeamVM> _availableTeams = new List<TeamVM>();
+        private List<SelectTeamVM> _availableTeams = new List<SelectTeamVM>();
 
         private string _teamsSearchTerm = string.Empty;
         private string _usersSearchTerm = string.Empty;
@@ -51,8 +52,33 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadTeams();
-            await LoadUsers();
+            await LoadTeamsAsync();
+            await LoadUsersAsync();
+
+            AssignTeamsFromExistingStep();
+            AssignUsersFromExistingStep();
+        }
+
+        private void AssignTeamsFromExistingStep()
+        {
+            if (StepToAssign.Teams == null || StepToAssign.Teams.Count == 0)
+                return;
+
+            foreach(var team in StepToAssign.Teams)
+            {
+                _assignedTeams.Add(team);
+            }
+        }
+
+        private void AssignUsersFromExistingStep()
+        {
+            if (StepToAssign.Users == null || StepToAssign.Users.Count == 0)
+                return;
+
+            foreach (var user in StepToAssign.Users)
+            {
+                _assignedModerators.Add(_availableModerators.First(u => u.Id == user.Id));
+            }
         }
 
         private async Task SelectTab(bool isTeamsTab)
@@ -63,38 +89,36 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             {
                 _teamsSearchTerm = string.Empty;
                 _teamsPage = 1;
-                await LoadTeams();
+                await LoadTeamsAsync();
             }
             else
             {
                 _usersSearchTerm = string.Empty;
                 _usersPage = 1;
-                await LoadUsers();
+                await LoadUsersAsync();
             }
 
             StateHasChanged();
         }
 
-        private void ToggleTeamSelection(Guid teamId, bool isSelected)
+        private void ToggleTeamSelection(TeamVM team, bool isSelected)
         {
-            var team = _availableTeams.FirstOrDefault(t => t.Id == teamId);
-            if (team == null) return;
-
             if (isSelected)
             {
-                if (!_assignedTeamIds.Contains(teamId))
-                {
-                    _assignedTeamIds.Add(teamId);
-                }
+                _assignedTeams.RemoveAll(ast => ast.Id == team.Id);
 
-                foreach (var user in team.Users)
+                TeamVM availableTeam = _availableTeams.First(ast => ast.Team.Id == team.Id).Team;
+                var assignedTeam = new TeamVM
                 {
-                    _assignedModeratorIds.Remove(user.Id);
-                }
+                    Id = availableTeam.Id,
+                    Name = availableTeam.Name,
+                    Users = new List<UserVM>(availableTeam.Users)
+                };
+                _assignedTeams.Add(assignedTeam);
             }
             else
             {
-                _assignedTeamIds.Remove(teamId);
+                _assignedTeams.RemoveAll(ast => ast.Id == team.Id);
             }
 
             _onSubmitMessage = string.Empty;
@@ -105,44 +129,36 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         {
             if (isSelected)
             {
-                if (!_assignedModeratorIds.Contains(user.Id))
-                {
-                    _assignedModeratorIds.Add(user.Id);
-                }
+                TeamVM assignedTeam = _assignedTeams.FirstOrDefault(ast => ast.Id == team.Id);
 
-                var allTeamUsersSelected = team.Users.All(u => _assignedModeratorIds.Contains(u.Id));
-
-                if (allTeamUsersSelected)
+                if (assignedTeam == null) // team not selected
                 {
-                    if (!_assignedTeamIds.Contains(team.Id))
+                    var newAssignedTeam = new TeamVM
                     {
-                        _assignedTeamIds.Add(team.Id);
-                    }
-
-                    foreach (var teamUser in team.Users)
-                    {
-                        _assignedModeratorIds.Remove(teamUser.Id);
-                    }
+                        Id = team.Id,
+                        Name = team.Name,
+                        Users = new List<UserVM> { user }
+                    };
+                    _assignedTeams.Add(newAssignedTeam);
                 }
-                else
+                else // team selected but user not assigned
                 {
-                    _assignedTeamIds.Remove(team.Id);
+                    if (!assignedTeam.Users.Any(u => u.Id == user.Id))
+                    {
+                        assignedTeam.Users.Add(user);
+                    }
                 }
             }
             else
             {
-                _assignedModeratorIds.Remove(user.Id);
-
-                if (_assignedTeamIds.Contains(team.Id))
+                TeamVM assignedTeam = _assignedTeams.FirstOrDefault(ast => ast.Id == team.Id);
+                if (assignedTeam != null)
                 {
-                    _assignedTeamIds.Remove(team.Id);
+                    assignedTeam.Users.RemoveAll(u => u.Id == user.Id);
 
-                    foreach (var teamUser in team.Users)
+                    if (!assignedTeam.Users.Any())
                     {
-                        if (teamUser.Id != user.Id && !_assignedModeratorIds.Contains(teamUser.Id))
-                        {
-                            _assignedModeratorIds.Add(teamUser.Id);
-                        }
+                        _assignedTeams.Remove(assignedTeam);
                     }
                 }
             }
@@ -151,29 +167,56 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             StateHasChanged();
         }
 
+        private void OpenDropdownForTeam(TeamVM team)
+        {
+            var teamToSelect = _availableTeams.First(t => t.Team.Id == team.Id);
+            teamToSelect.IsSelected = !teamToSelect.IsSelected;
+        }
+
         private bool IsTeamFullySelected(TeamVM team)
         {
-            return _assignedTeamIds.Contains(team.Id) ||
-                   team.Users.All(u => _assignedModeratorIds.Contains(u.Id));
+            TeamVM availableTeam = _availableTeams.First(t => t.Team.Id == team.Id).Team;
+            TeamVM assignedTeam = _assignedTeams.FirstOrDefault(t => t.Id == team.Id);
+
+            if (assignedTeam == null)
+            {
+                return false;
+            }
+
+            if (!availableTeam.Users.Any())
+            {
+                return false;
+            }
+
+            var result = availableTeam.Users.All(au => assignedTeam.Users.Any(asu => asu.Id == au.Id));
+
+            return result;
         }
 
         private bool IsUserFromTeamSelected(TeamVM team, UserVM user)
         {
-            return _assignedTeamIds.Contains(team.Id) || _assignedModeratorIds.Contains(user.Id);
+            TeamVM? assignedTeam = _assignedTeams.FirstOrDefault(ast => ast.Id == team.Id);
+
+            if (assignedTeam == null)
+            {
+                return false;
+            }
+
+            return assignedTeam.Users.Any(u => u.Id == user.Id);
         }
 
-        private void ToggleUserSelection(Guid userId, bool isSelected)
+        private void ToggleUserSelection(UserVM user, bool isSelected)
         {
             if (isSelected)
             {
-                if (!_assignedModeratorIds.Contains(userId))
+                if (!_assignedModerators.Contains(user))
                 {
-                    _assignedModeratorIds.Add(userId);
+                    _assignedModerators.Add(user);
                 }
             }
             else
             {
-                _assignedModeratorIds.Remove(userId);
+                _assignedModerators.Remove(user);
             }
 
             _onSubmitMessage = string.Empty;
@@ -188,7 +231,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 _teamsPage = 1;
                 await InvokeAsync(async () =>
                 {
-                    await LoadTeams();
+                    await LoadTeamsAsync();
                     StateHasChanged();
                 });
             }, null, SearchDelayMs, Timeout.Infinite);
@@ -202,13 +245,13 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 _usersPage = 1;
                 await InvokeAsync(async () =>
                 {
-                    await LoadUsers();
+                    await LoadUsersAsync();
                     StateHasChanged();
                 });
             }, null, SearchDelayMs, Timeout.Infinite);
         }
 
-        private async Task LoadTeams()
+        private async Task LoadTeamsAsync()
         {
             try
             {
@@ -233,22 +276,26 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
                 if (!response.Success)
                 {
-                    _availableTeams = new List<TeamVM>();
+                    _availableTeams = new List<SelectTeamVM>();
                     _teamsTotalCount = 0;
                     _teamsTotalPages = 0;
                     return;
                 }
 
-                _availableTeams = response.Result.Data.Select(t => new TeamVM
+                _availableTeams = response.Result.Data.Select(t => new SelectTeamVM
                 {
-                    Id = t.Id,
-                    Name = t.Name,
-                    Users = t.Users!.Select(u => new UserVM
+                    Team = new TeamVM
                     {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email,
-                    }).ToList()
+                        Id = t.Id,
+                        Name = t.Name,
+                        Users = t.Users!.Select(u => new UserVM
+                        {
+                            Id = u.Id,
+                            Name = u.Name,
+                            Email = u.Email,
+                        }).ToList()
+                    },
+                    IsSelected = false
                 }).ToList();
 
                 _teamsTotalCount = response.Result.TotalCount;
@@ -261,7 +308,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             }
         }
 
-        private async Task LoadUsers()
+        private async Task LoadUsersAsync()
         {
             try
             {
@@ -316,7 +363,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             if (_teamsPage > 1)
             {
                 _teamsPage--;
-                await LoadTeams();
+                await LoadTeamsAsync();
             }
         }
 
@@ -325,7 +372,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             if (_teamsPage < _teamsTotalPages)
             {
                 _teamsPage++;
-                await LoadTeams();
+                await LoadTeamsAsync();
             }
         }
 
@@ -334,7 +381,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             if (_usersPage > 1)
             {
                 _usersPage--;
-                await LoadUsers();
+                await LoadUsersAsync();
             }
         }
 
@@ -343,7 +390,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             if (_usersPage < _usersTotalPages)
             {
                 _usersPage++;
-                await LoadUsers();
+                await LoadUsersAsync();
             }
         }
 
@@ -351,7 +398,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         {
             try
             {
-                if (!_assignedTeamIds.Any() && !_assignedModeratorIds.Any())
+                if (!_assignedTeams.Any() && !_assignedModerators.Any())
                 {
                     _onSubmitMessage = "Please select at least one team or user to assign.";
                     _onSubmitSuccess = false;
@@ -362,20 +409,28 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 {
                     Id = StepToAssign.Id,
                     Name = StepToAssign.Name,
-                    Teams = _assignedTeamIds.Select(tId => new TeamVM { Id = tId }).ToList() ,
-                    Users = _assignedModeratorIds.Select(uId => new UserVM { Id = uId }).ToList(),
+                    Teams = new List<TeamVM>(),
+                    Users = new List<UserVM>(),
                 };
+
+                foreach(var team in _assignedTeams)
+                {
+                    updatedStep.Teams.Add(team);
+                }
+
+                foreach(var user in _assignedModerators)
+                {
+                    updatedStep.Users.Add(user);
+                }
 
                 await StepToAssignChanged.InvokeAsync(updatedStep);
 
                 _onSubmitMessage = "Assignment completed successfully!";
                 _onSubmitSuccess = true;
 
-                await Task.Delay(1500);
-                
-                await OnStepAssigned.InvokeAsync();
-
                 await CancelForm();
+
+                await OnStepAssigned.InvokeAsync();
             }
             catch (Exception ex)
             {
@@ -384,10 +439,23 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             }
         }
 
+        private void ClearForm()
+        {
+            _assignedModerators.Clear();
+            _assignedTeams.Clear();
+            _onSubmitMessage = string.Empty;
+            _onSubmitSuccess = false;
+            _isTeamsTabSelected = true;
+            _teamsSearchTerm = string.Empty;
+            _usersSearchTerm = string.Empty;
+            _teamsPage = 1;
+            _usersPage = 1;
+        }
+
         private async Task CancelForm()
         {
-            _assignedModeratorIds.Clear();
-            _assignedTeamIds.Clear();
+            _assignedModerators.Clear();
+            _assignedTeams.Clear();
             _onSubmitMessage = string.Empty;
             _onSubmitSuccess = false;
             _isTeamsTabSelected = true;
@@ -397,6 +465,58 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             _usersPage = 1;
 
             await ShowAssignToStepModalChanged.InvokeAsync();
+        }
+
+        private int GetTotalAssignedCount()
+        {
+            int teamUsersCount = _assignedTeams.Sum(t => t.Users.Count);
+            int individualUsersCount = _assignedModerators.Count;
+            return teamUsersCount + individualUsersCount;
+        }
+
+        private bool IsTeamCompletelyAssigned(TeamVM assignedTeam)
+        {
+            var originalTeam = _availableTeams.FirstOrDefault(at => at.Team.Id == assignedTeam.Id)?.Team;
+            if (originalTeam == null) return false;
+
+            return assignedTeam.Users.Count == originalTeam.Users.Count;
+        }
+
+        private int GetOriginalTeamUserCount(TeamVM assignedTeam)
+        {
+            var originalTeam = _availableTeams.FirstOrDefault(at => at.Team.Id == assignedTeam.Id)?.Team;
+            return originalTeam?.Users.Count ?? 0;
+        }
+
+        private void RemoveTeamFromAssignment(Guid teamId)
+        {
+            _assignedTeams.RemoveAll(t => t.Id == teamId);
+            _onSubmitMessage = string.Empty;
+            StateHasChanged();
+        }
+
+        private void RemoveUserFromAssignment(Guid userId)
+        {
+            _assignedModerators.RemoveAll(u => u.Id == userId);
+            _onSubmitMessage = string.Empty;
+            StateHasChanged();
+        }
+
+        private void RemoveUserFromTeamAssignment(Guid teamId, Guid userId)
+        {
+            var team = _assignedTeams.FirstOrDefault(t => t.Id == teamId);
+            if (team != null)
+            {
+                team.Users.RemoveAll(u => u.Id == userId);
+
+                if (!team.Users.Any())
+                {
+                    _assignedTeams.Remove(team);
+                }
+            }
+
+            _onSubmitMessage = string.Empty;
+            StateHasChanged();
         }
     }
 }

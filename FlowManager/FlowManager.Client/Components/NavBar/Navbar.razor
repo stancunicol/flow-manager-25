@@ -1,4 +1,8 @@
-﻿@inject NavigationManager Navigation
+﻿@using FlowManager.Client.Services;
+@using FlowManager.Client.ViewModels;
+@using FlowManager.Shared.DTOs;
+
+@inject NavigationManager Navigation;
 
 <div class="siemens-navbar">
     <nav>
@@ -7,6 +11,10 @@
         </div>
 
         <div class="nav-actions">
+            <div class="welcome-label">
+                <label>Welcome, @(_currentUser != null? _currentUser.Name : string.Empty)!</label>
+            </div>
+
             <div class="home-btn">
                 <button @onclick="NavigateToHome">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -20,8 +28,31 @@
 </div>
 
 @code {
+    [Inject] private AuthService _authService { get; set; } = default!;
+    private UserVM _currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetCurrentUser();
+    }
+
     private void NavigateToHome()
     {
         Navigation.NavigateTo("/home");
+    }
+
+    private async Task GetCurrentUser()
+    {
+        UserProfileDto? result = await _authService.GetCurrentUserAsync();
+
+        if (result == null)
+            return;
+
+        _currentUser = new UserVM
+        {
+            Id = result.Id,
+            Name = result.Name,
+            Email = result.Email
+        };
     }
 }

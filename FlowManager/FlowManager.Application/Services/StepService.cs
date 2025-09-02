@@ -21,13 +21,19 @@ namespace FlowManager.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IFlowRepository _flowRepository;
         private readonly ITeamRepository _teamRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public StepService(IStepRepository stepRepository, IUserRepository userRepository, IFlowRepository flowRepository, ITeamRepository teamRepository)
+        public StepService(IStepRepository stepRepository, 
+            IUserRepository userRepository,
+            IFlowRepository flowRepository,
+            ITeamRepository teamRepository,
+            IRoleRepository roleRepository)
         {
             _stepRepository = stepRepository;
             _userRepository = userRepository;
             _flowRepository = flowRepository;
             _teamRepository = teamRepository;
+            _roleRepository = roleRepository;
         }
 
         public async Task<List<StepResponseDto>> GetStepsAsync()
@@ -313,7 +319,14 @@ namespace FlowManager.Application.Services
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
 
-            (List<Step> data, int totalCount) = await _stepRepository.GetAllStepsIncludeUsersAndTeamsQueriedAsync(payload.Name, parameters);
+            Role? moderatorRole = await _roleRepository.GetRoleByRolenameAsync("MODERATOR");
+
+            if(moderatorRole == null)
+            {
+                throw new EntryNotFoundException("Moderator role does not exist");
+            }
+
+            (List<Step> data, int totalCount) = await _stepRepository.GetAllStepsIncludeUsersAndTeamsQueriedAsync(moderatorRole.Id, payload.Name, parameters);
 
             return new PagedResponseDto<StepResponseDto>
             {

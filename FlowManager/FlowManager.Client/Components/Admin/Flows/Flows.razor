@@ -2,22 +2,31 @@
 @using FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal;
 
 <div class="options-container">
+    <button class="option-button @(_activeTab == "VIEW" ? "active" : "inactive")"
+            @onclick='() => SetActiveTab("VIEW")'>
+        View Flows
+    </button>
+
     <button class="option-button @(_activeTab == "ADD" ? "active" : "inactive")"
             @onclick='() => SetActiveTab("ADD")'>
         Add Flow
     </button>
 
-    <button class="option-button @(_activeTab == "VIEW" ? "active" : "inactive")"
-            @onclick='() => SetActiveTab("VIEW")'>
-        View Flow
+    <button class="option-button @(_activeTab == "STEP" ? "active" : "inactive")"
+            @onclick='() => SetActiveTab("STEP")'>
+        View Steps
     </button>
 </div>
 
-@if (_activeTab == "ADD")
+@if (_activeTab == "VIEW")
+{
+<FlowsViewModal />
+}
+else if (_activeTab == "ADD")
 {
     <FlowsAddModal/>
 }
-else if (_activeTab == "VIEW")
+else if(_activeTab == "STEP")
 {
-    <FlowsViewModal />
+	<CreateStep />
 }

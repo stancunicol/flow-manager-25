@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
+using FlowManager.Shared.DTOs.Requests.FlowStep;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -91,35 +92,44 @@ namespace FlowManager.Infrastructure.Services
             if(payload.FormTemplateId != null)
             {
                 FormTemplate? ft = await _formTemplateRepository.GetFormTemplateByIdAsync((Guid)payload.FormTemplateId);
-                if (ft != null)
-                {
-                    flowToPost.FormTemplates.Add(ft);
-                }
-                else
+                if (ft == null)
                 {
                     throw new EntryNotFoundException($"Form template with id {payload.FormTemplateId} not found.");
                 }
+
+                flowToPost.FormTemplates.Add(ft);
             }
 
-            flowToPost.Steps = payload.Steps.Select(step => new FlowStep
+            if (payload.Steps != null && payload.Steps.Count > 0)
             {
-                StepId = step.StepId,
-                FlowId = flowToPost.Id,
-            }).ToList();
-
-            foreach(var step in flowToPost.Steps)
-            {
-                step.AssignedUsers = payload.Steps.First(s => s.StepId == step.StepId).UserIds.Select(uId => new FlowStepUser
+                foreach(PostFlowStepRequestDto step in payload.Steps)
                 {
-                    FlowStepId = step.Id,
-                    UserId = uId,
-                }).ToList();
+                    if ((await _stepRepository.GetStepByIdAsync(step.StepId)) == null)
+                    { 
+                        throw new EntryNotFoundException($"Step with id {payload.FormTemplateId} not found.");
+                    }
 
-                step.AssignedTeams = payload.Steps.First(s => s.StepId == step.StepId).TeamIds.Select(tId => new FlowStepTeam
+                    flowToPost.Steps.Add(new FlowStep
+                    {
+                        StepId = step.StepId,
+                        FlowId = flowToPost.Id,
+                    });
+                }
+
+                foreach (var step in flowToPost.Steps)
                 {
-                    FlowStepId = step.Id,
-                    TeamId = tId,
-                }).ToList();
+                    step.AssignedUsers = payload.Steps.First(s => s.StepId == step.StepId).UserIds.Select(uId => new FlowStepUser
+                    {
+                        FlowStepId = step.Id,
+                        UserId = uId,
+                    }).ToList();
+
+                    step.AssignedTeams = payload.Steps.First(s => s.StepId == step.StepId).TeamIds.Select(tId => new FlowStepTeam
+                    {
+                        FlowStepId = step.Id,
+                        TeamId = tId,
+                    }).ToList();
+                }
             }
 
             await _flowRepository.CreateFlowAsync(flowToPost);
