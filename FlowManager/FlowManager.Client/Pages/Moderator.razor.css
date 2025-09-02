@@ -59,6 +59,19 @@ body {
         text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
+.welcome-label {
+    position: absolute;
+    top: 50%; /* centru pe verticală */
+    right: 1.5rem; /* padding dreapta consistent cu page-description */
+    transform: translateY(-50%); /* ajustează centrul exact */
+}
+
+    .welcome-label label {
+        font-weight: 700;
+        font-size: 28px;
+        color: white;
+    }
+
 .sidebar {
     width: 200px;
     position: fixed;

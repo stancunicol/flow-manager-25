@@ -1,5 +1,6 @@
 ﻿using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
+using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs.Responses;
@@ -63,6 +64,8 @@ namespace FlowManager.Client.Pages
         private FormTemplateResponseDto? selectedFormTemplate;
         private List<ComponentResponseDto>? formComponents;
         private List<FormElement>? formElements;
+        [Inject] private AuthService _authService { get; set; } = default!;
+        private UserVM _currentUser = new();
 
         [Inject] protected FlowService FlowService { get; set; } = default!;
         [Inject] protected FormTemplateService FormTemplateService { get; set; } = default!;
@@ -95,6 +98,8 @@ namespace FlowManager.Client.Pages
             {
                 await LoadUserForms();
             }
+
+            await GetCurrentUser();
         }
 
         private async Task LoadCurrentUser()
@@ -700,6 +705,21 @@ namespace FlowManager.Client.Pages
             public string? Label { get; set; }
             public bool? Required { get; set; }
             public Dictionary<string, object>? Properties { get; set; }
+        }
+
+        private async Task GetCurrentUser()
+        {
+            UserProfileDto? result = await _authService.GetCurrentUserAsync();
+
+            if (result == null)
+                return;
+
+            _currentUser = new UserVM
+            {
+                Id = result.Id,
+                Name = result.Name,
+                Email = result.Email
+            };
         }
     }
 }

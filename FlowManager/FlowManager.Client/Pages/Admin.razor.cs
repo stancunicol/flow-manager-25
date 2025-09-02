@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using FlowManager.Client.Services;
+using FlowManager.Client.ViewModels;
+using FlowManager.Shared.DTOs;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -10,6 +13,8 @@ namespace FlowManager.Client.Pages
     {
         private string _activeTab = "USERS";
         protected string? errorMessage;
+        [Inject] private AuthService _authService { get; set; } = default!;
+        private UserVM _currentUser = new();
 
         protected override async Task OnInitializedAsync()
         {
@@ -29,6 +34,8 @@ namespace FlowManager.Client.Pages
             }
 
             Console.WriteLine("[Admin] User has Admin role, allowing access");
+
+            await GetCurrentUser();
         }
 
         private void SetActiveTab(string tab)
@@ -53,6 +60,20 @@ namespace FlowManager.Client.Pages
                 Console.WriteLine($"[Auth] Logout failed with status: {response.StatusCode}");
                 errorMessage = "Logout failed. Please try again.";
             }
+        }
+        private async Task GetCurrentUser()
+        {
+            UserProfileDto? result = await _authService.GetCurrentUserAsync();
+
+            if (result == null)
+                return;
+
+            _currentUser = new UserVM
+            {
+                Id = result.Id,
+                Name = result.Name,
+                Email = result.Email
+            };
         }
     }
 }

@@ -41,7 +41,7 @@ body {
 }
 
 .page-description h2 {
-    padding-left: 1.5rem;
+    padding-left: 0.25rem;
     padding-top: 1.25rem;
     margin: 0;
     font-weight: 700;
@@ -51,7 +51,7 @@ body {
 }
 
 .page-description p {
-    padding-left: 1.5rem;
+    padding-left: 0.25rem;
     padding-top: 0.25rem;
     padding-bottom: 1.25rem;
     margin: 0;
@@ -60,6 +60,19 @@ body {
     color: rgba(255, 255, 255, 0.95);
     text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+
+.welcome-label {
+    position: absolute;
+    top: 50%; /* centru pe verticală */
+    right: 1.5rem; /* padding dreapta consistent cu page-description */
+    transform: translateY(-50%); /* ajustează centrul exact */
+}
+
+    .welcome-label label {
+        font-weight: 700;
+        font-size: 28px;
+        color: white;
+    }
 
 /* Sidebar fix jos */
 .sidebar {

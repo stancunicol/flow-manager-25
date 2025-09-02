@@ -14,6 +14,10 @@
 <div class="page-description">
     <h2>User dashboard</h2>
     <p>Manage your forms and personal details</p>
+
+    <div class="welcome-label">
+        <label>Welcome, @(_currentUser != null ? _currentUser.Name : string.Empty)!</label>
+    </div>
 </div>
 
 <div class="basic-user-container">
