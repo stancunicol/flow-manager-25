@@ -22,6 +22,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         [Inject] private FlowService _flowService { get; set; } = default!;
         [Parameter] public string SavedFormTemplateName { get; set; } = "";
         [Parameter] public EventCallback OnSaveWorkflow { get; set; }
+        [Parameter] public EventCallback OnFlowSavedWithoutTemplate { get; set; }
 
         private List<StepVM> _availableSteps = new List<StepVM>();
         private List<StepVM> _configuredSteps = new List<StepVM>();
@@ -150,6 +151,12 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         public async Task SaveWorkflow()
         {
+            if (!IsWorkflowValid())
+            {
+                await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
+                return;
+            }
+
             PostFlowRequestDto payload = new PostFlowRequestDto
             {
                 Name = _flowName,
@@ -165,6 +172,28 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
             _onSubmitMessage = response.Message;
             _onSubmitSuccess = response.Success;
+
+            // Only show success message and navigate if the API call was successful
+            if (response.Success && response.Result != null)
+            {
+                await _jsRuntime.InvokeVoidAsync("alert", "Workflow saved successfully!");
+
+                // Clear the form
+                ClearConfiguration();
+
+                // Trigger navigation to view flows page
+                if (OnFlowSavedWithoutTemplate.HasDelegate)
+                {
+                    await OnFlowSavedWithoutTemplate.InvokeAsync();
+                }
+            }
+            else
+            {
+                // Show error message if the save failed
+                await _jsRuntime.InvokeVoidAsync("alert", $"Failed to save workflow: {response.Message}");
+            }
+
+            StateHasChanged();
         }
 
         public async Task SaveWorkflowInvokeAsync()
