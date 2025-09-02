@@ -17,75 +17,146 @@ namespace FlowManager.Client.Services
             _httpClient = httpClient;
         }
 
-        public async Task<List<FormTemplateResponseDto>?> GetAllFormTemplatesAsync()
+        // METODĂ NOUĂ pentru a obține doar template-urile active
+        public async Task<List<FormTemplateResponseDto>?> GetActiveFormTemplatesAsync()
         {
             try
             {
-                // Folosesc endpoint-ul queried fără parametri pentru a obține toate template-urile
-                var response = await _httpClient.GetAsync("api/formtemplates/queried");
+                Console.WriteLine("[FormTemplateService] Loading active form templates...");
+
+                // Obține toate template-urile
+                var response = await _httpClient.GetAsync("api/formtemplates/queried?QueryParams.PageSize=1000");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Raw response: {jsonContent}"); // Pentru debugging
+                    Console.WriteLine($"[FormTemplateService] Raw response: {jsonContent}");
 
-                    // Dezeria structura cu Result wrappat
                     var apiResponse = JsonSerializer.Deserialize<FormTemplateApiResponse<PagedResponseDto<FormTemplateResponseDto>>>(jsonContent, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
 
-                    // Returnez lista din PagedResponseDto
+                    var allTemplates = apiResponse?.Result?.Data?.ToList() ?? new List<FormTemplateResponseDto>();
+                    Console.WriteLine($"[FormTemplateService] Found {allTemplates.Count} total templates");
+
+                    // Filtrează doar template-urile active (cele mai recente pentru fiecare flow)
+                    var activeTemplates = allTemplates
+                        .Where(t => t.FlowId.HasValue) // Doar template-urile care au flow asociat
+                        .GroupBy(t => t.FlowId) // Grupează pe flow
+                        .Select(group => group
+                            .OrderByDescending(t => t.CreatedAt) // Ia cel mai recent pentru fiecare flow
+                            .First())
+                        .ToList();
+
+                    Console.WriteLine($"[FormTemplateService] Filtered to {activeTemplates.Count} active templates");
+
+                    return activeTemplates;
+                }
+                return new List<FormTemplateResponseDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FormTemplateService] Error loading active templates: {ex.Message}");
+                return new List<FormTemplateResponseDto>();
+            }
+        }
+
+        // METODĂ NOUĂ pentru search și paginare pe template-uri active
+        public async Task<PagedTemplatesResponse?> GetActiveFormTemplatesPagedAsync(int page, int pageSize, string? searchTerm = null)
+        {
+            try
+            {
+                // Obține toate template-urile active
+                var activeTemplates = await GetActiveFormTemplatesAsync();
+
+                if (activeTemplates == null)
+                {
+                    return new PagedTemplatesResponse
+                    {
+                        Templates = new List<FormTemplateResponseDto>(),
+                        TotalCount = 0,
+                        Page = page,
+                        PageSize = pageSize,
+                        HasMore = false
+                    };
+                }
+
+                // Aplică filtrul de căutare pe template-urile active
+                var filteredTemplates = activeTemplates;
+
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    var search = searchTerm.ToLower();
+                    filteredTemplates = activeTemplates
+                        .Where(t => t.Name != null && t.Name.ToLower().Contains(search))
+                        .ToList();
+                }
+
+                // Aplică paginarea
+                var totalCount = filteredTemplates.Count;
+                var skip = (page - 1) * pageSize;
+                var pagedTemplates = filteredTemplates
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .ToList();
+
+                return new PagedTemplatesResponse
+                {
+                    Templates = pagedTemplates,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize,
+                    HasMore = skip + pageSize < totalCount
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FormTemplateService] Error in GetActiveFormTemplatesPagedAsync: {ex.Message}");
+                return new PagedTemplatesResponse
+                {
+                    Templates = new List<FormTemplateResponseDto>(),
+                    TotalCount = 0,
+                    Page = page,
+                    PageSize = pageSize,
+                    HasMore = false
+                };
+            }
+        }
+
+        // METODĂ existentă - păstrată pentru compatibilitate cu alte părți
+        public async Task<List<FormTemplateResponseDto>?> GetAllFormTemplatesAsync()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("api/formtemplates/queried");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Raw response: {jsonContent}");
+
+                    var apiResponse = JsonSerializer.Deserialize<FormTemplateApiResponse<PagedResponseDto<FormTemplateResponseDto>>>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
                     return apiResponse?.Result?.Data?.ToList();
                 }
                 return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error getting form templates: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"Error loading templates: {ex.Message}");
                 return null;
             }
         }
 
-        // METODA NOUĂ pentru search și paginare
+        // METODĂ existentă - MODIFICATĂ pentru a folosi template-uri active în modalul BasicUser
         public async Task<PagedTemplatesResponse?> GetFormTemplatesPagedAsync(int page, int pageSize, string? searchTerm = null)
         {
-            try
-            {
-                var payload = new QueriedFormTemplateRequestDto
-                {
-                    Name = searchTerm, // Folosesc Name pentru căutare
-                    QueryParams = new QueryParamsDto
-                    {
-                        Page = page,
-                        PageSize = pageSize,
-                        SortBy = "CreatedAt",
-                        SortDescending = true
-                    }
-                };
-
-                var result = await GetAllFormTemplatesQueriedAsync(payload);
-
-                if (result != null)
-                {
-                    return new PagedTemplatesResponse
-                    {
-                        Templates = result.Data?.ToList() ?? new List<FormTemplateResponseDto>(),
-                        TotalCount = result.TotalCount,
-                        Page = result.Page,
-                        PageSize = result.PageSize,
-                        HasMore = result.HasNextPage
-                    };
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error getting paged form templates: {ex.Message}");
-                return null;
-            }
+            // SCHIMBAT: Folosește GetActiveFormTemplatesPagedAsync pentru BasicUser
+            return await GetActiveFormTemplatesPagedAsync(page, pageSize, searchTerm);
         }
 
         public async Task<PagedResponseDto<FormTemplateResponseDto>?> GetAllFormTemplatesQueriedAsync(QueriedFormTemplateRequestDto? payload = null)
@@ -239,7 +310,7 @@ namespace FlowManager.Client.Services
         }
     }
 
-    // Clasa redenumită pentru a evita conflictele
+    // Clasele existente rămân neschimbate
     public class FormTemplateApiResponse<T>
     {
         public T? Result { get; set; }
@@ -248,7 +319,6 @@ namespace FlowManager.Client.Services
         public DateTime Timestamp { get; set; }
     }
 
-    // Clasa pentru răspunsul paginat simplificat
     public class PagedTemplatesResponse
     {
         public List<FormTemplateResponseDto> Templates { get; set; } = new();

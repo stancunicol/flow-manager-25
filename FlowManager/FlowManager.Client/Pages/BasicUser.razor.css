@@ -1456,3 +1456,27 @@ body {
         padding: 8px;
     }
 }
+
+/*.active-template-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #059669;
+    background: #d1fae5;
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #a7f3d0;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.template-info h4 {
+    display: flex;
+    align-items: center;
+    margin: 0 0 0.25rem 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}*/

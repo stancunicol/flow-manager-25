@@ -265,7 +265,62 @@ namespace FlowManager.Client.Pages
             totalTemplatesCount = 0;
 
             StateHasChanged();
-            await LoadTemplates();
+            await LoadActiveTemplates();
+        }
+
+        private async Task LoadActiveTemplates(bool append = false)
+        {
+            isLoadingTemplates = true;
+            StateHasChanged();
+
+            try
+            {
+                Console.WriteLine($"[BasicUser] Loading active templates - Page: {currentPage}, Search: '{searchTerm}', Append: {append}");
+
+                // SCHIMBAT: folosește metoda pentru template-uri active
+                var response = await FormTemplateService.GetActiveFormTemplatesPagedAsync(
+                    page: currentPage,
+                    pageSize: pageSize,
+                    searchTerm: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm
+                );
+
+                if (response != null)
+                {
+                    if (append && displayedTemplates != null)
+                    {
+                        displayedTemplates.AddRange(response.Templates);
+                    }
+                    else
+                    {
+                        displayedTemplates = response.Templates.ToList();
+                    }
+
+                    hasMoreTemplates = response.HasMore;
+                    totalTemplatesCount = response.TotalCount;
+
+                    Console.WriteLine($"[BasicUser] Loaded {response.Templates.Count} active templates. Total: {totalTemplatesCount}, HasMore: {hasMoreTemplates}");
+                }
+                else
+                {
+                    Console.WriteLine("[BasicUser] No response received from FormTemplateService");
+                    displayedTemplates = new List<FormTemplateResponseDto>();
+                    hasMoreTemplates = false;
+                    totalTemplatesCount = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[BasicUser] Error loading active templates: {ex.Message}");
+                displayedTemplates = new List<FormTemplateResponseDto>();
+                hasMoreTemplates = false;
+                totalTemplatesCount = 0;
+                await JSRuntime.InvokeVoidAsync("alert", $"Error loading form templates: {ex.Message}");
+            }
+            finally
+            {
+                isLoadingTemplates = false;
+                StateHasChanged();
+            }
         }
 
         private async Task LoadTemplates(bool append = false)
@@ -317,14 +372,13 @@ namespace FlowManager.Client.Pages
             if (isLoadingTemplates || !hasMoreTemplates) return;
 
             currentPage++;
-            await LoadTemplates(append: true);
+            await LoadActiveTemplates(append: true);
         }
 
         private void OnSearchInput(ChangeEventArgs e)
         {
             var newSearchTerm = e.Value?.ToString() ?? "";
 
-            // Debounce search to avoid too many API calls
             searchDebounceTimer?.Dispose();
             searchDebounceTimer = new Timer(async _ =>
             {
@@ -332,16 +386,16 @@ namespace FlowManager.Client.Pages
                 currentPage = 1;
                 await InvokeAsync(async () =>
                 {
-                    await LoadTemplates();
+                    await LoadActiveTemplates();
                 });
-            }, null, 500, Timeout.Infinite); // 500ms debounce
+            }, null, 500, Timeout.Infinite);
         }
 
         private async Task ClearSearch()
         {
             searchTerm = "";
             currentPage = 1;
-            await LoadTemplates();
+            await LoadActiveTemplates();
         }
 
         private void CloseFormSelectionModal()
