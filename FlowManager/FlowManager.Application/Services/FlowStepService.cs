@@ -39,7 +39,7 @@ namespace FlowManager.Application.Services
             _teamRepository = teamRepository;
         }
 
-        public async Task<PagedResponseDto<FlowStepResponseDto>> GetAllFlowStepsQueriedAsync(QueriedFlowRequestDto payload)
+        public async Task<PagedResponseDto<FlowStepResponseDto>> GetAllFlowStepsQueriedAsync(QueriedFlowStepRequestDto payload)
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
             (List<FlowStep> data, int totalCount) = await _flowStepRepository.GetAllFlowStepsQueriedAsync(payload.Name, parameters);
@@ -51,6 +51,7 @@ namespace FlowManager.Application.Services
                     Id = f.Id,
                     FlowId = f.FlowId,
                     StepId = f.StepId,
+                    StepName = f.Step.Name,
                     IsApproved = f.IsApproved,
                     CreatedAt = f.CreatedAt,
                     UpdatedAt = f.UpdatedAt,
@@ -135,12 +136,6 @@ namespace FlowManager.Application.Services
 
         public async Task<FlowStepResponseDto> CreateFlowStepAsync(PostFlowStepRequestDto flowStep)
         {
-            var flow = await _flowRepository.GetFlowByIdAsync(flowStep.FlowId);
-            if (flow == null)
-            {
-                throw new EntryNotFoundException($"Flow with id {flowStep.FlowId} not found.");
-            }
-
             var department = await _stepRepository.GetStepByIdAsync(flowStep.StepId);
             if (department == null)
             {
@@ -149,7 +144,7 @@ namespace FlowManager.Application.Services
 
             FlowStep flowStepToPost = new FlowStep
             {
-                FlowId = flowStep.FlowId,
+                FlowId = Guid.Empty,
                 StepId = flowStep.StepId,
                 IsApproved = false
             };
@@ -193,7 +188,7 @@ namespace FlowManager.Application.Services
             return new FlowStepResponseDto
             {
                 Id = flowStepToPost.Id,
-                FlowId = flowStep.FlowId,
+                FlowId = Guid.Empty,
                 StepId = flowStep.StepId,
                 IsApproved = flowStepToPost.IsApproved,
                 Users = flowStepToPost.AssignedUsers.Select(su => new UserResponseDto
@@ -302,6 +297,7 @@ namespace FlowManager.Application.Services
             {
                 throw new EntryNotFoundException($"FlowStep with id {id} not found.");
             }
+
             await _flowStepRepository.DeleteFlowStepAsync(flowStep);
 
             return new FlowStepResponseDto

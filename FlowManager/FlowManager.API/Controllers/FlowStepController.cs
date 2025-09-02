@@ -5,6 +5,7 @@ using FlowManager.Application.IServices;
 using FlowManager.Shared.DTOs.Requests.FlowStep;
 using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.FlowStep;
+using FlowManager.Shared.DTOs.Requests.FlowStep;
 
 namespace FlowManager.API.Controllers
 {
@@ -19,34 +20,34 @@ namespace FlowManager.API.Controllers
             _flowStepService = flowStepService;
         }
 
-        //[HttpGet("queried")]
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        //public async Task<IActionResult> GetFlowStepsQueriedAsync([FromQuery] QueriedFlowStepRequestDto payload)
-        //{
-        //    var result = await _flowStepService.GetAllFlowStepsQueriedAsync(payload);
+        [HttpGet("queried")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetFlowStepsQueriedAsync([FromQuery] QueriedFlowStepRequestDto payload)
+        {
+            var result = await _flowStepService.GetAllFlowStepsQueriedAsync(payload);
 
-        //    if (result.Data == null || !result.Data.Any())
-        //    {
-        //        return NotFound(new
-        //        {
-        //            Result = new List<FlowStepResponseDto>(),
-        //            Message = "No flows found matching the criteria.",
-        //            Success = false,
-        //            Timestamp = DateTime.UtcNow
-        //        });
-        //    }
+            if (result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<FlowStepResponseDto>(),
+                    Message = "No flows found matching the criteria.",
+                    Success = false,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
 
-        //    return Ok(new
-        //    {
-        //        Result = result,
-        //        Success = true,
-        //        Message = "Flows retreived succesfully.",
-        //        Timestamp = DateTime.UtcNow
-        //    });
-        //}
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flows retreived succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
 
         [HttpGet("")]
         [ProducesResponseType(StatusCodes.Status200OK)]
