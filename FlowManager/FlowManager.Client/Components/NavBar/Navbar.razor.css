@@ -4,6 +4,17 @@
     padding: 0 20px;
 }
 
+.logo-title {
+    font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    font-weight: 700;
+    font-size: clamp(14px, 3vw, 36px);
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-shadow: 0 0 16px rgba(0, 180, 180, 0.55);
+}
+
     .siemens-navbar nav {
         display: flex;
         justify-content: space-between;
