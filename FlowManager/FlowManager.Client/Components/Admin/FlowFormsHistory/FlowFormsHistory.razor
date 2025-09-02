@@ -1,0 +1,686 @@
+﻿@using FlowManager.Shared.DTOs.Requests
+@using FlowManager.Shared.DTOs.Requests.FormResponse
+@using FlowManager.Shared.DTOs.Responses.Component
+@using FlowManager.Shared.DTOs.Responses.Flow
+@using FlowManager.Shared.DTOs.Responses.FormTemplate
+@using FlowManager.Shared.DTOs.Requests.Flow
+@using FlowManager.Client.Services
+@using Microsoft.AspNetCore.Components
+@using System.Text.Json
+@using static FlowManager.Client.Pages.BasicUser
+@inject FlowService FlowService
+@inject FormTemplateService FormTemplateService
+@inject IJSRuntime JSRuntime
+@inject ComponentService ComponentService
+@namespace FlowManager.Client.Components.Admin.FlowFormsHistory
+
+<div class="flow-forms-history-container">
+    <!-- Header -->
+    <div class="header">
+        <h2>Flow Templates Management</h2>
+        <div class="header-actions">
+            <button @onclick="RefreshFlows" class="refresh-btn" title="Refresh flows">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 000 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <div class="search-input-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+            </svg>
+            <input type="text"
+                   placeholder="Search flows by name..."
+                   @bind="searchTerm"
+                   @oninput="OnSearchInput"
+                   class="search-input" />
+            @if (!string.IsNullOrEmpty(searchTerm))
+            {
+                <button class="clear-search-btn" @onclick="ClearSearch">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(searchTerm))
+        {
+            <div class="search-results-info">
+                @if (flows?.Any() == true)
+                {
+                    <span>Found @flows.Count flow(s) matching "@searchTerm"</span>
+                }
+                else if (!isLoadingFlows)
+                {
+                    <span>No flows found matching "@searchTerm"</span>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoadingFlows)
+    {
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Loading flows...</p>
+        </div>
+    }
+    else if (flows?.Any() == true)
+    {
+        <div class="flows-grid">
+            @foreach (var flow in flows)
+            {
+                <div class="flow-card" @onclick="() => ShowFlowTemplates(flow)">
+                    <div class="flow-card-header">
+                        <div class="flow-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.502 6h7.128A3.375 3.375 0 0118 9.375v9.375a3 3 0 003-3V6.108c0-1.505-1.125-2.811-2.664-2.94a48.972 48.972 0 00-.673-.05A3 3 0 0015 1.5h-1.5a3 3 0 00-2.663 1.618c-.225.015-.45.032-.673.05C8.662 3.295 7.554 4.542 7.502 6zM13.5 3A1.5 1.5 0 0012 4.5h4.5A1.5 1.5 0 0015 3h-1.5z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd" d="M3 9.375C3 8.339 3.84 7.5 4.875 7.5h9.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 013 20.625V9.375zM6 12a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H6.75a.75.75 0 01-.75-.75V12zm2.25 0a.75.75 0 01.75-.75h3.75a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zm0 2.25a.75.75 0 01.75-.75h3.75a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="flow-info">
+                            <h4>@flow.Name</h4>
+                            <p class="flow-meta">@(flow.FormTemplates?.Count ?? 0) template(s) • @(flow.Steps?.Count ?? 0) step(s)</p>
+                        </div>
+                    </div>
+
+                    <div class="flow-card-body">
+                        <div class="flow-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Created:</span>
+                                <span class="detail-value">@flow.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            @if (flow.UpdatedAt.HasValue)
+                            {
+                                <div class="detail-item">
+                                    <span class="detail-label">Updated:</span>
+                                    <span class="detail-value">@flow.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            }
+                            <div class="detail-item">
+                                <span class="detail-label">Active Template:</span>
+                                <span class="detail-value">@(flow.ActiveFormTemplate?.Name ?? "None")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-card-footer">
+                        <div class="flow-id">ID: @flow.Id.ToString()[..8]...</div>
+                        <div class="view-indicator">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
+                            </svg>
+                            Click to view templates
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                Showing @((currentPage - 1) * pageSize + 1) - @Math.Min(currentPage * pageSize, totalCount) of @totalCount flows
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn" 
+                        @onclick="PreviousPage" 
+                        disabled="@(currentPage <= 1)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" />
+                    </svg>
+                    Previous
+                </button>
+
+                <div class="page-numbers">
+                    @for (int page = Math.Max(1, currentPage - 2); page <= Math.Min(totalPages, currentPage + 2); page++)
+                    {
+                        <button class="page-number @(page == currentPage ? "active" : "")" 
+                                @onclick="() => GoToPage(page)">
+                        @((MarkupString)page.ToString())
+                        </button>
+                    }
+                </div>
+
+                <button class="pagination-btn" 
+                        @onclick="NextPage" 
+                        disabled="@(currentPage >= totalPages)">
+                    Next
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L15.69 12 8.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="no-flows">
+            <div class="no-flows-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.502 6h7.128A3.375 3.375 0 0118 9.375v9.375a3 3 0 003-3V6.108c0-1.505-1.125-2.811-2.664-2.94a48.972 48.972 0 00-.673-.05A3 3 0 0015 1.5h-1.5a3 3 0 00-2.663 1.618c-.225.015-.45.032-.673.05C8.662 3.295 7.554 4.542 7.502 6zM13.5 3A1.5 1.5 0 0012 4.5h4.5A1.5 1.5 0 0015 3h-1.5z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h4>@(string.IsNullOrEmpty(searchTerm) ? "No flows found" : "No matching flows")</h4>
+            <p>@(string.IsNullOrEmpty(searchTerm) ? "There are no flows available at the moment." : $"No flows found matching \"{searchTerm}\". Try a different search term.")</p>
+            @if (!string.IsNullOrEmpty(searchTerm))
+            {
+                <button @onclick="ClearSearch" class="clear-search-btn-alt">Clear Search</button>
+            }
+        </div>
+    }
+</div>
+
+<!-- Templates Modal -->
+@if (showTemplatesModal && selectedFlow != null)
+{
+    <div class="modal-overlay" @onclick="CloseTemplatesModal">
+        <div class="templates-modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h3>Templates for "@selectedFlow.Name"</h3>
+                    <div class="modal-metadata">
+                        <span class="metadata-item">
+                            <strong>Flow ID:</strong> @selectedFlow.Id.ToString()[..8]...
+                        </span>
+                        <span class="metadata-item">
+                            <strong>Total Templates:</strong> @(selectedFlow.FormTemplates?.Count ?? 0)
+                        </span>
+                        <span class="metadata-item">
+                            <strong>Steps:</strong> @(selectedFlow.Steps?.Count ?? 0)
+                        </span>
+                    </div>
+                </div>
+                <button class="close-btn" @onclick="CloseTemplatesModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                @if (selectedFlow.FormTemplates?.Any() == true)
+                {
+                    <div class="templates-list">
+                        @foreach (var template in selectedFlow.FormTemplates)
+                        {
+                            <div class="template-item" @onclick="() => ViewFormTemplate(template)">
+                                <div class="template-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75-4.5a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="template-info">
+                                    <h4>@template.Name</h4>
+                                    <div class="template-meta">
+                                        <span>Created: @template.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                                        @if (template.UpdatedAt.HasValue)
+                                        {
+                                            <span> • Updated: @template.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                        }
+                                    </div>
+                                    <div class="template-details">
+                                        <span class="template-detail">Components: @(template.Components?.Count ?? 0)</span>
+                                        @if (template.Id == selectedFlow.ActiveFormTemplate?.Id)
+                                        {
+                                            <span class="active-badge">ACTIVE</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="template-actions">
+                                    <div class="template-id">ID: @template.Id.ToString()[..8]...</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-templates">
+                        <div class="no-templates-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <h4>No Templates Found</h4>
+                        <p>This flow doesn't have any form templates yet.</p>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <div class="modal-flow-info">
+                    <span class="flow-status">Flow: @selectedFlow.Name</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<!-- Form Template Modal -->
+@if (showFormModal && selectedTemplate != null)
+{
+    <div class="modal-overlay" @onclick="CloseFormModal">
+        <div class="form-modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h3>@selectedTemplate.Name</h3>
+                    <div class="form-metadata">
+                        <span class="metadata-item">
+                            <strong>Created:</strong> @selectedTemplate.CreatedAt?.ToString("dd/MM/yyyy HH:mm")
+                        </span>
+                        @if (selectedTemplate.UpdatedAt.HasValue)
+                        {
+                            <span class="metadata-item">
+                                <strong>Updated:</strong> @selectedTemplate.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                        }
+                    </div>
+                </div>
+                <button class="close-btn" @onclick="CloseFormModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                @if (isLoadingFormDetails)
+                {
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Loading form details...</p>
+                    </div>
+                }
+                else if (formElements?.Any() == true)
+                {
+                    <!-- Form Canvas View -->
+                    <div class="form-canvas-container">
+                        <div class="form-canvas-header">
+                            <h4>Form Preview</h4>
+                            <span class="readonly-indicator">🔒 Read Only</span>
+                        </div>
+
+                        <div class="form-canvas-readonly">
+                            @foreach (var element in formElements)
+                            {
+                                <div class="form-element-readonly" style="left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
+                                    @if (element.IsTextElement)
+                                    {
+                                        <!-- Static text elements -->
+                                        <div class="static-text-readonly">
+                                            @element.TextContent
+                                        </div>
+                                    }
+                                    else if (element.ComponentId.HasValue)
+                                    {
+                                        <!-- Form components -->
+
+                                        var component = formComponents?.FirstOrDefault(c => c.Id == element.ComponentId);
+                                        if (component != null)
+                                        {
+                                            var fieldValue = GetFieldValue(component.Id);
+
+                                            <div class="form-field-readonly">
+                                                <label class="field-label-readonly">
+                                                    @component.Label
+                                                    @if (component.Required == true)
+                                                    {
+                                                        <span class="required-mark">*</span>
+                                                    }
+                                                </label>
+
+                                                @switch (component.Type?.ToLower())
+                                                {
+                                                    case "textinput":
+                                                    case "text":
+                                                        <div class="field-value-readonly text-input-readonly">
+                                                            @(fieldValue?.ToString() ?? "No response")
+                                                        </div>
+                                                        break;
+
+                                                    case "textarea":
+                                                        <div class="field-value-readonly textarea-readonly">
+                                                            @(fieldValue?.ToString() ?? "No response")
+                                                        </div>
+                                                        break;
+
+                                                    case "number":
+                                                        <div class="field-value-readonly number-input-readonly">
+                                                            @(fieldValue?.ToString() ?? "No response")
+                                                        </div>
+                                                        break;
+
+                                                    case "email":
+                                                        <div class="field-value-readonly email-input-readonly">
+                                                            @(fieldValue?.ToString() ?? "No response")
+                                                        </div>
+                                                        break;
+
+                                                    case "datetime":
+                                                    case "date":
+                                                        <div class="field-value-readonly datetime-input-readonly">
+                                                            @(DateTime.TryParse(fieldValue?.ToString(), out var date) ? date.ToString("dd/MM/yyyy HH:mm") : "No response")
+                                                        </div>
+                                                        break;
+
+                                                    case "checkbox":
+                                                        <div class="checkbox-field-readonly">
+                                                            <div class="checkbox-display @(fieldValue?.ToString() == "True" ? "checked" : "unchecked")">
+                                                                @if (fieldValue?.ToString() == "True")
+                                                                {
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                                        <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                                                                    </svg>
+                                                                }
+                                                            </div>
+                                                            <span class="checkbox-label-readonly">@component.Label</span>
+                                                        </div>
+                                                        break;
+
+                                                    case "radio":
+                                                        <div class="field-value-readonly radio-input-readonly">
+                                                            @(fieldValue?.ToString() ?? "No selection")
+                                                        </div>
+                                                        break;
+
+                                                    case "select":
+                                                    case "dropdown":
+                                                        <div class="field-value-readonly select-input-readonly">
+                                                            @(fieldValue?.ToString() ?? "No selection")
+                                                        </div>
+                                                        break;
+
+                                                    default:
+                                                        <div class="field-value-readonly default-input-readonly">
+                                                            @(fieldValue?.ToString() ?? "No response")
+                                                        </div>
+                                                        break;
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-form-data">
+                        <p>Unable to load form structure.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+@code {
+    // Modal state pentru vizualizarea formularului
+    private bool showFormModal = false;
+    private bool isLoadingFormDetails = false;
+    private FormTemplateResponseDto? selectedTemplate;
+    private List<ComponentResponseDto>? formComponents;
+    private List<FormElement>? formElements;
+    // Data
+    private List<FlowResponseDto>? flows = new List<FlowResponseDto>();
+    private FlowResponseDto? selectedFlow;
+    private FormResponseResponseDto? selectedFormResponse;
+    private FormTemplateResponseDto? selectedFormTemplate;
+
+    // Loading states
+    private bool isLoadingFlows = false;
+    private bool showTemplatesModal = false;
+
+    // Search and pagination
+    private string searchTerm = "";
+    private Timer? searchDebounceTimer;
+    private int currentPage = 1;
+    private int pageSize = 9; // 3x3 grid
+    private int totalCount = 0;
+    private int totalPages => (int)Math.Ceiling((double)totalCount / pageSize);
+
+    public class FormContent
+    {
+        public string Layout { get; set; } = "";
+        public List<FormElement> Elements { get; set; } = new();
+    }
+
+    public class FormElement
+    {
+        public string Id { get; set; } = "";
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int ZIndex { get; set; }
+        public bool IsTextElement { get; set; }
+        public string? TextContent { get; set; }
+        public Guid? ComponentId { get; set; }
+        public string? ComponentType { get; set; }
+        public string? Label { get; set; }
+        public bool? Required { get; set; }
+        public Dictionary<string, object>? Properties { get; set; }
+    }
+    private object? GetFieldValue(Guid componentId)
+    {
+        if (selectedFormResponse?.ResponseFields?.ContainsKey(componentId) == true)
+        {
+            return selectedFormResponse.ResponseFields[componentId];
+        }
+        return null;
+    }
+    private async Task ParseFormContent()
+    {
+        if (string.IsNullOrEmpty(selectedTemplate?.Content))
+            return;
+
+        try
+        {
+            var contentData = JsonSerializer.Deserialize<FormContent>(selectedTemplate.Content);
+            formElements = contentData?.Elements?.ToList() ?? new List<FormElement>();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing form content: {ex.Message}");
+            formElements = new List<FormElement>();
+        }
+    }
+    private async Task LoadFormComponents()
+    {
+        if (selectedTemplate?.Components?.Any() != true)
+            return;
+
+        try
+        {
+            var componentTasks = selectedTemplate.Components.Select(async formTemplateComponent =>
+            {
+                try
+                {
+                    return await ComponentService.GetComponentByIdAsync(formTemplateComponent.Id);
+                }
+                catch
+                {
+                    return null;
+                }
+            });
+
+            var componentResults = await Task.WhenAll(componentTasks);
+            formComponents = componentResults.Where(c => c != null).ToList()!;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading components: {ex.Message}");
+            formComponents = new List<ComponentResponseDto>();
+        }
+    }
+    private async Task ViewFormTemplate(FormTemplateResponseDto template)
+    {
+        selectedTemplate = template;
+        showFormModal = true;
+        isLoadingFormDetails = true;
+        StateHasChanged();
+
+        selectedTemplate = await FormTemplateService.GetFormTemplateByIdAsync(template.Id);
+
+        try
+        {
+            // Parsează conținutul formularului
+            await ParseFormContent();
+
+            // Încarcă componentele
+            await LoadFormComponents();
+            selectedFormResponse = null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading form details: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading form details: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingFormDetails = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseFormModal()
+    {
+        showFormModal = false;
+        selectedTemplate = null;
+        formComponents = null;
+        formElements = null;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFlows();
+    }
+
+    private async Task LoadFlows()
+    {
+        isLoadingFlows = true;
+        StateHasChanged();
+        try
+        {
+            var request = new QueriedFlowRequestDto
+            {
+                Name = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
+                QueryParams = new QueryParamsDto
+                {
+                    Page = currentPage,
+                    PageSize = pageSize,
+                    SortBy = "CreatedAt",
+                    SortDescending = true
+                }
+            };
+            var apiResponse = await FlowService.GetAllFlowsQueriedAsync(request);
+            if (apiResponse?.Result != null)
+            {
+                flows = apiResponse.Result.Data?.ToList() ?? new List<FlowResponseDto>();
+                totalCount = apiResponse.Result.TotalCount;
+                Console.WriteLine($"Loaded {flows?.Count ?? 0} flows. Total: {totalCount}");
+            }
+            else
+            {
+                flows = new List<FlowResponseDto>(); 
+                totalCount = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading flows: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading flows: {ex.Message}");
+            flows = new List<FlowResponseDto>(); 
+            totalCount = 0;
+        }
+        finally
+        {
+            isLoadingFlows = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        var newSearchTerm = e.Value?.ToString() ?? "";
+
+        searchDebounceTimer?.Dispose();
+        searchDebounceTimer = new Timer(async _ =>
+        {
+            searchTerm = newSearchTerm;
+            currentPage = 1; // Reset to first page
+            await InvokeAsync(async () =>
+            {
+                await LoadFlows();
+            });
+        }, null, 500, Timeout.Infinite);
+    }
+
+    private async Task ClearSearch()
+    {
+        searchTerm = "";
+        currentPage = 1;
+        await LoadFlows();
+    }
+
+    private async Task RefreshFlows()
+    {
+        currentPage = 1;
+        await LoadFlows();
+    }
+
+    // Pagination methods
+    private async Task PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadFlows();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadFlows();
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page >= 1 && page <= totalPages && page != currentPage)
+        {
+            currentPage = page;
+            await LoadFlows();
+        }
+    }
+
+    // Modal methods
+    private void ShowFlowTemplates(FlowResponseDto flow)
+    {
+        selectedFlow = flow;
+        showTemplatesModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseTemplatesModal()
+    {
+        showTemplatesModal = false;
+        selectedFlow = null;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        searchDebounceTimer?.Dispose();
+    }
+
+}
