@@ -1,6 +1,6 @@
 ﻿/* FlowTemplatesGrid.razor.css */
 
-.flow-forms-history-container  {
+.flow-forms-history-container {
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
@@ -267,14 +267,8 @@
     background: #f9fafb;
     border-top: 1px solid #f3f4f6;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
-}
-
-.flow-id {
-    font-size: 12px;
-    color: #6b7280;
-    font-family: 'Courier New', monospace;
 }
 
 .view-indicator {
@@ -536,6 +530,7 @@
     border-radius: 8px;
     background: white;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
     .template-item:hover {
@@ -599,20 +594,6 @@
     border: 1px solid #a7f3d0;
 }
 
-.template-actions {
-    margin-left: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.5rem;
-}
-
-.template-id {
-    font-size: 10px;
-    color: #9ca3af;
-    font-family: 'Courier New', monospace;
-}
-
 /* No Templates */
 .no-templates {
     display: flex;
@@ -645,6 +626,7 @@
     color: #6b7280;
     font-size: 14px;
 }
+
 .form-modal-content {
     background: white;
     border-radius: 12px;
@@ -747,19 +729,19 @@
 
 
 .datetime-input-readonly {
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    border-left: 4px solid #9ca3af;
+    background: #f3f4f6;
 }
 
 .select-input-readonly,
 .radio-input-readonly {
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    border-left: 4px solid #9ca3af;
+    background: #f3f4f6;
 }
 
 .default-input-readonly {
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    border-left: 4px solid #9ca3af;
+    background: #f3f4f6;
 }
 
 .checkbox-field-readonly {
@@ -884,12 +866,4 @@
     .template-icon {
         margin-right: 0;
     }
-
-    .template-actions {
-        margin-left: 0;
-        align-items: flex-start;
-        width: 100%;
-    }
-    /* Form Modal Styles */
-    
 }

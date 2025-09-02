@@ -93,9 +93,16 @@
                         <div class="flow-details">
                             <div class="detail-item">
                                 <span class="detail-label">Created:</span>
-                                <span class="detail-value">@flow.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                                <span class="detail-value">@(flow.ActiveFormTemplate?.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? flow.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Unknown")</span>
                             </div>
-                            @if (flow.UpdatedAt.HasValue)
+                            @if (flow.ActiveFormTemplate?.UpdatedAt.HasValue == true)
+                            {
+                                <div class="detail-item">
+                                    <span class="detail-label">Updated:</span>
+                                    <span class="detail-value">@flow.ActiveFormTemplate.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            }
+                            else if (flow.UpdatedAt.HasValue)
                             {
                                 <div class="detail-item">
                                     <span class="detail-label">Updated:</span>
@@ -110,7 +117,6 @@
                     </div>
 
                     <div class="flow-card-footer">
-                        <div class="flow-id">ID: @flow.Id.ToString()[..8]...</div>
                         <div class="view-indicator">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
@@ -129,8 +135,8 @@
                 Showing @((currentPage - 1) * pageSize + 1) - @Math.Min(currentPage * pageSize, totalCount) of @totalCount flows
             </div>
             <div class="pagination-controls">
-                <button class="pagination-btn" 
-                        @onclick="PreviousPage" 
+                <button class="pagination-btn"
+                        @onclick="PreviousPage"
                         disabled="@(currentPage <= 1)">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" />
@@ -141,15 +147,15 @@
                 <div class="page-numbers">
                     @for (int page = Math.Max(1, currentPage - 2); page <= Math.Min(totalPages, currentPage + 2); page++)
                     {
-                        <button class="page-number @(page == currentPage ? "active" : "")" 
+                        <button class="page-number @(page == currentPage ? "active" : "")"
                                 @onclick="() => GoToPage(page)">
-                        @((MarkupString)page.ToString())
+                            @((MarkupString)page.ToString())
                         </button>
                     }
                 </div>
 
-                <button class="pagination-btn" 
-                        @onclick="NextPage" 
+                <button class="pagination-btn"
+                        @onclick="NextPage"
                         disabled="@(currentPage >= totalPages)">
                     Next
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -187,9 +193,6 @@
                     <h3>Templates for "@selectedFlow.Name"</h3>
                     <div class="modal-metadata">
                         <span class="metadata-item">
-                            <strong>Flow ID:</strong> @selectedFlow.Id.ToString()[..8]...
-                        </span>
-                        <span class="metadata-item">
                             <strong>Total Templates:</strong> @(selectedFlow.FormTemplates?.Count ?? 0)
                         </span>
                         <span class="metadata-item">
@@ -208,7 +211,7 @@
                 @if (selectedFlow.FormTemplates?.Any() == true)
                 {
                     <div class="templates-list">
-                        @foreach (var template in selectedFlow.FormTemplates)
+                        @foreach (var template in selectedFlow.FormTemplates.OrderByDescending(t => t.CreatedAt))
                         {
                             <div class="template-item" @onclick="() => ViewFormTemplate(template)">
                                 <div class="template-icon">
@@ -232,9 +235,6 @@
                                             <span class="active-badge">ACTIVE</span>
                                         }
                                     </div>
-                                </div>
-                                <div class="template-actions">
-                                    <div class="template-id">ID: @template.Id.ToString()[..8]...</div>
                                 </div>
                             </div>
                         }
@@ -320,7 +320,6 @@
                                     else if (element.ComponentId.HasValue)
                                     {
                                         <!-- Form components -->
-
                                         var component = formComponents?.FirstOrDefault(c => c.Id == element.ComponentId);
                                         if (component != null)
                                         {
@@ -588,7 +587,7 @@
             }
             else
             {
-                flows = new List<FlowResponseDto>(); 
+                flows = new List<FlowResponseDto>();
                 totalCount = 0;
             }
         }
@@ -596,7 +595,7 @@
         {
             Console.WriteLine($"Error loading flows: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("alert", $"Error loading flows: {ex.Message}");
-            flows = new List<FlowResponseDto>(); 
+            flows = new List<FlowResponseDto>();
             totalCount = 0;
         }
         finally
