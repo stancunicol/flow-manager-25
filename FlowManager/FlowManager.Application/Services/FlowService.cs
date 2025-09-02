@@ -20,12 +20,20 @@ namespace FlowManager.Infrastructure.Services
         private readonly IFlowRepository _flowRepository;
         private readonly IFormTemplateRepository _formTemplateRepository;
         private readonly IStepRepository _stepRepository;
+        private readonly ITeamRepository _teamRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public FlowService(IFlowRepository flowRepository, IFormTemplateRepository formTemplateRepository, IStepRepository stepRepository)
+        public FlowService(IFlowRepository flowRepository,
+            IFormTemplateRepository formTemplateRepository,
+            IStepRepository stepRepository,
+            ITeamRepository teamRepository,
+            IRoleRepository roleRepository)
         {
             _flowRepository = flowRepository;
             _formTemplateRepository = formTemplateRepository;
             _stepRepository = stepRepository;
+            _teamRepository = teamRepository;
+            _roleRepository = roleRepository;
         }
 
         public async Task<PagedResponseDto<FlowResponseDto>> GetAllFlowsQueriedAsync(QueriedFlowRequestDto payload)
@@ -118,17 +126,38 @@ namespace FlowManager.Infrastructure.Services
 
                 foreach (var step in flowToPost.Steps)
                 {
-                    step.AssignedUsers = payload.Steps.First(s => s.StepId == step.StepId).UserIds.Select(uId => new FlowStepUser
+                    var stepPayload = payload.Steps.First(s => s.StepId == step.StepId);
+
+                    step.AssignedUsers = stepPayload.UserIds.Select(uId => new FlowStepUser
                     {
                         FlowStepId = step.Id,
                         UserId = uId,
                     }).ToList();
 
-                    step.AssignedTeams = payload.Steps.First(s => s.StepId == step.StepId).TeamIds.Select(tId => new FlowStepTeam
+                    foreach (var teamPayload in stepPayload.Teams)
                     {
-                        FlowStepId = step.Id,
-                        TeamId = tId,
-                    }).ToList();
+                        var fullTeam = await _teamRepository.GetTeamWithModeratorsAsync(teamPayload.TeamId, (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id);
+
+                        if (fullTeam.Users.Count == teamPayload.UserIds.Count)
+                        {
+                            step.AssignedTeams.Add(new FlowStepTeam
+                            {
+                                FlowStepId = step.Id,
+                                TeamId = teamPayload.TeamId,
+                            });
+                        }
+                        else
+                        {
+                            foreach (var userId in teamPayload.UserIds)
+                            {
+                                step.AssignedUsers.Add(new FlowStepUser
+                                {
+                                    FlowStepId = step.Id,
+                                    UserId = userId,
+                                });
+                            }
+                        }
+                    }
                 }
             }
 

@@ -192,7 +192,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 {
                     StepId = configuredStep.Id,
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                    TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                    Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                    {
+                        TeamId = t.Id,
+                        UserIds = t.Users.Select(u => u.Id).ToList(),
+                    }).ToList(),
                 }).ToList()
             };
 
@@ -263,7 +267,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     {
                         StepId = configuredStep.Id,
                         UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                        TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                        Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                        {
+                            TeamId = t.Id,
+                            UserIds = t.Users.Select(u => u.Id).ToList(),
+                        }).ToList(),
                     }).ToList(),
                     FormTemplateId = null
                 });
@@ -304,7 +312,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 {
                     StepId = configuredStep.Id,
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                    TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                    Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                    {
+                        TeamId = t.Id,
+                        UserIds = t.Users.Select(u => u.Id).ToList(),
+                    }).ToList()
                 }).ToList(),
                 FormTemplateId = templateId
             };

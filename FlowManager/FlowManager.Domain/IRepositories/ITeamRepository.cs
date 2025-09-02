@@ -20,5 +20,6 @@ namespace FlowManager.Domain.IRepositories
         Task SaveChangesAsync();
         Task<(List<User>, List<User>)> GetSplitUsersByTeamIdQueriedAsync(Guid stepId, Guid teamId, string? globalSearchTerm, QueryParams? queryParams);
         Task<(List<Team>, int)> GetAllModeratorTeamsByStepIdQueriedAsync(Guid stepId, Guid moderatorId, string? globalSearchTerm, QueryParams? queryParams);
+        Task<Team?> GetTeamWithModeratorsAsync(Guid teamId, Guid moderatorId);
     }
 }

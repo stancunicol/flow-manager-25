@@ -136,6 +136,14 @@ namespace FlowManager.Infrastructure.Repositories
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
+        public async Task<Team?> GetTeamWithModeratorsAsync(Guid teamId, Guid moderatorId)
+        {
+            return await _context.Teams
+                .Where(t => t.DeletedAt == null)
+                .Include(t => t.Users.Where(u => u.DeletedAt == null && u.User.Roles.Any(ur => ur.RoleId == moderatorId)))
+                .FirstOrDefaultAsync(t => t.Id == teamId);
+        }
+
         public async Task<Team> AddTeamAsync(Team team)
         {
             await _context.Teams.AddAsync(team);
