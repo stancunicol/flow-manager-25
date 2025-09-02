@@ -37,7 +37,8 @@ namespace FlowManager.Application.Services
                 payload.CreatedFrom,
                 payload.CreatedTo,
                 payload.IncludeDeleted,
-                queryParams);
+                queryParams,
+                payload.StatusFilters);
 
             var items = data.Select(fr => new FormResponseResponseDto
             {

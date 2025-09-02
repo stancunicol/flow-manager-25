@@ -18,14 +18,15 @@ namespace FlowManager.Infrastructure.Repositories
         }
 
         public async Task<(List<FormResponse> Data, int TotalCount)> GetAllFormResponsesQueriedAsync(
-            Guid? formTemplateId,
-            Guid? stepId,
-            Guid? userId,
-            string? searchTerm,
-            DateTime? createdFrom,
-            DateTime? createdTo,
-            bool includeDeleted,
-            QueryParams? parameters)
+    Guid? formTemplateId,
+    Guid? stepId,
+    Guid? userId,
+    string? searchTerm,
+    DateTime? createdFrom,
+    DateTime? createdTo,
+    bool includeDeleted,
+    QueryParams? parameters,
+    List<string>? statusFilters = null)
         {
             IQueryable<FormResponse> query = _context.FormResponses
                 .Include(fr => fr.FormTemplate)
@@ -72,6 +73,12 @@ namespace FlowManager.Infrastructure.Repositories
                     fr.Step.Name.ToUpper().Contains(search) ||
                     fr.User.Name.ToUpper().Contains(search) ||
                     (fr.RejectReason != null && fr.RejectReason.ToUpper().Contains(search)));
+            }
+
+            // ADAUGĂ filtrarea după statusuri
+            if (statusFilters?.Any() == true)
+            {
+                query = query.Where(fr => statusFilters.Contains(fr.Status ?? "Pending"));
             }
 
             int totalCount = await query.CountAsync();

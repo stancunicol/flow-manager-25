@@ -23,6 +23,9 @@ namespace FlowManager.Client.Pages
         private string _activeTab = "MYFORMS";
         protected string? errorMessage;
 
+        // Status filter state
+        private HashSet<string> selectedStatuses = new HashSet<string> { "Pending", "Rejected", "Approved" };
+
         // Form selection modal state
         private bool showFormSelectionModal = false;
         private bool isLoadingTemplates = false;
@@ -122,29 +125,14 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                var payload = new QueriedFormResponseRequestDto
-                {
-                    UserId = currentUserId,
-                    IncludeDeleted = false,
-                    QueryParams = new Shared.DTOs.Requests.QueryParamsDto
-                    {
-                        Page = _currentPage,
-                        PageSize = _pageSize,
-                        SortBy = "CreatedAt",
-                        SortDescending = true
-                    }
-                };
-
-                if (!string.IsNullOrEmpty(userFormsSearchTerm))
-                {
-                    payload.SearchTerm = userFormsSearchTerm;
-                }
+                Console.WriteLine($"[BasicUser] Loading forms - Page: {_currentPage}, PageSize: {_pageSize}, Search: '{userFormsSearchTerm}', Statuses: [{string.Join(", ", selectedStatuses)}]");
 
                 var response = await FormResponseService.GetFormResponsesByUserPagedAsync(
                     currentUserId,
                     _currentPage,
                     _pageSize,
-                    userFormsSearchTerm);
+                    userFormsSearchTerm,
+                    selectedStatuses.ToList());
 
                 if (response != null)
                 {
@@ -152,20 +140,19 @@ namespace FlowManager.Client.Pages
                     _totalCount = response.TotalCount;
                     _totalPages = (int)Math.Ceiling((double)_totalCount / _pageSize);
 
-                    Console.WriteLine($"Loaded {userForms?.Count ?? 0} forms for user {currentUserId} (page {_currentPage}/{_totalPages})");
+                    Console.WriteLine($"[BasicUser] Loaded {userForms?.Count ?? 0} forms for user {currentUserId} (page {_currentPage}/{_totalPages}, total: {_totalCount})");
                 }
                 else
                 {
+                    Console.WriteLine("[BasicUser] Failed to load forms - response was null");
                     userForms = new List<FormResponseResponseDto>();
                     _totalCount = 0;
                     _totalPages = 0;
                 }
-
-                // Nu mai e nevoie de ApplyUserFormsFilter() pentru că search-ul se face server-side
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading user forms: {ex.Message}");
+                Console.WriteLine($"[BasicUser] Error loading user forms: {ex.Message}");
                 userForms = new List<FormResponseResponseDto>();
                 _totalCount = 0;
                 _totalPages = 0;
@@ -175,6 +162,37 @@ namespace FlowManager.Client.Pages
                 isLoadingUserForms = false;
                 StateHasChanged();
             }
+        }
+
+        private async Task FilterByStatus(string status)
+        {
+            // Setează doar statusul selectat
+            selectedStatuses = new HashSet<string> { status };
+
+            // Reset la prima pagină și reîncarcă
+            _currentPage = 1;
+            await LoadUserForms();
+        }
+
+        private async Task ShowAllStatuses()
+        {
+            // Selectează toate statusurile
+            selectedStatuses = new HashSet<string> { "Pending", "Rejected", "Approved" };
+            _currentPage = 1;
+            await LoadUserForms();
+        }
+
+        private bool IsOnlyStatusSelected(string status)
+        {
+            return selectedStatuses.Count == 1 && selectedStatuses.Contains(status);
+        }
+
+        private bool AreAllStatusesSelected()
+        {
+            return selectedStatuses.Count == 3 &&
+                   selectedStatuses.Contains("Pending") &&
+                   selectedStatuses.Contains("Rejected") &&
+                   selectedStatuses.Contains("Approved");
         }
 
         // USER FORMS SEARCH FUNCTIONALITY
