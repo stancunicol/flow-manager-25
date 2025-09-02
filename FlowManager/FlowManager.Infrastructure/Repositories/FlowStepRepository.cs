@@ -26,10 +26,10 @@ namespace FlowManager.Infrastructure.Repositories
         {
             IQueryable<FlowStep> query = _context.FlowSteps
                 .Include(fs => fs.Flow)
-                .Include(fs => fs.IsApproved)
-                .Include(fs => fs.Step);
+                .Include(fs => fs.Step)
+                .Where(fs => fs.DeletedAt == null);
 
-            if(!string.IsNullOrEmpty(name))
+            if (!string.IsNullOrEmpty(name))
             {
                 query = query.Where(fs => fs.Flow.Name.ToUpper().Contains(name.ToUpper()) || fs.Step.Name.ToUpper().Contains(name.ToUpper()));
             }

@@ -15,6 +15,7 @@ namespace FlowManager.Shared.DTOs.Responses.FlowStep
         public List<TeamResponseDto> Teams = new();
         public Guid? FlowId { get; set; }
         public Guid? StepId { get; set; }
+        public string? StepName { get; set; }
         public bool? IsApproved { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

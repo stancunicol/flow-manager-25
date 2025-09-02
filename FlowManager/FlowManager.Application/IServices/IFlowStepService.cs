@@ -13,7 +13,7 @@ namespace FlowManager.Application.IServices
 {
     public interface IFlowStepService
     {
-        Task<PagedResponseDto<FlowStepResponseDto>> GetAllFlowStepsQueriedAsync(QueriedFlowRequestDto payload);
+        Task<PagedResponseDto<FlowStepResponseDto>> GetAllFlowStepsQueriedAsync(QueriedFlowStepRequestDto payload);
         Task<List<FlowStepResponseDto>> GetAllFlowStepsAsync();
         Task<FlowStepResponseDto?> GetFlowStepByIdAsync(Guid id);
         Task<FlowStepResponseDto> CreateFlowStepAsync(PostFlowStepRequestDto flowStep);

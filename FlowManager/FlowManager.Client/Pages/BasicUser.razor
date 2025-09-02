@@ -352,7 +352,7 @@
                 {
                     <div class="loading-container">
                         <div class="spinner"></div>
-                        <p>Loading form templates...</p>
+                        <p>Loading active form templates...</p>
                     </div>
                 }
                 else if (displayedTemplates?.Any() == true)
@@ -364,10 +364,13 @@
                                 <div class="template-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                         <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75-4.5a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clip-rule="evenodd" />
+                                        <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
                                     </svg>
                                 </div>
                                 <div class="template-info">
-                                    <h4>@template.Name</h4>
+                                    <h4>
+                                        @template.Name
+                                    </h4>
                                     <p>Created: @($"{template.CreatedAt:dd.MM.yyyy}")</p>
                                 </div>
                                 <div class="template-arrow">
@@ -384,13 +387,13 @@
                     {
                         <div class="load-more-container">
                             <button class="load-more-btn" @onclick="LoadMoreTemplates">
-                                Load More Templates
+                                Load More Active Templates
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                     <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clip-rule="evenodd" />
                                 </svg>
                             </button>
                             <div class="pagination-info">
-                                Showing @displayedTemplates.Count of @totalTemplatesCount templates
+                                Showing @displayedTemplates.Count of @totalTemplatesCount active templates
                             </div>
                         </div>
                     }
@@ -400,7 +403,7 @@
                     {
                         <div class="loading-more-container">
                             <div class="spinner-small"></div>
-                            <span>Loading more templates...</span>
+                            <span>Loading more active templates...</span>
                         </div>
                     }
                 }
@@ -409,12 +412,12 @@
                     <div class="no-templates">
                         @if (!string.IsNullOrEmpty(searchTerm))
                         {
-                            <p>No form templates found matching your search.</p>
+                            <p>No active form templates found matching your search.</p>
                             <button class="clear-search-btn-alt" @onclick="ClearSearch">Clear Search</button>
                         }
                         else
                         {
-                            <p>No form templates available.</p>
+                            <p>No active form templates available.</p>
                         }
                     </div>
                 }

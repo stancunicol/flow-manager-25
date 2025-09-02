@@ -15,7 +15,7 @@ using FlowManager.Shared.DTOs.Requests.Step;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
-    public partial class Steps: ComponentBase
+    public partial class Steps : ComponentBase
     {
         private List<StepResponseDto> departments = new();
         private bool isModalOpen = false;
@@ -29,6 +29,7 @@ namespace FlowManager.Client.Components.Admin.Steps
         private string editDepName = string.Empty;
         private List<UserResponseDto> allUsersList = new();
         private List<UserResponseDto> allUsers = new();
+        private Dictionary<Guid, string> departmentColors = new();
 
 
         [Inject]
@@ -40,6 +41,17 @@ namespace FlowManager.Client.Components.Admin.Steps
         protected override async Task OnInitializedAsync()
         {
             await LoadDepartments();
+
+            if (departments != null)
+            {
+                foreach (var dep in departments)
+                {
+                    if (!departmentColors.ContainsKey(dep.Id))
+                    {
+                        departmentColors[dep.Id] = GetRandomGradient();
+                    }
+                }
+            }
         }
 
         private async Task LoadDepartments()
@@ -67,10 +79,10 @@ namespace FlowManager.Client.Components.Admin.Steps
                 if (response != null && response.Success && response.Result != null)
                 {
                     var allUsers = (List<UserResponseDto>)response.Result.Data;
-                    foreach(var user in allUsers)
+                    foreach (var user in allUsers)
                     {
                         var isAssigned = await userService.VerifyIfAssigned(user.Id);
-                        if(isAssigned.Success && !isAssigned.Result)
+                        if (isAssigned.Success && !isAssigned.Result)
                         {
                             unsignedUsers.Add(user);
                         }
@@ -358,16 +370,17 @@ namespace FlowManager.Client.Components.Admin.Steps
 
         private string GetRandomGradient()
         {
-            var colors = new string[]
-            {
-        "#f87171", "#fbbf24", "#34d399", "#60a5fa", "#a78bfa", "#f472b6", "#facc15"
-            };
+            var gradients = new List<string>
+        {
+            "linear-gradient(135deg, #f6d365, #fda085)",
+            "linear-gradient(135deg, #a1c4fd, #c2e9fb)",
+            "linear-gradient(135deg, #84fab0, #8fd3f4)",
+            "linear-gradient(135deg, #ffecd2, #fcb69f)",
+            "linear-gradient(135deg, #e0c3fc, #8ec5fc)"
+        };
 
             var rnd = new Random();
-            var c1 = colors[rnd.Next(colors.Length)];
-            var c2 = colors[rnd.Next(colors.Length)];
-
-            return $"linear-gradient(135deg, {c1}, {c2})";
+            return gradients[rnd.Next(gradients.Count)];
         }
     }
 }
