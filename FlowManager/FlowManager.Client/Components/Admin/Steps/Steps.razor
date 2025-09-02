@@ -19,7 +19,7 @@
     {
         @foreach (var department in departments)
         {
-            <div class="department-card" style="background:@GetRandomGradient()" @onclick="() => OpenModal(department)">
+            <div class="department-card" style="background:@departmentColors[department.Id]" @onclick="() => OpenModal(department)">
                 <span class="department-name">@department.Name</span>
 
             </div>
