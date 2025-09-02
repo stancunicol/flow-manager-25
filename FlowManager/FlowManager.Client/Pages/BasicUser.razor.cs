@@ -166,10 +166,8 @@ namespace FlowManager.Client.Pages
 
         private async Task FilterByStatus(string status)
         {
-            // Setează doar statusul selectat
             selectedStatuses = new HashSet<string> { status };
 
-            // Reset la prima pagină și reîncarcă
             _currentPage = 1;
             await LoadUserForms();
         }
