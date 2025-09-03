@@ -195,13 +195,18 @@
 
 .text-element .text-display {
     padding: 8px 12px;
-    background: #f8f9fa;
-    border: 1px solid #e5e5e5;
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 4px;
     position: relative;
     min-width: 120px;
     min-height: 40px;
+    transition: all 0.2s ease;
 }
+    .text-element .text-display:hover {
+        background: rgba(255, 255, 255, 0.3); 
+        border-color: rgba(0, 0, 0, 0.1); 
+    }
 
 .placeholder-text {
     color: #9ca3af;
