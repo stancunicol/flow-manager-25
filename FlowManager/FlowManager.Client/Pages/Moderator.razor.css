@@ -507,7 +507,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 1400;
     backdrop-filter: blur(2px);
     cursor: pointer;
 }
@@ -519,6 +519,7 @@ body {
     width: 95%;
     max-height: 90vh;
     overflow: hidden;
+    z-index: 1400;
     display: flex;
     flex-direction: column;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
@@ -1149,6 +1150,7 @@ body {
     display: flex;
     flex-direction: column;
     cursor: default;
+    z-index: 1400;
 }
 
 .modal-title-section {

@@ -4,6 +4,7 @@
     background: white;
     display: flex;
     flex-direction: row;
+    z-index: 1400;
 }
 
 .step-configuration {
