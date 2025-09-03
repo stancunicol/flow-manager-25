@@ -13,24 +13,11 @@
 
         <!-- Content -->
         <div class="modal-content">
-            @if (Flow?.FormTemplateId != null)
-            {
-                <EditFormTemplate FlowId="@Flow.Id"
-                                  FormTemplateId="@Flow.FormTemplateId.Value"
-                                  OnTemplateSaved="@OnTemplateSaved"
-                                  @ref="editFormTemplateRef" />
-            }
-            else
-            {
-                <div class="no-template-state">
-                    <div class="no-template-icon">📄</div>
-                    <h3>No Form Template</h3>
-                    <p>This flow doesn't have a form template associated with it.</p>
-                    <button class="create-template-btn" @onclick="CreateNewTemplate">
-                        Create Form Template
-                    </button>
-                </div>
-            }
+            @* Încarcă întotdeauna EditFormTemplate, indiferent dacă există FormTemplateId sau nu *@
+            <EditFormTemplate FlowId="@Flow!.Id"
+                              FormTemplateId="@(Flow.FormTemplateId ?? Guid.Empty)"
+                              OnTemplateSaved="@OnTemplateSaved"
+                              @ref="editFormTemplateRef" />
         </div>
 
         <!-- Modal Footer -->
@@ -38,22 +25,17 @@
             <button class="btn-secondary" @onclick="@(() => OnClose.InvokeAsync())">
                 Cancel
             </button>
-            @if (Flow?.FormTemplateId != null)
-            {
-                <button class="btn-primary" @onclick="SaveTemplate" disabled="@_isSaving">
-                    @if (_isSaving)
-                    {
-                        <span class="loading-spinner"></span>
-                    }
-                    Save Changes
-                </button>
-            }
+            <button class="btn-primary" @onclick="SaveTemplate" disabled="@_isSaving">
+                @if (_isSaving)
+                {
+                    <span class="loading-spinner"></span>
+                }
+                @(Flow?.FormTemplateId != null ? "Save Changes" : "Create Template")
+            </button>
         </div>
 
     </div>
 </div>
-
-
 
 @code {
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
@@ -66,12 +48,6 @@
 
     // Component reference
     private EditFormTemplate? editFormTemplateRef;
-
-    private async Task CreateNewTemplate()
-    {
-        // TODO: Implement creating new template for existing flow
-        await JSRuntime.InvokeVoidAsync("alert", "Create new template functionality will be implemented soon!");
-    }
 
     private async Task OnTemplateSaved()
     {

@@ -340,6 +340,21 @@
             _isLoading = true;
             _hasError = false;
             StateHasChanged();
+
+            // Dacă FormTemplateId este Guid.Empty, creează un template gol
+            if (FormTemplateId == Guid.Empty)
+            {
+                // Inițializează cu un template gol
+                templateName = "";
+                canvasElements = new List<CanvasElement>();
+                zIndexCounter = 1;
+
+                _isLoading = false;
+                StateHasChanged();
+                return;
+            }
+
+            // Încarcă template-ul existent
             var template = await FormTemplateService.GetFormTemplateByIdAsync(FormTemplateId);
             if (template != null)
             {
