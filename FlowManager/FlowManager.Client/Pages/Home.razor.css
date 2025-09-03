@@ -58,9 +58,9 @@ body {
 
 .welcome-label {
     position: absolute;
-    top: 50%; /* centru pe verticală */
-    right: 1.5rem; /* padding dreapta consistent cu page-description */
-    transform: translateY(-50%); /* ajustează centrul exact */
+    top: 50%;
+    right: 1.5rem;
+    transform: translateY(-50%);
 }
 
     .welcome-label label {
@@ -70,26 +70,26 @@ body {
     }
 
 .home-container {
-    padding: 160px 2rem 3rem 2rem; /* 55px navbar + 90px page-description */
-    width: 1200px;
+    padding: 160px 2rem 3rem 2rem;
+    width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    flex: 1;
-    z-index: 1; /* dedesubt de page-description */
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 145px);
 }
 
 .roles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
     width: 100%;
+    max-width: 800px;
 }
 
 .role-card {
-    position: relative;
     background: white;
     border-radius: 16px;
     padding: 2rem;
@@ -102,6 +102,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    /* Eliminăm position: center */
 }
 
     .role-card::before {
