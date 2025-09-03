@@ -6,9 +6,12 @@
     display: flex;
     flex-direction: column;
     background: #f8f9fa;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 100vh;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 100;
 }
 
 /* CAROUSEL HEADER */
@@ -108,8 +111,13 @@
 .page-content {
     flex: 1;
     height: 100%;
-    overflow: hidden;
     padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #4285f4 #f1f3f4;
 }
 
 /* NAVIGATION CONTROLS */
