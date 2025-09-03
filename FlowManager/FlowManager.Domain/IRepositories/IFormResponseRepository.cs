@@ -7,14 +7,15 @@ namespace FlowManager.Domain.IRepositories
     public interface IFormResponseRepository
     {
         Task<(List<FormResponse> Data, int TotalCount)> GetAllFormResponsesQueriedAsync(
-            Guid? formTemplateId,
-            Guid? stepId,
-            Guid? userId,
-            string? searchTerm,
-            DateTime? createdFrom,
-            DateTime? createdTo,
-            bool includeDeleted,
-            QueryParams parameters);
+    Guid? formTemplateId,
+    Guid? stepId,
+    Guid? userId,
+    string? searchTerm,
+    DateTime? createdFrom,
+    DateTime? createdTo,
+    bool includeDeleted,
+    QueryParams? parameters,
+    List<string>? statusFilters = null);
         Task<List<FormResponse>> GetAllFormResponsesAsync();
         Task<FormResponse?> GetFormResponseByIdAsync(Guid id);
         Task<List<FormResponse>> GetFormResponsesByUserAsync(Guid userId);

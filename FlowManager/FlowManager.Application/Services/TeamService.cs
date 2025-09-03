@@ -38,7 +38,8 @@ namespace FlowManager.Application.Services
             (List<Team> result, int totalCount) = await _teamRepository.GetAllTeamsQueriedAsync(
                 payload.GlobalSearchTerm,
                 payload.Name,
-                payload.QueryParams?.ToQueryParams());
+                payload.QueryParams?.ToQueryParams(),
+                includeDeleted: true);
 
             return new PagedResponseDto<TeamResponseDto>
             {
@@ -96,7 +97,7 @@ namespace FlowManager.Application.Services
 
         public async Task<TeamResponseDto> AddTeamAsync(PostTeamRequestDto payload)
         {
-            var existingTeam = await _teamRepository.GetTeamByNameAsync(payload.Name);
+            var existingTeam = await _teamRepository.GetTeamByNameAsync(payload.Name, includeDeleted: true);
             if (existingTeam != null)
             {
                 throw new UniqueConstraintViolationException($"Team with name {payload.Name} already exists.");

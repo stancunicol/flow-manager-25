@@ -38,8 +38,12 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         protected override async Task OnInitializedAsync()
         {
-            ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetStepsQueriedAsync();
+            await LoadStepsAsync();
+        }
 
+        private async Task LoadStepsAsync()
+        {
+            ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetStepsQueriedAsync();
             if (!response.Success)
             {
                 return;
@@ -60,15 +64,34 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     {
                         Id = t.Id,
                         Name = t.Name,
-                        Users = t.Users?.Select(u => new UserVM
+                        Users = t.Users?.Select(user => new UserVM
                         {
-                            Id = u.Id,
-                            Name = u.Name,
-                            Email = u.Email,
+                            Id = user.Id,
+                            Name = user.Name,
+                            Email = user.Email,
                         }).ToList() ?? new List<UserVM>(),
                     }).ToList() ?? new List<TeamVM>(),
-                })
-                .ToList();
+                }).ToList();
+
+            // Debug logging pentru useri
+            foreach (var step in _availableSteps)
+            {
+                Console.WriteLine($"Step: {step.Name} - Users count: {step.Users.Count}");
+                foreach (var user in step.Users)
+                {
+                    Console.WriteLine($"  User: {user.Name} ({user.Email})");
+                }
+
+                Console.WriteLine($"Step: {step.Name} - Teams count: {step.Teams.Count}");
+                foreach (var team in step.Teams)
+                {
+                    Console.WriteLine($"  Team: {team.Name} - Team Users count: {team.Users.Count}");
+                    foreach (var teamUser in team.Users)
+                    {
+                        Console.WriteLine($"    Team User: {teamUser.Name} ({teamUser.Email})");
+                    }
+                }
+            }
         }
 
         private void HandleDragStart(DragEventArgs e, StepVM step)
@@ -108,15 +131,20 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         private void HandleDrop(DragEventArgs e)
         {
             _isDragOver = false;
-
             if (_draggedStep != null)
             {
                 if (!_configuredSteps.Any(cs => cs.Id == _draggedStep.Id))
                 {
-                    _configuredSteps.Add(_draggedStep);
+                    var stepForWorkflow = new StepVM
+                    {
+                        Id = _draggedStep.Id,
+                        Name = _draggedStep.Name,
+                        Users = new List<UserVM>(),
+                        Teams = new List<TeamVM>() 
+                    };
+                    _configuredSteps.Add(stepForWorkflow);
                 }
             }
-
             _draggedStep = null;
             StateHasChanged();
         }
@@ -164,7 +192,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 {
                     StepId = configuredStep.Id,
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                    TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                    Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                    {
+                        TeamId = t.Id,
+                        UserIds = t.Users.Select(u => u.Id).ToList(),
+                    }).ToList(),
                 }).ToList()
             };
 
@@ -194,6 +226,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             }
 
             StateHasChanged();
+            await Task.Delay(5000);
+
+            _onSubmitMessage = string.Empty;
+
+            ClearConfiguration();
         }
 
         public async Task SaveWorkflowInvokeAsync()
@@ -230,7 +267,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     {
                         StepId = configuredStep.Id,
                         UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                        TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                        Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                        {
+                            TeamId = t.Id,
+                            UserIds = t.Users.Select(u => u.Id).ToList(),
+                        }).ToList(),
                     }).ToList(),
                     FormTemplateId = null
                 });
@@ -271,7 +312,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 {
                     StepId = configuredStep.Id,
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                    TeamIds = configuredStep.Teams!.Select(t => t.Id).ToList(),
+                    Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                    {
+                        TeamId = t.Id,
+                        UserIds = t.Users.Select(u => u.Id).ToList(),
+                    }).ToList()
                 }).ToList(),
                 FormTemplateId = templateId
             };
@@ -307,14 +352,15 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         public int GetTotalUsersInWorkflow()
         {
             return _configuredSteps.Sum(step =>
-                step.Users!.Count() + step.Teams!.Sum(t => t.Users!.Count()));
+                (step.Users?.Count ?? 0) +
+                (step.Teams?.Count ?? 0));
         }
 
         public bool IsWorkflowValid()
         {
             return !string.IsNullOrWhiteSpace(_flowName) &&
                    _configuredSteps.Any() &&
-                   _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name));
+                   _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name) &&((s.Users != null && s.Users.Count > 0) || (s.Teams != null && s.Teams.Count > 0)));
         }
 
         public string GetFlowNameValidationClass()
@@ -335,8 +381,27 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         private void ConfigureStepsToFlow()
         {
             StepVM step = _configuredSteps.First(s => s.Id == _stepToAssign!.Id);
-            step.Users = _stepToAssign!.Users;
-            step.Teams = _stepToAssign!.Teams;
+
+            step.Users = _stepToAssign!.Users?.Select(u => new UserVM
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email
+            }).ToList() ?? new List<UserVM>();
+
+            step.Teams = _stepToAssign!.Teams?.Select(t => new TeamVM
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Users = t.Users?.Select(u => new UserVM
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email
+                }).ToList() ?? new List<UserVM>()
+            }).ToList() ?? new List<TeamVM>();
+
+            StateHasChanged();
         }
     }
 }

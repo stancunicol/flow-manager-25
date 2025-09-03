@@ -115,11 +115,17 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
             _onSubmitSuccess = response.Success;
             _onSubmitMessage = response.Message;
+            StateHasChanged();
 
             if (!response.Success)
             {
                 return;
             }
+
+            await Task.Delay(5000);
+
+            _onSubmitMessage = string.Empty;
+            StateHasChanged();
 
             await OnUserEdit.InvokeAsync();
         }

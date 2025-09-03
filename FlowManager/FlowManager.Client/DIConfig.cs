@@ -16,8 +16,8 @@ namespace FlowManager.Client
             services.AddScoped<FormResponseService>();
             services.AddScoped<ComponentService>();
             services.AddScoped<TeamService>();
+            services.AddScoped<AuthService>();
             services.AddScoped<FlowStepService>();
-
             return services;
         }
     }

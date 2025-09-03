@@ -166,22 +166,22 @@ namespace FlowManager.Application.Services
                 }
             }
 
-            foreach (Guid teamId in flowStep.TeamIds)
-            {
-                Team? team = await _teamRepository.GetTeamByIdAsync(teamId);
-                if (team == null)
-                {
-                    throw new EntryNotFoundException($"Team with id {teamId} not found.");
-                }
-                else
-                {
-                    flowStepToPost.AssignedTeams.Add(new FlowStepTeam
-                    {
-                        FlowStepId = flowStepToPost.Id,
-                        TeamId = teamId
-                    });
-                }
-            }
+            //foreach (Guid teamId in flowStep.TeamIds)
+            //{
+            //    Team? team = await _teamRepository.GetTeamByIdAsync(teamId);
+            //    if (team == null)
+            //    {
+            //        throw new EntryNotFoundException($"Team with id {teamId} not found.");
+            //    }
+            //    else
+            //    {
+            //        flowStepToPost.AssignedTeams.Add(new FlowStepTeam
+            //        {
+            //            FlowStepId = flowStepToPost.Id,
+            //            TeamId = teamId
+            //        });
+            //    }
+            //}
 
             await _flowStepRepository.AddFlowStepAsync(flowStepToPost);
 

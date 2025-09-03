@@ -69,6 +69,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
             _onSubmitMessage = response.Message;
             _onSubmitSuccess = response.Success;
+            StateHasChanged();
 
             if (!response.Success)
             {
@@ -76,8 +77,13 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
                 return;
             }
 
+            await Task.Delay(5000);
+
+            ClearForm();
+            _onSubmitMessage = string.Empty;
+            StateHasChanged();
+
             await OnUserAdded.InvokeAsync();
-            selectedRoles.Clear();
         }
 
         private void ToggleDropdown()

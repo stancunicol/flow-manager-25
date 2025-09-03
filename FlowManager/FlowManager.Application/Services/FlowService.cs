@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
+using FlowManager.Shared.DTOs.Requests.FlowStep;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -19,12 +20,20 @@ namespace FlowManager.Infrastructure.Services
         private readonly IFlowRepository _flowRepository;
         private readonly IFormTemplateRepository _formTemplateRepository;
         private readonly IStepRepository _stepRepository;
+        private readonly ITeamRepository _teamRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public FlowService(IFlowRepository flowRepository, IFormTemplateRepository formTemplateRepository, IStepRepository stepRepository)
+        public FlowService(IFlowRepository flowRepository,
+            IFormTemplateRepository formTemplateRepository,
+            IStepRepository stepRepository,
+            ITeamRepository teamRepository,
+            IRoleRepository roleRepository)
         {
             _flowRepository = flowRepository;
             _formTemplateRepository = formTemplateRepository;
             _stepRepository = stepRepository;
+            _teamRepository = teamRepository;
+            _roleRepository = roleRepository;
         }
 
         public async Task<PagedResponseDto<FlowResponseDto>> GetAllFlowsQueriedAsync(QueriedFlowRequestDto payload)
@@ -91,35 +100,65 @@ namespace FlowManager.Infrastructure.Services
             if(payload.FormTemplateId != null)
             {
                 FormTemplate? ft = await _formTemplateRepository.GetFormTemplateByIdAsync((Guid)payload.FormTemplateId);
-                if (ft != null)
-                {
-                    flowToPost.FormTemplates.Add(ft);
-                }
-                else
+                if (ft == null)
                 {
                     throw new EntryNotFoundException($"Form template with id {payload.FormTemplateId} not found.");
                 }
+
+                flowToPost.FormTemplates.Add(ft);
             }
 
-            flowToPost.Steps = payload.Steps.Select(step => new FlowStep
+            if (payload.Steps != null && payload.Steps.Count > 0)
             {
-                StepId = step.StepId,
-                FlowId = flowToPost.Id,
-            }).ToList();
-
-            foreach(var step in flowToPost.Steps)
-            {
-                step.AssignedUsers = payload.Steps.First(s => s.StepId == step.StepId).UserIds.Select(uId => new FlowStepUser
+                foreach(PostFlowStepRequestDto step in payload.Steps)
                 {
-                    FlowStepId = step.Id,
-                    UserId = uId,
-                }).ToList();
+                    if ((await _stepRepository.GetStepByIdAsync(step.StepId)) == null)
+                    { 
+                        throw new EntryNotFoundException($"Step with id {payload.FormTemplateId} not found.");
+                    }
 
-                step.AssignedTeams = payload.Steps.First(s => s.StepId == step.StepId).TeamIds.Select(tId => new FlowStepTeam
+                    flowToPost.Steps.Add(new FlowStep
+                    {
+                        StepId = step.StepId,
+                        FlowId = flowToPost.Id,
+                    });
+                }
+
+                foreach (var step in flowToPost.Steps)
                 {
-                    FlowStepId = step.Id,
-                    TeamId = tId,
-                }).ToList();
+                    var stepPayload = payload.Steps.First(s => s.StepId == step.StepId);
+
+                    step.AssignedUsers = stepPayload.UserIds.Select(uId => new FlowStepUser
+                    {
+                        FlowStepId = step.Id,
+                        UserId = uId,
+                    }).ToList();
+
+                    foreach (var teamPayload in stepPayload.Teams)
+                    {
+                        var fullTeam = await _teamRepository.GetTeamWithModeratorsAsync(teamPayload.TeamId, (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id);
+
+                        if (fullTeam.Users.Count == teamPayload.UserIds.Count)
+                        {
+                            step.AssignedTeams.Add(new FlowStepTeam
+                            {
+                                FlowStepId = step.Id,
+                                TeamId = teamPayload.TeamId,
+                            });
+                        }
+                        else
+                        {
+                            foreach (var userId in teamPayload.UserIds)
+                            {
+                                step.AssignedUsers.Add(new FlowStepUser
+                                {
+                                    FlowStepId = step.Id,
+                                    UserId = userId,
+                                });
+                            }
+                        }
+                    }
+                }
             }
 
             await _flowRepository.CreateFlowAsync(flowToPost);

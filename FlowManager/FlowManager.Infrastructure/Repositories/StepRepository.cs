@@ -98,19 +98,18 @@ namespace FlowManager.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(string? name, QueryParams? parameters)
+        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(Guid moderatorId, string? name, QueryParams? parameters)
         {
             IQueryable<Step> query = _context.Steps
-                .Include(s => s.Users.Where(u => u.DeletedAt == null))
+                .Include(s => s.Users.Where(u => u.DeletedAt == null && u.Roles.Any(ur => ur.RoleId == moderatorId)))
                     .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
                         .ThenInclude(ut => ut.Team);
-
 
             query = query.Where(s => s.DeletedAt == null);
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(s => s.Name.Contains(name));
+                query = query.Where(s => s.Name.ToUpper().Contains(name.ToUpper()));
             }
 
             int totalCount = query.Count();

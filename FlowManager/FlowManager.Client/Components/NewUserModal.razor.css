@@ -1,11 +1,11 @@
 .popup-backdrop {
+    z-index: 1400;
     position: fixed;
     inset: 0;
     background-color: rgba(0, 0, 40, 0.85);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 999;
     animation: fadein 0.3s ease-out forwards;
 }
 

@@ -16,6 +16,6 @@ namespace FlowManager.Domain.IRepositories
         Task<Step> PostStepAsync(Step step);
         Task<Step> DeleteStepAsync(Step step);
         Task SaveChangesAsync();
-        Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(string? name, QueryParams? parameters);
+        Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(Guid moderatorId, string? name, QueryParams? parameters);
     }
 }

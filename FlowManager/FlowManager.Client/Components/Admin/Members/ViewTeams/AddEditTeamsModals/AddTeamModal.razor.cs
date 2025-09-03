@@ -128,7 +128,12 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private async Task OnSubmit()
         {
             await PostTeamAsync();
+
+            await Task.Delay(5000);
+            _submitMessage = string.Empty;
+
             ClearForm();
+
             await LoadUsersAsync();
         }
 

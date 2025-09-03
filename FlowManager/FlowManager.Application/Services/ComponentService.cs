@@ -98,7 +98,7 @@ namespace FlowManager.Application.Services
             };
         }
 
-        public async Task<ComponentResponseDto> PatchComponentAsync(Guid id,PatchComponentRequestDto payload)
+        public async Task<ComponentResponseDto> PatchComponentAsync(Guid id, PatchComponentRequestDto payload)
         {
             Component? componentToPatch = _componentRepository.GetComponentByIdAsync(id).Result;
 

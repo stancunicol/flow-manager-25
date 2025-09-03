@@ -35,174 +35,288 @@
                 </div>
 
                 <form @onsubmit="SubmitAssignment" @onsubmit:preventDefault="true">
-                    <div class="tab-content">
-                        @if (_isTeamsTabSelected)
-                        {
-                            <!-- Teams Tab -->
-                            <div class="form-field">
-                                <label for="teamsSearch">Search Teams:</label>
-                                <input @bind="_teamsSearchTerm"
-                                       @bind:event="oninput"
-                                       @onkeyup="OnTeamsSearchChanged"
-                                       type="text"
-                                       id="teamsSearch"
-                                       class="modern-input"
-                                       placeholder="Search for teams..." />
-                            </div>
+                    <div class="main-content-with-sidebar">
+                        <div class="tab-content">
+                            @if (_isTeamsTabSelected)
+                            {
+                                <!-- Teams Tab -->
+                                <div class="form-field">
+                                    <label for="teamsSearch">Search Teams:</label>
+                                    <input @bind="_teamsSearchTerm"
+                                           @bind:event="oninput"
+                                           @onkeyup="OnTeamsSearchChanged"
+                                           type="text"
+                                           id="teamsSearch"
+                                           class="modern-input"
+                                           placeholder="Search for teams..." />
+                                </div>
 
-                            <div class="teams-list">
-                                @if (_availableTeams.Any())
-                                {
-                                    @foreach (var team in _availableTeams)
+                                <div class="teams-list">
+                                    @if (_availableTeams.Any())
                                     {
-                                        <div class="team-item">
-                                            <div class="team-header">
-                                                <div class="team-checkbox">
+                                        @foreach (var selectTeam in _availableTeams)
+                                        {
+                                            <div class="team-item">
+                                                <div class="team-header">
+                                                    <div class="team-checkbox">
+                                                        <input type="checkbox"
+                                                               id="team_@selectTeam.Team.Id"
+                                                               checked="@IsTeamFullySelected(selectTeam.Team)"
+                                                               @onchange="@((ChangeEventArgs e) => ToggleTeamSelection(selectTeam.Team, (bool)e.Value))" />
+                                                        <label for="team_@selectTeam.Team.Id">
+                                                            <div class="checkmark"></div>
+                                                            <div class="team-info">
+                                                                <div class="team-details">
+                                                                    <div class="team-name">@selectTeam.Team.Name</div>
+                                                                    <div class="team-member-count">@selectTeam.Team.Users.Count members</div>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                        <div class="team-dropdown-button">
+                                                            <button type="button" @onclick="() => OpenDropdownForTeam(selectTeam.Team)">
+                                                                v
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                @if (selectTeam.IsSelected)
+                                                {
+                                                    <div class="team-members">
+                                                        @foreach (var user in selectTeam.Team.Users)
+                                                        {
+                                                            <div class="member-checkbox">
+                                                                <input type="checkbox"
+                                                                       id="member_@(selectTeam.Team.Id)_@user.Id"
+                                                                       checked="@IsUserFromTeamSelected(selectTeam.Team, user)"
+                                                                       @onchange="@((ChangeEventArgs e) => ToggleUserSelectionFromTeam(selectTeam.Team, user, (bool)e.Value))" />
+                                                                <label for="member_@(selectTeam.Team.Id)_@user.Id">
+                                                                    <div class="checkmark"></div>
+                                                                    <div class="member-info">
+                                                                        <div class="member-name">@user.Name</div>
+                                                                        <div class="member-email">@user.Email</div>
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="no-results">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="9" cy="7" r="4"></circle>
+                                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                            </svg>
+                                            <p>No teams found</p>
+                                        </div>
+                                    }
+                                </div>
+
+                                @if (_teamsTotalPages > 1)
+                                {
+                                    <div class="pagination">
+                                        <button type="button" @onclick="PreviousTeamsPage"
+                                                disabled="@(_teamsPage <= 1)" class="pagination-btn">
+                                            Previous
+                                        </button>
+                                        <span class="pagination-info">
+                                            Page @_teamsPage of @_teamsTotalPages
+                                        </span>
+                                        <button type="button" @onclick="NextTeamsPage"
+                                                disabled="@(_teamsPage >= _teamsTotalPages)" class="pagination-btn">
+                                            Next
+                                        </button>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <!-- Individual Users Tab -->
+                                <div class="form-field">
+                                    <label for="usersSearch">Search Users:</label>
+                                    <input @bind="_usersSearchTerm"
+                                           @bind:event="oninput"
+                                           @onkeyup="OnUsersSearchChanged"
+                                           type="text"
+                                           id="usersSearch"
+                                           class="modern-input"
+                                           placeholder="Search for users..." />
+                                </div>
+
+                                <div class="users-list">
+                                    @if (_availableModerators.Any())
+                                    {
+                                        @foreach (var user in _availableModerators)
+                                        {
+                                            <div class="user-item">
+                                                <div class="user-checkbox">
                                                     <input type="checkbox"
-                                                           id="team_@team.Id"
-                                                           checked="@IsTeamFullySelected(team)"
-                                                           @onchange="@((ChangeEventArgs e) => ToggleTeamSelection(team.Id, (bool)e.Value))" />
-                                                    <label for="team_@team.Id">
+                                                           id="user_@user.Id"
+                                                           checked="@_assignedModerators.Contains(user)"
+                                                           @onchange="@((ChangeEventArgs e) => ToggleUserSelection(user, (bool)e.Value))" />
+                                                    <label for="user_@user.Id">
                                                         <div class="checkmark"></div>
-                                                        <div class="team-info">
-                                                            <div class="team-name">@team.Name</div>
-                                                            <div class="team-member-count">@team.Users.Count members</div>
+                                                        <div class="user-info">
+                                                            <div class="user-name">@user.Name</div>
+                                                            <div class="user-email">@user.Email</div>
                                                         </div>
                                                     </label>
                                                 </div>
                                             </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="no-results">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                            <p>No users found</p>
+                                        </div>
+                                    }
+                                </div>
 
-                                            @if (IsTeamFullySelected(team) || team.Users.Any(u => IsUserFromTeamSelected(team, u)))
+                                @if (_usersTotalPages > 1)
+                                {
+                                    <div class="pagination">
+                                        <button type="button" @onclick="PreviousUsersPage"
+                                                disabled="@(_usersPage <= 1)" class="pagination-btn">
+                                            Previous
+                                        </button>
+                                        <span class="pagination-info">
+                                            Page @_usersPage of @_usersTotalPages
+                                        </span>
+                                        <button type="button" @onclick="NextUsersPage"
+                                                disabled="@(_usersPage >= _usersTotalPages)" class="pagination-btn">
+                                            Next
+                                        </button>
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <!-- Assigned Items Sidebar -->
+                        <div class="assigned-items-sidebar">
+                            <div class="assigned-header">
+                                <span>Assigned to Step</span>
+                                <div class="assigned-count">@GetTotalAssignedCount()</div>
+                            </div>
+
+                            <div class="assigned-content">
+                                <!-- Assigned Teams Section -->
+                                @if (_assignedTeams.Any())
+                                {
+                                    <div class="assigned-section">
+                                        <div class="assigned-section-header">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="9" cy="7" r="4"></circle>
+                                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                            </svg>
+                                            <span>Teams (@_assignedTeams.Count)</span>
+                                        </div>
+
+                                        <div class="assigned-teams-list">
+                                            @foreach (var team in _assignedTeams)
                                             {
-                                                <div class="team-members">
-                                                    <div class="members-header">
-                                                        @if (_assignedTeamIds.Contains(team.Id))
-                                                        {
-                                                            <span>All team members selected</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span>Select specific members:</span>
-                                                        }
+                                                <div class="assigned-team-item">
+                                                    <div class="assigned-team-header">
+                                                        <div class="assigned-team-info">
+                                                            <div class="assigned-team-name">@team.Name</div>
+                                                            <div class="assigned-team-status">
+                                                                @if (IsTeamCompletelyAssigned(team))
+                                                                {
+                                                                    <span class="status-complete">Complete (@team.Users.Count/@GetOriginalTeamUserCount(team))</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="status-partial">Partial (@team.Users.Count/@GetOriginalTeamUserCount(team))</span>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        <button type="button"
+                                                                class="remove-team-btn"
+                                                                @onclick="() => RemoveTeamFromAssignment(team.Id)"
+                                                                title="Remove team">
+                                                            ✕
+                                                        </button>
                                                     </div>
 
-                                                    @foreach (var user in team.Users)
-                                                    {
-                                                        <div class="member-checkbox">
-                                                            <input type="checkbox"
-                                                                   id="member_@user.Id"
-                                                                   checked="@IsUserFromTeamSelected(team, user)"
-                                                                   @onchange="@((ChangeEventArgs e) => ToggleUserSelectionFromTeam(team, user, (bool)e.Value))" />
-                                                            <label for="member_@user.Id">
-                                                                <div class="checkmark"></div>
-                                                                <div class="member-info">
-                                                                    <div class="member-name">@user.Name</div>
-                                                                    <div class="member-email">@user.Email</div>
+                                                    <div class="assigned-team-members">
+                                                        @foreach (var user in team.Users)
+                                                        {
+                                                            <div class="assigned-team-member">
+                                                                <div class="member-details">
+                                                                    <span class="member-name">@user.Name</span>
+                                                                    <span class="member-email">@user.Email</span>
                                                                 </div>
-                                                            </label>
-                                                        </div>
-                                                    }
+                                                                <button type="button"
+                                                                        class="remove-member-btn"
+                                                                        @onclick="() => RemoveUserFromTeamAssignment(team.Id, user.Id)"
+                                                                        title="Remove member">
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
                                                 </div>
                                             }
                                         </div>
-                                    }
-                                }
-                                else
-                                {
-                                    <div class="no-results">
-                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="9" cy="7" r="4"></circle>
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                        </svg>
-                                        <p>No teams found</p>
                                     </div>
                                 }
-                            </div>
 
-                            @if (_teamsTotalPages > 1)
-                            {
-                                <div class="pagination">
-                                    <button type="button" @onclick="PreviousTeamsPage"
-                                            disabled="@(_teamsPage <= 1)" class="pagination-btn">
-                                        Previous
-                                    </button>
-                                    <span class="pagination-info">
-                                        Page @_teamsPage of @_teamsTotalPages
-                                    </span>
-                                    <button type="button" @onclick="NextTeamsPage"
-                                            disabled="@(_teamsPage >= _teamsTotalPages)" class="pagination-btn">
-                                        Next
-                                    </button>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <!-- Individual Users Tab -->
-                            <div class="form-field">
-                                <label for="usersSearch">Search Users:</label>
-                                <input @bind="_usersSearchTerm"
-                                       @bind:event="oninput"
-                                       @onkeyup="OnUsersSearchChanged"
-                                       type="text"
-                                       id="usersSearch"
-                                       class="modern-input"
-                                       placeholder="Search for users..." />
-                            </div>
-
-                            <div class="users-list">
-                                @if (_availableModerators.Any())
+                                <!-- Assigned Individual Users Section -->
+                                @if (_assignedModerators.Any())
                                 {
-                                    @foreach (var user in _availableModerators)
-                                    {
-                                        <div class="user-item">
-                                            <div class="user-checkbox">
-                                                <input type="checkbox"
-                                                       id="user_@user.Id"
-                                                       checked="@_assignedModeratorIds.Contains(user.Id)"
-                                                       @onchange="@((ChangeEventArgs e) => ToggleUserSelection(user.Id, (bool)e.Value))" />
-                                                <label for="user_@user.Id">
-                                                    <div class="checkmark"></div>
-                                                    <div class="user-info">
-                                                        <div class="user-name">@user.Name</div>
-                                                        <div class="user-email">@user.Email</div>
-                                                    </div>
-                                                </label>
-                                            </div>
+                                    <div class="assigned-section">
+                                        <div class="assigned-section-header">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                            <span>Individual Users (@_assignedModerators.Count)</span>
                                         </div>
-                                    }
+
+                                        <div class="assigned-users-list">
+                                            @foreach (var user in _assignedModerators)
+                                            {
+                                                <div class="assigned-user-item">
+                                                    <div class="assigned-user-details">
+                                                        <span class="assigned-user-name">@user.Name</span>
+                                                        <span class="assigned-user-email">@user.Email</span>
+                                                    </div>
+                                                    <button type="button"
+                                                            class="remove-user-btn"
+                                                            @onclick="() => RemoveUserFromAssignment(user.Id)"
+                                                            title="Remove user">
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 }
-                                else
+
+                                @if (!_assignedTeams.Any() && !_assignedModerators.Any())
                                 {
-                                    <div class="no-results">
+                                    <div class="no-assigned-items">
                                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                             <circle cx="12" cy="7" r="4"></circle>
                                         </svg>
-                                        <p>No users found</p>
+                                        <p>No teams or users assigned yet</p>
                                     </div>
                                 }
                             </div>
-
-                            @if (_usersTotalPages > 1)
-                            {
-                                <div class="pagination">
-                                    <button type="button" @onclick="PreviousUsersPage"
-                                            disabled="@(_usersPage <= 1)" class="pagination-btn">
-                                        Previous
-                                    </button>
-                                    <span class="pagination-info">
-                                        Page @_usersPage of @_usersTotalPages
-                                    </span>
-                                    <button type="button" @onclick="NextUsersPage"
-                                            disabled="@(_usersPage >= _usersTotalPages)" class="pagination-btn">
-                                        Next
-                                    </button>
-                                </div>
-                            }
-                        }
+                        </div>
                     </div>
 
                     <div class="info-card">
@@ -230,7 +344,7 @@
                             Cancel
                         </button>
                         <button type="submit" class="btn btn-primary"
-                                disabled="@(!_assignedTeamIds.Any() && !_assignedModeratorIds.Any())">
+                                disabled="@(!_assignedTeams.Any() && !_assignedModerators.Any())">
                             Assign to Step
                         </button>
                     </div>

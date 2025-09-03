@@ -12,13 +12,17 @@ body {
 
 .basic-user-container {
     display: flex;
-    min-height: 83vh;
+    height: 100vh;
 }
 
 .page-description {
+    position: fixed;
+    top: 55px;
+    left: 0;
+    right: 0;
+    height: 90px;
     border-top: 1px solid var(--primary-color);
     background: linear-gradient(180deg, #2c8e90 0%,#003d5c 100%);
-    position: relative;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(44, 142, 144, 0.15);
 }
@@ -55,15 +59,33 @@ body {
         text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
+.welcome-label {
+    position: absolute;
+    top: 50%; /* centru pe verticală */
+    right: 1.5rem; /* padding dreapta consistent cu page-description */
+    transform: translateY(-50%); /* ajustează centrul exact */
+}
+
+    .welcome-label label {
+        font-weight: 700;
+        font-size: 28px;
+        color: white;
+    }
+
 .sidebar {
     width: 200px;
+    position: fixed;
+    top: 145px; /* navbar + page-description */
+    bottom: 0;
     background-color: white;
     border-right: 1px solid #E5E5E5;
     padding: 2rem 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto; /* scroll dacă meniul e mare */
 }
+
 
 .nav-main {
     display: flex;
@@ -77,13 +99,17 @@ body {
 }
 
 .main-content {
-    flex: 1;
+    flex: 1; /* ocupă tot spațiul disponibil */
+    margin-left: 200px; /* lățimea sidebar */
+    margin-top: 145px; /* navbar + page-description */
+    padding: 0 1.5rem;
     background-color: #f8fafc;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    padding: 0 1.5rem;
+    min-height: calc(100vh - 145px); /* asigură spațiu minim */
 }
+
 
 /* Add Form Button - exact same style as Add User */
 .adminButtons {
@@ -1457,26 +1483,144 @@ body {
     }
 }
 
-/*.active-template-badge {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    color: #059669;
-    background: #d1fae5;
-    padding: 0.2rem 0.5rem;
+/* Status Filter Styles */
+.status-filter-container {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
     border-radius: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 1px solid #a7f3d0;
-    margin-left: 0.5rem;
-    vertical-align: middle;
+    border: 1px solid #e5e7eb;
 }
 
-.template-info h4 {
+.status-filter-header {
+    margin-bottom: 0.75rem;
+}
+
+.filter-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.status-filter-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.status-filter-btn {
     display: flex;
     align-items: center;
-    margin: 0 0 0.25rem 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #1f2937;
-}*/
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 100px;
+    justify-content: flex-start;
+}
+
+    .status-filter-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-filter-btn.active {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .status-filter-btn.all {
+        border-color: #6b7280;
+        color: #374151;
+    }
+
+        .status-filter-btn.all.active {
+            background: #f3f4f6;
+            border-color: #6b7280;
+        }
+
+    .status-filter-btn.pending {
+        border-color: #f59e0b;
+        color: #92400e;
+    }
+
+        .status-filter-btn.pending.active {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+    .status-filter-btn.rejected {
+        border-color: #ef4444;
+        color: #991b1b;
+    }
+
+        .status-filter-btn.rejected.active {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+
+    .status-filter-btn.approved {
+        border-color: #10b981;
+        color: #065f46;
+    }
+
+        .status-filter-btn.approved.active {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+    .status-indicator.all {
+        background: #6b7280;
+    }
+
+    .status-indicator.pending {
+        background: #f59e0b;
+    }
+
+    .status-indicator.rejected {
+        background: #ef4444;
+    }
+
+    .status-indicator.approved {
+        background: #10b981;
+    }
+
+.active-filters-info {
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    background: #e0f2fe;
+    border: 1px solid #0284c7;
+    border-radius: 6px;
+    text-align: center;
+}
+
+    .active-filters-info span {
+        font-size: 13px;
+        color: #0c4a6e;
+        font-weight: 500;
+    }
+
+/* Responsive pentru filtere */
+@media (max-width: 768px) {
+    .status-filter-buttons {
+        gap: 0.5rem;
+    }
+
+    .status-filter-btn {
+        min-width: 90px;
+        padding: 0.6rem 0.8rem;
+        font-size: 13px;
+    }
+}

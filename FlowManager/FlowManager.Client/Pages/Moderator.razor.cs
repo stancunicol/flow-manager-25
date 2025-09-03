@@ -1,5 +1,6 @@
 ﻿using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
+using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs.Responses;
@@ -53,6 +54,8 @@ namespace FlowManager.Client.Pages
         private bool showRejectModal = false;
         private string _rejectReason = "";
         private NextStepInfo? nextStepInfo;
+        [Inject] private AuthService _authService { get; set; } = default!;
+        private UserVM _currentUser = new();
 
         // Property pentru reject reason cu StateHasChanged
         private string rejectReason
@@ -92,6 +95,8 @@ namespace FlowManager.Client.Pages
             }
 
             Console.WriteLine("[Moderator] User has Moderator role, allowing access");
+
+            await GetCurrentUser();
         }
 
         private async Task LoadCurrentModerator()
@@ -627,6 +632,21 @@ namespace FlowManager.Client.Pages
         public void Dispose()
         {
             searchDebounceTimer?.Dispose();
+        }
+
+        private async Task GetCurrentUser()
+        {
+            UserProfileDto? result = await _authService.GetCurrentUserAsync();
+
+            if (result == null)
+                return;
+
+            _currentUser = new UserVM
+            {
+                Id = result.Id,
+                Name = result.Name,
+                Email = result.Email
+            };
         }
 
         // Helper classes

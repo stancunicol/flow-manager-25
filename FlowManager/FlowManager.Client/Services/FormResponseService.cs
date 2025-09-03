@@ -38,7 +38,7 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<PagedUserFormsResponse?> GetFormResponsesByUserPagedAsync(Guid userId, int page, int pageSize, string? searchTerm = null)
+        public async Task<PagedUserFormsResponse?> GetFormResponsesByUserPagedAsync(Guid userId, int page, int pageSize, string? searchTerm = null, List<string>? statusFilters = null)
         {
             try
             {
@@ -54,6 +54,14 @@ namespace FlowManager.Client.Services
 
                 if (!string.IsNullOrEmpty(searchTerm))
                     query["SearchTerm"] = searchTerm;
+
+                if (statusFilters?.Any() == true && statusFilters.Count < 3)
+                {
+                    for (int i = 0; i < statusFilters.Count; i++)
+                    {
+                        query[$"StatusFilters[{i}]"] = statusFilters[i];
+                    }
+                }
 
                 query["QueryParams.Page"] = page.ToString();
                 query["QueryParams.PageSize"] = pageSize.ToString();

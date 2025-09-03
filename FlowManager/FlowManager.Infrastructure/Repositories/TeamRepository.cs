@@ -30,16 +30,18 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globalSearchTerm, string? name, QueryParams? queryParams)
+        public async Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globalSearchTerm, string? name, QueryParams? queryParams, bool includeDeleted = false)
         {
             var query = _context.Teams
-                .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
                     .ThenInclude(ut => ut.User)
                         .ThenInclude(u => u.Step)
                 .AsQueryable();
 
-            if(!string.IsNullOrWhiteSpace(globalSearchTerm))
+            if (!includeDeleted)
+                query = query.Where(t => t.DeletedAt == null);
+
+            if (!string.IsNullOrWhiteSpace(globalSearchTerm))
             {
                 query = query.Where(t =>
                     t.Name.Contains(globalSearchTerm) ||
@@ -113,13 +115,17 @@ namespace FlowManager.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync(t => t.Id == id);
         }
 
-        public async Task<Team?> GetTeamByNameAsync(string name)
+        public async Task<Team?> GetTeamByNameAsync(string name, bool includeDeleted = false)
         {
-            return await _context.Teams
-                .Where(t => t.DeletedAt == null)
-                .Include(t => t.Users.Where(u => u.DeletedAt == null))
-                    .ThenInclude(ut => ut.User)
-                .FirstOrDefaultAsync(t => t.Name.ToLower() == name.ToLower());
+            IQueryable<Team> query = _context.Teams;
+
+            if (!includeDeleted)
+                query = query.Where(t => t.DeletedAt == null);
+
+            query = query.Include(t => t.Users.Where(u => u.DeletedAt == null))
+                    .ThenInclude(ut => ut.User);
+
+            return await query.FirstOrDefaultAsync(t => t.Name.ToLower() == name.ToLower());
         }
 
         public async Task<Team?> GetTeamWithUsersAsync(Guid id)
@@ -128,6 +134,14 @@ namespace FlowManager.Infrastructure.Repositories
                 .Where(t => t.DeletedAt == null)
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
                 .FirstOrDefaultAsync(t => t.Id == id);
+        }
+
+        public async Task<Team?> GetTeamWithModeratorsAsync(Guid teamId, Guid moderatorId)
+        {
+            return await _context.Teams
+                .Where(t => t.DeletedAt == null)
+                .Include(t => t.Users.Where(u => u.DeletedAt == null && u.User.Roles.Any(ur => ur.RoleId == moderatorId)))
+                .FirstOrDefaultAsync(t => t.Id == teamId);
         }
 
         public async Task<Team> AddTeamAsync(Team team)
@@ -203,8 +217,8 @@ namespace FlowManager.Infrastructure.Repositories
                 .Where(t => t.DeletedAt == null &&
                             t.Users.Any(ut => ut.DeletedAt == null &&
                                               ut.User.StepId == stepId &&
-                                              ut.Team.Users.Any(ut => ut.DeletedAt == null && ut.User.Roles.Any(ur => ur.RoleId == moderatorId))))
-                .Include(t => t.Users)
+                                              ut.User.Roles.Any(ur => ur.RoleId == moderatorId)))
+                .Include(t => t.Users.Where(ut => ut.DeletedAt == null && ut.User.Roles.Any(ur => ur.RoleId == moderatorId)))
                     .ThenInclude(ut => ut.User)
                         .ThenInclude(u => u.Step)
                 .AsQueryable();

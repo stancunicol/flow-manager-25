@@ -1,4 +1,8 @@
-﻿@inject NavigationManager Navigation
+﻿@using FlowManager.Client.Services;
+@using FlowManager.Client.ViewModels;
+@using FlowManager.Shared.DTOs;
+
+@inject NavigationManager Navigation;
 
 <div class="siemens-navbar">
     <nav>
@@ -7,6 +11,7 @@
         </div>
 
         <div class="nav-actions">
+
             <div class="home-btn">
                 <button @onclick="NavigateToHome">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -20,6 +25,7 @@
 </div>
 
 @code {
+
     private void NavigateToHome()
     {
         Navigation.NavigateTo("/home");

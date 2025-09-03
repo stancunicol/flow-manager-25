@@ -1,4 +1,6 @@
-﻿using FlowManager.Shared.DTOs;
+﻿using FlowManager.Client.Services;
+using FlowManager.Client.ViewModels;
+using FlowManager.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
@@ -13,10 +15,13 @@ namespace FlowManager.Client.Pages
         private List<string> userRoles = new();
         private bool isLoading = true;
         private string? errorMessage;
+        [Inject] private AuthService _authService { get; set; } = default!;
+        private UserVM _currentUser = new();
 
         protected override async Task OnInitializedAsync()
         {
             await LoadUserRoles();
+            await GetCurrentUser();
         }
 
         private async Task LoadUserRoles()
@@ -77,6 +82,21 @@ namespace FlowManager.Client.Pages
         private bool HasRole(string roleName)
         {
             return userRoles.Any(r => r.Equals(roleName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private async Task GetCurrentUser()
+        {
+            UserProfileDto? result = await _authService.GetCurrentUserAsync();
+
+            if (result == null)
+                return;
+
+            _currentUser = new UserVM
+            {
+                Id = result.Id,
+                Name = result.Name,
+                Email = result.Email
+            };
         }
     }
 }

@@ -6,6 +6,7 @@
         public Guid? StepId { get; set; }
         public Guid? UserId { get; set; }
         public string? SearchTerm { get; set; }
+        public List<string>? StatusFilters { get; set; }
         public DateTime? CreatedFrom { get; set; }
         public DateTime? CreatedTo { get; set; }
         public bool IncludeDeleted { get; set; } = false;

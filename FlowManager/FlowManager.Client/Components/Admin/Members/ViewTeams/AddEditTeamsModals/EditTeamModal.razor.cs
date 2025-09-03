@@ -73,6 +73,13 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
             _totalPages = response.Result.TotalPages;
             _totalCount = response.Result.TotalCountUnassigned + response.Result.TotalCountAssigned;
+
+            StateHasChanged();
+        }
+
+        private bool IsSubmitValid()
+        {
+            return _isSubmitting == false && _selectedUsers.Count() != 0;
         }
 
         private async Task LoadUsersAsync(bool resetPageSize = false)
@@ -136,6 +143,11 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         private async Task OnSubmit()
         {
             await EditTeamAsync();
+
+            await Task.Delay(5000);
+
+            _submitMessage = string.Empty;
+
             await LoadUsersAsync();
         }
 

@@ -38,11 +38,6 @@
                     <span class="template-name">@SavedFormTemplateName</span>
                 </div>
             }
-
-            @if (_configuredSteps.Any())
-            {
-                <span class="workflow-info">(@_configuredSteps.Count steps, @GetTotalUsersInWorkflow() total users)</span>
-            }
         </div>
 
         <div class="dropped-steps">
@@ -86,7 +81,7 @@
                             <div class="step-details">
                                 <div class="step-name">@step.Name</div>
                                 <div class="step-users-count">
-                                    @(step.Users!.Count() + step.Teams!.Sum(t => t.Users!.Count())) users
+                                    @((step.Users?.Count ?? 0) + (step.Teams?.Count ?? 0)) assignments
                                 </div>
                             </div>
                         </div>
@@ -131,7 +126,7 @@
                 <div class="step-details">
                     <div class="step-name">@step.Name</div>
                     <div class="step-users-count">
-                        @(step.Users!.Count() + step.Teams!.Sum(t => t.Users!.Count())) users
+                        @(step.Users!.Count()) moderators
                     </div>
                 </div>
 

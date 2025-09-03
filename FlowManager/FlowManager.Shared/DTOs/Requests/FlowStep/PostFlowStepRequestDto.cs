@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FlowManager.Shared.DTOs.Requests.Flow;
+using FlowManager.Shared.DTOs.Requests.Team;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +13,6 @@ namespace FlowManager.Shared.DTOs.Requests.FlowStep
         public Guid StepId { get; set; }
         public Guid FlowId { get; set; }
         public List<Guid>? UserIds { get; set; }    
-        public List<Guid>? TeamIds { get; set; }
+        public List<PostFlowTeamRequestDto>? Teams { get; set; }
     }
 }

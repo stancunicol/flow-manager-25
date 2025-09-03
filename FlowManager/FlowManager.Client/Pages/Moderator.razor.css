@@ -12,13 +12,17 @@ body {
 
 .moderator-container {
     display: flex;
-    min-height: 83vh;
+    height: 100vh;
 }
 
 .page-description {
+    position: fixed;
+    top: 55px;
+    left: 0;
+    right: 0;
+    height: 90px;
     border-top: 1px solid var(--primary-color);
     background: linear-gradient(180deg, #2c8e90 0%, #003d5c 100%);
-    position: relative;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(44, 142, 144, 0.15);
 }
@@ -55,14 +59,31 @@ body {
         text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
+.welcome-label {
+    position: absolute;
+    top: 50%; /* centru pe verticală */
+    right: 1.5rem; /* padding dreapta consistent cu page-description */
+    transform: translateY(-50%); /* ajustează centrul exact */
+}
+
+    .welcome-label label {
+        font-weight: 700;
+        font-size: 28px;
+        color: white;
+    }
+
 .sidebar {
     width: 200px;
+    position: fixed;
+    top: 145px;
+    bottom: 0;
     background-color: white;
     border-right: 1px solid #E5E5E5;
     padding: 2rem 0;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
 }
 
 .nav-main {
@@ -78,9 +99,14 @@ body {
 
 .main-content {
     flex: 1;
-    padding: 1rem;
+    margin-left: 200px;
+    margin-top: 145px;
+    padding: 0 1.5rem;
     background-color: #f8fafc;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 145px);
 }
 
 .nav-item {
@@ -130,7 +156,6 @@ body {
         border-left-color: #dc2626;
     }
 
-/* Assigned Forms Content */
 .assigned-content {
     height: 100%;
     display: flex;
@@ -188,7 +213,6 @@ body {
     color: #0ea5e9;
 }
 
-/* Search Container */
 .search-container {
     margin-bottom: 1.5rem;
 }
@@ -262,7 +286,6 @@ body {
     padding-left: 0.25rem;
 }
 
-/* Loading and Empty States */
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -350,7 +373,6 @@ body {
         transform: translateY(-1px);
     }
 
-/* Forms Grid */
 .forms-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -475,7 +497,6 @@ body {
     }
 
 
-/* Modal Overlay */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -486,12 +507,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 1400;
     backdrop-filter: blur(2px);
     cursor: pointer;
 }
 
-/* Review Form Modal Styles */
 .review-form-modal-content {
     background: white;
     border-radius: 12px;
@@ -499,6 +519,7 @@ body {
     width: 95%;
     max-height: 90vh;
     overflow: hidden;
+    z-index: 1400;
     display: flex;
     flex-direction: column;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
@@ -570,7 +591,6 @@ body {
     padding: 0;
 }
 
-/* Form Display Section */
 .form-display-section {
     padding: 1.5rem;
     border-bottom: 1px solid #f3f4f6;
@@ -613,7 +633,6 @@ body {
     color: #6b7280;
 }
 
-/* Form Canvas Display */
 .form-canvas-display {
     position: relative;
     min-height: 400px;
@@ -705,7 +724,6 @@ body {
             color: white;
         }
 
-/* User Info Section */
 .user-info-section {
     padding: 1.5rem;
     background: #f8fafc;
@@ -748,7 +766,6 @@ body {
     text-align: right;
 }
 
-/* Review Actions Footer */
 .review-actions-footer {
     background: #f9fafb;
     border-top: 1px solid #e5e7eb;
@@ -838,7 +855,7 @@ body {
         width: 16px;
         height: 16px;
     }
-/* Reject Modal Styles - FIXED */
+
 .reject-modal-content {
     background: white;
     border-radius: 8px;
@@ -1031,7 +1048,6 @@ body {
         height: 16px;
     }
 
-/* Responsive pentru reject modal */
 @media (max-width: 480px) {
     .reject-modal-content {
         width: 95%;
@@ -1058,7 +1074,6 @@ body {
     }
 }
 
-/* Success/Error Messages */
 .review-message {
     padding: 1rem;
     border-radius: 6px;
@@ -1088,7 +1103,6 @@ body {
         flex-shrink: 0;
     }
 
-/* Processing Overlay */
 .processing-overlay {
     position: absolute;
     top: 0;
@@ -1125,11 +1139,9 @@ body {
     color: #6b7280;
 }
 
-/* View Form Modal Styles*/
 .view-form-modal-content {
     background: white;
     border-radius: 12px;
-    /* Match FormTemplate Builder container width */
     max-width: 1200px;
     width: 95%;
     max-height: 90vh;
@@ -1138,6 +1150,7 @@ body {
     display: flex;
     flex-direction: column;
     cursor: default;
+    z-index: 1400;
 }
 
 .modal-title-section {
@@ -1190,14 +1203,13 @@ body {
         color: #991b1b;
     }
 
-/* Form Canvas Styles - exact ca la BasicUser */
 .form-canvas-container {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     overflow: hidden;
     background: white;
     margin: 0 auto;
-    max-width: 1040px; /* 1000px canvas + 40px padding */
+    max-width: 1040px;
 }
 
 .form-canvas-header {
@@ -1262,8 +1274,7 @@ body {
 .field-label-readonly {
     display: block;
     font-size: 12px;
-    font-weight: 600;
-    color: #6b7280; /* SCHIMBAT - text cenușiu în loc de negru */
+    font-weight: 60;
     margin-bottom: 4px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
@@ -1274,7 +1285,6 @@ body {
 }
 
 .field-value-readonly {
-    /* EXACT dimensions from FormTemplate Builder */
     width: 180px;
     height: 36px;
     padding: 8px 12px;
