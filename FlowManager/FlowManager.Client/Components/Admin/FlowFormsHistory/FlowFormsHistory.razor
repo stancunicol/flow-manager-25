@@ -47,19 +47,6 @@
                 </button>
             }
         </div>
-        @if (!string.IsNullOrEmpty(searchTerm))
-        {
-            <div class="search-results-info">
-                @if (flows?.Any() == true)
-                {
-                    <span>Found @flows.Count flow(s) matching "@searchTerm"</span>
-                }
-                else if (!isLoadingFlows)
-                {
-                    <span>No flows found matching "@searchTerm"</span>
-                }
-            </div>
-        }
     </div>
 
     <!-- Loading State -->
