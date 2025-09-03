@@ -50,7 +50,8 @@
             <div class="canvas-workspace"
                  @onclick="OnWorkspaceClick"
                  @onmousemove="OnMouseMove"
-                 @onmouseup="OnMouseUp">
+                 @onmouseup="OnMouseUp"
+                @onmouseleave="OnMouseUp">
                 @if (!canvasElements.Any())
                 {
                     <div class="empty-workspace">
@@ -102,7 +103,7 @@
                         else
                         {
                             <!-- Component display -->
-                            <div class="component-display" @onmousedown:stopPropagation="false">
+                            <div class="component-display" >
                                 @if (element.ComponentType == "TextInput" || element.ComponentType == "email" || element.ComponentType == "text")
                                 {
                                     <div class="form-field">
@@ -365,9 +366,10 @@
     // Drag state
     private bool isDragging = false;
     private Guid? draggedElementId = null;
-    private double dragOffsetX = 0;
-    private double dragOffsetY = 0;
-    private bool justFinishedDragging = false;
+    private double dragStartX = 0;
+    private double dragStartY = 0;
+    private double elementStartX = 0;
+    private double elementStartY = 0;
     // Grid settings
     private const int GRID_SIZE = 25; // 20px for element + 5px spacing
 
@@ -439,92 +441,60 @@
 
     private async Task OnWorkspaceClick(MouseEventArgs e)
     {
-        if (justFinishedDragging)
-        {
-            justFinishedDragging = false;
-            return; // Nu crea text element
-        }
-
-        // Only create text if not dragging and not editing
         if (!isDragging && !isEditingText)
         {
-            try
-            {
-                // Snap to grid
-                var gridX = SnapToGrid(e.OffsetX);
-                var gridY = SnapToGrid(e.OffsetY - 60); // Subtract header height
-
-                // Create text element at click position
-                await CreateTextElement(gridX, gridY);
-            }
-            catch (Exception ex)
-            {
-                // Fallback to basic positioning
-                await CreateTextElement(SnapToGrid(100), SnapToGrid(100));
-            }
+            var gridX = SnapToGrid(e.OffsetX);
+            var gridY = SnapToGrid(e.OffsetY - 60);
+            await CreateTextElement(gridX, gridY);
         }
-
     }
 
-    private async Task OnElementMouseDown(MouseEventArgs e, Guid elementId)
+    private void OnElementMouseDown(MouseEventArgs e, Guid elementId)
     {
-        // Don't start dragging if we're editing text
         if (isEditingText && editingElementId == elementId)
         {
             return;
         }
 
-        // Start dragging
         isDragging = true;
         draggedElementId = elementId;
 
-        // Calculate offset from element origin
+        dragStartX = e.ClientX;
+        dragStartY = e.ClientY;
+
         var element = canvasElements.FirstOrDefault(el => el.Id == elementId);
         if (element != null)
         {
-            dragOffsetX = e.OffsetX;
-            dragOffsetY = e.OffsetY;
+            elementStartX = element.X;
+            elementStartY = element.Y;
         }
     }
 
-    private async Task OnMouseMove(MouseEventArgs e)
+    private void OnMouseMove(MouseEventArgs e)
     {
         if (isDragging && draggedElementId.HasValue)
         {
             var element = canvasElements.FirstOrDefault(el => el.Id == draggedElementId.Value);
             if (element != null)
             {
-                // Calculate new position relative to workspace
-                var newX = e.OffsetX - dragOffsetX;
-                var newY = e.OffsetY - dragOffsetY - 60; // Subtract header height
+                var deltaX = e.ClientX - dragStartX;
+                var deltaY = e.ClientY - dragStartY;
 
-                // Snap to grid
-                element.X = SnapToGrid(newX);
-                element.Y = SnapToGrid(newY);
+                var newX = elementStartX + deltaX;
+                var newY = elementStartY + deltaY;
+
+                element.X = Math.Max(0, SnapToGrid(newX));
+                element.Y = Math.Max(0, SnapToGrid(newY));
 
                 StateHasChanged();
             }
         }
     }
 
-    private async Task OnMouseUp(MouseEventArgs e)
+    private void OnMouseUp(MouseEventArgs e)
     {
-        if (isDragging)
-        {
-            justFinishedDragging = true; // Marchează că tocmai am terminat de tras
-
-            // Resetează după un delay scurt pentru a permite event-ului click să se proceseze
-            _ = Task.Delay(100).ContinueWith(_ =>
-            {
-                justFinishedDragging = false;
-                InvokeAsync(StateHasChanged);
-            });
-        }
-
         isDragging = false;
         draggedElementId = null;
-        dragOffsetX = 0;
-        dragOffsetY = 0;
     }
 
     private double SnapToGrid(double value)
