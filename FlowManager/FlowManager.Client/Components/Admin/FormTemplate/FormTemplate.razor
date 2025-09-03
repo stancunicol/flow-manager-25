@@ -51,7 +51,7 @@
                  @onclick="OnWorkspaceClick"
                  @onmousemove="OnMouseMove"
                  @onmouseup="OnMouseUp"
-                @onmouseleave="OnMouseUp">
+                 @onmouseleave="OnMouseUp">
                 @if (!canvasElements.Any())
                 {
                     <div class="empty-workspace">
@@ -103,7 +103,9 @@
                         else
                         {
                             <!-- Component display -->
-                            <div class="component-display" >
+                            <div class="component-display"
+                                 @ondblclick="@(() => EditComponentElement(element.Id))"
+                                 @ondblclick:stopPropagation="true">
                                 @if (element.ComponentType == "TextInput" || element.ComponentType == "email" || element.ComponentType == "text")
                                 {
                                     <div class="form-field">
@@ -156,14 +158,16 @@
                                             }
                                         </label>
                                         <div class="radio-group">
-                                            <label class="radio-option">
-                                                <input type="radio" name="radio_@element.Id" disabled />
-                                                <span>Option 1</span>
-                                            </label>
-                                            <label class="radio-option">
-                                                <input type="radio" name="radio_@element.Id" disabled />
-                                                <span>Option 2</span>
-                                            </label>
+                                            @{
+                                                var radioOptions = GetRadioOptions(element);
+                                            }
+                                            @foreach (var option in radioOptions)
+                                            {
+                                                <label class="radio-option">
+                                                    <input type="radio" name="radio_@element.Id" disabled />
+                                                    <span>@option</span>
+                                                </label>
+                                            }
                                         </div>
                                     </div>
                                 }
@@ -284,7 +288,7 @@
             <div class="modal-content">
                 <div class="modal-field">
                     <label class="modal-label">Component Type</label>
-                    <select @bind="newComponent.Type" class="modal-select">
+                    <select @bind="newComponent.Type" @oninput="OnComponentTypeChange" class="modal-select">
                         <option value="TextInput">Text Input</option>
                         <option value="Checkbox">Checkbox</option>
                         <option value="DateTime">Date Time</option>
@@ -320,6 +324,38 @@
                                placeholder="0 = unlimited" />
                     </div>
                 }
+
+                @if (newComponent.Type == "RadioButton")
+                {
+                    <div class="modal-field">
+                        <label class="modal-label">Radio Button Options</label>
+                        <div class="radio-options-editor">
+                            @for (int i = 0; i < radioOptions.Count; i++)
+                            {
+                                int index = i; // Capture pentru closure
+                                               <div class="radio-option-row">
+                                                   <input @bind="radioOptions[index]"
+                                                          class="modal-input"
+                                                          placeholder="@($"Option {index + 1}")"
+                                                          style="flex: 1; margin-right: 8px;" />
+                                    @if (radioOptions.Count > 1)
+                                    {
+                                        <button type="button"
+                                                @onclick="@(() => RemoveRadioOption(index))"
+                                                class="remove-option-btn">
+                                            ×
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            <button type="button"
+                                    @onclick="AddRadioOption"
+                                    class="add-option-btn">
+                                + Add Option
+                            </button>
+                        </div>
+                    </div>
+                }
             </div>
 
             <div class="modal-footer">
@@ -328,6 +364,76 @@
                 </button>
                 <button class="modal-btn primary" @onclick="SaveNewComponent" @onclick:stopPropagation="true">
                     Add Component
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Edit Component Modal -->
+@if (showEditComponentModal && editingComponent != null)
+{
+    <div class="modal-overlay" @onclick="CloseEditComponentModal" @onclick:stopPropagation="false">
+        <div class="modal-container" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Edit @editingComponent.ComponentType</h2>
+                <button class="modal-close" @onclick="CloseEditComponentModal" @onclick:stopPropagation="true">×</button>
+            </div>
+
+            <div class="modal-content">
+                <div class="modal-field">
+                    <label class="modal-label">Label</label>
+                    <input @bind="editingComponent.Label"
+                           class="modal-input"
+                           placeholder="Enter component label" />
+                </div>
+
+                <div class="modal-field">
+                    <label class="checkbox-container">
+                        <input @bind="editingComponent.Required" type="checkbox" />
+                        <span class="checkbox-mark">Required field</span>
+                    </label>
+                </div>
+
+                @if (editingComponent.ComponentType == "RadioButton" || editingComponent.ComponentType == "radio")
+                {
+                    <div class="modal-field">
+                        <label class="modal-label">Radio Button Options</label>
+                        <div class="radio-options-editor">
+                            @for (int i = 0; i < editRadioOptions.Count; i++)
+                            {
+                                int index = i;
+                                <div class="radio-option-row">
+                                    <input @bind="editRadioOptions[index]"
+                                           class="modal-input"
+                                           placeholder="@($"Option {index + 1}")"
+                                           style="flex: 1; margin-right: 8px;" />
+                                    @if (editRadioOptions.Count > 1)
+                                    {
+                                        <button type="button"
+                                                @onclick="@(() => RemoveEditRadioOption(index))"
+                                                class="remove-option-btn">
+                                            ×
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            <button type="button"
+                                    @onclick="AddEditRadioOption"
+                                    class="add-option-btn">
+                                + Add Option
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-btn secondary" @onclick="CloseEditComponentModal" @onclick:stopPropagation="true">
+                    Cancel
+                </button>
+                <button class="modal-btn primary" @onclick="SaveEditComponent" @onclick:stopPropagation="true">
+                    Save Changes
                 </button>
             </div>
         </div>
@@ -351,8 +457,16 @@
 
     // Modal state
     private bool showAddComponentModal = false;
+    private bool showEditComponentModal = false;
     private PostComponentRequestDto newComponent = new();
     private int newComponentMaxLength = 0;
+
+    // Radio button options pentru new component
+    private List<string> radioOptions = new() { "Option 1", "Option 2" };
+
+    // Edit component state
+    private CanvasElement? editingComponent = null;
+    private List<string> editRadioOptions = new();
 
     // Text editing state
     private bool isEditingText = false;
@@ -375,8 +489,6 @@
 
     // Debug pentru API call
     private string apiCallStatus = "Not started";
-
-
 
     // Z-index counter for layering
     private int zIndexCounter = 1;
@@ -437,6 +549,36 @@
             isLoading = false;
             StateHasChanged();
         }
+    }
+
+    // Metodă pentru a obține opțiunile radio button-ului
+    private List<string> GetRadioOptions(CanvasElement element)
+    {
+        if (element.Properties != null && element.Properties.ContainsKey("Options"))
+        {
+            try
+            {
+                if (element.Properties["Options"] is JsonElement jsonElement)
+                {
+                    var optionsList = JsonSerializer.Deserialize<List<string>>(jsonElement.GetRawText());
+                    return optionsList ?? new List<string> { "Option 1", "Option 2" };
+                }
+                else if (element.Properties["Options"] is List<string> directList)
+                {
+                    return directList;
+                }
+                else if (element.Properties["Options"] is string[] stringArray)
+                {
+                    return stringArray.ToList();
+                }
+            }
+            catch
+            {
+                // Fallback la opțiuni default
+            }
+        }
+
+        return new List<string> { "Option 1", "Option 2" };
     }
 
     private async Task OnWorkspaceClick(MouseEventArgs e)
@@ -662,6 +804,66 @@
         }
     }
 
+    // Edit component modal methods
+    private void EditComponentElement(Guid elementId)
+    {
+        var element = canvasElements.FirstOrDefault(e => e.Id == elementId && !e.IsTextElement);
+        if (element != null)
+        {
+            editingComponent = element;
+
+            // Pentru radio buttons, încarcă opțiunile existente
+            if (element.ComponentType == "RadioButton" || element.ComponentType == "radio")
+            {
+                editRadioOptions = GetRadioOptions(element).ToList();
+            }
+
+            showEditComponentModal = true;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseEditComponentModal()
+    {
+        showEditComponentModal = false;
+        editingComponent = null;
+        editRadioOptions.Clear();
+        StateHasChanged();
+    }
+
+    private void SaveEditComponent()
+    {
+        if (editingComponent != null)
+        {
+            // Salvează modificările pentru radio buttons
+            if ((editingComponent.ComponentType == "RadioButton" || editingComponent.ComponentType == "radio")
+                && editRadioOptions.Any())
+            {
+                editingComponent.Properties ??= new Dictionary<string, object>();
+                editingComponent.Properties["Options"] = editRadioOptions.ToList();
+            }
+
+            StateHasChanged();
+            CloseEditComponentModal();
+        }
+    }
+
+    private void AddEditRadioOption()
+    {
+        editRadioOptions.Add($"Option {editRadioOptions.Count + 1}");
+        StateHasChanged();
+    }
+
+    private void RemoveEditRadioOption(int index)
+    {
+        if (editRadioOptions.Count > 1 && index >= 0 && index < editRadioOptions.Count)
+        {
+            editRadioOptions.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    // New component modal methods
     private void AddNewComponent()
     {
         try
@@ -674,12 +876,41 @@
                 Properties = new Dictionary<string, object>()
             };
             newComponentMaxLength = 0;
+
+            // Reset radio options pentru new component
+            radioOptions = new List<string> { "Option 1", "Option 2" };
+
             showAddComponentModal = true;
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error in AddNewComponent: {ex.Message}");
+        }
+    }
+
+    private void OnComponentTypeChange(ChangeEventArgs e)
+    {
+        // Reset radio options când se schimbă tipul
+        if (e.Value?.ToString() == "RadioButton")
+        {
+            radioOptions = new List<string> { "Option 1", "Option 2" };
+        }
+        StateHasChanged();
+    }
+
+    private void AddRadioOption()
+    {
+        radioOptions.Add($"Option {radioOptions.Count + 1}");
+        StateHasChanged();
+    }
+
+    private void RemoveRadioOption(int index)
+    {
+        if (radioOptions.Count > 1 && index >= 0 && index < radioOptions.Count)
+        {
+            radioOptions.RemoveAt(index);
+            StateHasChanged();
         }
     }
 
@@ -690,11 +921,9 @@
             showAddComponentModal = false;
             newComponent = new PostComponentRequestDto();
             newComponentMaxLength = 0;
+            radioOptions = new List<string> { "Option 1", "Option 2" };
             StateHasChanged();
         }
-
-
-
         catch (Exception ex)
         {
             Console.WriteLine($"Error in CloseAddComponentModal: {ex.Message}");
@@ -711,10 +940,18 @@
 
         try
         {
+            // Adaugă proprietăți specifice tipului
             if (newComponent.Type == "TextInput" && newComponentMaxLength > 0)
             {
                 newComponent.Properties ??= new Dictionary<string, object>();
                 newComponent.Properties["MaxLength"] = newComponentMaxLength;
+            }
+
+            // Pentru radio buttons, salvează opțiunile
+            if (newComponent.Type == "RadioButton" && radioOptions.Any())
+            {
+                newComponent.Properties ??= new Dictionary<string, object>();
+                newComponent.Properties["Options"] = radioOptions.ToList();
             }
 
             var result = await ComponentService.PostComponentAsync(newComponent);
@@ -735,6 +972,7 @@
             await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
         }
     }
+
     private async Task SaveTemplate()
     {
         if (string.IsNullOrWhiteSpace(templateName))
@@ -797,7 +1035,7 @@
                 ComponentId = e.ComponentId,
                 ComponentType = e.ComponentType,
                 Label = e.Label,
-                Required = e.Required??false,
+                Required = e.Required ?? false,
                 Properties = e.Properties
             }).ToList(),
             ZIndexCounter = zIndexCounter
@@ -861,7 +1099,6 @@
                             element.Required = false;
                     }
 
-
                     if (elementJson.TryGetProperty("ComponentId", out var compIdProperty) &&
                         !compIdProperty.ValueKind.Equals(System.Text.Json.JsonValueKind.Null))
                     {
@@ -891,8 +1128,6 @@
             await JSRuntime.InvokeVoidAsync("alert", $"Error loading template: {ex.Message}");
         }
     }
-
-
 
     public async Task<(Guid Id, string Name)?> SaveTemplateFromLocalStorageToDatabase(Guid? flowId = null)
     {
@@ -976,8 +1211,6 @@
                     }
                 }
             }
-
-
 
             // 5. Create JSON content folosind storedElements (NU canvasElements!)
             var templateContent = System.Text.Json.JsonSerializer.Serialize(new

@@ -181,6 +181,37 @@
     font-size: 12px;
 }
 
+/* Palette footer pentru butonul Add Component */
+.palette-footer {
+    padding: 15px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.add-component-btn {
+    width: 100%;
+    padding: 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+    .add-component-btn:hover {
+        background: #218838;
+    }
+
+.add-icon {
+    font-size: 16px;
+    font-weight: bold;
+}
+
 /* Canvas element styles */
 .canvas-element {
     cursor: move;
@@ -203,9 +234,10 @@
     min-height: 40px;
     transition: all 0.2s ease;
 }
+
     .text-element .text-display:hover {
-        background: rgba(255, 255, 255, 0.3); 
-        border-color: rgba(0, 0, 0, 0.1); 
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(0, 0, 0, 0.1);
     }
 
 .placeholder-text {
@@ -220,6 +252,25 @@
     padding: 12px;
     position: relative;
     min-width: 200px;
+    cursor: move;
+}
+
+/* Indicativ vizual pentru componentele editabile */
+.component-display:hover::after {
+    content: "Double-click to edit";
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 1001;
+    opacity: 0;
+    animation: fadeIn 0.3s ease-in-out forwards;
 }
 
 .form-field {
@@ -256,6 +307,7 @@
     font-size: 12px;
     cursor: pointer;
     display: none;
+    z-index: 1000;
 }
 
 .canvas-element:hover .delete-element-btn {
@@ -270,16 +322,6 @@
     font-family: inherit;
     font-size: 14px;
     outline: none;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
 }
 
 .loading-spinner-small {
@@ -340,3 +382,218 @@
     resize: vertical;
 }
 
+/* MODAL STYLES */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-container {
+    background: white;
+    border-radius: 8px;
+    padding: 0;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+    }
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .modal-close:hover {
+        color: #333;
+    }
+
+.modal-content {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-field {
+    margin-bottom: 20px;
+}
+
+.modal-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.modal-input, .modal-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+    .modal-input:focus, .modal-select:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+    }
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-mark {
+    font-size: 14px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px;
+    border-top: 1px solid #e5e5e5;
+    background: #f8f9fa;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+    .modal-btn.secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+        .modal-btn.secondary:hover {
+            background: #5a6268;
+        }
+
+    .modal-btn.primary {
+        background: #4f46e5;
+        color: white;
+    }
+
+        .modal-btn.primary:hover {
+            background: #3f3cf4;
+        }
+
+/* RADIO OPTIONS EDITOR STYLES */
+.radio-options-editor {
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 15px;
+    background: #f8f9fa;
+}
+
+.radio-option-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+
+    .radio-option-row:last-of-type {
+        margin-bottom: 15px;
+    }
+
+.remove-option-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: #dc3545;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+    .remove-option-btn:hover {
+        background: #c82333;
+        transform: scale(1.05);
+    }
+
+.add-option-btn {
+    padding: 8px 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+    .add-option-btn:hover {
+        background: #218838;
+    }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

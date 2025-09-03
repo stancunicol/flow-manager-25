@@ -1,4 +1,4 @@
-﻿/* FormTemplate.razor.css - Free Canvas Layout */
+﻿/* FormTemplate.razor.css - Free Canvas Layout cu Radio Options Editor */
 
 .form-template-container {
     padding: 20px;
@@ -271,6 +271,7 @@
     min-width: 180px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     margin: 2px;
+    cursor: move;
 }
 
     .component-display:hover {
@@ -615,3 +616,94 @@
         .modal-btn.primary:hover {
             background: #0056b3;
         }
+
+/* RADIO OPTIONS EDITOR STYLES */
+.radio-options-editor {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    background: #f8f9fa;
+}
+
+.radio-option-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+
+    .radio-option-row:last-of-type {
+        margin-bottom: 15px;
+    }
+
+.remove-option-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: #dc3545;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+    .remove-option-btn:hover {
+        background: #c82333;
+        transform: scale(1.05);
+    }
+
+.add-option-btn {
+    padding: 8px 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+    .add-option-btn:hover {
+        background: #218838;
+    }
+
+/* Indicativ vizual pentru componentele editabile */
+.component-display {
+    position: relative;
+}
+
+    .component-display:hover::after {
+        content: "Double-click to edit";
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+        z-index: 1001;
+        opacity: 0;
+        animation: fadeIn 0.3s ease-in-out forwards;
+    }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
