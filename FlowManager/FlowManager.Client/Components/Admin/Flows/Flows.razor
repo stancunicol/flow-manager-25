@@ -11,11 +11,6 @@
             @onclick='() => SetActiveTab("ADD")'>
         Add Flow
     </button>
-
-    <button class="option-button @(_activeTab == "STEP" ? "active" : "inactive")"
-            @onclick='() => SetActiveTab("STEP")'>
-        View Steps
-    </button>
 </div>
 
 @if (_activeTab == "VIEW")
@@ -25,8 +20,4 @@
 else if (_activeTab == "ADD")
 {
     <FlowsAddModal/>
-}
-else if(_activeTab == "STEP")
-{
-	<CreateStep />
 }
