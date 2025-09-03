@@ -147,10 +147,11 @@
                 <div class="page-numbers">
                     @for (int page = Math.Max(1, currentPage - 2); page <= Math.Min(totalPages, currentPage + 2); page++)
                     {
-                        <button class="page-number @(page == currentPage ? "active" : "")"
-                                @onclick="() => GoToPage(page)">
-                            @((MarkupString)page.ToString())
-                        </button>
+                        var pageNumber = page; // Capture local variable
+                                               <button class="page-number @(page == currentPage ? "active" : "")"
+                                                       @onclick="() => GoToPage(pageNumber)">
+                                                   @((MarkupString)page.ToString())
+                                               </button>
                     }
                 </div>
 
