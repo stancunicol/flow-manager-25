@@ -8,7 +8,7 @@ using Microsoft.JSInterop;
 
 namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 {
-    public partial class FlowsViewModal : ComponentBase
+    public partial class FlowsViewModal : ComponentBase, IDisposable
     {
         [Parameter] public EventCallback<FlowResponseDto> OnEditFlowRequested { get; set; }
         [Inject] private FlowService _flowService { get; set; } = default!;
@@ -18,7 +18,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
         private string _searchTerm = string.Empty;
         private bool _showEditModal = false;
         private FlowResponseDto? _selectedFlow = null;
-
+        private Timer? _searchDebounceTimer;
 
         protected override async Task OnInitializedAsync()
         {
@@ -56,7 +56,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 Console.WriteLine($"Flows loaded: {_flows.Count} items.");
             }
             catch (Exception ex)
-            {   
+            {
                 _flows = new List<FlowResponseDto>();
             }
             finally
@@ -65,21 +65,33 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 StateHasChanged();
             }
         }
+
         public async Task RefreshFlows()
         {
             await LoadFlows();
         }
 
-        private async Task SearchFlows()
+        private void OnSearchInput(ChangeEventArgs e)
         {
-            await LoadFlows();
+            var newSearchTerm = e.Value?.ToString() ?? "";
+
+            _searchDebounceTimer?.Dispose();
+            _searchDebounceTimer = new Timer(async _ =>
+            {
+                _searchTerm = newSearchTerm;
+                await InvokeAsync(async () =>
+                {
+                    await LoadFlows();
+                });
+            }, null, 500, Timeout.Infinite);
         }
 
         private async Task OnEnterPressed(KeyboardEventArgs e)
         {
             if (e.Key == "Enter")
             {
-                await SearchFlows();
+                _searchDebounceTimer?.Dispose();
+                await LoadFlows();
             }
         }
 
@@ -92,8 +104,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 (step.Teams?.Sum(t => t.Users?.Count() ?? 0) ?? 0)
             );
         }
-        
-
 
         private void OpenEditModal(FlowResponseDto flow)
         {
@@ -110,6 +120,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 StateHasChanged();
             }
         }
+
         private async Task CloseEditModal()
         {
             _showEditModal = false;
@@ -129,6 +140,9 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
             await LoadFlows();
         }
 
-
+        public void Dispose()
+        {
+            _searchDebounceTimer?.Dispose();
+        }
     }
 }

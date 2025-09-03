@@ -13,8 +13,8 @@
                    class="search-input"
                    placeholder="Search workflows by name..."
                    @bind="_searchTerm"
+                   @oninput="OnSearchInput"
                    @onkeypress="OnEnterPressed" />
-            <button class="search-btn" @onclick="SearchFlows">Search</button>
         </div>
 
         <!-- Modal Content -->
