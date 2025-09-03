@@ -8,7 +8,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 999;
+    z-index: 9999;
     backdrop-filter: blur(2px);
 }
 
@@ -24,6 +24,7 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     position: relative;
     overflow: hidden;
+    z-index: 1400;
 }
 
 .modal-header {
@@ -179,6 +180,7 @@
     gap: 12px;
     background: white;
     flex-shrink: 0;
+    z-index: 1400;
 }
 
 .btn-secondary {
