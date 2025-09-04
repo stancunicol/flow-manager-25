@@ -100,6 +100,9 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<bool?>("IsApproved")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("StepId")
                         .HasColumnType("uuid");
 

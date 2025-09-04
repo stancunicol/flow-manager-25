@@ -47,11 +47,13 @@ namespace FlowManager.Infrastructure.Services
                 {
                     Id = f.Id,
                     Name = f.Name,
-                    Steps = f.Steps.Select(s => new StepResponseDto
-                    {
-                        Id = s.Step.Id,
-                        Name = s.Step.Name,
-                    }).ToList(),
+                    Steps = f.Steps
+                        .OrderBy(s => s.Order) // Order by Order field
+                        .Select(s => new StepResponseDto
+                        {
+                            Id = s.Step.Id,
+                            Name = s.Step.Name,
+                        }).ToList(),
                     FormTemplateId = f.FormTemplateId,
                     ActiveFormTemplate = f.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(f.ActiveFormTemplate) : null,
                     FormTemplates = f.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
@@ -76,11 +78,13 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flow.Id,
                 Name = flow.Name,
-                Steps = flow.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.Step.Id,
-                    Name = s.Step.Name,
-                }).ToList(),
+                Steps = flow.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
                 FormTemplateId = flow.FormTemplateId,
                 ActiveFormTemplate = flow.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flow.ActiveFormTemplate) : null,
                 FormTemplates = flow.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
@@ -97,7 +101,7 @@ namespace FlowManager.Infrastructure.Services
                 Name = payload.Name,
             };
 
-            if(payload.FormTemplateId != null)
+            if (payload.FormTemplateId != null)
             {
                 FormTemplate? ft = await _formTemplateRepository.GetFormTemplateByIdAsync((Guid)payload.FormTemplateId);
                 if (ft == null)
@@ -110,17 +114,19 @@ namespace FlowManager.Infrastructure.Services
 
             if (payload.Steps != null && payload.Steps.Count > 0)
             {
-                foreach(PostFlowStepRequestDto step in payload.Steps)
+                int order = 1; // Start ordering from 1
+                foreach (PostFlowStepRequestDto step in payload.Steps)
                 {
                     if ((await _stepRepository.GetStepByIdAsync(step.StepId)) == null)
-                    { 
-                        throw new EntryNotFoundException($"Step with id {payload.FormTemplateId} not found.");
+                    {
+                        throw new EntryNotFoundException($"Step with id {step.StepId} not found.");
                     }
 
                     flowToPost.Steps.Add(new FlowStep
                     {
                         StepId = step.StepId,
                         FlowId = flowToPost.Id,
+                        Order = order++, // Set order sequentially
                     });
                 }
 
@@ -128,17 +134,17 @@ namespace FlowManager.Infrastructure.Services
                 {
                     var stepPayload = payload.Steps.First(s => s.StepId == step.StepId);
 
-                    step.AssignedUsers = stepPayload.UserIds.Select(uId => new FlowStepUser
+                    step.AssignedUsers = stepPayload.UserIds?.Select(uId => new FlowStepUser
                     {
                         FlowStepId = step.Id,
                         UserId = uId,
-                    }).ToList();
+                    }).ToList() ?? new List<FlowStepUser>();
 
-                    foreach (var teamPayload in stepPayload.Teams)
+                    foreach (var teamPayload in stepPayload.Teams ?? new List<PostFlowTeamRequestDto>())
                     {
                         var fullTeam = await _teamRepository.GetTeamWithModeratorsAsync(teamPayload.TeamId, (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id);
 
-                        if (fullTeam.Users.Count == teamPayload.UserIds.Count)
+                        if (fullTeam?.Users.Count == (teamPayload.UserIds?.Count ?? 0))
                         {
                             step.AssignedTeams.Add(new FlowStepTeam
                             {
@@ -148,7 +154,7 @@ namespace FlowManager.Infrastructure.Services
                         }
                         else
                         {
-                            foreach (var userId in teamPayload.UserIds)
+                            foreach (var userId in teamPayload.UserIds ?? new List<Guid>())
                             {
                                 step.AssignedUsers.Add(new FlowStepUser
                                 {
@@ -167,18 +173,20 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
-                Steps = flowToPost.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.StepId,
-                    Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                Steps = flowToPost.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
                     {
-                        Id = u.UserId,
+                        Id = s.StepId,
+                        Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                        {
+                            Id = u.UserId,
+                        }).ToList(),
+                        Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
+                        {
+                            Id = t.TeamId,
+                        }).ToList(),
                     }).ToList(),
-                    Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
-                    {
-                        Id = t.TeamId,  
-                    }).ToList(),
-                }).ToList(),
                 FormTemplateId = flowToPost.FormTemplateId,
                 ActiveFormTemplate = flowToPost.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToPost.ActiveFormTemplate) : null,
                 FormTemplates = flowToPost.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
@@ -211,11 +219,13 @@ namespace FlowManager.Infrastructure.Services
                 {
                     Id = flowToUpdate.Id,
                     Name = flowToUpdate.Name,
-                    Steps = flowToUpdate.Steps.Select(s => new StepResponseDto
-                    {
-                        Id = s.Step.Id,
-                        Name = s.Step.Name,
-                    }).ToList(),
+                    Steps = flowToUpdate.Steps
+                        .OrderBy(s => s.Order) // Order by Order field
+                        .Select(s => new StepResponseDto
+                        {
+                            Id = s.Step.Id,
+                            Name = s.Step.Name,
+                        }).ToList(),
                     FormTemplateId = flowToUpdate.FormTemplateId,
                     ActiveFormTemplate = flowToUpdate.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToUpdate.ActiveFormTemplate) : null,
                     FormTemplates = flowToUpdate.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
@@ -238,6 +248,13 @@ namespace FlowManager.Infrastructure.Services
                 step.DeletedAt = DateTime.UtcNow;
             }
 
+            // Get the next order number
+            int nextOrder = 1;
+            if (flowToUpdate.Steps.Any(s => s.DeletedAt == null))
+            {
+                nextOrder = flowToUpdate.Steps.Where(s => s.DeletedAt == null).Max(s => s.Order) + 1;
+            }
+
             foreach (Guid stepId in payload.StepIds)
             {
                 if (flowToUpdate.Steps.Any(s => s.StepId == stepId))
@@ -253,7 +270,8 @@ namespace FlowManager.Infrastructure.Services
                     flowToUpdate.Steps.Add(new FlowStep
                     {
                         StepId = stepId,
-                        FlowId = flowToUpdate.Id
+                        FlowId = flowToUpdate.Id,
+                        Order = nextOrder++ // Set order sequentially
                     });
                 }
             }
@@ -263,11 +281,13 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToUpdate.Id,
                 Name = flowToUpdate.Name,
-                Steps = flowToUpdate.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.Step.Id,
-                    Name = s.Step.Name,
-                }).ToList(),
+                Steps = flowToUpdate.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
                 FormTemplateId = flowToUpdate.FormTemplateId,
                 ActiveFormTemplate = flowToUpdate.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToUpdate.ActiveFormTemplate) : null,
                 FormTemplates = flowToUpdate.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
@@ -291,11 +311,13 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToDelete.Id,
                 Name = flowToDelete.Name,
-                Steps = flowToDelete.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.Step.Id,
-                    Name = s.Step.Name,
-                }).ToList(),
+                Steps = flowToDelete.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
                 FormTemplateId = flowToDelete.FormTemplateId,
                 ActiveFormTemplate = flowToDelete.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToDelete.ActiveFormTemplate) : null,
                 FormTemplates = flowToDelete.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
@@ -315,14 +337,16 @@ namespace FlowManager.Infrastructure.Services
             }
 
             return new List<StepResponseDto>(
-                flow.Steps.Select(fs => new StepResponseDto
-                {
-                    Id = fs.Step.Id,
-                    Name = fs.Step.Name,
-                    CreatedAt = fs.Step.CreatedAt,
-                    UpdatedAt = fs.Step.UpdatedAt,
-                    DeletedAt = fs.Step.DeletedAt
-                })
+                flow.Steps
+                    .OrderBy(fs => fs.Order) // Order by Order field instead of CreatedAt
+                    .Select(fs => new StepResponseDto
+                    {
+                        Id = fs.Step.Id,
+                        Name = fs.Step.Name,
+                        CreatedAt = fs.Step.CreatedAt,
+                        UpdatedAt = fs.Step.UpdatedAt,
+                        DeletedAt = fs.Step.DeletedAt
+                    })
             );
         }
 
