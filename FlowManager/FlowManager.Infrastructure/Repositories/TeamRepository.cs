@@ -30,7 +30,7 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globalSearchTerm, string? name, QueryParams? queryParams, bool includeDeleted = false)
+        public async Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globalSearchTerm, QueryParams? queryParams, bool includeDeleted = false)
         {
             var query = _context.Teams
                 .Include(t => t.Users.Where(u => u.DeletedAt == null))
@@ -44,13 +44,8 @@ namespace FlowManager.Infrastructure.Repositories
             if (!string.IsNullOrWhiteSpace(globalSearchTerm))
             {
                 query = query.Where(t =>
-                    t.Name.Contains(globalSearchTerm) ||
-                    t.Users.Any(ut => ut.User.Email!.Contains(globalSearchTerm) || ut.User.Name.Contains(globalSearchTerm)));
-            }
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                query = query.Where(t => t.Name.ToLower().Contains(name.ToLower()));
+                    t.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) ||
+                    t.Users.Any(ut => ut.User.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()) || ut.User.Name.ToUpper().Contains(globalSearchTerm.ToUpper())));
             }
 
             int totalCount = await query.CountAsync();

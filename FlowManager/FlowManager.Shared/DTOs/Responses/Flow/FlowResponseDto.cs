@@ -1,4 +1,5 @@
-﻿using FlowManager.Shared.DTOs.Responses.FormTemplate;
+﻿using FlowManager.Shared.DTOs.Responses.FlowStep;
+using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.Step;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace FlowManager.Shared.DTOs.Responses.Flow
         public string? Name { get; set; }
         public Guid? FormTemplateId { get; set; }
         public List<StepResponseDto>? Steps { get; set; }
+        public List<FlowStepResponseDto>? FlowSteps { get; set; }    
         public List<FormTemplateResponseDto>? FormTemplates { get; set; }
         public FormTemplateResponseDto? ActiveFormTemplate { get; set; }
         public DateTime? CreatedAt { get; set; }

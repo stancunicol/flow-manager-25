@@ -1,8 +1,8 @@
-﻿@using FlowManager.Client.ViewModels;
+﻿@using FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal;
+@using FlowManager.Client.ViewModels;
 @using Microsoft.AspNetCore.Components.Web;
-@using FlowManager.Client.Components.Admin.Flows.AddFlow;
 
-<div class="add-flow-container">
+<div class="edit-flow-container">
     @if (_showAssignToStepModal)
     {
         <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
@@ -24,26 +24,17 @@
                 <input type="text"
                        id="flowName"
                        class="flow-name-input @GetFlowNameValidationClass()"
-                       placeholder="*Enter workflow name..."
                        @bind="_flowName"
                        @bind:event="oninput"
                        maxlength="100"/>
             </div>
-            @if (!string.IsNullOrEmpty(SavedFormTemplateName))
-            {
-                <div class="form-template-info">
-                    <span class="template-icon">📋</span>
-                    <span class="template-label">Form Template:</span>
-                    <span class="template-name">@SavedFormTemplateName</span>
-                </div>
-            }
         </div>
 
         <div class="dropped-steps">
             @if (!_configuredSteps.Any())
             {
                 <div class="empty-state">
-                    Drag steps here to build your workflow
+                    Drag steps here to edit your workflow
                 </div>
             }
             else
@@ -90,14 +81,13 @@
                 <!-- Action buttons -->
                 <div class="workflow-actions">
                     <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
-                    <button class="btn-save" @onclick="@(() => string.IsNullOrEmpty(SavedFormTemplateName) ?
-                           SaveWorkflow() : SaveWorkflowInvokeAsync())"
+                    <button class="btn-save" @onclick="EditCurrentWorkflow"
                         disabled="@(!IsWorkflowValid())">
-                        Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
-                    </button>
-                </div>
+                    Edit "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
+                </button>
+            </div>
 
-                @if (!string.IsNullOrEmpty(_onSubmitMessage))
+            @if (!string.IsNullOrEmpty(_onSubmitMessage))
                 {
                     <div class="onSubmitMessage">
                         <span class="onSubmit @(_onSubmitSuccess ? "success" : "fail")">@_onSubmitMessage</span>

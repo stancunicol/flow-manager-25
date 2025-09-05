@@ -12,6 +12,8 @@ using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
 using FlowManager.Shared.DTOs.Requests.FlowStep;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
+using FlowManager.Shared.DTOs.Responses.Team;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -348,6 +350,59 @@ namespace FlowManager.Infrastructure.Services
                         DeletedAt = fs.Step.DeletedAt
                     })
             );
+        }
+
+        public async Task<FlowResponseDto> GetFlowByIdIncludeStepsAsync(Guid flowId)
+        {
+            Guid moderatorId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
+            Flow? flow = await _flowRepository.GetFlowByIdIncludeStepsAsync(flowId, moderatorId);
+
+            if(flow == null)
+            {
+                throw new EntryNotFoundException($"Flow with id {flowId} was not found.");
+            }
+
+            return new FlowResponseDto
+            {
+                Id = flowId,
+                Name = flow.Name,
+                FlowSteps = flow.Steps.Select(fs => new FlowStepResponseDto
+                {
+                    Id = fs.Id,
+                    StepId = fs.Step.Id,
+                    StepName = fs.Step.Name,
+                    Users = fs.AssignedUsers.Select(assignedUser => new Shared.DTOs.Responses.User.FlowStepUserResponseDto
+                    {
+                        FlowStepUserId = assignedUser.Id,
+                        User = new Shared.DTOs.Responses.User.UserResponseDto
+                        {
+                            Id = assignedUser.UserId,
+                            Name = assignedUser.User.Name,
+                            Email = assignedUser.User.Email,
+                            Teams = assignedUser.User.Teams.Select(ut => new TeamResponseDto()
+                            {
+                                Id = ut.TeamId,
+                                Name = ut.Team.Name
+                            }).ToList(),
+                        }
+                    }).ToList(),
+                    Teams = fs.AssignedTeams.Select(assignedTeam => new FlowStepTeamResponseDto
+                    {
+                        FlowStepTeamId = assignedTeam.Id,
+                        Team = new TeamResponseDto
+                        {
+                            Id = assignedTeam.TeamId,
+                            Name = assignedTeam.Team.Name,
+                            Users = assignedTeam.Team.Users.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                            {
+                                Id = u.UserId,
+                                Name = u.User.Name,
+                                Email = u.User.Email,   
+                            }).ToList()
+                        }
+                    }).ToList()
+                }).ToList(),
+            };
         }
 
         private FormTemplateResponseDto MapToFormTemplateResponseDto(FormTemplate ft)

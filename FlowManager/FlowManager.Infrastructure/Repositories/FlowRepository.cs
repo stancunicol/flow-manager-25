@@ -106,5 +106,35 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null))
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
+
+        public async Task<Flow?> GetFlowByIdIncludeStepsAsync(Guid flowId, Guid moderatorRoleId)
+        {
+            return await _context.Flows
+                .Where(f => f.Id == flowId && f.DeletedAt == null)
+                .Where(f => f.Steps.Any(fs => fs.DeletedAt == null && (
+                    fs.AssignedUsers.Any(fsu => fsu.DeletedAt == null &&
+                        fsu.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)) ||
+                    fs.AssignedTeams.Any(fst => fst.DeletedAt == null &&
+                        fst.Team.Users.Any(ut => ut.DeletedAt == null &&
+                            ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
+                )))
+                .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
+                    .ThenInclude(fs => fs.Step)
+                .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
+                    .ThenInclude(fs => fs.AssignedUsers.Where(fsu => fsu.DeletedAt == null &&
+                        fsu.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
+                        .ThenInclude(fsu => fsu.User)
+                            .ThenInclude(u => u.Roles)
+                .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
+                    .ThenInclude(fs => fs.AssignedTeams.Where(fst => fst.DeletedAt == null &&
+                        fst.Team.Users.Any(ut => ut.DeletedAt == null &&
+                            ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId))))
+                        .ThenInclude(fst => fst.Team)
+                            .ThenInclude(t => t.Users.Where(ut => ut.DeletedAt == null &&
+                                ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
+                                .ThenInclude(ut => ut.User)
+                                    .ThenInclude(u => u.Roles)
+                .FirstOrDefaultAsync();
+        }
     }
 }

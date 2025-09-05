@@ -33,6 +33,20 @@ namespace FlowManager.Client.Services
             }
         }
 
+        public async Task<ApiResponse<FlowResponseDto?>> GetFlowByIdIncludeStepsAsync(Guid flowId)
+        {
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync($"api/flows/includeSteps/{flowId}");
+
+                return await response.Content.ReadFromJsonAsync<ApiResponse<FlowResponseDto?>>();
+            }
+            catch(Exception ex) 
+            {
+                return null;
+            }
+        }
+
         public async Task<Flow?> GetFlowAsync(Guid id)
         {
             try
