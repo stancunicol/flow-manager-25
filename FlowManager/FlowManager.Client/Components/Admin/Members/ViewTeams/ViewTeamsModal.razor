@@ -7,7 +7,9 @@
         <input class="search-teams-input"
                type="text"
                placeholder="Search by teams or employees name..."
-               @bind="_searchTerm" />
+               @bind="_searchTerm"
+               @oninput="@((e) => OnSearchTermChanged(e.Value?.ToString() ?? string.Empty))"
+               @onkeypress="OnEnterPressed" />
 
         <button class="search-teams-button" @onclick="LoadTeamsAsync">
             Search

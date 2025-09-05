@@ -98,8 +98,6 @@
 
     private async Task OnFlowSaved()
     {
-        await JSRuntime.InvokeVoidAsync("alert", "Flow updated successfully!");
-
         if (Flow != null && OnFlowUpdated.HasDelegate)
         {
             await OnFlowUpdated.InvokeAsync(Flow);

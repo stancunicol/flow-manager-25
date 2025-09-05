@@ -206,7 +206,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             }
 
             StateHasChanged();
-            await Task.Delay(4000);
+            await Task.Delay(3000);
 
             _onSubmitMessage = string.Empty;
 

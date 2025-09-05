@@ -6,7 +6,8 @@
         <input type="text"
                class="search-input"
                placeholder="Search users..."
-               @bind="_searchTerm"
+               value="@_searchTerm"
+               @oninput="@((e) => OnSearchTermChanged(e.Value?.ToString() ?? string.Empty))"
                @onkeypress="OnEnterPressed" />
         <button class="search-btn" @onclick="SearchFlows">Search</button>
     </div>

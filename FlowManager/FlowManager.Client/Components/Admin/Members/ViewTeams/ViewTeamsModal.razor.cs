@@ -7,7 +7,9 @@ using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Team;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using System.Collections;
+using System.Timers;
 
 namespace FlowManager.Client.Components.Admin.Members.ViewTeams
 {
@@ -29,9 +31,47 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
         private int _maxVisiblePages = 4;
         private int _totalCount = 0;
 
+        private System.Threading.Timer? _debounceTimer;
+        private int _debounceDelayMs = 250;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadTeamsAsync();
+        }
+
+        private async Task OnEnterPressed(KeyboardEventArgs e)
+        {
+            if (e.Key == "Enter")
+            {
+                _debounceTimer?.Dispose();
+                _debounceTimer = null;
+
+                _searchTerm = _searchTerm.Trim();
+                _currentPage = 1;
+                await LoadTeamsAsync();
+            }
+        }
+
+        private void OnSearchTermChanged(string newSearchTerm)
+        {
+            _searchTerm = newSearchTerm;
+
+            _debounceTimer?.Dispose();
+
+            _debounceTimer = new System.Threading.Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    _searchTerm = _searchTerm.Trim();
+                    _currentPage = 1;
+                    await LoadTeamsAsync();
+                    StateHasChanged();
+                });
+
+                _debounceTimer?.Dispose();
+                _debounceTimer = null;
+
+            }, null, _debounceDelayMs, Timeout.Infinite);
         }
 
         private async Task LoadTeamsAsync()
