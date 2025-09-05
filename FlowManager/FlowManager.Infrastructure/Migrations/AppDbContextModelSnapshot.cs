@@ -79,7 +79,10 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Flows");
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Flows", (string)null);
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStep", b =>
@@ -241,9 +244,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("FlowId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -254,13 +254,11 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FlowId");
-
                     b.HasIndex("Name")
                         .IsUnique()
                         .HasDatabaseName("IX_FormTemplates_Name");
 
-                    b.ToTable("FormTemplates");
+                    b.ToTable("FormTemplates", (string)null);
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplateComponent", b =>
@@ -291,6 +289,30 @@ namespace FlowManager.Infrastructure.Migrations
                     b.HasIndex("FormTemplateId");
 
                     b.ToTable("FormTemplateComponents");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplateFlow", b =>
+                {
+                    b.Property<Guid>("FormTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FlowId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("FormTemplateId", "FlowId");
+
+                    b.HasIndex("FlowId");
+
+                    b.ToTable("FormTemplateFlows");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Role", b =>
@@ -695,15 +717,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplate", b =>
-                {
-                    b.HasOne("FlowManager.Domain.Entities.Flow", "Flow")
-                        .WithMany("FormTemplates")
-                        .HasForeignKey("FlowId");
-
-                    b.Navigation("Flow");
-                });
-
             modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplateComponent", b =>
                 {
                     b.HasOne("FlowManager.Domain.Entities.Component", "Component")
@@ -719,6 +732,25 @@ namespace FlowManager.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Component");
+
+                    b.Navigation("FormTemplate");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplateFlow", b =>
+                {
+                    b.HasOne("FlowManager.Domain.Entities.Flow", "Flow")
+                        .WithMany("FormTemplateFlows")
+                        .HasForeignKey("FlowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FlowManager.Domain.Entities.FormTemplate", "FormTemplate")
+                        .WithMany("FormTemplateFlows")
+                        .HasForeignKey("FormTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Flow");
 
                     b.Navigation("FormTemplate");
                 });
@@ -815,7 +847,7 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Flow", b =>
                 {
-                    b.Navigation("FormTemplates");
+                    b.Navigation("FormTemplateFlows");
 
                     b.Navigation("Steps");
                 });
@@ -830,6 +862,8 @@ namespace FlowManager.Infrastructure.Migrations
             modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplate", b =>
                 {
                     b.Navigation("Components");
+
+                    b.Navigation("FormTemplateFlows");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Role", b =>

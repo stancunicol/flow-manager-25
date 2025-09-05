@@ -16,19 +16,18 @@ namespace FlowManager.Client.Components.Admin.EditFlow
     public partial class EditFlow : ComponentBase
     {
         [Inject] private StepService _stepService { get; set; } = default!;
-        [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
         [Inject] private FlowService _flowService { get; set; } = default!;
 
+        [Parameter] public Guid? FormTemplateId { get; set; }
         [Parameter] public Guid FlowId { get; set; }
         [Parameter] public EventCallback OnFlowSaved { get; set; }
-        [Parameter] public EventCallback OnSaveWorkflow { get; set; }
-        [Parameter] public EventCallback OnFlowSavedWithoutTemplate { get; set; }
 
         private List<StepVM> _availableSteps = new List<StepVM>();
         private List<StepVM> _configuredSteps = new List<StepVM>();
         private StepVM? _draggedStep = null;
         private bool _isDragOver = false;
         private string _flowName = string.Empty;
+        private string _initialFlowName = string.Empty;
 
         private bool _showAssignToStepModal = false;
         private StepVM? _stepToAssign = null;
@@ -53,13 +52,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 return;
             }
 
-            _onSubmitSuccess = true;
-            _onSubmitMessage = response.Message;
-
+            _flowName = response.Result.Name ?? string.Empty;
+            _initialFlowName = response.Result.Name ?? string.Empty;
             _configuredSteps = response.Result.FlowSteps?.Select(fs => new StepVM
             {
                 Id = fs.StepId ?? Guid.Empty,
                 Name = fs.StepName ?? string.Empty,
+                FlowStepId = fs.Id,
                 Users = fs.Users?.Where(u => u.User?.Teams?.Count == 0 || u.User?.Teams == null)
                                 .Select(u => new UserVM
                                 {
@@ -192,14 +191,39 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             StateHasChanged();
         }
 
-        private bool IsStepConfigured(Guid stepId)
+        private async Task SaveCurrentWorkflowAsync()
         {
-            return _configuredSteps.Any(s => s.Id == stepId);
-        }
+            PostFlowRequestDto payload = new PostFlowRequestDto
+            {
+                FormTemplateId = FormTemplateId,
+                Name = _flowName,
+                Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                {
+                    StepId = configuredStep.Id,
+                    UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
+                    Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                    {
+                        TeamId = t.Id,
+                        UserIds = t.Users.Select(u => u.Id).ToList(),
+                    }).ToList(),
+                }).ToList()
+            };
 
-        private async Task EditCurrentWorkflow()
-        {
+            ApiResponse<FlowResponseDto> response = await _flowService.PostFlowAsync(payload);
 
+            _onSubmitMessage = response.Message;
+            _onSubmitSuccess = response.Success;
+
+            StateHasChanged();
+
+            if(response.Success)
+            {
+                await Task.Delay(4000);
+                _onSubmitMessage = string.Empty;
+                await OnFlowSaved.InvokeAsync(null);
+            }
+
+            ClearConfiguration();
         }
 
         public void MoveStepUp(int index)
@@ -234,8 +258,10 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         public bool IsWorkflowValid()
         {
             return !string.IsNullOrWhiteSpace(_flowName) &&
+                   _flowName.ToUpper() != _initialFlowName.ToUpper() && 
                    _configuredSteps.Any() &&
-                   _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name) && ((s.Users != null && s.Users.Count > 0) || (s.Teams != null && s.Teams.Count > 0)));
+                   _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name) &&
+                       ((s.Users != null && s.Users.Count > 0) || (s.Teams != null && s.Teams.Count > 0)));
         }
 
         public string GetFlowNameValidationClass()

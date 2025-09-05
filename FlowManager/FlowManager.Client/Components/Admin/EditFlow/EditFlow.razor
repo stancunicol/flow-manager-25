@@ -20,13 +20,13 @@
 
         <div class="step-configuration-header">
             <div class="flow-name-section">
-                <label for="flowName" class="flow-name-label">Flow Name:</label>
+                <label for="flowName" class="flow-name-label">*Flow Name (must be different from @_initialFlowName):</label>
                 <input type="text"
                        id="flowName"
                        class="flow-name-input @GetFlowNameValidationClass()"
                        @bind="_flowName"
                        @bind:event="oninput"
-                       maxlength="100"/>
+                       maxlength="100" />
             </div>
         </div>
 
@@ -78,16 +78,7 @@
                     </div>
                 }
 
-                <!-- Action buttons -->
-                <div class="workflow-actions">
-                    <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
-                    <button class="btn-save" @onclick="EditCurrentWorkflow"
-                        disabled="@(!IsWorkflowValid())">
-                    Edit "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
-                </button>
-            </div>
-
-            @if (!string.IsNullOrEmpty(_onSubmitMessage))
+                @if (!string.IsNullOrEmpty(_onSubmitMessage))
                 {
                     <div class="onSubmitMessage">
                         <span class="onSubmit @(_onSubmitSuccess ? "success" : "fail")">@_onSubmitMessage</span>
@@ -97,34 +88,39 @@
         </div>
     </div>
 
-    <!-- Steps navbar -->
-    <div class="steps-navbar">
-        <div class="navbar-header">Available Steps</div>
+    <!-- Sidebar container care include navbar și butoanele -->
+    <div class="sidebar-container">
+        <!-- Steps navbar -->
+        <div class="steps-navbar">
+            <div class="navbar-header">Available Steps</div>
 
-        @foreach (StepVM step in _availableSteps)
-        {
-            <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : "") @(IsStepConfigured(step.Id) ? "configured" : "")"
-                 draggable="true"
-                 @ondragstart="(e) => HandleDragStart(e, step)"
-                 @ondragend="HandleDragEnd">
+            @foreach (StepVM step in _availableSteps)
+            {
+                <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : "")"
+                     draggable="true"
+                     @ondragstart="(e) => HandleDragStart(e, step)"
+                     @ondragend="HandleDragEnd">
 
-                <!-- Step description -->
-                <div class="step-avatar">
-                    @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
-                </div>
-                <div class="step-details">
-                    <div class="step-name">@step.Name</div>
-                    <div class="step-users-count">
-                        @(step.Users!.Count()) moderators
+                    <!-- Step description -->
+                    <div class="step-avatar">
+                        @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
+                    </div>
+                    <div class="step-details">
+                        <div class="step-name">@step.Name</div>
+                        <div class="step-users-count">
+                            @(step.Users!.Count()) moderators
+                        </div>
                     </div>
                 </div>
+            }
+        </div>
 
-                <!-- Configured indicator -->
-                @if (IsStepConfigured(step.Id))
-                {
-                    <div class="configured-indicator" title="Already configured">✓</div>
-                }
-            </div>
-        }
+        <!-- Modal Footer - acum sub navbar -->
+        <div class="modal-footer">
+            <button class="btn-clear" @onclick="ClearConfiguration">Cancel</button>
+            <button class="btn-primary" @onclick="SaveCurrentWorkflowAsync" disabled="@(!IsWorkflowValid())">
+                Save Changes
+            </button>
+        </div>
     </div>
 </div>

@@ -25,7 +25,8 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.Flows
                 .Include(f => f.Steps)
-                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null))
+                .Include(f => f.FormTemplateFlows.Where(ft => ft.DeletedAt == null && ft.FormTemplate.DeletedAt == null))
+                    .ThenInclude(formTemplateFlow => formTemplateFlow.FormTemplate)
                 .ToListAsync();
         }
 
@@ -34,7 +35,8 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Flows
                 .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.Step)
-                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null))
+                .Include(f => f.FormTemplateFlows.Where(ft => ft.DeletedAt == null && ft.FormTemplate.DeletedAt == null))
+                    .ThenInclude(formTemplateFlow => formTemplateFlow.FormTemplate)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
@@ -50,7 +52,8 @@ namespace FlowManager.Infrastructure.Repositories
             IQueryable<Flow> query = _context.Flows
                 .Include(f => f.Steps)
                     .ThenInclude(fs => fs.Step)
-                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null));
+                .Include(f => f.FormTemplateFlows.Where(ft => ft.DeletedAt == null && ft.FormTemplate.DeletedAt == null))
+                    .ThenInclude(formTemplateFlow => formTemplateFlow.FormTemplate);
 
             // filtering
             if (!string.IsNullOrEmpty(name))
@@ -103,7 +106,8 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.Flows
                 .Include(f => f.Steps.Where(s => s.DeletedAt == null))
                     .ThenInclude(fs => fs.Step)
-                .Include(f => f.FormTemplates.Where(ft => ft.DeletedAt == null))
+                .Include(f => f.FormTemplateFlows.Where(ft => ft.DeletedAt == null && ft.FormTemplate.DeletedAt == null))
+                    .ThenInclude(formTemplateFlow => formTemplateFlow.FormTemplate)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
@@ -126,6 +130,12 @@ namespace FlowManager.Infrastructure.Repositories
                         .ThenInclude(fsu => fsu.User)
                             .ThenInclude(u => u.Roles)
                 .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
+                    .ThenInclude(fs => fs.AssignedUsers.Where(fsu => fsu.DeletedAt == null &&
+                        fsu.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
+                        .ThenInclude(fsu => fsu.User)
+                            .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                                .ThenInclude(ut => ut.Team)
+                .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.AssignedTeams.Where(fst => fst.DeletedAt == null &&
                         fst.Team.Users.Any(ut => ut.DeletedAt == null &&
                             ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId))))
@@ -135,6 +145,12 @@ namespace FlowManager.Infrastructure.Repositories
                                 .ThenInclude(ut => ut.User)
                                     .ThenInclude(u => u.Roles)
                 .FirstOrDefaultAsync();
+        }
+
+        public Task<Flow?> GetFlowByNameAsync(string flowName)
+        {
+            return _context.Flows
+                .FirstOrDefaultAsync(f => f.Name == flowName);
         }
     }
 }

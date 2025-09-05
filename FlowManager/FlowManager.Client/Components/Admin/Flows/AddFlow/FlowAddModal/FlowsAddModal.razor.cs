@@ -72,26 +72,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                         }).ToList() ?? new List<UserVM>(),
                     }).ToList() ?? new List<TeamVM>(),
                 }).ToList();
-
-            // Debug logging pentru useri
-            foreach (var step in _availableSteps)
-            {
-                Console.WriteLine($"Step: {step.Name} - Users count: {step.Users.Count}");
-                foreach (var user in step.Users)
-                {
-                    Console.WriteLine($"  User: {user.Name} ({user.Email})");
-                }
-
-                Console.WriteLine($"Step: {step.Name} - Teams count: {step.Teams.Count}");
-                foreach (var team in step.Teams)
-                {
-                    Console.WriteLine($"  Team: {team.Name} - Team Users count: {team.Users.Count}");
-                    foreach (var teamUser in team.Users)
-                    {
-                        Console.WriteLine($"    Team User: {teamUser.Name} ({teamUser.Email})");
-                    }
-                }
-            }
         }
 
         private void HandleDragStart(DragEventArgs e, StepVM step)
@@ -226,7 +206,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             }
 
             StateHasChanged();
-            await Task.Delay(5000);
+            await Task.Delay(4000);
 
             _onSubmitMessage = string.Empty;
 

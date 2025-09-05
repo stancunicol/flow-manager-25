@@ -48,7 +48,7 @@ namespace FlowManager.Infrastructure.Services
                 Id = formTemplateToDelete.Id,
                 Name = formTemplateToDelete.Name,
                 Content = formTemplateToDelete.Content,
-                FlowId = formTemplateToDelete.FlowId,
+                FlowId = formTemplateToDelete.ActiveFlowId ?? Guid.Empty,
                 CreatedAt = formTemplateToDelete.CreatedAt,
                 UpdatedAt = formTemplateToDelete.UpdatedAt,
                 DeletedAt = formTemplateToDelete.DeletedAt
@@ -67,7 +67,7 @@ namespace FlowManager.Infrastructure.Services
                     Id = ft.Id,
                     Name = ft.Name,
                     Content = ft.Content,
-                    FlowId = ft.FlowId,
+                    FlowId = ft.ActiveFlowId,
                     Components = ft.Components.Where(ftc => ftc.DeletedAt == null).Select(ftc => new FormTemplateComponentResponseDto
                     {
                         Id = ftc.ComponentId,
@@ -96,7 +96,7 @@ namespace FlowManager.Infrastructure.Services
                 Id = formTemplate.Id,
                 Name = formTemplate.Name,
                 Content = formTemplate.Content,
-                FlowId = formTemplate.FlowId,
+                FlowId = formTemplate.ActiveFlowId ?? Guid.Empty,
                 Components = formTemplate.Components.Where(ftc => ftc.DeletedAt == null).Select(ftc => new FormTemplateComponentResponseDto
                 {
                     Id = ftc.ComponentId,
@@ -160,12 +160,18 @@ namespace FlowManager.Infrastructure.Services
 
             await _formTemplateRepository.SaveChangesAsync();
 
+            Guid? activeFlowId = null;
+            if (id != null && id != Guid.Empty)
+            {
+                activeFlowId = id;
+            }
+
             return new FormTemplateResponseDto
             {
                 Id = formTemplateToPatch.Id,
                 Name = formTemplateToPatch.Name,
                 Content = formTemplateToPatch.Content,
-                FlowId = formTemplateToPatch.FlowId,
+                FlowId = formTemplateToPatch.ActiveFlowId ?? Guid.Empty,
                 Components = formTemplateToPatch.Components.Where(ftc => ftc.DeletedAt == null).Select(ftc => new FormTemplateComponentResponseDto
                 {
                     Id = ftc.ComponentId,
@@ -178,13 +184,34 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<FormTemplateResponseDto> PostFormTemplateAsync(PostFormTemplateRequestDto payload)
         {
+            FormTemplate? existingFormTemplate = await _formTemplateRepository.GetFormTemplateByNameAsync(payload.Name);
+            if(existingFormTemplate != null)
+            {
+                if(existingFormTemplate.DeletedAt == null)
+                {
+                    throw new UniqueConstraintViolationException($"FormTemplate with name {payload.Name} already exists. Please choose a different name.");
+                }
+                else
+                {
+                    throw new UniqueConstraintViolationException($"FormTemplate with name {payload.Name} was deleted. Please choose a different name.");
+                }   
+            }
+
             FormTemplate newFormTemplate = new FormTemplate
             {
                 Name = payload.Name,
                 Content = payload.Content,
-                FlowId = payload.FlowId,
                 CreatedAt = DateTime.UtcNow,
             };
+
+            if(payload.FlowId != null && payload.FlowId != Guid.Empty)
+            {
+                newFormTemplate.FormTemplateFlows.Add(new FormTemplateFlow
+                {
+                    FlowId = (Guid)payload.FlowId,
+                    FormTemplateId = newFormTemplate.Id,
+                });
+            }
 
             newFormTemplate.Components = payload.Components.Select(c => new FormTemplateComponent
             {
@@ -194,12 +221,18 @@ namespace FlowManager.Infrastructure.Services
 
             await _formTemplateRepository.AddAsync(newFormTemplate);
 
+            Guid? activeFlowId = null;
+            if (payload.FlowId != null && payload.FlowId != Guid.Empty)
+            {
+                activeFlowId = payload.FlowId;
+            }
+
             return new FormTemplateResponseDto
             {
                 Id = newFormTemplate.Id,
                 Name = newFormTemplate.Name,
                 Content = newFormTemplate.Content,
-                FlowId = newFormTemplate.FlowId,
+                FlowId = payload.FlowId ?? Guid.Empty,
                 Components = newFormTemplate.Components.Where(ftc => ftc.DeletedAt == null).Select(ftc => new FormTemplateComponentResponseDto
                 {
                     Id = ftc.Id

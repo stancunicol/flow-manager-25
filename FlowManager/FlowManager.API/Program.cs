@@ -94,8 +94,8 @@ using (var scope = app.Services.CreateScope())
     AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-    //BasicSeed.Populate(dbContext, passwordHasher);
-    //MockDataSeed.Populate(dbContext, passwordHasher);
+    // BasicSeed.Populate(dbContext, passwordHasher);
+    // MockDataSeed.Populate(dbContext, passwordHasher);
 }
 
 if (app.Environment.IsDevelopment())

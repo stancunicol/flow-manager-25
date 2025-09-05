@@ -1,7 +1,7 @@
 ﻿.adminViewUsersButton {
     background: var(--siemens-blue);
     color: white;
-    padding: 8px 0px;
+    padding: 8px 16px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -9,22 +9,24 @@
     animation: fadein 0.4s ease-out forwards;
     transition: background 0.3s;
     display: flex;
-    max-width: 200px;
-    width: 15%;
-    margin-left: auto;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     font-weight: 500;
-    font-size: 18px;
-    justify-content: center;
-    flex: 0 0 15%;
+    white-space: nowrap;
+    min-width: 120px;
+    flex-shrink: 0;
 }
 
+    .adminViewUsersButton:hover {
+        background: #1a9870;
+    }
+
 .admin-buttons {
-    border-bottom: 2px thin gray;
     display: flex;
     align-items: center;
     padding: 20px 30px;
-    gap: 15px;
+    gap: 0;
 }
 
 .edit-button {
@@ -73,7 +75,6 @@
     margin-bottom: 20px;
 }
 
-
 table {
     min-width: 100%;
     width: 100%;
@@ -105,7 +106,6 @@ tbody {
         tbody tr:hover {
             background-color: #f9fafb;
         }
-
 
 .table-data-item {
     padding: 16px 24px;
@@ -235,33 +235,12 @@ tbody {
     font-weight: 500;
 }
 
-@media (max-width: 768px) {
-    .table-header-item,
-    .table-data-item {
-        padding: 12px 16px;
-    }
-
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 12px;
-        margin-right: 12px;
-    }
-
-    .table-header-item {
-        font-size: 11px;
-    }
-
-    .table-data-item {
-        font-size: 13px;
-    }
-}
-
 .search-bar {
     display: flex;
     gap: 12px;
-    flex: 0 0 85%;
+    flex: 1;
     align-items: center;
+    margin-right: 15px;
 }
 
 .search-input {
@@ -273,6 +252,7 @@ tbody {
     transition: border-color 0.2s ease;
     outline: none;
     flex: 1;
+    min-width: 200px;
 }
 
     .search-input:focus {
@@ -289,6 +269,7 @@ tbody {
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    white-space: nowrap;
 }
 
     .search-btn:hover {
@@ -312,7 +293,6 @@ tbody {
         padding: 4px;
         gap: 2px;
     }
-
 
 .pagination-btn {
     position: relative;
@@ -399,4 +379,81 @@ tbody {
     font-size: 14px;
     color: #6b7280;
     font-weight: 500;
+}
+
+/* Media queries pentru responsive design */
+@media (max-width: 1024px) {
+    .admin-buttons {
+        padding: 15px 20px;
+    }
+
+    .search-input {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    .search-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .adminViewUsersButton {
+        font-size: 14px;
+        padding: 8px 12px;
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-buttons {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .search-bar {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .adminViewUsersButton {
+        width: 100%;
+        max-width: none;
+        min-width: auto;
+    }
+
+    .table-header-item,
+    .table-data-item {
+        padding: 12px 16px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        margin-right: 12px;
+    }
+
+    .table-header-item {
+        font-size: 11px;
+    }
+
+    .table-data-item {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .search-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .search-input {
+        min-width: auto;
+    }
+
+    .search-btn {
+        width: 100%;
+    }
 }
