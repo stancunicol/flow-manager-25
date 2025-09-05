@@ -65,7 +65,7 @@
 
             <div class="modal-actions">
                 <button class="action-btn edit-btn" @onclick="async () => await OpenEditModal(selectedDepartment)">✎ Edit</button>
-                <button class="action-btn delete-btn" @onclick="async () => await DeleteDepartment(selectedDepartment.Id)">🗑 Delete</button>
+                <button class="action-btn delete-btn" @onclick="async () => await OpenDeleteDepartmentModal(selectedDepartment.Id)">🗑 Delete</button>
             </div>
         </div>
     </div>
@@ -144,6 +144,92 @@
             <div class="modal-actions">
                 <button class="btn save-btn" @onclick="SaveEditDepartment">💾 Save</button>
                 <button class="btn cancel-btn" @onclick="CloseEditModal">✕ Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (isDeleteModalOpen && departmentToDelete != null)
+{
+    <div class="delete-modal-backdrop" @onclick="() => isDeleteModalOpen = false">
+        <div class="delete-modal-content" @onclick:stopPropagation="true">
+
+            <div class="delete-modal-header">
+                <h3>Reassign employees from: @departmentToDelete.Name</h3>
+                <button class="close-icon" @onclick="() => isDeleteModalOpen = false">✕</button>
+            </div>
+
+            <p>Select the department where you want to move the employees:</p>
+
+            <select @bind="selectedReassignDepartmentId">
+                <option value="">-- Select department --</option>
+                @foreach (var dep in departments.Where(d => d.Id != departmentToDelete.Id))
+                {
+                    <option value="@dep.Id">@dep.Name</option>
+                }
+            </select>
+
+            <div class="delete-modal-actions">
+                <button class="btn cancel-btn" @onclick="CloseDeleteDepartmentModal">✕ Cancel</button>
+                <button class="btn save-btn" @onclick="OpenMoveUsersModal">➡ Next</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (isMoveUsersModalOpen && departmentToDelete != null && selectedDepartment != null)
+{
+    <div class="select-modal-backdrop" @onclick="() => isMoveUsersModalOpen = false">
+        <div class="select-modal-content wide" @onclick:stopPropagation="true">
+
+            <div class="select-modal-header">
+                <h3>Move Users</h3>
+            </div>
+
+            <div class="select-move-users-container">
+                <div class="users-column">
+                    <h4>@departmentToDelete.Name</h4>
+                    <ul>
+                        @if (departmentToDelete.Users != null && departmentToDelete.Users.Any())
+                        {
+                            @foreach (var user in departmentToDelete.Users)
+                            {
+                                <li class="user-item">
+                                    <span>@user.Name (@user.Email)</span>
+                                    <button class="move-btn" @onclick="() => MoveUserToTarget(user)">➡</button>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="empty-slot">No users to move</li>
+                        }
+                    </ul>
+                </div>
+
+                <div class="users-column">
+                    <h4>@selectedDepartment.Name</h4>
+                    <ul>
+                        @if (selectedDepartment.Users != null && selectedDepartment.Users.Any())
+                        {
+                            @foreach (var user in selectedDepartment.Users)
+                            {
+                                <li class="user-item">
+                                    <span>@user.Name (@user.Email)</span>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="empty-slot">No users yet</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="select-modal-actions">
+                <button class="btn cancel-btn" @onclick="CloseMoveUsersModal">✕ Cancel</button>
+                <button class="btn save-btn" @onclick="SaveUserMoves">💾 Save Changes</button>
             </div>
         </div>
     </div>

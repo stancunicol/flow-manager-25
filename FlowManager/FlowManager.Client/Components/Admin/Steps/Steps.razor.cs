@@ -12,6 +12,7 @@ using UserService = FlowManager.Client.Services.UserService;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Linq.Expressions;
 using FlowManager.Shared.DTOs.Requests.Step;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
@@ -20,7 +21,11 @@ namespace FlowManager.Client.Components.Admin.Steps
         private List<StepResponseDto> departments = new();
         private bool isModalOpen = false;
         private bool isCreateModalOpen = false;
+        private bool isDeleteModalOpen = false;
+        private bool isMoveUsersModalOpen = false;
+        private Guid selectedReassignDepartmentId { get; set; }
         private StepResponseDto? selectedDepartment;
+        private StepResponseDto? departmentToDelete;
         private string newDepName = string.Empty;
         private string error = string.Empty;
         private List<UserResponseDto> unsignedUsers = new();
@@ -30,6 +35,7 @@ namespace FlowManager.Client.Components.Admin.Steps
         private List<UserResponseDto> allUsersList = new();
         private List<UserResponseDto> allUsers = new();
         private Dictionary<Guid, string> departmentColors = new();
+        private Guid? draggedUserId = null;
 
 
         [Inject]
@@ -70,31 +76,6 @@ namespace FlowManager.Client.Components.Admin.Steps
             }
         }
 
-        private async Task LoadUnsignedUsers()
-        {
-            try
-            {
-                unsignedUsers.Clear();
-                var response = await userService.GetAllUsersQueriedAsync();
-                if (response != null && response.Success && response.Result != null)
-                {
-                    var allUsers = (List<UserResponseDto>)response.Result.Data;
-                    foreach (var user in allUsers)
-                    {
-                        var isAssigned = await userService.VerifyIfAssigned(user.Id);
-                        if (isAssigned.Success && !isAssigned.Result)
-                        {
-                            unsignedUsers.Add(user);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading unsigned users: {ex.Message}");
-            }
-        }
-
         private async Task OpenModal(StepResponseDto department)
         {
             isModalOpen = true;
@@ -113,11 +94,9 @@ namespace FlowManager.Client.Components.Admin.Steps
 
         private async void OpenCreateModal()
         {
-            await LoadUnsignedUsers();
             newDepName = string.Empty;
             error = string.Empty;
             isCreateModalOpen = true;
-            selectedUsers.Clear();
             StateHasChanged();
         }
 
@@ -126,7 +105,6 @@ namespace FlowManager.Client.Components.Admin.Steps
             isCreateModalOpen = false;
             error = string.Empty;
             newDepName = string.Empty;
-            selectedUsers.Clear();
         }
 
         private void CloseModal()
@@ -165,16 +143,6 @@ namespace FlowManager.Client.Components.Admin.Steps
                 if (result != null)
                 {
                     await LoadDepartments();
-
-                    foreach (var user in selectedUsers)
-                    {
-                        var assignResult = await stepService.AssignUserToStepAsync(result.Id, user.Id);
-                        if (assignResult == null)
-                        {
-                            Console.WriteLine($"⚠️ Failed to assign user {user.Name} to department {result.Id}");
-                            error = $"Failed to assign user {user.Name}.";
-                        }
-                    }
 
                     await RefreshAllData();
 
@@ -219,7 +187,6 @@ namespace FlowManager.Client.Components.Admin.Steps
                 unsignedUsers.Clear();
 
                 await LoadDepartments();
-                await LoadUnsignedUsers();
 
                 StateHasChanged();
             }
@@ -229,42 +196,42 @@ namespace FlowManager.Client.Components.Admin.Steps
             }
         }
 
-        private async Task DeleteDepartment(Guid departmentId)
+        private async Task OpenDeleteDepartmentModal(Guid departmentId)
         {
-            try
-            {
-                var response = await stepService.DeleteStepAsync(departmentId);
-                if (response)
-                {
-                    var departmentToRemove = departments.FirstOrDefault(d => d.Id == departmentId);
+            var step = await stepService.GetStepAsync(departmentId);
 
-                    if (departmentToRemove != null)
-                    {
-                        foreach (var user in departmentToRemove.Users)
-                        {
-                            await stepService.UnassignUserFromStepAsync(departmentId, user.Id);
-                        }
-
-                        departments.Remove(departmentToRemove);
-                    }
-                    await LoadDepartments();
-                    isModalOpen = false;
-                    selectedDepartment = null;
-                    StateHasChanged();
-                    Console.WriteLine("✅ Department deleted successfully!");
-                }
-                else
-                {
-                    Console.WriteLine("❌ Failed to delete department");
-                    error = "Could not delete department.";
-                }
-            }
-            catch (Exception ex)
+            if (step != null)
             {
-                Console.WriteLine($"💥 Error deleting step: {ex.Message}");
-                error = "Unexpected error occurred.";
+                departmentToDelete = step;
+                isDeleteModalOpen = true;
+                CloseModal();
+                CloseEditModal();
+                StateHasChanged();
             }
         }
+
+        private void CloseDeleteDepartmentModal()
+        {
+            isDeleteModalOpen = false;
+            StateHasChanged();
+        }
+
+        private async Task OpenMoveUsersModal()
+        {
+            if (departmentToDelete == null || selectedReassignDepartmentId == Guid.Empty)
+                return;
+
+            var target = await stepService.GetStepAsync(selectedReassignDepartmentId);
+
+            if (target != null)
+            {
+                selectedDepartment = target;
+                isMoveUsersModalOpen = true;
+                CloseDeleteDepartmentModal();
+                StateHasChanged();
+            }
+        }
+
 
         private async Task OpenEditModal(StepResponseDto department)
         {
@@ -381,6 +348,65 @@ namespace FlowManager.Client.Components.Admin.Steps
 
             var rnd = new Random();
             return gradients[rnd.Next(gradients.Count)];
+        }
+
+        private void MoveUserToTarget(UserResponseDto user)
+        {
+            if (departmentToDelete == null || selectedDepartment == null)
+                return;
+
+            departmentToDelete.Users?.Remove(user);
+
+            selectedDepartment.Users ??= new List<UserResponseDto>();
+            selectedDepartment.Users.Add(user);
+
+            StateHasChanged();
+        }
+
+        private async Task SaveUserMoves()
+        {
+            try
+            {
+                var targetPayload = new PatchStepRequestDto
+                {
+                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
+                };
+
+                await stepService.UpdateStepAsync(selectedDepartment.Id, targetPayload);
+
+                if (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
+                {
+                    await stepService.DeleteStepAsync(departmentToDelete.Id);
+                    departments.RemoveAll(d => d.Id == departmentToDelete.Id);
+                    StateHasChanged();
+                }
+                else
+                {
+                    var deletePayload = new PatchStepRequestDto
+                    {
+                        UserIds = departmentToDelete.Users.Select(u => u.Id).ToList()
+                    };
+
+                    await stepService.UpdateStepAsync(departmentToDelete.Id, deletePayload);
+                }
+
+                await CloseMoveUsersModal();
+                await OpenDeleteDepartmentModal(departmentToDelete.Id);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Eroare la salvarea mutărilor: {ex.Message}");
+            }
+        }
+
+        private async Task CloseMoveUsersModal()
+        {
+            isMoveUsersModalOpen = false;
+            selectedDepartment = null;
+            selectedReassignDepartmentId = Guid.Empty;
+
+            StateHasChanged();
         }
     }
 }
