@@ -419,5 +419,5 @@ FlowManager/appsettings.json
 /FlowManager/FlowManager.API/appsettings.json
 /FlowManager/FlowManager.Infrastructure/Migrations
 
-/FlowManager/FlowManager.Infrastructure/flowMmanagerdb.db-shm
-/FlowManager/FlowManager.Infrastructure/flowMmanagerdb.db-wal
+/FlowManager/FlowManager.Infrastructure/flowmanagerdb.db-shm
+/FlowManager/FlowManager.Infrastructure/flowmanagerdb.db-wal
