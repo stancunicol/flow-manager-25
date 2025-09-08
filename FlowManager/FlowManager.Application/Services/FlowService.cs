@@ -116,7 +116,7 @@ namespace FlowManager.Infrastructure.Services
                 Name = payload.Name,
             };
 
-            if (payload.FormTemplateId != null)
+            if (payload.FormTemplateId != null && payload.FormTemplateId != Guid.Empty)
             {
                 FormTemplate? ft = await _formTemplateRepository.GetFormTemplateByIdAsync((Guid)payload.FormTemplateId);
                 if (ft == null)
