@@ -90,6 +90,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
                 Id = u.Id,
                 Name = u.Name!,
                 Email = u.Email!,
+                PhoneNumber = u.PhoneNumber,
                 IsActive = u.DeletedAt == null,
                 Roles = u.Roles!.Select(r => new RoleVM
                 {

@@ -86,20 +86,20 @@ namespace FlowManager.Infrastructure.Seed
         }
 
         private static List<User> CreateUsers(AppDbContext dbContext, IPasswordHasher<User> passwordHasher,
-            (Role basicRole, Role moderatorRole, Role adminRole) roles, List<Step> steps)
+        (Role basicRole, Role moderatorRole, Role adminRole) roles, List<Step> steps)
         {
             // Generate 50 users with balanced distribution
             var firstNames = new[] { "James", "Sarah", "Michael", "Emily", "David", "Jessica", "Robert", "Amanda", "Christopher", "Nicole",
-                                "Kevin", "Lauren", "Daniel", "Melissa", "Andrew", "Ashley", "Matthew", "Stephanie", "Ryan", "Rachel",
-                                "Brandon", "Samantha", "Justin", "Brittany", "John", "Michelle", "Anthony", "Danielle", "William", "Katherine",
-                                "Joshua", "Amy", "Nicholas", "Angela", "Tyler", "Heather", "Alexander", "Rebecca", "Jonathan", "Jennifer",
-                                "Nathan", "Elizabeth", "Patrick", "Maria", "Jason", "Lisa", "Adam", "Christine", "Mark", "Laura" };
+                            "Kevin", "Lauren", "Daniel", "Melissa", "Andrew", "Ashley", "Matthew", "Stephanie", "Ryan", "Rachel",
+                            "Brandon", "Samantha", "Justin", "Brittany", "John", "Michelle", "Anthony", "Danielle", "William", "Katherine",
+                            "Joshua", "Amy", "Nicholas", "Angela", "Tyler", "Heather", "Alexander", "Rebecca", "Jonathan", "Jennifer",
+                            "Nathan", "Elizabeth", "Patrick", "Maria", "Jason", "Lisa", "Adam", "Christine", "Mark", "Laura" };
 
             var lastNames = new[] { "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
-                               "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
-                               "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
-                               "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
-                               "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts" };
+                           "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
+                           "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
+                           "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
+                           "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts" };
 
             var createdUsers = new List<User>();
 
@@ -153,7 +153,10 @@ namespace FlowManager.Infrastructure.Seed
                             Name = name,
                             StepId = step.Id, // Assign user to specific step
                             SecurityStamp = Guid.NewGuid().ToString(),
-                            ConcurrencyStamp = Guid.NewGuid().ToString()
+                            ConcurrencyStamp = Guid.NewGuid().ToString(),
+                            // Add phone number from Identity base entity
+                            PhoneNumber = GenerateRandomPhoneNumber(),
+                            PhoneNumberConfirmed = true // Mark phone as confirmed
                         };
 
                         user.PasswordHash = passwordHasher.HashPassword(user, "password123");
@@ -198,6 +201,44 @@ namespace FlowManager.Infrastructure.Seed
 
             dbContext.SaveChanges();
             return createdUsers;
+        }
+
+        // Helper method to generate random Romanian phone numbers
+        private static string GenerateRandomPhoneNumber()
+        {
+            var random = new Random();
+
+            // Romanian mobile operators with their real prefixes
+            var mobileOperators = new Dictionary<string, string[]>
+        {
+            // Orange Romania
+            { "Orange", new[] { "740", "741", "742", "743", "744", "745", "746", "747", "748" } },
+            
+            // Vodafone Romania
+            { "Vodafone", new[] { "720", "721", "722", "723", "724", "725", "726", "727", "728", "729",
+                                 "750", "751", "752", "753", "754", "755", "756", "757", "758", "759" } },
+            
+            // Telekom Romania
+            { "Telekom", new[] { "730", "731", "732", "733", "734", "735", "736", "737", "738", "739" } },
+            
+            // Digi Mobil
+            { "Digi", new[] { "760", "761", "762", "763", "764", "765", "766", "767", "768", "769" } },
+            
+            // RCS & RDS
+            { "RCS", new[] { "770", "771", "772", "773", "774", "775", "776", "777", "778", "779" } }
+        };
+
+            // Get all prefixes from all operators
+            var allPrefixes = mobileOperators.Values.SelectMany(x => x).ToArray();
+
+            // Select random prefix
+            var selectedPrefix = allPrefixes[random.Next(allPrefixes.Length)];
+
+            // Generate remaining 6 digits (XXX XXX format)
+            var middlePart = random.Next(100, 999).ToString("D3");
+            var lastPart = random.Next(100, 999).ToString("D3");
+
+            return $"+40 {selectedPrefix} {middlePart} {lastPart}";
         }
 
         private static List<Team> CreateBalancedTeams(AppDbContext dbContext, List<Step> steps)

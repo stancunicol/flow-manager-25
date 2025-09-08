@@ -8,6 +8,7 @@ using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
 using System.Numerics;
+using System.Text.RegularExpressions;
 
 namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersModals
 {
@@ -29,6 +30,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
         private string _name = "";
         private string _email = "";
+        private string _phoneNumber = "";
         private List<Guid> selectedRoles = new();
         private Guid _selectedStepId = Guid.Empty;
         private bool _isDropdownOpen = false;
@@ -63,6 +65,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
                 Email = _email,
                 Name = _name,
                 Username = _email,
+                PhoneNumber = _phoneNumber,
                 Roles = selectedRoles,
                 StepId = _selectedStepId,
             });
@@ -135,6 +138,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
         {
             _name = string.Empty;
             _email = string.Empty;
+            _phoneNumber = string.Empty;
             selectedRoles.Clear();
             _isNewUserAdmin = false;
             _isNewUserModerator = false;
@@ -142,7 +146,19 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
         private bool IsSubmitValid()
         {
-            return !string.IsNullOrEmpty(_name) && !string.IsNullOrEmpty(_email) && !string.IsNullOrEmpty(_selectedStepName); 
+            return !string.IsNullOrEmpty(_name) && !string.IsNullOrEmpty(_email) && !string.IsNullOrEmpty(_selectedStepName) && IsPhoneNumberValid(); 
+        }
+
+        private bool IsPhoneNumberValid()
+        {
+            if (string.IsNullOrEmpty(_phoneNumber))
+            {
+                return false; 
+            }
+
+            Regex phoneNumberRegex = new Regex(@"^\+[1-9][0-9]{7,14}");
+
+            return phoneNumberRegex.IsMatch(_phoneNumber);
         }
     }
 }

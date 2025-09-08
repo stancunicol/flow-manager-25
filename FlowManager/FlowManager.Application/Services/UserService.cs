@@ -97,6 +97,7 @@ namespace FlowManager.Infrastructure.Services
                     Name = u.Name,
                     Email = u.Email,
                     UserName = u.UserName,
+                    PhoneNumber = u.PhoneNumber,
                     Step = new Shared.DTOs.Responses.Step.StepResponseDto
                     {
                         Id = u.StepId,
@@ -162,6 +163,7 @@ namespace FlowManager.Infrastructure.Services
                 Name = payload.Name,
                 NormalizedEmail = payload.Email.ToUpper(),
                 Email = payload.Email,
+                PhoneNumber = payload.PhoneNumber,
                 EmailConfirmed = false,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 ConcurrencyStamp = Guid.NewGuid().ToString(),
@@ -269,7 +271,12 @@ namespace FlowManager.Infrastructure.Services
                 userToUpdate.UserName = payload.Email;
             }
 
-            if(payload.StepId != null && (await _stepRepository.GetStepByIdAsync((Guid)payload.StepId)) != null)
+            if(!string.IsNullOrEmpty(payload.PhoneNumber))
+            {
+                userToUpdate.PhoneNumber = payload.PhoneNumber;
+            }
+
+            if (payload.StepId != null && (await _stepRepository.GetStepByIdAsync((Guid)payload.StepId)) != null)
             {
                 userToUpdate.StepId = (Guid)
                     payload.StepId;

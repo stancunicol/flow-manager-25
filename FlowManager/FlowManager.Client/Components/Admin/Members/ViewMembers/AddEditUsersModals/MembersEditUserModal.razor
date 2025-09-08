@@ -20,7 +20,6 @@
                            type="text"
                            id="name"
                            name="name"
-                           class="modern-input"
                            placeholder="e.g. John Doe" />
                 </div>
 
@@ -30,8 +29,16 @@
                            type="email"
                            id="email"
                            name="email"
-                           class="modern-input"
                            placeholder="e.g. john.doe@example.com" />
+                </div>
+
+                <div class="form-field">
+                    <label for="phone-number">Phone number (must start with +):</label>
+                    <input @bind="UserToEdit.PhoneNumber"
+                           type="tel"
+                           id="phone-number"
+                           pattern="^\+[1-9][0-9]{7,14}$"
+                           required>
                 </div>
 
                 <div class="department-selector">

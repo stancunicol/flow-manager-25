@@ -109,6 +109,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
                 Name = UserToEdit.Name,
                 Email = UserToEdit.Email,
                 UserName = UserToEdit.Email,
+                PhoneNumber = UserToEdit.PhoneNumber,
                 StepId = UserToEdit.Step?.Id,
                 Roles = UserToEdit.Roles?.Select(r => r.Id).ToList()
             });

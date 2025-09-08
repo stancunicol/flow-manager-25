@@ -34,6 +34,15 @@
                            required />
                 </div>
 
+                <div class="form-field">
+                    <label for="phone-number">*Phone number (must start with +):</label>
+                    <input @bind="_phoneNumber"
+                           type="tel"
+                           id="phone-number"
+                           pattern="^\+[1-9][0-9]{7,14}$"
+                           required>
+                </div>
+
                 <div class="department-selector">
                     <label class="department-label">*Department:</label>
                     <div class="custom-dropdown" @onclick="ToggleDropdown">
