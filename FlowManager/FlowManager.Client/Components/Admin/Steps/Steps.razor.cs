@@ -9,10 +9,13 @@ using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Responses.Step;
 using StepService = FlowManager.Client.Services.StepService;
 using UserService = FlowManager.Client.Services.UserService;
+using TeamService = FlowManager.Client.Services.TeamService;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Linq.Expressions;
 using FlowManager.Shared.DTOs.Requests.Step;
+using FlowManager.Shared.DTOs.Requests.Team;
 using Microsoft.AspNetCore.Components.Web;
+using FlowManager.Shared.DTOs.Responses.Team;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
@@ -34,15 +37,18 @@ namespace FlowManager.Client.Components.Admin.Steps
         private string editDepName = string.Empty;
         private List<UserResponseDto> allUsersList = new();
         private List<UserResponseDto> allUsers = new();
+        private List<TeamResponseDto> allTeams = new();
         private Dictionary<Guid, string> departmentColors = new();
         private Guid? draggedUserId = null;
+        private List<TeamResponseDto> selectedTeams = new();
 
 
         [Inject]
         private StepService stepService { get; set; } = default!;
-
         [Inject]
         private UserService userService { get; set; } = default!;
+        [Inject]
+        private TeamService teamService { get; set; } = default!;
 
         protected override async Task OnInitializedAsync()
         {
@@ -73,6 +79,22 @@ namespace FlowManager.Client.Components.Admin.Steps
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading departments: {ex.Message}");
+            }
+        }
+
+        private async Task LoadTeams()
+        {
+            try
+            {
+                var response = await teamService.GetAllTeamsQueriedAsync();
+                if (response != null && response.Success && response.Result != null)
+                {
+                    allTeams = response.Result.Data.Where(t => t.DeletedAt == null).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading teams: {ex.Message}");
             }
         }
 
@@ -179,6 +201,19 @@ namespace FlowManager.Client.Components.Admin.Steps
             }
         }
 
+        private void ToggleTeamSelection(TeamResponseDto team, bool isChecked)
+        {
+            if (isChecked)
+            {
+                if (!selectedTeams.Any(t => t.Id == team.Id))
+                    selectedTeams.Add(team);
+            }
+            else
+            {
+                selectedTeams.RemoveAll(t => t.Id == team.Id);
+            }
+        }
+
         private async Task RefreshAllData()
         {
             try
@@ -261,8 +296,27 @@ namespace FlowManager.Client.Components.Admin.Steps
                     }
 
                     allUsers = filteredUsers;
-
                 }
+
+                var teamResponse = await teamService.GetAllTeamsQueriedAsync();
+                if (teamResponse != null && teamResponse.Success && teamResponse.Result != null)
+                {
+                    var allTeamsList = teamResponse.Result.Data;
+
+                    var filteredTeams = new List<TeamResponseDto>();
+
+                    foreach (var t in allTeamsList)
+                    {
+                        if (selectedDepartment.Teams.Any(st => st.Id == t.Id) || true)
+                        {
+                            filteredTeams.Add(t);
+                        }
+                    }
+
+                    allTeams = filteredTeams;
+                }
+
+                selectedTeams = selectedDepartment.Teams.ToList();
 
                 isEditModalOpen = true;
                 StateHasChanged();
@@ -276,41 +330,6 @@ namespace FlowManager.Client.Components.Admin.Steps
 
             try
             {
-                selectedDepartment = await stepService.GetStepAsync(selectedDepartment.Id);
-                Console.WriteLine($"{selectedDepartment.Id}");
-                selectedUsers ??= new List<UserResponseDto>();
-
-                var currentUserIds = (selectedDepartment?.Users ?? new List<UserResponseDto>())
-                        .Select(u => u.Id)
-                        .ToList();
-
-                var newUserIds = (selectedUsers ?? new List<UserResponseDto>())
-                                        .Select(u => u.Id)
-                                        .ToList();
-
-                var usersToAssign = newUserIds.Except(currentUserIds).ToList();
-
-                var usersToUnassign = currentUserIds.Except(newUserIds).ToList();
-
-                foreach (var userId in usersToAssign)
-                {
-                    var updatedStep = await stepService.AssignUserToStepAsync(selectedDepartment.Id, userId);
-                    Console.WriteLine($"{userId} assigned to {selectedDepartment.Id}");
-                    if (updatedStep != null)
-                        selectedDepartment = updatedStep;
-                }
-
-                Console.WriteLine($"Users to unassign: {string.Join(", ", usersToUnassign)}");
-                foreach (var userId in usersToUnassign)
-                {
-                    var updatedStep = await stepService.UnassignUserFromStepAsync(selectedDepartment.Id, userId);
-                    Console.WriteLine($"{userId} unassigned from {selectedDepartment.Id}");
-                    if (updatedStep != null)
-                        selectedDepartment = updatedStep;
-                }
-
-                selectedUsers = selectedDepartment.Users.ToList();
-
                 await RefreshAllData();
                 await LoadDepartments();
 
@@ -332,7 +351,9 @@ namespace FlowManager.Client.Components.Admin.Steps
             selectedDepartment = null;
             editDepName = string.Empty;
             selectedUsers.Clear();
+            selectedTeams.Clear();
             allUsers.Clear();
+            allTeams.Clear();
         }
 
         private string GetRandomGradient()
@@ -363,18 +384,33 @@ namespace FlowManager.Client.Components.Admin.Steps
             StateHasChanged();
         }
 
+        private void MoveTeamToTarget(TeamResponseDto team)
+        {
+            if (departmentToDelete == null || selectedDepartment == null)
+                return;
+
+            departmentToDelete.Teams?.Remove(team);
+
+            selectedDepartment.Teams ??= new List<TeamResponseDto>();
+            selectedDepartment.Teams.Add(team);
+
+            StateHasChanged();
+        }
+
         private async Task SaveUserMoves()
         {
             try
             {
                 var targetPayload = new PatchStepRequestDto
                 {
-                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
+                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList(),
+                    TeamIds = selectedDepartment.Teams.Select(t => t.Id).ToList()
                 };
 
                 await stepService.UpdateStepAsync(selectedDepartment.Id, targetPayload);
 
-                if (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
+                if ((departmentToDelete.Users == null || !departmentToDelete.Users.Any()) &&
+                    (departmentToDelete.Teams == null || !departmentToDelete.Teams.Any()))
                 {
                     await stepService.DeleteStepAsync(departmentToDelete.Id);
                     departments.RemoveAll(d => d.Id == departmentToDelete.Id);
@@ -384,7 +420,8 @@ namespace FlowManager.Client.Components.Admin.Steps
                 {
                     var deletePayload = new PatchStepRequestDto
                     {
-                        UserIds = departmentToDelete.Users.Select(u => u.Id).ToList()
+                        UserIds = departmentToDelete.Users.Select(u => u.Id).ToList(),
+                        TeamIds = departmentToDelete.Teams.Select(t => t.Id).ToList()
                     };
 
                     await stepService.UpdateStepAsync(departmentToDelete.Id, deletePayload);
@@ -396,7 +433,7 @@ namespace FlowManager.Client.Components.Admin.Steps
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Eroare la salvarea mutărilor: {ex.Message}");
+                Console.WriteLine($"Error at saving moves: {ex.Message}");
             }
         }
 
