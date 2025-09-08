@@ -38,7 +38,7 @@ namespace FlowManager.Infrastructure.Context
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
             var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-            optionsBuilder.UseNpgsql(connectionString);
+            optionsBuilder.UseSqlite(connectionString);
 
             return new AppDbContext(optionsBuilder.Options);
         }

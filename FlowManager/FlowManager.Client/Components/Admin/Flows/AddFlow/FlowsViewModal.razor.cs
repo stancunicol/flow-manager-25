@@ -40,7 +40,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
 
             try
             {
-                Console.WriteLine($"term : {_searchTerm}");
                 var payload = new QueriedFlowRequestDto
                 {
                     GlobalSearchTerm = _searchTerm,

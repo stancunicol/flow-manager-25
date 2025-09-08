@@ -137,23 +137,21 @@ namespace FlowManager.Infrastructure.Context
             builder.Entity<Component>(entity =>
             {
                 entity.HasKey(e => e.Id);
-
                 entity.Property(e => e.Properties)
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                           v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null))
-                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
+                      .HasColumnType("TEXT"); // JSON
             });
 
             builder.Entity<FormResponse>(entity =>
             {
                 entity.HasKey(e => e.Id);
-
                 entity.Property(e => e.ResponseFields)
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                           v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
-                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
+                      .HasColumnType("TEXT"); // JSON
             });
         }
 

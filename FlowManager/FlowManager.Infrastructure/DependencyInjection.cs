@@ -14,7 +14,7 @@ namespace FlowManager.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+                     options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
 
             services.AddIdentity<User, Role>()
                     .AddEntityFrameworkStores<AppDbContext>()
