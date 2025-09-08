@@ -14,12 +14,15 @@ namespace FlowManager.Application.Services
     {
         private readonly IFormResponseRepository _formResponseRepository;
         private readonly ILogger<FormResponseService> _logger;
+        private readonly IFormReviewRepository _formReviewRepository;
 
         public FormResponseService(
             IFormResponseRepository formResponseRepository,
+            IFormReviewRepository formReviewRepository,
             ILogger<FormResponseService> logger)
         {
             _formResponseRepository = formResponseRepository ?? throw new ArgumentNullException(nameof(formResponseRepository));
+            _formReviewRepository = formReviewRepository ?? throw new ArgumentNullException(nameof(formReviewRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -222,11 +225,29 @@ namespace FlowManager.Application.Services
                 formResponse.ResponseFields = payload.ResponseFields;
             }
 
+            // ÎNREGISTREAZĂ REVIEW-UL PENTRU ISTORIC
+            FormReview? reviewToRecord = null;
+
             // LOGICA PENTRU REJECT
             if (!string.IsNullOrEmpty(payload.RejectReason))
             {
                 formResponse.RejectReason = payload.RejectReason;
                 formResponse.Status = "Rejected";
+
+                // Înregistrează reject-ul în istoric
+                if (payload.ReviewerId.HasValue)
+                {
+                    reviewToRecord = new FormReview
+                    {
+                        FormResponseId = payload.Id,
+                        ReviewerId = payload.ReviewerId.Value,
+                        StepId = formResponse.StepId,
+                        Action = "Rejected",
+                        RejectReason = payload.RejectReason,
+                        ReviewedAt = DateTime.UtcNow
+                    };
+                }
+
                 _logger.LogInformation("Form response {Id} rejected with reason: {RejectReason}", payload.Id, payload.RejectReason);
             }
             // LOGICA PENTRU CLEAR REJECT (approve după reject anterior)
@@ -249,14 +270,26 @@ namespace FlowManager.Application.Services
             // LOGICA PENTRU SCHIMBAREA STEP-ULUI (approve și move to next step)
             if (payload.StepId.HasValue && payload.StepId.Value != formResponse.StepId)
             {
-                var isLastStep = await _formResponseRepository.IsLastStepInFlowAsync(payload.StepId.Value);
+                // Înregistrează approve-ul pentru step-ul curent ÎNAINTE de mutare
+                if (payload.ReviewerId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
+                {
+                    reviewToRecord = new FormReview
+                    {
+                        FormResponseId = payload.Id,
+                        ReviewerId = payload.ReviewerId.Value,
+                        StepId = formResponse.StepId, // Step-ul curent (nu cel nou)
+                        Action = "Approved",
+                        ReviewedAt = DateTime.UtcNow
+                    };
+                }
 
                 formResponse.StepId = payload.StepId.Value;
 
-                // Doar dacă nu e reject, actualizează statusul
+                // SCHIMBAT: Nu setez automat status-ul la "Approved" când ajunge la ultimul step
+                // Formularele rămân "Pending" la fiecare step pentru review de către moderatori
                 if (string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
                 {
-                    formResponse.Status = isLastStep ? "Approved" : "Pending";
+                    formResponse.Status = "Pending"; // Întotdeauna "Pending" pentru review
                 }
 
                 _logger.LogInformation("Form response {Id} moved from step {PreviousStepId} to step {NewStepId}, status: {Status}",
@@ -274,6 +307,14 @@ namespace FlowManager.Application.Services
             formResponse.UpdatedAt = DateTime.UtcNow;
 
             await _formResponseRepository.UpdateAsync(formResponse);
+
+            // SALVEAZĂ REVIEW-UL ÎN ISTORIC
+            if (reviewToRecord != null)
+            {
+                await _formReviewRepository.AddAsync(reviewToRecord);
+                _logger.LogInformation("Review recorded: {Action} by {ReviewerId} for form {FormResponseId} at step {StepId}",
+                    reviewToRecord.Action, reviewToRecord.ReviewerId, reviewToRecord.FormResponseId, reviewToRecord.StepId);
+            }
 
             _logger.LogInformation("Form response {Id} updated. Previous status: {PreviousStatus}, New status: {NewStatus}",
                 payload.Id, previousStatus, formResponse.Status);

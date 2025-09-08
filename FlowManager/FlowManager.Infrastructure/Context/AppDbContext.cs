@@ -29,6 +29,9 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<UserTeam> UserTeams => Set<UserTeam>();
         public DbSet<FormTemplateFlow> FormTemplateFlows => Set<FormTemplateFlow>();
 
+        // ADAUGĂ ACEASTĂ LINIE PENTRU FORMREVIEW
+        public DbSet<FormReview> FormReviews => Set<FormReview>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -42,7 +45,44 @@ namespace FlowManager.Infrastructure.Context
             FormTemplateFlowsRelationshipConfiguration(builder);
             UserTeamRelationshipConfiguration(builder);
 
+            // ADAUGĂ ACEASTĂ LINIE PENTRU CONFIGURAȚIA FORMREVIEW
+            FormReviewRelationshipConfiguration(builder);
+
             JSONBConfiguration(builder);
+        }
+
+        // ADAUGĂ ACEASTĂ METODĂ PENTRU CONFIGURAȚIA FORMREVIEW
+        private void FormReviewRelationshipConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FormReview>(entity =>
+            {
+                entity.HasKey(fr => fr.Id);
+
+                entity.HasOne(fr => fr.FormResponse)
+                    .WithMany()
+                    .HasForeignKey(fr => fr.FormResponseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(fr => fr.Reviewer)
+                    .WithMany()
+                    .HasForeignKey(fr => fr.ReviewerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(fr => fr.Step)
+                    .WithMany()
+                    .HasForeignKey(fr => fr.StepId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(fr => fr.Action)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(fr => fr.RejectReason)
+                    .HasMaxLength(500);
+
+                entity.HasIndex(fr => new { fr.ReviewerId, fr.ReviewedAt });
+                entity.HasIndex(fr => fr.FormResponseId);
+            });
         }
 
         private void UserRoleRelationshipConfiguration(ModelBuilder builder)

@@ -222,6 +222,53 @@ namespace FlowManager.Infrastructure.Migrations
                     b.ToTable("FormResponses");
                 });
 
+            modelBuilder.Entity("FlowManager.Domain.Entities.FormReview", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("FormResponseId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ReviewerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("StepId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormResponseId");
+
+                    b.HasIndex("StepId");
+
+                    b.HasIndex("ReviewerId", "ReviewedAt");
+
+                    b.ToTable("FormReviews");
+                });
+
             modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -706,6 +753,33 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("Step");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.FormReview", b =>
+                {
+                    b.HasOne("FlowManager.Domain.Entities.FormResponse", "FormResponse")
+                        .WithMany()
+                        .HasForeignKey("FormResponseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FlowManager.Domain.Entities.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FlowManager.Domain.Entities.Step", "Step")
+                        .WithMany()
+                        .HasForeignKey("StepId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FormResponse");
+
+                    b.Navigation("Reviewer");
+
+                    b.Navigation("Step");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FormTemplateComponent", b =>
