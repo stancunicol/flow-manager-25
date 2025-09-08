@@ -1,5 +1,4 @@
-﻿using Azure;
-using FlowManager.Client.DTOs;
+﻿using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Client.ViewModels.Team;
@@ -12,23 +11,23 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
-
-namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
+namespace FlowManager.Client.Components.Admin.EditFlow
 {
-    public partial class FlowsAddModal : ComponentBase
+    public partial class EditFlow : ComponentBase
     {
         [Inject] private StepService _stepService { get; set; } = default!;
-        [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
         [Inject] private FlowService _flowService { get; set; } = default!;
-        [Parameter] public string SavedFormTemplateName { get; set; } = "";
-        [Parameter] public EventCallback OnSaveWorkflow { get; set; }
-        [Parameter] public EventCallback OnFlowSavedWithoutTemplate { get; set; }
+
+        [Parameter] public Guid? FormTemplateId { get; set; }
+        [Parameter] public Guid FlowId { get; set; }
+        [Parameter] public EventCallback OnFlowSaved { get; set; }
 
         private List<StepVM> _availableSteps = new List<StepVM>();
         private List<StepVM> _configuredSteps = new List<StepVM>();
         private StepVM? _draggedStep = null;
         private bool _isDragOver = false;
         private string _flowName = string.Empty;
+        private string _initialFlowName = string.Empty;
 
         private bool _showAssignToStepModal = false;
         private StepVM? _stepToAssign = null;
@@ -38,7 +37,47 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         protected override async Task OnInitializedAsync()
         {
+            await LoadCurrentFlow();
             await LoadStepsAsync();
+        }
+
+        private async Task LoadCurrentFlow()
+        {
+            ApiResponse<FlowResponseDto?> response = await _flowService.GetFlowByIdIncludeStepsAsync(FlowId);
+            if (!response.Success || response.Result == null)
+            {
+                _onSubmitMessage = response?.Message ?? "Failed to load flow";
+                _onSubmitSuccess = false;
+                _configuredSteps.Clear();
+                return;
+            }
+
+            _flowName = response.Result.Name ?? string.Empty;
+            _initialFlowName = response.Result.Name ?? string.Empty;
+            _configuredSteps = response.Result.FlowSteps?.Select(fs => new StepVM
+            {
+                Id = fs.StepId ?? Guid.Empty,
+                Name = fs.StepName ?? string.Empty,
+                FlowStepId = fs.Id,
+                Users = fs.Users?.Where(u => u.User?.Teams?.Count == 0 || u.User?.Teams == null)
+                                .Select(u => new UserVM
+                                {
+                                    Id = u.User?.Id ?? Guid.Empty,
+                                    Name = u.User?.Name ?? string.Empty,
+                                    Email = u.User?.Email ?? string.Empty,
+                                }).ToList() ?? new List<UserVM>(),
+                Teams = fs.Teams?.Select(t => new TeamVM
+                {
+                    Id = t.Team?.Id ?? Guid.Empty,
+                    Name = t.Team?.Name ?? string.Empty,
+                    Users = t.Team?.Users?.Select(u => new UserVM
+                    {
+                        Id = u.Id,
+                        Name = u.Name ?? string.Empty,
+                        Email = u.Email ?? string.Empty,
+                    }).ToList() ?? new List<UserVM>()
+                }).ToList() ?? new List<TeamVM>(),
+            }).ToList() ?? new List<StepVM>();
         }
 
         private async Task LoadStepsAsync()
@@ -120,7 +159,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                         Id = _draggedStep.Id,
                         Name = _draggedStep.Name,
                         Users = new List<UserVM>(),
-                        Teams = new List<TeamVM>() 
+                        Teams = new List<TeamVM>()
                     };
                     _configuredSteps.Add(stepForWorkflow);
                 }
@@ -152,21 +191,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             StateHasChanged();
         }
 
-        private bool IsStepConfigured(Guid stepId)
+        private async Task SaveCurrentWorkflowAsync()
         {
-            return _configuredSteps.Any(s => s.Id == stepId);
-        }
-
-        public async Task SaveWorkflow()
-        {
-            if (!IsWorkflowValid())
-            {
-                await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
-                return;
-            }
-
             PostFlowRequestDto payload = new PostFlowRequestDto
             {
+                FormTemplateId = FormTemplateId,
                 Name = _flowName,
                 Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
                 {
@@ -185,126 +214,14 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             _onSubmitMessage = response.Message;
             _onSubmitSuccess = response.Success;
 
-            // Only show success message and navigate if the API call was successful
-            if (response.Success && response.Result != null)
-            {
-                await _jsRuntime.InvokeVoidAsync("alert", "Workflow saved successfully!");
-
-                // Clear the form
-                ClearConfiguration();
-
-                // Trigger navigation to view flows page
-                if (OnFlowSavedWithoutTemplate.HasDelegate)
-                {
-                    await OnFlowSavedWithoutTemplate.InvokeAsync();
-                }
-            }
-            else
-            {
-                // Show error message if the save failed
-                await _jsRuntime.InvokeVoidAsync("alert", $"Failed to save workflow: {response.Message}");
-            }
-
             StateHasChanged();
-            await Task.Delay(3000);
 
-            _onSubmitMessage = string.Empty;
-
-            ClearConfiguration();
-        }
-
-        public async Task SaveWorkflowInvokeAsync()
-        {
-            if (!IsWorkflowValid())
+            if(response.Success)
             {
-                await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
-                return;
+                await Task.Delay(3000);
+                _onSubmitMessage = string.Empty;
+                await OnFlowSaved.InvokeAsync(null);
             }
-
-            // Trigger the save event - WorkflowCarousel will coordinate the save process
-            if (OnSaveWorkflow.HasDelegate)
-            {
-                await OnSaveWorkflow.InvokeAsync();
-            }
-        }
-
-        public async Task<(Guid Id, string Name)?> SaveWorkflowFirst()
-        {
-            try
-            {
-                if (!IsWorkflowValid())
-                {
-                    await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
-                    return null;
-                }
-
-                var workflowStepIds = GetConfiguredStepIds();
-
-                var apiResponse = await _flowService.PostFlowAsync(new PostFlowRequestDto
-                {
-                    Name = _flowName,
-                    Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
-                    {
-                        StepId = configuredStep.Id,
-                        UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                        Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
-                        {
-                            TeamId = t.Id,
-                            UserIds = t.Users.Select(u => u.Id).ToList(),
-                        }).ToList(),
-                    }).ToList(),
-                    FormTemplateId = null
-                });
-
-                if (apiResponse != null && apiResponse.Success && apiResponse.Result != null)
-                {
-                    Console.WriteLine($"Flow created: Id={apiResponse.Result.Id}");
-
-                    ClearConfiguration();
-
-                    return (apiResponse.Result.Id, apiResponse.Result.Name ?? "Unnamed Flow");
-                }
-
-                // Log error message if available
-                if (apiResponse != null && !apiResponse.Success)
-                {
-                    Console.WriteLine($"Flow creation failed: {apiResponse.Message}");
-                }
-
-                _onSubmitMessage = apiResponse.Message;
-                _onSubmitSuccess = apiResponse.Success;
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error creating flow: {ex.Message}");
-                throw;
-            }
-        }
-
-        public async Task SaveWorkflowWithFormTemplate(Guid templateId)
-        {
-            PostFlowRequestDto payload = new PostFlowRequestDto
-            {
-                Name = _flowName,
-                Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
-                {
-                    StepId = configuredStep.Id,
-                    UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                    Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
-                    {
-                        TeamId = t.Id,
-                        UserIds = t.Users.Select(u => u.Id).ToList(),
-                    }).ToList()
-                }).ToList(),
-                FormTemplateId = templateId
-            };
-
-            ApiResponse<FlowResponseDto> response = await _flowService.PostFlowAsync(payload);
-
-            _onSubmitMessage = response.Message;
-            _onSubmitSuccess = response.Success;
         }
 
         public void MoveStepUp(int index)
@@ -339,8 +256,10 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         public bool IsWorkflowValid()
         {
             return !string.IsNullOrWhiteSpace(_flowName) &&
+                   _flowName.ToUpper() != _initialFlowName.ToUpper() && 
                    _configuredSteps.Any() &&
-                   _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name) &&((s.Users != null && s.Users.Count > 0) || (s.Teams != null && s.Teams.Count > 0)));
+                   _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name) &&
+                       ((s.Users != null && s.Users.Count > 0) || (s.Teams != null && s.Teams.Count > 0)));
         }
 
         public string GetFlowNameValidationClass()

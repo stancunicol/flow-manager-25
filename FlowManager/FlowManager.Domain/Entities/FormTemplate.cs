@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace FlowManager.Domain.Entities
 {
@@ -18,8 +19,14 @@ namespace FlowManager.Domain.Entities
 
         // navigation properties
         public virtual ICollection<FormTemplateComponent> Components { get; set; } = new List<FormTemplateComponent>();
-        public Guid? FlowId { get; set; }
-        public virtual Flow? Flow { get; set; }
+        public virtual ICollection<FormTemplateFlow> FormTemplateFlows { get; set; } = new List<FormTemplateFlow>();
+        public Flow? ActiveFlow => FormTemplateFlows
+            .Where(ft => ft.DeletedAt == null && ft.Flow.DeletedAt == null)
+            .OrderByDescending(ft => ft.CreatedAt)
+            .FirstOrDefault(formTemplateFlow => formTemplateFlow.FormTemplateId == this.Id)
+            ?.Flow;
+        public Guid? ActiveFlowId => ActiveFlow?.Id;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }

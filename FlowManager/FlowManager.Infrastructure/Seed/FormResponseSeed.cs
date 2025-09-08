@@ -259,9 +259,14 @@ namespace FlowManager.Infrastructure.Seed
                         Id = Guid.NewGuid(),
                         Name = templateName.Length > 50 ? templateName.Substring(0, 50) : templateName,
                         Content = GenerateFormContent(flow.Name),
-                        FlowId = flow.Id, // Associate with the Flow
                         CreatedAt = DateTime.UtcNow.AddDays(-i * 5) // Older versions have earlier dates
                     };
+
+                    formTemplate.FormTemplateFlows.Add(new FormTemplateFlow
+                    {
+                        FlowId = flow.Id,
+                        FormTemplateId = formTemplate.Id,
+                    });
 
                     dbContext.FormTemplates.Add(formTemplate);
                     dbContext.SaveChanges(); // Save template to get ID

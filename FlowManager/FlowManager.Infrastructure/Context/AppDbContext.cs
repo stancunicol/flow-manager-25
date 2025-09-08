@@ -27,6 +27,7 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<FlowStepUser> FlowStepUsers => Set<FlowStepUser>();
         public DbSet<FlowStepTeam> FlowStepTeams => Set<FlowStepTeam>();
         public DbSet<UserTeam> UserTeams => Set<UserTeam>();
+        public DbSet<FormTemplateFlow> FormTemplateFlows => Set<FormTemplateFlow>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -38,7 +39,7 @@ namespace FlowManager.Infrastructure.Context
             UniqueTeamNameConstraintConfiguration(builder);
 
             UserRoleRelationshipConfiguration(builder);
-
+            FormTemplateFlowsRelationshipConfiguration(builder);
             UserTeamRelationshipConfiguration(builder);
 
             JSONBConfiguration(builder);
@@ -93,6 +94,42 @@ namespace FlowManager.Infrastructure.Context
             {
                 entity.ToTable("Teams");
             });
+        }
+
+        private void FormTemplateFlowsRelationshipConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FormTemplateFlow>(entity =>
+            {
+                entity.HasKey(ftf => new { ftf.FormTemplateId, ftf.FlowId });
+
+                entity.HasOne(ftf => ftf.FormTemplate)
+                      .WithMany(u => u.FormTemplateFlows)
+                      .HasForeignKey(ut => ut.FormTemplateId)
+                      .IsRequired();
+
+                entity.HasOne(ftf => ftf.Flow)
+                      .WithMany(u => u.FormTemplateFlows)
+                      .HasForeignKey(ut => ut.FlowId)
+                      .IsRequired();
+            });
+
+            builder.Entity<FormTemplate>(entity =>
+            {
+                entity.ToTable("FormTemplates");
+            });
+
+            builder.Entity<Flow>(entity =>
+            {
+                entity.ToTable("Flows");
+            });
+
+            builder.Entity<FormTemplate>()
+                .HasIndex(ft => ft.Name)
+                .IsUnique();
+
+            builder.Entity<Flow>()
+                .HasIndex(f => f.Name)
+                .IsUnique();
         }
 
         private void JSONBConfiguration(ModelBuilder builder)

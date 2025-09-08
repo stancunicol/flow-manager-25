@@ -66,6 +66,24 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        [HttpGet("includeSteps/{flowId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetFlowByIdIncludeStepsAsync(Guid flowId)
+        {
+            var result = await _flowService.GetFlowByIdIncludeStepsAsync(flowId);
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flow retreived succesfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
         //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace FlowManager.Client.Components.Admin.Members.ViewMembers
 {
-    public partial class MembersViewUsersModal : ComponentBase
+    public partial class MembersViewUsersModal : ComponentBase, IDisposable
     {
         [Inject] private UserService _userService { get; set; } = default!;
         [Inject] private ILogger<Members> _logger { get; set; } = default!;
@@ -29,9 +29,34 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
         private int _maxVisiblePages = 4;
         private int _totalCount = 0;
 
+        private System.Threading.Timer? _debounceTimer;
+        private readonly int _debounceDelayMs = 250;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadUsers();
+        }
+
+        private void OnSearchTermChanged(string newSearchTerm)
+        {
+            _searchTerm = newSearchTerm;
+
+            _debounceTimer?.Dispose();
+
+            _debounceTimer = new System.Threading.Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    _searchTerm = _searchTerm.Trim();
+                    _currentPage = 1; 
+                    await LoadUsers();
+                    StateHasChanged();
+                });
+
+                _debounceTimer?.Dispose();
+                _debounceTimer = null;
+
+            }, null, _debounceDelayMs, Timeout.Infinite);
         }
 
         private async Task LoadUsers()
@@ -43,7 +68,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
                 payload.GlobalSearchTerm = _searchTerm;
             }
 
-            if(_currentPage != 0 && _pageSize != 0)
+            if (_currentPage != 0 && _pageSize != 0)
             {
                 payload.QueryParams = new Shared.DTOs.Requests.QueryParamsDto
                 {
@@ -116,14 +141,22 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
         {
             if (e.Key == "Enter")
             {
+                _debounceTimer?.Dispose();
+                _debounceTimer = null;
+
                 _searchTerm = _searchTerm.Trim();
+                _currentPage = 1;
                 await LoadUsers();
             }
         }
 
         private async Task SearchFlows()
         {
+            _debounceTimer?.Dispose();
+            _debounceTimer = null;
+
             _searchTerm = _searchTerm.Trim();
+            _currentPage = 1;
             await LoadUsers();
         }
 
@@ -177,6 +210,11 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
         {
             _currentPage = _totalPages;
             await LoadUsers();
+        }
+
+        public void Dispose()
+        {
+            _debounceTimer?.Dispose();
         }
     }
 }

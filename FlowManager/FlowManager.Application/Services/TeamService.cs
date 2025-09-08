@@ -37,7 +37,6 @@ namespace FlowManager.Application.Services
         {
             (List<Team> result, int totalCount) = await _teamRepository.GetAllTeamsQueriedAsync(
                 payload.GlobalSearchTerm,
-                payload.Name,
                 payload.QueryParams?.ToQueryParams(),
                 includeDeleted: true);
 

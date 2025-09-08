@@ -58,29 +58,6 @@
 
         </div>
     </div>
-
-    <!-- Navigation Controls -->
-    <div class="carousel-navigation">
-        <button class="nav-button prev @(_currentPage == 0 ? "disabled" : "")"
-                @onclick="PreviousPage"
-                disabled="@(_currentPage == 0)">
-            <span class="nav-icon">‹</span>
-            <span class="nav-text">Previous</span>
-        </button>
-
-        <div class="page-counter">
-            <span class="current-page">@(_currentPage + 1)</span>
-            <span class="page-separator">of</span>
-            <span class="total-pages">@_totalPages</span>
-        </div>
-
-        <button class="nav-button next @(_currentPage == _totalPages - 1 ? "disabled" : "")"
-                @onclick="NextPage"
-                disabled="@(_currentPage == _totalPages - 1)">
-            <span class="nav-text">Next</span>
-            <span class="nav-icon">›</span>
-        </button>
-    </div>
 </div>
 @if (_showEditModal && _selectedFlow != null)
 {

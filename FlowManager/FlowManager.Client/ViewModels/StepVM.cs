@@ -7,6 +7,7 @@ namespace FlowManager.Client.ViewModels
     public class StepVM
     {
         public Guid Id { get; set; }
+        public Guid? FlowStepId { get; set; }
         public string? Name { get; set; } = string.Empty;
 
         public List<UserVM>? Users { get; set; }

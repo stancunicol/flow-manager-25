@@ -122,7 +122,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
                 return;
             }
 
-            await Task.Delay(5000);
+            await Task.Delay(3000);
 
             _onSubmitMessage = string.Empty;
             StateHasChanged();

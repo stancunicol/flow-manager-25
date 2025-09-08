@@ -19,14 +19,14 @@ namespace FlowManager.Infrastructure.Seed
             // Create steps
             var steps = CreateSteps(dbContext);
 
-            // Create users with role assignments and step assignments
+            // Create users with balanced role distribution
             var users = CreateUsers(dbContext, passwordHasher, roles, steps);
 
-            // Create teams based on steps
-            var teams = CreateTeamsBasedOnSteps(dbContext, steps);
+            // Create balanced teams
+            var teams = CreateBalancedTeams(dbContext, steps);
 
-            // Create user-team relationships based on step assignments
-            CreateUserTeamRelationships(dbContext, users, teams);
+            // Create balanced user-team relationships
+            CreateBalancedUserTeamRelationships(dbContext, users, teams, steps);
 
             // Create components
             var components = CreateComponents(dbContext);
@@ -88,81 +88,111 @@ namespace FlowManager.Infrastructure.Seed
         private static List<User> CreateUsers(AppDbContext dbContext, IPasswordHasher<User> passwordHasher,
             (Role basicRole, Role moderatorRole, Role adminRole) roles, List<Step> steps)
         {
-            var userData = new[]
-            {
-            new { UserName = "jameswilson", Name = "James Wilson", Email = "james.wilson@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "sarahconnor", Name = "Sarah Connor", Email = "sarah.connor@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "michaeltorres", Name = "Michael Torres", Email = "michael.torres@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "emilyrodriguez", Name = "Emily Rodriguez", Email = "emily.rodriguez@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "davidkim", Name = "David Kim", Email = "david.kim@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "jessicamartinez", Name = "Jessica Martinez", Email = "jessica.martinez@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "robertchen", Name = "Robert Chen", Email = "robert.chen@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "amandathompson", Name = "Amanda Thompson", Email = "amanda.thompson@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "christopherlee", Name = "Christopher Lee", Email = "christopher.lee@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "nicoleanderson", Name = "Nicole Anderson", Email = "nicole.anderson@company.com", IsAdmin = false, IsModerator = false },
-            new { UserName = "kevinmurphy", Name = "Kevin Murphy", Email = "kevin.murphy@company.com", IsAdmin = false, IsModerator = true },
-            new { UserName = "laurenfoster", Name = "Lauren Foster", Email = "lauren.foster@company.com", IsAdmin = false, IsModerator = true },
-            new { UserName = "danielwhite", Name = "Daniel White", Email = "daniel.white@company.com", IsAdmin = false, IsModerator = true },
-            new { UserName = "melissagarcia", Name = "Melissa Garcia", Email = "melissa.garcia@company.com", IsAdmin = true, IsModerator = false },
-            new { UserName = "andrewtaylor", Name = "Andrew Taylor", Email = "andrew.taylor@company.com", IsAdmin = true, IsModerator = false }
-        };
+            // Generate 50 users with balanced distribution
+            var firstNames = new[] { "James", "Sarah", "Michael", "Emily", "David", "Jessica", "Robert", "Amanda", "Christopher", "Nicole",
+                                "Kevin", "Lauren", "Daniel", "Melissa", "Andrew", "Ashley", "Matthew", "Stephanie", "Ryan", "Rachel",
+                                "Brandon", "Samantha", "Justin", "Brittany", "John", "Michelle", "Anthony", "Danielle", "William", "Katherine",
+                                "Joshua", "Amy", "Nicholas", "Angela", "Tyler", "Heather", "Alexander", "Rebecca", "Jonathan", "Jennifer",
+                                "Nathan", "Elizabeth", "Patrick", "Maria", "Jason", "Lisa", "Adam", "Christine", "Mark", "Laura" };
+
+            var lastNames = new[] { "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
+                               "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
+                               "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
+                               "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
+                               "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts" };
 
             var createdUsers = new List<User>();
-            var random = new Random();
 
-            foreach (var userInfo in userData)
+            // Create balanced role distribution across all steps
+            // 5 steps × 10 users per step = 50 users total
+            // Per step: 1 admin, 3 moderators, 6 basic users
+            var usersPerStep = 50 / steps.Count; // 10 users per step
+            var adminsPerStep = 1;
+            var moderatorsPerStep = 3;
+            var basicPerStep = 6;
+
+            int userIndex = 0;
+            for (int stepIndex = 0; stepIndex < steps.Count; stepIndex++)
             {
-                User? existingUser = dbContext.Users.FirstOrDefault(u => u.NormalizedUserName == userInfo.UserName.ToUpper());
-                if (existingUser == null)
+                var step = steps[stepIndex];
+
+                // Create role distribution for this step
+                var stepRoleDistribution = new List<(bool IsAdmin, bool IsModerator)>();
+
+                // Add 1 admin for this step
+                stepRoleDistribution.Add((true, false));
+
+                // Add 3 moderators for this step
+                for (int j = 0; j < moderatorsPerStep; j++)
+                    stepRoleDistribution.Add((false, true));
+
+                // Add 6 basic users for this step
+                for (int j = 0; j < basicPerStep; j++)
+                    stepRoleDistribution.Add((false, false));
+
+                // Create users for this step
+                for (int i = 0; i < usersPerStep && userIndex < 50; i++)
                 {
-                    // Assign random step to user
-                    var assignedStep = steps[random.Next(steps.Count)];
+                    var userName = $"{firstNames[userIndex % firstNames.Length].ToLower()}{lastNames[userIndex % lastNames.Length].ToLower()}";
+                    var name = $"{firstNames[userIndex % firstNames.Length]} {lastNames[userIndex % lastNames.Length]}";
+                    var email = $"{userName}@company.com";
 
-                    var user = new User
+                    User? existingUser = dbContext.Users.FirstOrDefault(u => u.NormalizedUserName == userName.ToUpper());
+                    if (existingUser == null)
                     {
-                        Id = Guid.NewGuid(),
-                        UserName = userInfo.UserName,
-                        NormalizedUserName = userInfo.UserName.ToUpper(),
-                        Email = userInfo.Email,
-                        NormalizedEmail = userInfo.Email.ToUpper(),
-                        EmailConfirmed = true,
-                        Name = userInfo.Name,
-                        StepId = assignedStep.Id, // Assign step to user
-                        SecurityStamp = Guid.NewGuid().ToString(),
-                        ConcurrencyStamp = Guid.NewGuid().ToString()
-                    };
+                        var (isAdmin, isModerator) = stepRoleDistribution[i];
 
-                    user.PasswordHash = passwordHasher.HashPassword(user, "password123");
-                    dbContext.Users.Add(user);
-                    createdUsers.Add(user);
+                        var user = new User
+                        {
+                            Id = Guid.NewGuid(),
+                            UserName = userName,
+                            NormalizedUserName = userName.ToUpper(),
+                            Email = email,
+                            NormalizedEmail = email.ToUpper(),
+                            EmailConfirmed = true,
+                            Name = name,
+                            StepId = step.Id, // Assign user to specific step
+                            SecurityStamp = Guid.NewGuid().ToString(),
+                            ConcurrencyStamp = Guid.NewGuid().ToString()
+                        };
 
-                    dbContext.UserRoles.Add(new UserRole
-                    {
-                        UserId = user.Id,
-                        RoleId = roles.basicRole.Id
-                    });
+                        user.PasswordHash = passwordHasher.HashPassword(user, "password123");
+                        dbContext.Users.Add(user);
+                        createdUsers.Add(user);
 
-                    if (userInfo.IsModerator)
-                    {
+                        // Everyone gets basic role
                         dbContext.UserRoles.Add(new UserRole
                         {
                             UserId = user.Id,
-                            RoleId = roles.moderatorRole.Id
+                            RoleId = roles.basicRole.Id
                         });
+
+                        // Add moderator role if applicable
+                        if (isModerator)
+                        {
+                            dbContext.UserRoles.Add(new UserRole
+                            {
+                                UserId = user.Id,
+                                RoleId = roles.moderatorRole.Id
+                            });
+                        }
+
+                        // Add admin role if applicable
+                        if (isAdmin)
+                        {
+                            dbContext.UserRoles.Add(new UserRole
+                            {
+                                UserId = user.Id,
+                                RoleId = roles.adminRole.Id
+                            });
+                        }
+                    }
+                    else
+                    {
+                        createdUsers.Add(existingUser);
                     }
 
-                    if (userInfo.IsAdmin)
-                    {
-                        dbContext.UserRoles.Add(new UserRole
-                        {
-                            UserId = user.Id,
-                            RoleId = roles.adminRole.Id
-                        });
-                    }
-                }
-                else
-                {
-                    createdUsers.Add(existingUser);
+                    userIndex++;
                 }
             }
 
@@ -170,42 +200,42 @@ namespace FlowManager.Infrastructure.Seed
             return createdUsers;
         }
 
-        private static List<Team> CreateTeamsBasedOnSteps(AppDbContext dbContext, List<Step> steps)
+        private static List<Team> CreateBalancedTeams(AppDbContext dbContext, List<Step> steps)
         {
             var createdTeams = new List<Team>();
-            int teamCounter = 1;
 
+            // Create 2 teams per step (25 users per step / ~5-6 users per team = 2 teams per step)
             foreach (var step in steps)
             {
-                // Create team name based on step
-                string teamName = $"{step.Name} Team {teamCounter}";
+                for (int teamNumber = 1; teamNumber <= 2; teamNumber++)
+                {
+                    string teamName = $"{step.Name} Team {teamNumber}";
 
-                Team? existingTeam = dbContext.Teams.FirstOrDefault(t => t.Name == teamName);
-                if (existingTeam == null)
-                {
-                    var team = new Team
+                    Team? existingTeam = dbContext.Teams.FirstOrDefault(t => t.Name == teamName);
+                    if (existingTeam == null)
                     {
-                        Id = Guid.NewGuid(),
-                        Name = teamName,
-                    };
-                    dbContext.Teams.Add(team);
-                    createdTeams.Add(team);
+                        var team = new Team
+                        {
+                            Id = Guid.NewGuid(),
+                            Name = teamName,
+                        };
+                        dbContext.Teams.Add(team);
+                        createdTeams.Add(team);
+                    }
+                    else
+                    {
+                        createdTeams.Add(existingTeam);
+                    }
                 }
-                else
-                {
-                    createdTeams.Add(existingTeam);
-                }
-                teamCounter++;
             }
 
             dbContext.SaveChanges();
             return createdTeams;
         }
 
-        private static void CreateUserTeamRelationships(AppDbContext dbContext, List<User> users, List<Team> teams)
+        private static void CreateBalancedUserTeamRelationships(AppDbContext dbContext, List<User> users,
+            List<Team> teams, List<Step> steps)
         {
-            var random = new Random();
-
             // Group users by their step assignment
             var usersByStep = users.GroupBy(u => u.StepId).ToList();
 
@@ -213,55 +243,28 @@ namespace FlowManager.Infrastructure.Seed
             {
                 var stepId = userGroup.Key;
                 var stepUsers = userGroup.ToList();
-                var step = dbContext.Steps.First(s => s.Id == stepId);
+                var step = steps.First(s => s.Id == stepId);
 
-                // Find existing teams for this step
+                // Get teams for this step
                 var stepTeams = teams.Where(t => t.Name.Contains(step.Name)).ToList();
 
-                // Create teams of 3-4 users from the same step
-                var teamSize = random.Next(3, 5); // 3 or 4 users per team
-                var currentTeamIndex = 0;
+                // Sort users by role to ensure balanced distribution
+                // Admins first, then moderators, then basic users
+                var sortedUsers = stepUsers.OrderBy(u => {
+                    var userRoles = dbContext.UserRoles.Where(ur => ur.UserId == u.Id).ToList();
+                    bool isAdmin = userRoles.Any(ur => ur.RoleId == dbContext.Roles.First(r => r.NormalizedName == "ADMIN").Id);
+                    bool isModerator = userRoles.Any(ur => ur.RoleId == dbContext.Roles.First(r => r.NormalizedName == "MODERATOR").Id);
 
-                for (int i = 0; i < stepUsers.Count; i++)
+                    if (isAdmin) return 0;
+                    if (isModerator) return 1;
+                    return 2;
+                }).ToList();
+
+                // Distribute users evenly across teams in round-robin fashion
+                for (int i = 0; i < sortedUsers.Count; i++)
                 {
-                    var user = stepUsers[i];
-
-                    // If we need a new team for this step
-                    if (i > 0 && i % teamSize == 0)
-                    {
-                        currentTeamIndex++;
-                        teamSize = random.Next(3, 5); // New team size
-                    }
-
-                    // Create additional team if needed
-                    if (currentTeamIndex >= stepTeams.Count)
-                    {
-                        var newTeamName = $"{step.Name} Team {currentTeamIndex + 1}";
-
-                        // Check if team with this name already exists in database
-                        var existingTeam = dbContext.Teams.FirstOrDefault(t => t.Name == newTeamName);
-
-                        if (existingTeam == null)
-                        {
-                            var newTeam = new Team
-                            {
-                                Id = Guid.NewGuid(),
-                                Name = newTeamName
-                                // Add StepId if the Team model has this property
-                                // StepId = stepId
-                            };
-                            dbContext.Teams.Add(newTeam);
-                            dbContext.SaveChanges(); // Save immediately to avoid conflicts
-                            stepTeams.Add(newTeam);
-                            teams.Add(newTeam);
-                        }
-                        else
-                        {
-                            stepTeams.Add(existingTeam);
-                        }
-                    }
-
-                    var targetTeam = stepTeams[currentTeamIndex];
+                    var user = sortedUsers[i];
+                    var targetTeam = stepTeams[i % stepTeams.Count]; // Round-robin assignment
 
                     // Check if relationship already exists
                     bool relationshipExists = dbContext.UserTeams.Any(ut =>

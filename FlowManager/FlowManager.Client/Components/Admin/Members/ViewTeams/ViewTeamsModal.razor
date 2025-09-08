@@ -7,7 +7,9 @@
         <input class="search-teams-input"
                type="text"
                placeholder="Search by teams or employees name..."
-               @bind="_searchTerm" />
+               @bind="_searchTerm"
+               @oninput="@((e) => OnSearchTermChanged(e.Value?.ToString() ?? string.Empty))"
+               @onkeypress="OnEnterPressed" />
 
         <button class="search-teams-button" @onclick="LoadTeamsAsync">
             Search
@@ -171,7 +173,7 @@
                 <!-- Pagination info -->
                 <div class="pagination-info">
                     <span class="pagination-info-text">
-                        Showing @((_currentPage - 1) * _pageSize + 1) - @((_currentPage - 1) * _pageSize + _teams.Count) of @(_totalCount) users
+                        Showing @((_currentPage - 1) * _pageSize + 1) - @((_currentPage - 1) * _pageSize + _teams.Count) of @(_totalCount) teams
                     </span>
                 </div>
             </div>
