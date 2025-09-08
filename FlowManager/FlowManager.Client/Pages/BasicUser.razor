@@ -190,6 +190,13 @@
                                             <span class="detail-label">Status</span>
                                             <span class="status-badge @(GetFormStatus(form).ToLower())">@GetFormStatus(form)</span>
                                         </div>
+                                        @if (form.CompletedByAdmin && !string.IsNullOrEmpty(form.CompletedByAdminName))
+                                        {
+                                            <div class="detail-item completed-by-admin">
+                                                <span class="detail-label">Completed by</span>
+                                                <span class="detail-value admin-name">@form.CompletedByAdminName</span>
+                                            </div>
+                                        }
                                         @if (!string.IsNullOrEmpty(form.RejectReason))
                                         {
                                             <div class="detail-item reject-reason">

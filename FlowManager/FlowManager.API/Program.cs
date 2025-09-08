@@ -74,6 +74,7 @@ builder.Services.AddControllers()
 builder.Services.AddOpenApi();
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddIdentityCore<User>()
     .AddRoles<Role>()
@@ -95,7 +96,7 @@ using (var scope = app.Services.CreateScope())
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
     //BasicSeed.Populate(dbContext, passwordHasher);
-    //MockDataSeed.Populate(dbContext, passwordHasher);
+   // MockDataSeed.Populate(dbContext, passwordHasher);
 }
 
 if (app.Environment.IsDevelopment())

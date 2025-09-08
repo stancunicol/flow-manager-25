@@ -7,6 +7,8 @@ using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Application.Utils;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace FlowManager.Application.Services
 {
@@ -14,13 +16,19 @@ namespace FlowManager.Application.Services
     {
         private readonly IFormResponseRepository _formResponseRepository;
         private readonly ILogger<FormResponseService> _logger;
+        private readonly IEmailService _emailService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public FormResponseService(
             IFormResponseRepository formResponseRepository,
-            ILogger<FormResponseService> logger)
+            ILogger<FormResponseService> logger,
+            IEmailService emailService,
+            IHttpContextAccessor httpContextAccessor)
         {
             _formResponseRepository = formResponseRepository ?? throw new ArgumentNullException(nameof(formResponseRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         }
 
         public async Task<PagedResponseDto<FormResponseResponseDto>> GetAllFormResponsesQueriedAsync(QueriedFormResponseRequestDto payload)
@@ -53,6 +61,10 @@ namespace FlowManager.Application.Services
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
+                CompletedByAdmin = fr.CompletedByAdmin,
+                CompletedByAdminName = fr.CompletedByAdminName,
+                ApprovedByAdmin = fr.ApprovedByAdmin,
+                ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -86,6 +98,10 @@ namespace FlowManager.Application.Services
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
+                CompletedByAdmin = fr.CompletedByAdmin,
+                CompletedByAdminName = fr.CompletedByAdminName,
+                ApprovedByAdmin = fr.ApprovedByAdmin,
+                ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -114,6 +130,10 @@ namespace FlowManager.Application.Services
                 UserId = formResponse.UserId,
                 UserName = formResponse.User?.Name,
                 UserEmail = formResponse.User?.Email,
+                CompletedByAdmin = formResponse.CompletedByAdmin,
+                CompletedByAdminName = formResponse.CompletedByAdminName,
+                ApprovedByAdmin = formResponse.ApprovedByAdmin,
+                ApprovedByAdminName = formResponse.ApprovedByAdminName,
                 CreatedAt = formResponse.CreatedAt,
                 UpdatedAt = formResponse.UpdatedAt,
                 DeletedAt = formResponse.DeletedAt
@@ -147,6 +167,10 @@ namespace FlowManager.Application.Services
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
+                CompletedByAdmin = fr.CompletedByAdmin,
+                CompletedByAdminName = fr.CompletedByAdminName,
+                ApprovedByAdmin = fr.ApprovedByAdmin,
+                ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -165,6 +189,17 @@ namespace FlowManager.Application.Services
         {
             _logger.LogInformation("Creating new form response");
 
+            // Check if admin is impersonating a user (form completion)
+            var httpContext = _httpContextAccessor.HttpContext;
+            bool isAdminCompletingForUser = false;
+            string? adminName = null;
+            
+            if (httpContext?.User != null)
+            {
+                isAdminCompletingForUser = httpContext.User.FindFirst("IsImpersonating")?.Value == "true";
+                adminName = httpContext.User.FindFirst("OriginalAdminName")?.Value;
+            }
+
             var formResponse = new FormResponse
             {
                 FormTemplateId = payload.FormTemplateId,
@@ -172,7 +207,9 @@ namespace FlowManager.Application.Services
                 UserId = payload.UserId,
                 ResponseFields = payload.ResponseFields,
                 Status = "Pending", // Toate formularele noi încep cu Pending
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                CompletedByAdmin = isAdminCompletingForUser,
+                CompletedByAdminName = isAdminCompletingForUser ? adminName : null
             };
 
             await _formResponseRepository.AddAsync(formResponse);
@@ -181,6 +218,28 @@ namespace FlowManager.Application.Services
 
             // Reîncarcă pentru a avea relațiile populate
             var createdFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(formResponse.Id);
+
+            // Send email notification if admin completed form for user
+            if (isAdminCompletingForUser && !string.IsNullOrEmpty(adminName))
+            {
+                try
+                {
+                    await _emailService.SendFormCompletedByAdminEmailAsync(
+                        createdFormResponse.User?.Email ?? "",
+                        createdFormResponse.User?.Name ?? "",
+                        createdFormResponse.FormTemplate?.Name ?? "Unknown Form",
+                        adminName,
+                        formResponse.CreatedAt
+                    );
+                    _logger.LogInformation("Email sent to user {UserEmail} for form completed by admin {AdminName}", 
+                        createdFormResponse.User?.Email, adminName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send email to user {UserEmail} for form completed by admin", 
+                        createdFormResponse.User?.Email);
+                }
+            }
 
             return new FormResponseResponseDto
             {
@@ -270,6 +329,30 @@ namespace FlowManager.Application.Services
                 _logger.LogInformation("Form response {Id} status explicitly set to: {Status}", payload.Id, payload.Status);
             }
 
+            // Check if admin is impersonating for email notifications
+            var httpContext = _httpContextAccessor.HttpContext;
+            bool isAdminImpersonating = false;
+            string? adminName = null;
+            
+            if (httpContext?.User != null)
+            {
+                var impersonatingClaim = httpContext.User.FindFirst("IsImpersonating")?.Value;
+                isAdminImpersonating = impersonatingClaim == "true";
+                adminName = httpContext.User.FindFirst("OriginalAdminName")?.Value;
+                
+                _logger.LogInformation("PatchFormResponse - IsImpersonating claim: '{ImpersonatingClaim}', AdminName: '{AdminName}'", 
+                    impersonatingClaim, adminName);
+                
+                // Track admin approval if impersonating
+                if (isAdminImpersonating && !string.IsNullOrEmpty(adminName))
+                {
+                    formResponse.ApprovedByAdmin = true;
+                    formResponse.ApprovedByAdminName = adminName;
+                    _logger.LogInformation("Admin approval tracked for form {FormId} by admin {AdminName}", 
+                        formResponse.Id, adminName);
+                }
+            }
+
             // Actualizează timestamp
             formResponse.UpdatedAt = DateTime.UtcNow;
 
@@ -280,6 +363,83 @@ namespace FlowManager.Application.Services
 
             // Reîncarcă entitatea cu toate relațiile pentru response
             var updatedFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
+
+            // Send email notifications to moderators if admin is impersonating
+            if (isAdminImpersonating && !string.IsNullOrEmpty(adminName))
+            {
+                _logger.LogInformation("Preparing to send email notifications - Admin: {AdminName}, FormId: {FormId}", 
+                    adminName, updatedFormResponse.Id);
+                try
+                {
+                    // Get moderators assigned to this step - need to get step users
+                    var stepWithUsers = await _formResponseRepository.GetStepWithFlowInfoAsync(updatedFormResponse.StepId);
+                    _logger.LogInformation("Step with users loaded - StepId: {StepId}, HasUsers: {HasUsers}", 
+                        updatedFormResponse.StepId, stepWithUsers?.Users != null);
+                        
+                    if (stepWithUsers?.Users != null)
+                    {
+                        var moderators = stepWithUsers.Users
+                            .Where(u => u.DeletedAt == null && u.Roles.Any(r => r.Role.Name == "Moderator" && r.DeletedAt == null))
+                            .ToList();
+                            
+                        _logger.LogInformation("Found {ModeratorCount} moderators for step {StepId}", 
+                            moderators.Count, updatedFormResponse.StepId);
+                            
+                        foreach (var moderator in moderators)
+                        {
+                            _logger.LogInformation("Processing moderator {ModeratorEmail} - Status: {Status}, RejectReason: {RejectReason}, PreviousStatus: {PreviousStatus}", 
+                                moderator.Email, formResponse.Status, payload.RejectReason, previousStatus);
+                                
+                            if (formResponse.Status == "Rejected" && !string.IsNullOrEmpty(payload.RejectReason))
+                            {
+                                // Send reject notification
+                                _logger.LogInformation("Sending reject email to {ModeratorEmail}", moderator.Email);
+                                await _emailService.SendFormRejectedByAdminEmailAsync(
+                                    moderator.Email ?? "",
+                                    moderator.Name ?? "",
+                                    updatedFormResponse.FormTemplate?.Name ?? "Unknown Form",
+                                    adminName,
+                                    formResponse.UpdatedAt ?? DateTime.UtcNow,
+                                    payload.RejectReason
+                                );
+                                _logger.LogInformation("Reject email sent to moderator {ModeratorEmail} for form rejected by admin {AdminName}", 
+                                    moderator.Email, adminName);
+                            }
+                            else if (formResponse.Status == "Approved" || (formResponse.Status == "Pending" && previousStatus != "Pending"))
+                            {
+                                // Send approve notification (both intermediate and final approve)
+                                _logger.LogInformation("Sending approve email to {ModeratorEmail}", moderator.Email);
+                                await _emailService.SendFormApprovedByAdminEmailAsync(
+                                    moderator.Email ?? "",
+                                    moderator.Name ?? "",
+                                    updatedFormResponse.FormTemplate?.Name ?? "Unknown Form",
+                                    adminName,
+                                    formResponse.UpdatedAt ?? DateTime.UtcNow
+                                );
+                                _logger.LogInformation("Approve email sent to moderator {ModeratorEmail} for form approved by admin {AdminName}", 
+                                    moderator.Email, adminName);
+                            }
+                            else
+                            {
+                                _logger.LogInformation("No email sent to {ModeratorEmail} - conditions not met", moderator.Email);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No users found for step {StepId}", updatedFormResponse.StepId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send email notifications to moderators");
+                }
+            }
+            else
+            {
+                _logger.LogInformation("No email notifications sent - IsAdminImpersonating: {IsImpersonating}, AdminName: {AdminName}", 
+                    isAdminImpersonating, adminName ?? "null");
+            }
 
             return new FormResponseResponseDto
             {
@@ -319,6 +479,10 @@ namespace FlowManager.Application.Services
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
+                CompletedByAdmin = fr.CompletedByAdmin,
+                CompletedByAdminName = fr.CompletedByAdminName,
+                ApprovedByAdmin = fr.ApprovedByAdmin,
+                ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -350,6 +514,10 @@ namespace FlowManager.Application.Services
                 UserId = formResponse.UserId,
                 UserName = formResponse.User?.Name,
                 UserEmail = formResponse.User?.Email,
+                CompletedByAdmin = formResponse.CompletedByAdmin,
+                CompletedByAdminName = formResponse.CompletedByAdminName,
+                ApprovedByAdmin = formResponse.ApprovedByAdmin,
+                ApprovedByAdminName = formResponse.ApprovedByAdminName,
                 CreatedAt = formResponse.CreatedAt,
                 UpdatedAt = formResponse.UpdatedAt,
                 DeletedAt = formResponse.DeletedAt
@@ -375,6 +543,10 @@ namespace FlowManager.Application.Services
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
+                CompletedByAdmin = fr.CompletedByAdmin,
+                CompletedByAdminName = fr.CompletedByAdminName,
+                ApprovedByAdmin = fr.ApprovedByAdmin,
+                ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -399,6 +571,10 @@ namespace FlowManager.Application.Services
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
+                CompletedByAdmin = fr.CompletedByAdmin,
+                CompletedByAdminName = fr.CompletedByAdminName,
+                ApprovedByAdmin = fr.ApprovedByAdmin,
+                ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -423,6 +599,10 @@ namespace FlowManager.Application.Services
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
+                CompletedByAdmin = fr.CompletedByAdmin,
+                CompletedByAdminName = fr.CompletedByAdminName,
+                ApprovedByAdmin = fr.ApprovedByAdmin,
+                ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
