@@ -41,7 +41,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<PagedResponseDto<FlowResponseDto>> GetAllFlowsQueriedAsync(QueriedFlowRequestDto payload)
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
-            (List<Flow> data, int totalCount) = await _flowRepository.GetAllFlowsQueriedAsync(payload.Name, parameters);
+            (List<Flow> data, int totalCount) = await _flowRepository.GetAllFlowsQueriedAsync(payload.GlobalSearchTerm, parameters);
 
             return new PagedResponseDto<FlowResponseDto>
             {

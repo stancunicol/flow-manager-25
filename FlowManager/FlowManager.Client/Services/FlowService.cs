@@ -156,8 +156,8 @@ namespace FlowManager.Client.Services
 
                 if (payload != null)
                 {
-                    if (!string.IsNullOrEmpty(payload.Name))
-                        query["Name"] = payload.Name;
+                    if (!string.IsNullOrEmpty(payload.GlobalSearchTerm))
+                        query["GlobalSearchTerm"] = payload.GlobalSearchTerm;
 
                     if (payload.QueryParams != null)
                     {

@@ -47,7 +47,7 @@ namespace FlowManager.Infrastructure.Repositories
             return flow;
         }
 
-        public async Task<(List<Flow> Data, int TotalCount)> GetAllFlowsQueriedAsync(string? name, QueryParams? parameters)
+        public async Task<(List<Flow> Data, int TotalCount)> GetAllFlowsQueriedAsync(string? globalSearchTerm, QueryParams? parameters)
         {
             IQueryable<Flow> query = _context.Flows
                 .Include(f => f.Steps)
@@ -56,9 +56,9 @@ namespace FlowManager.Infrastructure.Repositories
                     .ThenInclude(formTemplateFlow => formTemplateFlow.FormTemplate);
 
             // filtering
-            if (!string.IsNullOrEmpty(name))
+            if (!string.IsNullOrEmpty(globalSearchTerm))
             {
-                query = query.Where(f => f.Name.ToUpper().Contains(name.ToUpper()));
+                query = query.Where(f => f.Name.ToUpper().Contains(globalSearchTerm.ToUpper()));
             }
 
             int totalCount = await query.CountAsync();

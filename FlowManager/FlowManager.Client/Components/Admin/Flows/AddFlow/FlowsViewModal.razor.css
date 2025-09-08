@@ -340,26 +340,25 @@
 
 
 .edit-btn {
-    background: #00abff;
-    color: white;
+    background: none;
     border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    padding: 4px;
+    border-radius: 4px;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #20B486;
 }
 
     .edit-btn:hover {
-        background: #05d7ff;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        color: #1a9c75;
+        background-color: #f0fdf4;
     }
 
-    .edit-btn .edit-icon {
-        font-size: 14px;
-    }
+
+.icon-small {
+    width: 1.5rem;
+    height: 1.5rem;
+}
