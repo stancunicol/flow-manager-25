@@ -12,26 +12,9 @@
             </svg>
             Back to My Forms
         </button>
-        
-        <div class="users-dropdown-container">
-            <input type="text"
-                   class="users-dropdown-input"
-                   placeholder="Search users..."
-                   @bind="_usersSearchTerm"/>
-            <button class="dropdown-arrow" @onclick="OpenAvailableUsersDropdown">▼</button>
-
-            @if (_isAvailableUsersDropdownOpen)
-            {
-                <div class="users-dropdown-options">
-                    @foreach (UserVM user in _availableUsers)
-                    {
-                        <div class="users-dropdown-option" @onclick="() => SelectUser(user)">@user.Name</div>
-                    }
-                </div>
-            }
-        </div>
 
         <h1>Form: @(_formTemplate?.Name ?? "Loading...")</h1>
+
         <button class="submit-btn" @onclick="SubmitForm" disabled="@(_isSubmitting || _firstStep == null)">
             @if (_isSubmitting)
             {
@@ -100,6 +83,29 @@
             }
 
             <div class="form-canvas">
+                <div class="users-dropdown-container form-search-canvas">
+                    <input type="text"
+                           class="users-dropdown-input"
+                           placeholder="Search users..."
+                           @bind="_usersSearchTerm"
+                           @oninput="((e) => OnUsersSearchTermChanged(e.Value?.ToString() ?? string.Empty))" />
+                    <button type="button" class="dropdown-arrow" @onclick="ChangeAvailableUsersDropdownVisibility">▼</button>
+                     
+                    @if (_isAvailableUsersDropdownOpen)
+                    {
+                        <div class="users-dropdown-options">
+                            @foreach (UserVM user in _availableUsers)
+                            {
+                                <div class="users-dropdown-option" @onclick="() => SelectUser(user)">@user.Name</div>
+                            }
+
+                            <button class="load-more-btn" @onclick="() => LoadMoreUsersAsync()" disabled="@(!_usersHasNextPage)">
+                                Load more
+                            </button>
+                        </div>
+                    }
+                </div>
+
                 @foreach (var element in _formElements.OrderBy(e => e.ZIndex))
                 {
                     <div class="form-element" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
@@ -125,31 +131,46 @@
                                     @switch (component.Type.ToLower())
                                     {
                                         case "textinput":
-                                            <input type="text" class="field-input"
-                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="text"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "number":
-                                            <input type="number" class="field-input"
-                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="number"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "datetime":
-                                            <input type="datetime-local" class="field-input"
-                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="datetime-local"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "textarea":
-                                            <textarea class="textarea-input"
-                                                        @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))"></textarea>
+                                            <textarea class="textarea-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                      readonly="@IsFieldReadonly(component.Id)"
+                                                      @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))">@GetFieldValue(component.Id)</textarea>
                                             break;
                                         case "checkbox":
                                             <div class="checkbox-field">
                                                 <input type="checkbox"
-                                                        @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
-                                                <span class="checkbox-label">@component.Label</span>
+                                                       checked="@(bool.TryParse(GetFieldValue(component.Id), out bool isChecked) && isChecked)"
+                                                       disabled="@IsFieldReadonly(component.Id)"
+                                                       @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                                <span class="checkbox-label @(IsFieldReadonly(component.Id) ? "readonly-label" : "")">@component.Label</span>
                                             </div>
                                             break;
                                         default:
-                                            <input type="text" class="field-input"
-                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="text"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                     }
                                 </div>
@@ -163,7 +184,7 @@
         {
             <div class="error-container">
                 <p>Error loading form template.</p>
-                <button class="retry-btn" @onclick="LoadFormTemplate">Try Again</button>
+                <button class="retry-btn" @onclick="LoadFormTemplateAsync">Try Again</button>
             </div>
         }
     </div>

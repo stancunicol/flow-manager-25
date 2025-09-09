@@ -529,12 +529,13 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = activeFlowForFormTemplate.Id,
                 Name = activeFlowForFormTemplate.Name,
-                Steps = activeFlowForFormTemplate.Steps
+                FlowSteps = activeFlowForFormTemplate.Steps
                     .OrderBy(s => s.Order)
-                    .Select(s => new StepResponseDto
+                    .Select(fs => new FlowStepResponseDto
                     {
-                        Id = s.Step.Id,
-                        Name = s.Step.Name,
+                        FlowId = fs.FlowId,
+                        StepId = fs.StepId,
+                        StepName = fs.Step.Name,
                     }).ToList(),
             };
         }
