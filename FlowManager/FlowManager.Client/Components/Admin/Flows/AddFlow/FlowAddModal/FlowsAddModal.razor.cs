@@ -31,6 +31,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         private string _flowName = string.Empty;
 
         private bool _showAssignToStepModal = false;
+        private int _stepToAssignIndex = 0;
         private StepVM? _stepToAssign = null;
 
         private string _onSubmitMessage = string.Empty;
@@ -113,17 +114,14 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             _isDragOver = false;
             if (_draggedStep != null)
             {
-                if (!_configuredSteps.Any(cs => cs.Id == _draggedStep.Id))
+                var stepForWorkflow = new StepVM
                 {
-                    var stepForWorkflow = new StepVM
-                    {
-                        Id = _draggedStep.Id,
-                        Name = _draggedStep.Name,
-                        Users = new List<UserVM>(),
-                        Teams = new List<TeamVM>() 
-                    };
-                    _configuredSteps.Add(stepForWorkflow);
-                }
+                    Id = _draggedStep.Id,
+                    Name = _draggedStep.Name,
+                    Users = new List<UserVM>(),
+                    Teams = new List<TeamVM>() 
+                };
+                _configuredSteps.Add(stepForWorkflow);
             }
             _draggedStep = null;
             StateHasChanged();
@@ -351,16 +349,17 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             return string.IsNullOrWhiteSpace(_flowName) ? "invalid" : "valid";
         }
 
-        private void ShowAssingToStepModal(StepVM step)
+        private void ShowAssingToStepModal(StepVM step, int stepIndex)
         {
             _showAssignToStepModal = true;
+            _stepToAssignIndex = stepIndex;
             _stepToAssign = step;
             StateHasChanged();
         }
 
         private void ConfigureStepsToFlow()
         {
-            StepVM step = _configuredSteps.First(s => s.Id == _stepToAssign!.Id);
+            StepVM step = _configuredSteps[_stepToAssignIndex];
 
             step.Users = _stepToAssign!.Users?.Select(u => new UserVM
             {

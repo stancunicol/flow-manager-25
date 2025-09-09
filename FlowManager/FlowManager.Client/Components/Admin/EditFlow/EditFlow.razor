@@ -49,17 +49,17 @@
                         <div class="step-order">@(stepIndex + 1)</div>
 
                         <!-- Remove button -->
-                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(step.Id)">×</button>
+                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(step.Id)" @onclick:stopPropagation="true">×</button>
 
                         <!-- Reorder buttons -->
                         <div class="reorder-buttons">
                             @if (stepIndex > 0)
                             {
-                                <button class="reorder-btn up" @onclick="() => MoveStepUp(stepIndex)" title="Move up">↑</button>
+                                <button class="reorder-btn up" @onclick="() => MoveStepUp(stepIndex)" title="Move up" @onclick:stopPropagation="true">↑</button>
                             }
                             @if (stepIndex < _configuredSteps.Count - 1)
                             {
-                                <button class="reorder-btn down" @onclick="() => MoveStepDown(stepIndex)" title="Move down">↓</button>
+                                <button class="reorder-btn down" @onclick="() => MoveStepDown(stepIndex)" title="Move down" @onclick:stopPropagation="true">↓</button>
                             }
                         </div>
 

@@ -297,6 +297,7 @@
     justify-content: center;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
 }
 
     .remove-step:hover {
@@ -318,14 +319,15 @@
     color: white;
     border: none;
     border-radius: 4px;
-    width: 20px;
-    height: 20px;
+    width: 1.7rem;
+    height: 1.7rem;
     cursor: pointer;
     font-size: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    z-index: 10;
 }
 
     .reorder-btn:hover {
