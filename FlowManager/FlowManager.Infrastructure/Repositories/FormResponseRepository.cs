@@ -45,7 +45,7 @@ namespace FlowManager.Infrastructure.Repositories
                 query = query.Where(fr => fr.FormTemplateId == formTemplateId.Value);
             }
 
-            if (stepId != Guid.Empty)
+            if (stepId.HasValue && stepId != Guid.Empty)
             {
                 query = query.Where(fr => fr.StepId == stepId.Value);
             }
@@ -76,7 +76,7 @@ namespace FlowManager.Infrastructure.Repositories
             }
 
             // ADAUGĂ filtrarea după statusuri
-            if (statusFilters?.Any() == true)
+            if (statusFilters != null && statusFilters.Any())
             {
                 query = query.Where(fr => statusFilters.Contains(fr.Status ?? "Pending"));
             }

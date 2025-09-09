@@ -325,7 +325,7 @@ namespace FlowManager.Application.Services
             }
 
             // LOGICA PENTRU SCHIMBAREA STEP-ULUI (approve și move to next step)
-            if (payload.StepId != Guid.Empty && payload.StepId.Value != formResponse.StepId)
+            if (payload.StepId.HasValue && payload.StepId != Guid.Empty && payload.StepId.Value != formResponse.StepId)
             {
                 // Înregistrează approve-ul pentru step-ul curent ÎNAINTE de mutare
                 if (payload.ReviewerId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
