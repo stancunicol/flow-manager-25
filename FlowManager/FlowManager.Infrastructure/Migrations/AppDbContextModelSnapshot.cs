@@ -182,6 +182,20 @@ namespace FlowManager.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("ApprovedByAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ApprovedByAdminName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("CompletedByAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CompletedByAdminName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 

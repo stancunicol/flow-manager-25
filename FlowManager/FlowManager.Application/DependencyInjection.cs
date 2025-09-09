@@ -18,8 +18,8 @@ namespace FlowManager.Application
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFormTemplateService, FormTemplateService>();
             services.AddScoped<IRoleService, RoleService>();
-            services.AddScoped<IStepService,StepService>();
-            services.AddScoped<ITeamService,TeamService>();
+            services.AddScoped<IStepService, StepService>();
+            services.AddScoped<ITeamService, TeamService>();
             services.AddScoped<IComponentService, ComponentService>();
             services.AddScoped<IFlowService, FlowService>();
             services.AddScoped<IFormResponseService, FormResponseService>();

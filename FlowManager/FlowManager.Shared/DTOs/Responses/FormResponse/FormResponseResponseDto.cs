@@ -19,6 +19,15 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
         public Guid UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserEmail { get; set; }
+        
+        // Admin completion tracking
+        public bool CompletedByAdmin { get; set; } = false;
+        public string? CompletedByAdminName { get; set; }
+        
+        // Admin approval tracking
+        public bool ApprovedByAdmin { get; set; } = false;
+        public string? ApprovedByAdminName { get; set; }
+        
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }

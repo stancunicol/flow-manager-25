@@ -16,6 +16,16 @@ namespace FlowManager.Domain.Entities
         public string? Status { get; set; } = "Pending";
         public Dictionary<Guid, object> ResponseFields { get; set; }
 
+        // Admin completion tracking
+        public bool CompletedByAdmin { get; set; } = false;
+        [MaxLength(100)]
+        public string? CompletedByAdminName { get; set; }
+
+        // Admin approval tracking  
+        public bool ApprovedByAdmin { get; set; } = false;
+        [MaxLength(100)]
+        public string? ApprovedByAdminName { get; set; }
+
         // navigation fields
         public virtual FormTemplate FormTemplate { get; set; }
         public Guid FormTemplateId { get; set; }

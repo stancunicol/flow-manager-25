@@ -1,0 +1,197 @@
+﻿/* Impersonation Indicator Styles */
+.impersonation-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    color: #92400e;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 2000;
+    border-bottom: 2px solid #f59e0b;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.impersonation-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.impersonation-icon {
+    width: 24px;
+    height: 24px;
+    background: rgba(146, 64, 14, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .impersonation-icon svg {
+        width: 14px;
+        height: 14px;
+        color: #92400e;
+    }
+
+.impersonation-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.impersonation-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+.impersonation-user {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.impersonation-admin {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.8;
+    line-height: 1;
+}
+
+.end-impersonation-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(146, 64, 14, 0.15);
+    color: #92400e;
+    border: 1px solid rgba(146, 64, 14, 0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+    .end-impersonation-btn:hover:not(:disabled) {
+        background: rgba(146, 64, 14, 0.25);
+        border-color: rgba(146, 64, 14, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(146, 64, 14, 0.2);
+    }
+
+    .end-impersonation-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .end-impersonation-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+
+.spinner-tiny {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(146, 64, 14, 0.3);
+    border-top: 2px solid #92400e;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .impersonation-indicator {
+        padding: 6px 12px;
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .impersonation-content {
+        gap: 8px;
+    }
+
+    .impersonation-info {
+        align-items: center;
+    }
+
+    .impersonation-title {
+        font-size: 11px;
+    }
+
+    .impersonation-user {
+        font-size: 13px;
+    }
+
+    .impersonation-admin {
+        font-size: 10px;
+    }
+
+    .end-impersonation-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        align-self: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .impersonation-content {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+
+    .impersonation-indicator {
+        padding: 8px 12px;
+    }
+}
+
+/* Adjust main content when impersonation indicator is shown */
+:global(body:has(.impersonation-indicator)) {
+    padding-top: 50px;
+}
+
+@media (max-width: 768px) {
+    :global(body:has(.impersonation-indicator)) {
+        padding-top: 70px;
+    }
+}
+
+@media (max-width: 480px) {
+    :global(body:has(.impersonation-indicator)) {
+        padding-top: 85px;
+    }
+}

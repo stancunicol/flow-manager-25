@@ -52,7 +52,7 @@ namespace FlowManager.Application.Services
 
         public async Task SendWelcomeEmailAsync(string email, string firstName)
         {
-            var subject = "Your account has been created - Siemens FMST";
+            var subject = "Your account has been created -  FMST";
 
             var body = $@"
         <!DOCTYPE html>
@@ -82,13 +82,13 @@ namespace FlowManager.Application.Services
         <body>
             <div class='container'>
                 <div class='header'>
-                    <h2>Welcome to Siemens FMST!</h2>
+                    <h2>Welcome to FMST!</h2>
                 </div>
         
                 <div class='content'>
                     <p>Hello <strong>{firstName}</strong>,</p>
             
-                    <p>Your account has been successfully created in the Siemens Flow Manager System Template.</p>
+                    <p>Your account has been successfully created in the Flow Manager System Template.</p>
             
                     <p><strong>Account details:</strong></p>
                     <ul>
@@ -110,7 +110,7 @@ namespace FlowManager.Application.Services
             
                     <p>If you have any questions or issues, please contact the system administrator.</p>
             
-                    <p>Best regards,<br>The Siemens FMST Administration Team</p>
+                    <p>Best regards,<br>The FMST Administration Team</p>
                 </div>
         
                 <div class='footer'>
@@ -125,7 +125,7 @@ namespace FlowManager.Application.Services
 
         public async Task SendPasswordResetCodeAsync(string email, string firstName, string resetCode)
         {
-            var subject = "Password Reset Code - Siemens FMST";
+            var subject = "Password Reset Code - FMST";
 
             var body = $@"
         <!DOCTYPE html>
@@ -166,7 +166,7 @@ namespace FlowManager.Application.Services
         <body>
             <div class='container'>
                 <div class='header'>
-                    <h2>Password Reset - Siemens FMST</h2>
+                    <h2>Password Reset - FMST</h2>
                 </div>
         
                 <div class='content'>
@@ -188,7 +188,248 @@ namespace FlowManager.Application.Services
             
                     <p>If you did not request this password reset, please ignore this email.</p>
             
-                    <p>Best regards,<br>The Siemens FMST Team</p>
+                    <p>Best regards,<br>The FMST Team</p>
+                </div>
+        
+                <div class='footer'>
+                    <p>This email was generated automatically. Please do not reply to this message.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+            await SendEmailAsync(email, subject, body, true);
+        }
+
+        public async Task SendFormCompletedByAdminEmailAsync(string email, string firstName, string formName, string adminName, DateTime completedAt, string? notes = null)
+        {
+            var subject = "Form Completed by Admin - FMST";
+
+            var notesSection = !string.IsNullOrEmpty(notes) 
+                ? $@"<p><strong>Admin Notes:</strong></p>
+                     <div style='background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;'>
+                         {notes}
+                     </div>" 
+                : "";
+
+            var body = $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #f8f9fa; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                .success-box {{ 
+                    background-color: #d4edda; 
+                    border: 1px solid #c3e6cb; 
+                    padding: 15px; 
+                    margin: 20px 0; 
+                    border-radius: 5px;
+                    border-left: 4px solid #28a745;
+                }}
+                .footer {{ 
+                    background-color: #f8f9fa; 
+                    padding: 15px; 
+                    text-align: center; 
+                    font-size: 12px; 
+                    color: #6c757d;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>Form Completed - FMST</h2>
+                </div>
+        
+                <div class='content'>
+                    <p>Hello <strong>{firstName}</strong>,</p>
+            
+                    <div class='success-box'>
+                        <strong>✅ Your form has been completed by admin</strong>
+                    </div>
+            
+                    <p><strong>Form Details:</strong></p>
+                    <ul>
+                        <li><strong>Form:</strong> {formName}</li>
+                        <li><strong>Completed by:</strong> {adminName}</li>
+                        <li><strong>Completed at:</strong> {completedAt:dd/MM/yyyy HH:mm}</li>
+                    </ul>
+
+                    {notesSection}
+            
+                    <p>Your form has been submitted and is now in the approval process.</p>
+            
+                    <p>Best regards,<br>The FMST Team</p>
+                </div>
+        
+                <div class='footer'>
+                    <p>This email was generated automatically. Please do not reply to this message.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+            await SendEmailAsync(email, subject, body, true);
+        }
+
+        public async Task SendFormApprovedByAdminEmailAsync(string email, string firstName, string formName, string adminName, DateTime approvedAt, string? notes = null)
+        {
+            _logger.LogInformation("🔥 SendFormApprovedByAdminEmailAsync called for {Email}, Form: {FormName}, Admin: {AdminName}", 
+                email, formName, adminName);
+                
+            var subject = "Form Approved by Admin - FMST";
+
+            var notesSection = !string.IsNullOrEmpty(notes) 
+                ? $@"<p><strong>Admin Notes:</strong></p>
+                     <div style='background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;'>
+                         {notes}
+                     </div>" 
+                : "";
+
+            var body = $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #f8f9fa; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                .success-box {{ 
+                    background-color: #d4edda; 
+                    border: 1px solid #c3e6cb; 
+                    padding: 15px; 
+                    margin: 20px 0; 
+                    border-radius: 5px;
+                    border-left: 4px solid #28a745;
+                }}
+                .footer {{ 
+                    background-color: #f8f9fa; 
+                    padding: 15px; 
+                    text-align: center; 
+                    font-size: 12px; 
+                    color: #6c757d;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>Form Approved by Admin - FMST</h2>
+                </div>
+        
+                <div class='content'>
+                    <p>Hello <strong>{firstName}</strong>,</p>
+            
+                    <div class='success-box'>
+                        <strong>✅ Form approved by admin on your behalf</strong>
+                    </div>
+            
+                    <p><strong>Form Details:</strong></p>
+                    <ul>
+                        <li><strong>Form:</strong> {formName}</li>
+                        <li><strong>Approved by:</strong> {adminName}</li>
+                        <li><strong>Approved at:</strong> {approvedAt:dd/MM/yyyy HH:mm}</li>
+                    </ul>
+
+                    {notesSection}
+            
+                    <p>This form has been approved and moved to the next step in the workflow.</p>
+            
+                    <p>Best regards,<br>The FMST Team</p>
+                </div>
+        
+                <div class='footer'>
+                    <p>This email was generated automatically. Please do not reply to this message.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+            await SendEmailAsync(email, subject, body, true);
+        }
+
+        public async Task SendFormRejectedByAdminEmailAsync(string email, string firstName, string formName, string adminName, DateTime rejectedAt, string rejectReason, string? notes = null)
+        {
+            _logger.LogInformation("🔥 SendFormRejectedByAdminEmailAsync called for {Email}, Form: {FormName}, Admin: {AdminName}, Reason: {RejectReason}", 
+                email, formName, adminName, rejectReason);
+                
+            var subject = "Form Rejected by Admin - FMST";
+
+            var notesSection = !string.IsNullOrEmpty(notes) 
+                ? $@"<p><strong>Admin Notes:</strong></p>
+                     <div style='background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;'>
+                         {notes}
+                     </div>" 
+                : "";
+
+            var body = $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #f8f9fa; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                .reject-box {{ 
+                    background-color: #f8d7da; 
+                    border: 1px solid #f5c6cb; 
+                    padding: 15px; 
+                    margin: 20px 0; 
+                    border-radius: 5px;
+                    border-left: 4px solid #dc3545;
+                }}
+                .reason-box {{
+                    background-color: #fff3cd;
+                    border: 1px solid #ffeaa7;
+                    padding: 15px;
+                    margin: 15px 0;
+                    border-radius: 5px;
+                    border-left: 4px solid #ffc107;
+                }}
+                .footer {{ 
+                    background-color: #f8f9fa; 
+                    padding: 15px; 
+                    text-align: center; 
+                    font-size: 12px; 
+                    color: #6c757d;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>Form Rejected by Admin - FMST</h2>
+                </div>
+        
+                <div class='content'>
+                    <p>Hello <strong>{firstName}</strong>,</p>
+            
+                    <div class='reject-box'>
+                        <strong>❌ Form rejected by admin on your behalf</strong>
+                    </div>
+            
+                    <p><strong>Form Details:</strong></p>
+                    <ul>
+                        <li><strong>Form:</strong> {formName}</li>
+                        <li><strong>Rejected by:</strong> {adminName}</li>
+                        <li><strong>Rejected at:</strong> {rejectedAt:dd/MM/yyyy HH:mm}</li>
+                    </ul>
+
+                    <div class='reason-box'>
+                        <strong>Rejection Reason:</strong>
+                        <p>{rejectReason}</p>
+                    </div>
+
+                    {notesSection}
+            
+                    <p>You have been notified that your form was rejected. Please review and take appropriate action.</p>
+            
+                    <p>Best regards,<br>The FMST Team</p>
                 </div>
         
                 <div class='footer'>
