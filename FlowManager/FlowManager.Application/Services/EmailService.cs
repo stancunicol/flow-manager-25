@@ -52,7 +52,7 @@ namespace FlowManager.Application.Services
 
         public async Task SendWelcomeEmailAsync(string email, string firstName)
         {
-            var subject = "Your account has been created - Siemens FMST";
+            var subject = "Your account has been created -  FMST";
 
             var body = $@"
         <!DOCTYPE html>
@@ -82,13 +82,13 @@ namespace FlowManager.Application.Services
         <body>
             <div class='container'>
                 <div class='header'>
-                    <h2>Welcome to Siemens FMST!</h2>
+                    <h2>Welcome to FMST!</h2>
                 </div>
         
                 <div class='content'>
                     <p>Hello <strong>{firstName}</strong>,</p>
             
-                    <p>Your account has been successfully created in the Siemens Flow Manager System Template.</p>
+                    <p>Your account has been successfully created in the Flow Manager System Template.</p>
             
                     <p><strong>Account details:</strong></p>
                     <ul>
@@ -110,7 +110,7 @@ namespace FlowManager.Application.Services
             
                     <p>If you have any questions or issues, please contact the system administrator.</p>
             
-                    <p>Best regards,<br>The Siemens FMST Administration Team</p>
+                    <p>Best regards,<br>The FMST Administration Team</p>
                 </div>
         
                 <div class='footer'>
@@ -125,7 +125,7 @@ namespace FlowManager.Application.Services
 
         public async Task SendPasswordResetCodeAsync(string email, string firstName, string resetCode)
         {
-            var subject = "Password Reset Code - Siemens FMST";
+            var subject = "Password Reset Code - FMST";
 
             var body = $@"
         <!DOCTYPE html>
@@ -166,7 +166,7 @@ namespace FlowManager.Application.Services
         <body>
             <div class='container'>
                 <div class='header'>
-                    <h2>Password Reset - Siemens FMST</h2>
+                    <h2>Password Reset - FMST</h2>
                 </div>
         
                 <div class='content'>
@@ -188,7 +188,7 @@ namespace FlowManager.Application.Services
             
                     <p>If you did not request this password reset, please ignore this email.</p>
             
-                    <p>Best regards,<br>The Siemens FMST Team</p>
+                    <p>Best regards,<br>The FMST Team</p>
                 </div>
         
                 <div class='footer'>
@@ -203,7 +203,7 @@ namespace FlowManager.Application.Services
 
         public async Task SendFormCompletedByAdminEmailAsync(string email, string firstName, string formName, string adminName, DateTime completedAt, string? notes = null)
         {
-            var subject = "Form Completed by Admin - Siemens FMST";
+            var subject = "Form Completed by Admin - FMST";
 
             var notesSection = !string.IsNullOrEmpty(notes) 
                 ? $@"<p><strong>Admin Notes:</strong></p>
@@ -241,7 +241,7 @@ namespace FlowManager.Application.Services
         <body>
             <div class='container'>
                 <div class='header'>
-                    <h2>Form Completed - Siemens FMST</h2>
+                    <h2>Form Completed - FMST</h2>
                 </div>
         
                 <div class='content'>
@@ -262,7 +262,7 @@ namespace FlowManager.Application.Services
             
                     <p>Your form has been submitted and is now in the approval process.</p>
             
-                    <p>Best regards,<br>The Siemens FMST Team</p>
+                    <p>Best regards,<br>The FMST Team</p>
                 </div>
         
                 <div class='footer'>
@@ -280,7 +280,7 @@ namespace FlowManager.Application.Services
             _logger.LogInformation("🔥 SendFormApprovedByAdminEmailAsync called for {Email}, Form: {FormName}, Admin: {AdminName}", 
                 email, formName, adminName);
                 
-            var subject = "Form Approved by Admin - Siemens FMST";
+            var subject = "Form Approved by Admin - FMST";
 
             var notesSection = !string.IsNullOrEmpty(notes) 
                 ? $@"<p><strong>Admin Notes:</strong></p>
@@ -318,7 +318,7 @@ namespace FlowManager.Application.Services
         <body>
             <div class='container'>
                 <div class='header'>
-                    <h2>Form Approved by Admin - Siemens FMST</h2>
+                    <h2>Form Approved by Admin - FMST</h2>
                 </div>
         
                 <div class='content'>
@@ -339,7 +339,7 @@ namespace FlowManager.Application.Services
             
                     <p>This form has been approved and moved to the next step in the workflow.</p>
             
-                    <p>Best regards,<br>The Siemens FMST Team</p>
+                    <p>Best regards,<br>The FMST Team</p>
                 </div>
         
                 <div class='footer'>
@@ -357,7 +357,7 @@ namespace FlowManager.Application.Services
             _logger.LogInformation("🔥 SendFormRejectedByAdminEmailAsync called for {Email}, Form: {FormName}, Admin: {AdminName}, Reason: {RejectReason}", 
                 email, formName, adminName, rejectReason);
                 
-            var subject = "Form Rejected by Admin - Siemens FMST";
+            var subject = "Form Rejected by Admin - FMST";
 
             var notesSection = !string.IsNullOrEmpty(notes) 
                 ? $@"<p><strong>Admin Notes:</strong></p>
@@ -403,7 +403,7 @@ namespace FlowManager.Application.Services
         <body>
             <div class='container'>
                 <div class='header'>
-                    <h2>Form Rejected by Admin - Siemens FMST</h2>
+                    <h2>Form Rejected by Admin - FMST</h2>
                 </div>
         
                 <div class='content'>
@@ -429,7 +429,7 @@ namespace FlowManager.Application.Services
             
                     <p>You have been notified that your form was rejected. Please review and take appropriate action.</p>
             
-                    <p>Best regards,<br>The Siemens FMST Team</p>
+                    <p>Best regards,<br>The FMST Team</p>
                 </div>
         
                 <div class='footer'>
