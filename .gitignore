@@ -423,3 +423,4 @@ FlowManager/appsettings.json
 /FlowManager/FlowManager.Infrastructure/flowmanagerdb.db-wal
 FlowManager/FlowManager.Infrastructure/flowmanagerdb.db-shm
 FlowManager/FlowManager.Infrastructure/flowmanagerdb.db-wal
+FlowManager/FlowManager.Infrastructure/flowmanagerdb.db
