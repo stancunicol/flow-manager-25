@@ -320,20 +320,17 @@ namespace FlowManager.Client.Pages
 
         private Dictionary<Guid, bool> _readonlyFields = new();
 
-        // Modifică metoda SelectUser pentru a include auto-completarea
         private void SelectUser(UserVM user)
         {
             _selectedUserToComplete = user;
             _isAvailableUsersDropdownOpen = false;
             _usersSearchTerm = user.Name;
 
-            // Auto-completează câmpurile cu datele utilizatorului
             AutoFillUserData(user);
 
             StateHasChanged();
         }
 
-        // Adaugă această metodă nouă pentru auto-completare
         private void AutoFillUserData(UserVM user)
         {
             if (_components == null || user == null) return;
@@ -348,16 +345,13 @@ namespace FlowManager.Client.Pages
                 }
                 else
                 {
-                    // Dacă nu e un câmp auto-completat, asigură-te că nu e readonly
                     _readonlyFields[component.Id] = false;
                 }
             }
         }
 
-        // Adaugă această metodă pentru maparea datelor utilizatorului
         private object? GetUserDataMapping(ComponentVM component, UserVM user)
         {
-            // Mapare după label (case insensitive)
             string label = component.Label?.ToLower() ?? "";
 
             return label switch
@@ -369,13 +363,11 @@ namespace FlowManager.Client.Pages
             };
         }
 
-        // Adaugă această metodă pentru a verifica dacă un câmp e readonly
         private bool IsFieldReadonly(Guid componentId)
         {
             return _readonlyFields.ContainsKey(componentId) && _readonlyFields[componentId];
         }
 
-        // Adaugă această metodă pentru a obține valoarea unui câmp
         private string GetFieldValue(Guid componentId)
         {
             if (_responses.ContainsKey(componentId))
@@ -385,10 +377,8 @@ namespace FlowManager.Client.Pages
             return string.Empty;
         }
 
-        // Modifică metoda UpdateResponse pentru a ignora schimbările pe câmpurile readonly
         private void UpdateResponse(Guid componentId, string? value, string componentType)
         {
-            // Nu permite modificarea câmpurilor readonly
             if (IsFieldReadonly(componentId))
             {
                 return;
@@ -409,6 +399,11 @@ namespace FlowManager.Client.Pages
             };
 
             _responses[componentId] = convertedValue;
+        }
+
+        private bool AllRequiredFieldsFilled()
+        {
+            return _components?.Where(c => c.Required == true).All(c => _responses.ContainsKey(c.Id)) ?? false;
         }
 
         private void GoBack()

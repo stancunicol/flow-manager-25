@@ -15,7 +15,7 @@
 
         <h1>Form: @(_formTemplate?.Name ?? "Loading...")</h1>
 
-        <button class="submit-btn" @onclick="SubmitForm" disabled="@(_isSubmitting || _firstStep == null)">
+        <button class="submit-btn" @onclick="SubmitForm" disabled="@(_isSubmitting || _firstStep == null || AllRequiredFieldsFilled())">
             @if (_isSubmitting)
             {
                 <div class="spinner-small"></div>
