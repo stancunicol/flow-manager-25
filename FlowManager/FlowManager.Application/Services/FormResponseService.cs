@@ -382,72 +382,73 @@ namespace FlowManager.Application.Services
             // Reîncarcă entitatea cu toate relațiile pentru response
             var updatedFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
 
-            // Send email notifications to all moderators when admin takes action
+            // Send email notification to impersonated user when admin takes action
             _logger.LogInformation("🔥 Email Debug - IsAuthenticated: {IsAuthenticated}, IsAdmin: {IsAdmin}", 
                 httpContext?.User?.Identity?.IsAuthenticated, httpContext?.User?.HasClaim(c => c.Type == "OriginalAdminId"));
                 
             if (httpContext?.User?.Identity?.IsAuthenticated == true && httpContext.User.HasClaim(c => c.Type == "OriginalAdminId"))
             {
-                _logger.LogInformation("🔥 Admin detected - proceeding with moderator notifications");
+                _logger.LogInformation("🔥 Admin detected - proceeding with impersonated user notification");
                 try
                 {
-
-                    //var currentAdminName = httpContext.User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value ?? "OriginalAdminName";
                     var currentAdminName = httpContext.User.FindFirstValue("OriginalAdminName") ?? "Admin";
                     _logger.LogInformation("🔥 Current admin name: {AdminName}", currentAdminName);
                     
-                    // Get all moderators dynamically
-                    var allModerators = await _userService.GetAllModeratorsAsync();
-                    _logger.LogInformation("🔥 Found {ModeratorCount} moderators in system", allModerators.Count());
-                    
-                    foreach (var moderator in allModerators.Where(m => !string.IsNullOrEmpty(m.Email)))
+                    // Get the impersonated user (the user who owns this form response)
+                    var impersonatedUserName = httpContext.User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name");
+                    var impersonatedUserEmail = httpContext.User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+                    if (!string.IsNullOrEmpty(impersonatedUserName) && !string.IsNullOrEmpty(impersonatedUserEmail))
                     {
-                        _logger.LogInformation("🔥 Processing moderator: {ModeratorEmail}, Status: {Status}, RejectReason: '{RejectReason}', PreviousStatus: {PreviousStatus}", 
-                            moderator.Email, formResponse.Status, payload.RejectReason, previousStatus);
+                        _logger.LogInformation("🔥 Processing impersonated user: {UserEmail}, Status: {Status}, RejectReason: '{RejectReason}', PreviousStatus: {PreviousStatus}",
+                            impersonatedUserEmail, formResponse.Status, payload.RejectReason, previousStatus);
                             
                         if (formResponse.Status == "Rejected" && !string.IsNullOrEmpty(payload.RejectReason))
                         {
-                            _logger.LogInformation("🔥 SENDING REJECT EMAIL to {ModeratorEmail}", moderator.Email);
+                            _logger.LogInformation("🔥 SENDING REJECT EMAIL to impersonated user {UserEmail}", impersonatedUserEmail);
                             await _emailService.SendFormRejectedByAdminEmailAsync(
-                                moderator.Email!,
-                                moderator.Name ?? "Moderator",
+                                impersonatedUserEmail,
+                                impersonatedUserName ?? "User",
                                 updatedFormResponse.FormTemplate?.Name ?? "Form",
                                 currentAdminName,
                                 DateTime.UtcNow,
                                 payload.RejectReason
                             );
                             
-                            _logger.LogInformation("✅ Rejection email sent to moderator {ModeratorEmail} for form {FormId} rejected by admin {AdminName}", 
-                                moderator.Email, updatedFormResponse.Id, currentAdminName);
+                            _logger.LogInformation("✅ Rejection email sent to impersonated user {UserEmail} for form {FormId} rejected by admin {AdminName}", 
+                                impersonatedUserEmail, updatedFormResponse.Id, currentAdminName);
                         }
-                        else if (formResponse.Status == "Approved" || (formResponse.Status == "Pending" && previousStatus != "Pending"))
+                        else if (formResponse.Status == "Approved" || formResponse.Status == "Pending")
                         {
-                            _logger.LogInformation("🔥 SENDING APPROVE EMAIL to {ModeratorEmail}", moderator.Email);
+                            _logger.LogInformation("🔥 SENDING APPROVE EMAIL to impersonated user {UserEmail}", impersonatedUserEmail);
                             await _emailService.SendFormApprovedByAdminEmailAsync(
-                                moderator.Email!,
-                                moderator.Name ?? "Moderator",
+                                impersonatedUserEmail,
+                                impersonatedUserName ?? "User",
                                 updatedFormResponse.FormTemplate?.Name ?? "Form",
                                 currentAdminName,
                                 DateTime.UtcNow
                             );
                             
-                            _logger.LogInformation("✅ Approval email sent to moderator {ModeratorEmail} for form {FormId} approved by admin {AdminName}", 
-                                moderator.Email, updatedFormResponse.Id, currentAdminName);
+                            _logger.LogInformation("✅ Approval email sent to impersonated user {UserEmail} for form {FormId} approved by admin {AdminName}", 
+                                impersonatedUserEmail, updatedFormResponse.Id, currentAdminName);
                         }
                         else
                         {
-                            _logger.LogInformation("🔥 No email sent - conditions not met for moderator {ModeratorEmail}", moderator.Email);
+                            _logger.LogInformation("🔥 No email sent - conditions not met for impersonated user {UserEmail}", impersonatedUserEmail);
                         }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("🔥 No impersonated user found or user has no email for form {FormId}", updatedFormResponse.Id);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to send email notifications to moderators");
+                    _logger.LogError(ex, "Failed to send email notification to impersonated user");
                 }
             }
             else
             {
-                _logger.LogInformation("🔥 Admin check failed - no moderator notifications will be sent");
+                _logger.LogInformation("🔥 Admin check failed - no impersonated user notification will be sent");
             }
 
             var result = new FormResponseResponseDto
