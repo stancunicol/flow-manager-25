@@ -5,14 +5,27 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Http
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
-@attribute [Authorize(Roles = "Basic")]
+@attribute [Authorize(Roles = "Basic,Moderator")]
 
 <FlowManager.Client.Components.NavBar.Navbar />
 
 <!-- Page description -->
 <div class="page-description">
-    <h2>Welcome back!</h2>
-    <p>Choose your workspace to get started</p>
+    @if (isImpersonating && HasRole("Moderator"))
+    {
+        <h2>Alegere rol pentru moderator</h2>
+        <p>Ca administrator <strong>@originalAdminName</strong>, alege rolul pe care vrei să îl folosești pentru <strong>@_currentUser.Name</strong>:</p>
+        
+        <div class="impersonation-notice">
+            <i class="fas fa-user-shield"></i>
+            <span>Impersonezi un moderator - are acces și la contul de user</span>
+        </div>
+    }
+    else
+    {
+        <h2>Welcome back!</h2>
+        <p>Choose your workspace to get started</p>
+    }
 
     <div class="welcome-label">
         <label>Welcome, @(_currentUser != null ? _currentUser.Name : string.Empty)!</label>
@@ -41,47 +54,70 @@
     }
     else if (userRoles.Any())
     {
-        <div class="roles-grid">
-            @if (HasRole("Admin"))
-            {
-                <div class="role-card admin-card" @onclick="NavigateToAdmin">
-                    <div class="role-icon">⚙️</div>
-                    <h3 class="role-title">Admin Dashboard</h3>
-                    <p class="role-description">Manage users, flows, forms and system settings</p>
-                    <div class="role-badge admin-badge">Administrator</div>
-                </div>
-            }
-
-            @if (HasRole("Manager"))
-            {
-                <div class="role-card manager-card" @onclick="NavigateToManager">
-                    <div class="role-icon">📊</div>
-                    <h3 class="role-title">Manager Dashboard</h3>
-                    <p class="role-description">Manage team flows and monitor progress</p>
-                    <div class="role-badge manager-badge">Manager</div>
-                </div>
-            }
-
-            @if (HasRole("Moderator"))
-            {
+        @if (isImpersonating && HasRole("Moderator"))
+        {
+            <!-- Afișează doar opțiunile pentru moderator când adminul impersonează -->
+            <div class="roles-grid impersonation-roles">
                 <div class="role-card moderator-card" @onclick="NavigateToModerator">
                     <div class="role-icon">🛡️</div>
-                    <h3 class="role-title">Moderator Dashboard</h3>
-                    <p class="role-description">Moderate content and manage community</p>
+                    <h3 class="role-title">Cont Moderator</h3>
+                    <p class="role-description">Revizuire formulare, gestionare submissions, moderare conținut</p>
                     <div class="role-badge moderator-badge">Moderator</div>
                 </div>
-            }
 
-            @if (HasRole("BasicUser") || HasRole("User") || HasRole("Basic"))
-            {
                 <div class="role-card user-card" @onclick="NavigateToUser">
                     <div class="role-icon">👤</div>
-                    <h3 class="role-title">User Workspace</h3>
-                    <p class="role-description">Access your flows, forms and tasks</p>
+                    <h3 class="role-title">Cont User</h3>
+                    <p class="role-description">Completare formulare, acces la fluxuri normale de user</p>
                     <div class="role-badge user-badge">User</div>
                 </div>
-            }
-        </div>
+            </div>
+        }
+        else
+        {
+            <!-- Logica normală pentru utilizatorii neimpersonați -->
+            <div class="roles-grid">
+                @if (HasRole("Admin"))
+                {
+                    <div class="role-card admin-card" @onclick="NavigateToAdmin">
+                        <div class="role-icon">⚙️</div>
+                        <h3 class="role-title">Admin Dashboard</h3>
+                        <p class="role-description">Manage users, flows, forms and system settings</p>
+                        <div class="role-badge admin-badge">Administrator</div>
+                    </div>
+                }
+
+                @if (HasRole("Manager"))
+                {
+                    <div class="role-card manager-card" @onclick="NavigateToManager">
+                        <div class="role-icon">📊</div>
+                        <h3 class="role-title">Manager Dashboard</h3>
+                        <p class="role-description">Manage team flows and monitor progress</p>
+                        <div class="role-badge manager-badge">Manager</div>
+                    </div>
+                }
+
+                @if (HasRole("Moderator"))
+                {
+                    <div class="role-card moderator-card" @onclick="NavigateToModerator">
+                        <div class="role-icon">🛡️</div>
+                        <h3 class="role-title">Moderator Dashboard</h3>
+                        <p class="role-description">Moderate content and manage community</p>
+                        <div class="role-badge moderator-badge">Moderator</div>
+                    </div>
+                }
+
+                @if (HasRole("BasicUser") || HasRole("User") || HasRole("Basic"))
+                {
+                    <div class="role-card user-card" @onclick="NavigateToUser">
+                        <div class="role-icon">👤</div>
+                        <h3 class="role-title">User Workspace</h3>
+                        <p class="role-description">Access your flows, forms and tasks</p>
+                        <div class="role-badge user-badge">User</div>
+                    </div>
+                }
+            </div>
+        }
     }
     else
     {

@@ -230,14 +230,20 @@ namespace FlowManager.Client.Pages
                 {
                     await JSRuntime.InvokeVoidAsync("alert", $"Successfully started impersonating {selectedUserForImpersonation.Name}. You will be redirected to their dashboard.");
 
-                    // Redirect based on user role
-                    var primaryRole = selectedUserForImpersonation.Roles?.FirstOrDefault();
-                    var redirectUrl = primaryRole?.ToLower() switch
+                    // Redirect based on user role - dacă are rol de moderator -> alegere, altfel -> user
+                    var hasModeratorRole = selectedUserForImpersonation.Roles?.Any(r => r.Equals("Moderator", StringComparison.OrdinalIgnoreCase)) ?? false;
+                    
+                    string redirectUrl;
+                    if (hasModeratorRole)
                     {
-                        "moderator" => "/moderator",
-                        "basic" => "/basic-user",
-                        _ => "/basic-user" // Default to basic user if role is unclear
-                    };
+                        // Dacă are rol de Moderator -> pagina de alegere (indiferent de alte roluri)
+                        redirectUrl = "/home";
+                    }
+                    else
+                    {
+                        // Utilizatori fără rol de moderator -> direct la user
+                        redirectUrl = "/basic-user";
+                    }
 
                     Navigation.NavigateTo(redirectUrl, forceLoad: true);
                 }

@@ -11,17 +11,30 @@ namespace FlowManager.Client.Pages
     {
         [Inject] protected HttpClient Http { get; set; } = default!;
         [Inject] protected AuthenticationStateProvider AuthProvider { get; set; } = default!;
+        [Inject] private ImpersonationService _impersonationService { get; set; } = default!;
 
         private List<string> userRoles = new();
         private bool isLoading = true;
         private string? errorMessage;
         [Inject] private AuthService _authService { get; set; } = default!;
         private UserVM _currentUser = new();
+        private bool isImpersonating = false;
+        private string? originalAdminName;
 
         protected override async Task OnInitializedAsync()
         {
+            await CheckImpersonationStatus();
             await LoadUserRoles();
             await GetCurrentUser();
+        }
+
+        private async Task CheckImpersonationStatus()
+        {
+            isImpersonating = await _impersonationService.IsImpersonating();
+            if (isImpersonating)
+            {
+                originalAdminName = await _impersonationService.GetOriginalAdminName();
+            }
         }
 
         private async Task LoadUserRoles()
