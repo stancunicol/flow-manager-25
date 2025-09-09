@@ -4,6 +4,7 @@ namespace FlowManager.Client.ViewModels
 {
     public class FlowStepVM
     {
+        public Guid Id { get; set; } = Guid.Empty;
         public bool? IsApproved { get; set; }
 
         // navigation properties

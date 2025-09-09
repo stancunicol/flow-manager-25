@@ -3,7 +3,6 @@
 @using FlowManager.Client.Components.Admin.Flows.AddFlow;
 
 <div class="add-flow-container">
-
     @if (_showAssignToStepModal)
     {
         <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
@@ -25,7 +24,7 @@
                 <input type="text"
                        id="flowName"
                        class="flow-name-input @GetFlowNameValidationClass()"
-                       placeholder="Enter workflow name..."
+                       placeholder="*Enter workflow name..."
                        @bind="_flowName"
                        @bind:event="oninput"
                        maxlength="100"/>
@@ -54,22 +53,22 @@
                     var step = _configuredSteps[i];
                     var stepIndex = i;
 
-                    <div class="dropped-step" key="@step.Id" @onclick="() => ShowAssingToStepModal(step)">
+                    <div class="dropped-step" key="@step.Id" @onclick="() => ShowAssingToStepModal(step, stepIndex)">
                         <!-- Step order indicator -->
                         <div class="step-order">@(stepIndex + 1)</div>
 
                         <!-- Remove button -->
-                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(step.Id)">×</button>
+                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(step.Id)" @onclick:stopPropagation="true">×</button>
 
                         <!-- Reorder buttons -->
                         <div class="reorder-buttons">
                             @if (stepIndex > 0)
                             {
-                                <button class="reorder-btn up" @onclick="() => MoveStepUp(stepIndex)" title="Move up">↑</button>
+                                <button class="reorder-btn up" @onclick="() => MoveStepUp(stepIndex)" title="Move up" @onclick:stopPropagation="true">↑</button>
                             }
                             @if (stepIndex < _configuredSteps.Count - 1)
                             {
-                                <button class="reorder-btn down" @onclick="() => MoveStepDown(stepIndex)" title="Move down">↓</button>
+                                <button class="reorder-btn down" @onclick="() => MoveStepDown(stepIndex)" title="Move down" @onclick:stopPropagation="true">↓</button>
                             }
                         </div>
 
@@ -114,7 +113,7 @@
 
         @foreach (StepVM step in _availableSteps)
         {
-            <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : "") @(IsStepConfigured(step.Id) ? "configured" : "")"
+            <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : ""))"
                  draggable="true"
                  @ondragstart="(e) => HandleDragStart(e, step)"
                  @ondragend="HandleDragEnd">
@@ -129,12 +128,6 @@
                         @(step.Users!.Count()) moderators
                     </div>
                 </div>
-
-                <!-- Configured indicator -->
-                @if (IsStepConfigured(step.Id))
-                {
-                    <div class="configured-indicator" title="Already configured">✓</div>
-                }
             </div>
         }
     </div>

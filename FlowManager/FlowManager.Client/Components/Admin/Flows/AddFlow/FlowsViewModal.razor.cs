@@ -18,7 +18,15 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
         private string _searchTerm = string.Empty;
         private bool _showEditModal = false;
         private FlowResponseDto? _selectedFlow = null;
-        private Timer? _searchDebounceTimer;
+
+        private System.Threading.Timer? _debounceTimer;
+        private int _debounceDelayMs = 250;
+
+        private int _pageSize = 12;
+        private int _currentPage = 1;
+        private int _totalPages = 1;
+        private int _totalCount = 1;
+        private const int _maxVisiblePages = 4;
 
         protected override async Task OnInitializedAsync()
         {
@@ -34,11 +42,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
             {
                 var payload = new QueriedFlowRequestDto
                 {
-                    Name = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
+                    GlobalSearchTerm = _searchTerm,
                     QueryParams = new QueryParamsDto
                     {
-                        Page = 1,
-                        PageSize = 50
+                        Page = _currentPage,
+                        PageSize = _pageSize
                     }
                 };
 
@@ -52,8 +60,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 {
                     _flows = new List<FlowResponseDto>();
                 }
-
-                Console.WriteLine($"Flows loaded: {_flows.Count} items.");
             }
             catch (Exception ex)
             {
@@ -75,34 +81,24 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
         {
             var newSearchTerm = e.Value?.ToString() ?? "";
 
-            _searchDebounceTimer?.Dispose();
-            _searchDebounceTimer = new Timer(async _ =>
+            _debounceTimer?.Dispose();
+            _debounceTimer = new Timer(async _ =>
             {
                 _searchTerm = newSearchTerm;
                 await InvokeAsync(async () =>
                 {
                     await LoadFlows();
                 });
-            }, null, 500, Timeout.Infinite);
+            }, null, _debounceDelayMs, Timeout.Infinite);
         }
 
         private async Task OnEnterPressed(KeyboardEventArgs e)
         {
             if (e.Key == "Enter")
             {
-                _searchDebounceTimer?.Dispose();
+                _debounceTimer?.Dispose();
                 await LoadFlows();
             }
-        }
-
-        private int GetTotalUsers(FlowResponseDto flow)
-        {
-            if (flow.Steps?.Any() != true) return 0;
-
-            return flow.Steps.Sum(step =>
-                (step.Users?.Count() ?? 0) +
-                (step.Teams?.Sum(t => t.Users?.Count() ?? 0) ?? 0)
-            );
         }
 
         private void OpenEditModal(FlowResponseDto flow)
@@ -140,9 +136,61 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
             await LoadFlows();
         }
 
+        private async Task GoToFirstPage()
+        {
+            _currentPage = 1;
+            await LoadFlows();
+        }
+
+        private async Task GoToPreviousPage()
+        {
+            _currentPage--;
+            await LoadFlows();
+        }
+
+        private List<int> GetPageNumbers()
+        {
+            List<int> pages = new List<int>();
+
+            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
+
+            int start = Math.Max(1, _currentPage - half);
+            int end = Math.Min(_totalPages, start + _maxVisiblePages - 1);
+
+            if (end - start + 1 < _maxVisiblePages)
+            {
+                start = Math.Max(1, end - _maxVisiblePages + 1);
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            return pages;
+        }
+
+        private async Task GoToPage(int page)
+        {
+            _currentPage = page;
+            await LoadFlows();
+        }
+
+        private async Task GoToNextPage()
+        {
+            _currentPage++;
+            await LoadFlows();
+        }
+
+        private async Task GoToLastPage()
+        {
+            _currentPage = _totalPages;
+            await LoadFlows();
+        }
+
         public void Dispose()
         {
-            _searchDebounceTimer?.Dispose();
+            _debounceTimer?.Dispose();
         }
     }
 }

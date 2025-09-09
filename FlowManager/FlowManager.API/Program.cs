@@ -85,6 +85,8 @@ builder.Services.AddIdentityCore<User>()
 
 builder.Services.AddScoped<IFormResponseRepository, FormResponseRepository>();
 
+builder.Services.AddScoped<IFormReviewRepository, FormReviewRepository>();
+builder.Services.AddScoped<IFormReviewService, FormReviewService>();
 
 builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender>();
 
@@ -97,6 +99,7 @@ using (var scope = app.Services.CreateScope())
 
     //BasicSeed.Populate(dbContext, passwordHasher);
    // MockDataSeed.Populate(dbContext, passwordHasher);
+
 }
 
 if (app.Environment.IsDevelopment())

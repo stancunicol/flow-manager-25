@@ -12,6 +12,8 @@ using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
 using FlowManager.Shared.DTOs.Requests.FlowStep;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
+using FlowManager.Shared.DTOs.Responses.Team;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -39,7 +41,7 @@ namespace FlowManager.Infrastructure.Services
         public async Task<PagedResponseDto<FlowResponseDto>> GetAllFlowsQueriedAsync(QueriedFlowRequestDto payload)
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
-            (List<Flow> data, int totalCount) = await _flowRepository.GetAllFlowsQueriedAsync(payload.Name, parameters);
+            (List<Flow> data, int totalCount) = await _flowRepository.GetAllFlowsQueriedAsync(payload.GlobalSearchTerm, parameters);
 
             return new PagedResponseDto<FlowResponseDto>
             {
@@ -47,14 +49,16 @@ namespace FlowManager.Infrastructure.Services
                 {
                     Id = f.Id,
                     Name = f.Name,
-                    Steps = f.Steps.Select(s => new StepResponseDto
-                    {
-                        Id = s.Step.Id,
-                        Name = s.Step.Name,
-                    }).ToList(),
-                    FormTemplateId = f.FormTemplateId,
+                    Steps = f.Steps
+                        .OrderBy(s => s.Order) // Order by Order field
+                        .Select(s => new StepResponseDto
+                        {
+                            Id = s.Step.Id,
+                            Name = s.Step.Name,
+                        }).ToList(),
+                    FormTemplateId = f.ActiveFormTemplateId,
                     ActiveFormTemplate = f.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(f.ActiveFormTemplate) : null,
-                    FormTemplates = f.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
+                    FormTemplates = f.FormTemplateFlows?.Select(formTemplateFlows => formTemplateFlows.FormTemplate).Select(MapToFormTemplateResponseDto).ToList(),
                     CreatedAt = f.CreatedAt,
                     UpdatedAt = f.UpdatedAt,
                     DeletedAt = f.DeletedAt
@@ -65,7 +69,8 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<FlowResponseDto> GetFlowByIdAsync(Guid id)
         {
-            Flow? flow = await _flowRepository.GetFlowByIdAsync(id);
+            Guid moderatorRoleId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
+            Flow? flow = await _flowRepository.GetFlowByIdIncludeStepsAsync(id, moderatorRoleId);
 
             if (flow == null)
             {
@@ -76,14 +81,24 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flow.Id,
                 Name = flow.Name,
-                Steps = flow.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.Step.Id,
-                    Name = s.Step.Name,
-                }).ToList(),
-                FormTemplateId = flow.FormTemplateId,
+                Steps = flow.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                        Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                        {
+                            Id = u.UserId,
+                        }).ToList(),
+                        Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
+                        {
+                            Id = t.TeamId,
+                        }).ToList(),
+                    }).ToList(),
+                FormTemplateId = flow.ActiveFormTemplateId,
                 ActiveFormTemplate = flow.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flow.ActiveFormTemplate) : null,
-                FormTemplates = flow.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
+                FormTemplates = flow.FormTemplateFlows?.Select(formTemplateFlows => formTemplateFlows.FormTemplate).Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flow.CreatedAt,
                 UpdatedAt = flow.UpdatedAt,
                 DeletedAt = flow.DeletedAt
@@ -92,12 +107,25 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<FlowResponseDto> CreateFlowAsync(PostFlowRequestDto payload)
         {
+            Flow? existingFlow = await _flowRepository.GetFlowByNameAsync(payload.Name);
+            if (existingFlow != null)
+            {
+                if (existingFlow.DeletedAt != null)
+                {
+                    throw new UniqueConstraintViolationException($"Flow with name {payload.Name} was previously deleted. Please choose a different name.");
+                }
+                else
+                {
+                    throw new UniqueConstraintViolationException($"Flow with name {payload.Name} already exists. Please choose a different name.");
+                }
+            }
+
             Flow flowToPost = new Flow
             {
                 Name = payload.Name,
             };
 
-            if(payload.FormTemplateId != null)
+            if (payload.FormTemplateId != null && payload.FormTemplateId != Guid.Empty)
             {
                 FormTemplate? ft = await _formTemplateRepository.GetFormTemplateByIdAsync((Guid)payload.FormTemplateId);
                 if (ft == null)
@@ -105,59 +133,63 @@ namespace FlowManager.Infrastructure.Services
                     throw new EntryNotFoundException($"Form template with id {payload.FormTemplateId} not found.");
                 }
 
-                flowToPost.FormTemplates.Add(ft);
+                flowToPost.FormTemplateFlows.Add(new FormTemplateFlow
+                {
+                    FormTemplateId = ft.Id,
+                    FlowId = flowToPost.Id,
+                });
             }
 
             if (payload.Steps != null && payload.Steps.Count > 0)
             {
-                foreach(PostFlowStepRequestDto step in payload.Steps)
+                for (int i = 0; i < payload.Steps.Count; i++)
                 {
-                    if ((await _stepRepository.GetStepByIdAsync(step.StepId)) == null)
-                    { 
-                        throw new EntryNotFoundException($"Step with id {payload.FormTemplateId} not found.");
+                    var stepPayload = payload.Steps[i];
+
+                    if ((await _stepRepository.GetStepByIdAsync(stepPayload.StepId)) == null)
+                    {
+                        throw new EntryNotFoundException($"Step with id {stepPayload.StepId} not found.");
                     }
 
-                    flowToPost.Steps.Add(new FlowStep
+                    var flowStep = new FlowStep
                     {
-                        StepId = step.StepId,
+                        StepId = stepPayload.StepId,
                         FlowId = flowToPost.Id,
-                    });
-                }
+                        Order = i + 1,
+                    };
 
-                foreach (var step in flowToPost.Steps)
-                {
-                    var stepPayload = payload.Steps.First(s => s.StepId == step.StepId);
-
-                    step.AssignedUsers = stepPayload.UserIds.Select(uId => new FlowStepUser
+                    flowStep.AssignedUsers = stepPayload.UserIds?.Select(uId => new FlowStepUser
                     {
-                        FlowStepId = step.Id,
+                        FlowStepId = flowStep.Id,
                         UserId = uId,
-                    }).ToList();
+                    }).ToList() ?? new List<FlowStepUser>();
 
-                    foreach (var teamPayload in stepPayload.Teams)
+                    foreach (var teamPayload in stepPayload.Teams ?? new List<PostFlowTeamRequestDto>())
                     {
                         var fullTeam = await _teamRepository.GetTeamWithModeratorsAsync(teamPayload.TeamId, (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id);
 
-                        if (fullTeam.Users.Count == teamPayload.UserIds.Count)
+                        if (fullTeam?.Users.Count == (teamPayload.UserIds?.Count ?? 0))
                         {
-                            step.AssignedTeams.Add(new FlowStepTeam
+                            flowStep.AssignedTeams.Add(new FlowStepTeam
                             {
-                                FlowStepId = step.Id,
+                                FlowStepId = flowStep.Id,
                                 TeamId = teamPayload.TeamId,
                             });
                         }
                         else
                         {
-                            foreach (var userId in teamPayload.UserIds)
+                            foreach (var userId in teamPayload.UserIds ?? new List<Guid>())
                             {
-                                step.AssignedUsers.Add(new FlowStepUser
+                                flowStep.AssignedUsers.Add(new FlowStepUser
                                 {
-                                    FlowStepId = step.Id,
+                                    FlowStepId = flowStep.Id,
                                     UserId = userId,
                                 });
                             }
                         }
                     }
+
+                    flowToPost.Steps.Add(flowStep);
                 }
             }
 
@@ -167,21 +199,23 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
-                Steps = flowToPost.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.StepId,
-                    Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                Steps = flowToPost.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
                     {
-                        Id = u.UserId,
+                        Id = s.StepId,
+                        Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                        {
+                            Id = u.UserId,
+                        }).ToList(),
+                        Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
+                        {
+                            Id = t.TeamId,
+                        }).ToList(),
                     }).ToList(),
-                    Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
-                    {
-                        Id = t.TeamId,  
-                    }).ToList(),
-                }).ToList(),
-                FormTemplateId = flowToPost.FormTemplateId,
+                FormTemplateId = flowToPost.ActiveFormTemplateId,
                 ActiveFormTemplate = flowToPost.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToPost.ActiveFormTemplate) : null,
-                FormTemplates = flowToPost.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
+                FormTemplates = flowToPost.FormTemplateFlows?.Select(formTemplateFlows => formTemplateFlows.FormTemplate).Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flowToPost.CreatedAt,
                 UpdatedAt = flowToPost.UpdatedAt,
                 DeletedAt = flowToPost.DeletedAt
@@ -211,14 +245,16 @@ namespace FlowManager.Infrastructure.Services
                 {
                     Id = flowToUpdate.Id,
                     Name = flowToUpdate.Name,
-                    Steps = flowToUpdate.Steps.Select(s => new StepResponseDto
-                    {
-                        Id = s.Step.Id,
-                        Name = s.Step.Name,
-                    }).ToList(),
-                    FormTemplateId = flowToUpdate.FormTemplateId,
+                    Steps = flowToUpdate.Steps
+                        .OrderBy(s => s.Order) // Order by Order field
+                        .Select(s => new StepResponseDto
+                        {
+                            Id = s.Step.Id,
+                            Name = s.Step.Name,
+                        }).ToList(),
+                    FormTemplateId = flowToUpdate.ActiveFormTemplateId,
                     ActiveFormTemplate = flowToUpdate.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToUpdate.ActiveFormTemplate) : null,
-                    FormTemplates = flowToUpdate.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
+                    FormTemplates = flowToUpdate.FormTemplateFlows?.Select(formTemplateFlows => formTemplateFlows.FormTemplate).Select(MapToFormTemplateResponseDto).ToList(),
                     CreatedAt = flowToUpdate.CreatedAt,
                     UpdatedAt = flowToUpdate.UpdatedAt,
                     DeletedAt = flowToUpdate.DeletedAt
@@ -238,6 +274,13 @@ namespace FlowManager.Infrastructure.Services
                 step.DeletedAt = DateTime.UtcNow;
             }
 
+            // Get the next order number
+            int nextOrder = 1;
+            if (flowToUpdate.Steps.Any(s => s.DeletedAt == null))
+            {
+                nextOrder = flowToUpdate.Steps.Where(s => s.DeletedAt == null).Max(s => s.Order) + 1;
+            }
+
             foreach (Guid stepId in payload.StepIds)
             {
                 if (flowToUpdate.Steps.Any(s => s.StepId == stepId))
@@ -253,7 +296,8 @@ namespace FlowManager.Infrastructure.Services
                     flowToUpdate.Steps.Add(new FlowStep
                     {
                         StepId = stepId,
-                        FlowId = flowToUpdate.Id
+                        FlowId = flowToUpdate.Id,
+                        Order = nextOrder++ // Set order sequentially
                     });
                 }
             }
@@ -263,14 +307,16 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToUpdate.Id,
                 Name = flowToUpdate.Name,
-                Steps = flowToUpdate.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.Step.Id,
-                    Name = s.Step.Name,
-                }).ToList(),
-                FormTemplateId = flowToUpdate.FormTemplateId,
+                Steps = flowToUpdate.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
+                FormTemplateId = flowToUpdate.ActiveFormTemplateId,
                 ActiveFormTemplate = flowToUpdate.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToUpdate.ActiveFormTemplate) : null,
-                FormTemplates = flowToUpdate.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
+                FormTemplates = flowToUpdate.FormTemplateFlows?.Select(formTemplateFlows => formTemplateFlows.FormTemplate).Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flowToUpdate.CreatedAt,
                 UpdatedAt = flowToUpdate.UpdatedAt,
                 DeletedAt = flowToUpdate.DeletedAt
@@ -291,14 +337,16 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToDelete.Id,
                 Name = flowToDelete.Name,
-                Steps = flowToDelete.Steps.Select(s => new StepResponseDto
-                {
-                    Id = s.Step.Id,
-                    Name = s.Step.Name,
-                }).ToList(),
-                FormTemplateId = flowToDelete.FormTemplateId,
+                Steps = flowToDelete.Steps
+                    .OrderBy(s => s.Order) // Order by Order field
+                    .Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
+                FormTemplateId = flowToDelete.ActiveFormTemplateId,
                 ActiveFormTemplate = flowToDelete.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flowToDelete.ActiveFormTemplate) : null,
-                FormTemplates = flowToDelete.FormTemplates?.Select(MapToFormTemplateResponseDto).ToList(),
+                FormTemplates = flowToDelete.FormTemplateFlows?.Select(formTemplateFlows => formTemplateFlows.FormTemplate).Select(MapToFormTemplateResponseDto).ToList(),
                 CreatedAt = flowToDelete.CreatedAt,
                 UpdatedAt = flowToDelete.UpdatedAt,
                 DeletedAt = flowToDelete.DeletedAt
@@ -315,15 +363,139 @@ namespace FlowManager.Infrastructure.Services
             }
 
             return new List<StepResponseDto>(
-                flow.Steps.Select(fs => new StepResponseDto
-                {
-                    Id = fs.Step.Id,
-                    Name = fs.Step.Name,
-                    CreatedAt = fs.Step.CreatedAt,
-                    UpdatedAt = fs.Step.UpdatedAt,
-                    DeletedAt = fs.Step.DeletedAt
-                })
+                flow.Steps
+                    .OrderBy(fs => fs.Order) // Order by Order field instead of CreatedAt
+                    .Select(fs => new StepResponseDto
+                    {
+                        Id = fs.Step.Id,
+                        Name = fs.Step.Name,
+                        CreatedAt = fs.Step.CreatedAt,
+                        UpdatedAt = fs.Step.UpdatedAt,
+                        DeletedAt = fs.Step.DeletedAt
+                    })
             );
+        }
+
+        public async Task<FlowResponseDto> GetFlowByIdIncludeStepsAsync(Guid flowId)
+        {
+            Guid moderatorId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
+
+            Flow? flow = await _flowRepository.GetFlowByIdIncludeStepsAsync(flowId, moderatorId);
+            if (flow == null)
+            {
+                throw new EntryNotFoundException($"Flow with id {flowId} was not found.");
+            }
+
+            flow.Steps = flow.Steps.OrderBy(fs => fs.Order).ToList();
+
+            FlowResponseDto response = new FlowResponseDto
+            {
+                Id = flowId,
+                Name = flow.Name,
+                FlowSteps = flow.Steps.Select(fs => new FlowStepResponseDto
+                {
+                    Id = fs.Id,
+                    StepId = fs.Step.Id,
+                    StepName = fs.Step.Name,
+                    Teams = fs.AssignedTeams.Select(assignedTeam => new FlowStepTeamResponseDto
+                    {
+                        FlowStepTeamId = assignedTeam.Id,
+                        Team = new TeamResponseDto
+                        {
+                            Id = assignedTeam.TeamId,
+                            Name = assignedTeam.Team.Name,
+                            Users = assignedTeam.Team.Users.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                            {
+                                Id = u.UserId,
+                                Name = u.User.Name,
+                                Email = u.User.Email,
+                            }).ToList()
+                        }
+                    }).ToList()
+                }).ToList(),
+            };
+
+            for (int i = 0; i < flow.Steps.Count; i++)
+            {
+                var flowStep = flow.Steps.ElementAt(i);
+
+                var usersWithoutTeams = flowStep.AssignedUsers
+                    .Where(assignedUser => assignedUser.User.Teams.Count == 0)
+                    .ToList();
+
+                response.FlowSteps[i].Users = usersWithoutTeams
+                    .Select(assignedUser => new Shared.DTOs.Responses.User.FlowStepUserResponseDto
+                    {
+                        FlowStepUserId = assignedUser.Id,
+                        User = new Shared.DTOs.Responses.User.UserResponseDto
+                        {
+                            Id = assignedUser.UserId,
+                            Name = assignedUser.User.Name,
+                            Email = assignedUser.User.Email,
+                            Teams = assignedUser.User.Teams.Select(ut => new TeamResponseDto()
+                            {
+                                Id = ut.TeamId,
+                                Name = ut.Team.Name
+                            }).ToList(),
+                        }
+                    }).ToList();
+
+                var usersWithTeams = flowStep.AssignedUsers
+                    .Where(assignedUser => assignedUser.User.Teams.Count > 0)
+                    .ToList();
+
+                foreach (var assignedUser in usersWithTeams)
+                {
+                    foreach (var userTeam in assignedUser.User.Teams)
+                    {
+                        var teamInResponse = response.FlowSteps[i].Teams
+                            .FirstOrDefault(t => t.Team.Id == userTeam.TeamId);
+
+                        if (teamInResponse != null)
+                        {
+                            var userExists = teamInResponse.Team.Users
+                                .Any(u => u.Id == assignedUser.UserId);
+
+
+                            if (!userExists)
+                            {
+                                teamInResponse.Team.Users.Add(new Shared.DTOs.Responses.User.UserResponseDto
+                                {
+                                    Id = assignedUser.UserId,
+                                    Name = assignedUser.User.Name,
+                                    Email = assignedUser.User.Email,
+                                });
+                            }
+                        }
+                        else
+                        {
+                            var newTeam = new FlowStepTeamResponseDto
+                            {
+                                FlowStepTeamId = Guid.NewGuid(), 
+                                Team = new TeamResponseDto
+                                {
+                                    Id = userTeam.TeamId,
+                                    Name = userTeam.Team.Name,
+                                    Users = new List<Shared.DTOs.Responses.User.UserResponseDto>
+                                    {
+                                        new Shared.DTOs.Responses.User.UserResponseDto
+                                        {
+                                            Id = assignedUser.UserId,
+                                            Name = assignedUser.User.Name,
+                                            Email = assignedUser.User.Email,
+                                        }
+                                    }
+                                }
+                            };
+
+                            response.FlowSteps[i].Teams.Add(newTeam);
+                        }
+                    }
+                }
+
+            }
+
+            return response;
         }
 
         private FormTemplateResponseDto MapToFormTemplateResponseDto(FormTemplate ft)
@@ -333,7 +505,7 @@ namespace FlowManager.Infrastructure.Services
                 Id = ft.Id,
                 Name = ft.Name,
                 Content = ft.Content,
-                FlowId = ft.FlowId,
+                FlowId = ft.ActiveFlowId,
                 Components = ft.Components?.Where(ftc => ftc.DeletedAt == null).Select(ftc => new FormTemplateComponentResponseDto
                 {
                     Id = ftc.ComponentId,

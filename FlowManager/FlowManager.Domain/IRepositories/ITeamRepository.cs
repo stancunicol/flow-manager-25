@@ -11,7 +11,7 @@ namespace FlowManager.Domain.IRepositories
     public interface ITeamRepository
     {
         Task<List<Team>> GetAllTeamsAsync();
-        Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globaleSearchTerm, string? name, QueryParams? queryParams, bool includeDeleted = false);
+        Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globaleSearchTerm, QueryParams? queryParams, bool includeDeleted = false);
         Task<Team?> GetTeamByIdAsync(Guid id, bool includeDeleted = false, bool includeDeletedUserTeams = false);
         Task<Team?> GetTeamByNameAsync(string name, bool includeDeleted = false);
         Task<Team?> GetTeamWithUsersAsync(Guid id);

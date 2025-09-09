@@ -466,14 +466,26 @@ body {
     word-break: break-word;
 }
 
-.detail-item.reject-reason .detail-label {
-    color: #dc2626;
+/* Enhanced detail items for reject reasons */
+.detail-item.reject-reason {
+    background: #fef2f2;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border-left: 3px solid #ef4444;
+    margin-top: 0.5rem;
 }
 
-.detail-item.reject-reason .detail-value {
-    color: #dc2626;
-    font-weight: 500;
-}
+    .detail-item.reject-reason .detail-label {
+        color: #dc2626;
+        font-weight: 600;
+    }
+
+    .detail-item.reject-reason .detail-value {
+        color: #7f1d1d;
+        font-style: italic;
+        margin-top: 0.25rem;
+        line-height: 1.4;
+    }
 
 .form-card-footer {
     padding: 0.75rem 1rem;
@@ -1981,5 +1993,81 @@ body {
 
     .pagination-btn-nav {
         padding: 8px;
+    }
+}
+
+/* History Card Styles */
+.history-card {
+    border-left: 4px solid transparent;
+}
+
+    .history-card.approved {
+        border-left-color: #10b981;
+    }
+
+    .history-card.rejected {
+        border-left-color: #ef4444;
+    }
+
+.form-icon.approved {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.form-icon.rejected {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+    .status-badge.approved {
+        background: #10b981;
+        color: white;
+    }
+
+    .status-badge.rejected {
+        background: #ef4444;
+        color: white;
+    }
+
+.history-card .form-card-header {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.history-card.approved .form-card-header {
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+}
+
+.history-card.rejected .form-card-header {
+    background: linear-gradient(135deg, #fef2f2, #fef3f3);
+}
+
+/* Filter Select Styling */
+.search-container select {
+    background: white;
+    cursor: pointer;
+}
+
+    .search-container select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(44, 142, 144, 0.1);
+    }
+
+/* Responsive adjustments for history */
+@media (max-width: 768px) {
+    .history-card {
+        border-left-width: 3px;
+    }
+
+    .status-badge {
+        font-size: 10px;
+        padding: 0.2rem 0.5rem;
     }
 }

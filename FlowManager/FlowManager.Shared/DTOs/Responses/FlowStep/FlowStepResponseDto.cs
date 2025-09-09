@@ -11,8 +11,8 @@ namespace FlowManager.Shared.DTOs.Responses.FlowStep
     public class FlowStepResponseDto
     {
         public Guid Id { get; set; }
-        public List<UserResponseDto> Users = new();
-        public List<TeamResponseDto> Teams = new();
+        public List<FlowStepUserResponseDto> Users { get; set; } = new();
+        public List<FlowStepTeamResponseDto> Teams { get; set; } = new();
         public Guid? FlowId { get; set; }
         public Guid? StepId { get; set; }
         public string? StepName { get; set; }

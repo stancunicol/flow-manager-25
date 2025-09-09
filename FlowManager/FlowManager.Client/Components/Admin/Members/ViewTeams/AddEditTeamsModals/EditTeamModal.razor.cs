@@ -144,7 +144,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         {
             await EditTeamAsync();
 
-            await Task.Delay(5000);
+            await Task.Delay(3000);
 
             _submitMessage = string.Empty;
 

@@ -23,7 +23,7 @@ namespace FlowManager.Application
             services.AddScoped<IComponentService, ComponentService>();
             services.AddScoped<IFlowService, FlowService>();
             services.AddScoped<IFormResponseService, FormResponseService>();
-            services.AddScoped<IFlowStepService, FlowStepService>();
+            // services.AddScoped<IFlowStepService, FlowStepService>();
 
             return services;
         }

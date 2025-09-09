@@ -1,6 +1,8 @@
 ﻿@using FlowManager.Shared.DTOs.Responses.Flow
+@using FlowManager.Shared.DTOs.Responses.FormTemplate
 @using FlowManager.Client.Components.Admin.FormTemplate
 @using FlowManager.Client.Components.Admin.EditFormTemplate
+@using FlowManager.Client.Components.Admin.EditFlow
 
 <div class="flow-edit-modal-overlay" @onclick="@(() => OnClose.InvokeAsync())" @onclick:stopPropagation="false">
     <div class="flow-edit-modal-container" @onclick:stopPropagation="true">
@@ -11,29 +13,50 @@
             <button class="modal-close" @onclick="@(() => OnClose.InvokeAsync())" aria-label="Close modal">×</button>
         </div>
 
+        <div class="tab-header">
+            <button class="tab-button @(isEditFormTabActive ? "active" : "inactive")" @onclick="() => isEditFormTabActive = true">
+                Edit Form
+            </button>
+
+            <button class="tab-button @(!isEditFormTabActive ? "active" : "inactive")" @onclick="() => isEditFormTabActive = false">
+                Edit Flow
+            </button>
+        </div>
+
         <!-- Content -->
-        <div class="modal-content">
-            @* Încarcă întotdeauna EditFormTemplate, indiferent dacă există FormTemplateId sau nu *@
+        @if (isEditFormTabActive)
+        {
+            <div class="modal-content">
+                @* Încarcă întotdeauna EditFormTemplate, indiferent dacă există FormTemplateId sau nu *@
             <EditFormTemplate FlowId="@Flow!.Id"
                               FormTemplateId="@(Flow.FormTemplateId ?? Guid.Empty)"
                               OnTemplateSaved="@OnTemplateSaved"
                               @ref="editFormTemplateRef" />
-        </div>
+            </div>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer">
-            <button class="btn-secondary" @onclick="@(() => OnClose.InvokeAsync())">
-                Cancel
-            </button>
-            <button class="btn-primary" @onclick="SaveTemplate" disabled="@_isSaving">
-                @if (_isSaving)
-                {
-                    <span class="loading-spinner"></span>
-                }
-                @(Flow?.FormTemplateId != null ? "Save Changes" : "Create Template")
-            </button>
-        </div>
-
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="@(() => OnClose.InvokeAsync())">
+                    Cancel
+                </button>
+                <button class="btn-primary" @onclick="SaveTemplate" disabled="@(_isSaving)">
+                    @if (_isSaving)
+                    {
+                        <span class="loading-spinner"></span>
+                    }
+                    @(Flow?.FormTemplateId != null ? "Save Changes" : "Create Template")
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="modal-content">
+                <EditFlow FlowId="@Flow!.Id"
+                          OnFlowSaved="@OnFlowSaved"
+                          FormTemplateId="@(Flow.FormTemplateId ?? Guid.Empty)"
+                          @ref="editFlowRef" />
+            </div>
+        }
     </div>
 </div>
 
@@ -48,6 +71,9 @@
 
     // Component reference
     private EditFormTemplate? editFormTemplateRef;
+    private EditFlow? editFlowRef;
+
+    private bool isEditFormTabActive = true;
 
     private async Task OnTemplateSaved()
     {
@@ -61,6 +87,22 @@
         }
 
         // Close the modal
+        await OnClose.InvokeAsync();
+    }
+
+    private bool IsFormValid()
+    {
+        Console.WriteLine($"Checking form validity: {editFormTemplateRef?.IsFormValid()}");
+        return editFormTemplateRef?.IsFormValid() ?? false;
+    }
+
+    private async Task OnFlowSaved()
+    {
+        if (Flow != null && OnFlowUpdated.HasDelegate)
+        {
+            await OnFlowUpdated.InvokeAsync(Flow);
+        }
+
         await OnClose.InvokeAsync();
     }
 

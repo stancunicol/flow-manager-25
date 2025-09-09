@@ -35,6 +35,8 @@ builder.Services.AddScoped<FlowService>();
 
 builder.Services.AddServices();
 
+builder.Services.AddScoped<FormReviewService>();
+
 builder.Services.AddBlazorBootstrap();
 
 await builder.Build().RunAsync();

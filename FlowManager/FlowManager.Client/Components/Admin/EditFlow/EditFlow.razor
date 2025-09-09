@@ -1,0 +1,126 @@
+﻿@using FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal;
+@using FlowManager.Client.ViewModels;
+@using Microsoft.AspNetCore.Components.Web;
+
+<div class="edit-flow-container">
+    @if (_showAssignToStepModal)
+    {
+        <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
+                           @bind-StepToAssign="@_stepToAssign"
+                           OnStepAssigned="ConfigureStepsToFlow" />
+    }
+
+    <!-- Step configuration area -->
+    <div class="step-configuration @(_isDragOver ? "drag-over" : "")"
+         @ondrop="HandleDrop"
+         @ondragover="HandleDragOver"
+         @ondragover:preventDefault="true"
+         @ondragenter="HandleDragEnter"
+         @ondragleave="HandleDragLeave">
+
+        <div class="step-configuration-header">
+            <div class="flow-name-section">
+                <label for="flowName" class="flow-name-label">*Flow Name (must be different from @_initialFlowName):</label>
+                <input type="text"
+                       id="flowName"
+                       class="flow-name-input @GetFlowNameValidationClass()"
+                       @bind="_flowName"
+                       @bind:event="oninput"
+                       maxlength="100" />
+            </div>
+        </div>
+
+        <div class="dropped-steps">
+            @if (!_configuredSteps.Any())
+            {
+                <div class="empty-state">
+                    Drag steps here to edit your workflow
+                </div>
+            }
+            else
+            {
+                @for (int i = 0; i < _configuredSteps.Count; i++)
+                {
+                    var step = _configuredSteps[i];
+                    var stepIndex = i;
+
+                    <div class="dropped-step" key="@step.Id" @onclick="() => ShowAssingToStepModal(step)">
+                        <!-- Step order indicator -->
+                        <div class="step-order">@(stepIndex + 1)</div>
+
+                        <!-- Remove button -->
+                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(step.Id)" @onclick:stopPropagation="true">×</button>
+
+                        <!-- Reorder buttons -->
+                        <div class="reorder-buttons">
+                            @if (stepIndex > 0)
+                            {
+                                <button class="reorder-btn up" @onclick="() => MoveStepUp(stepIndex)" title="Move up" @onclick:stopPropagation="true">↑</button>
+                            }
+                            @if (stepIndex < _configuredSteps.Count - 1)
+                            {
+                                <button class="reorder-btn down" @onclick="() => MoveStepDown(stepIndex)" title="Move down" @onclick:stopPropagation="true">↓</button>
+                            }
+                        </div>
+
+                        <!-- Step content -->
+                        <div class="step-info">
+                            <div class="step-avatar">
+                                @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
+                            </div>
+                            <div class="step-details">
+                                <div class="step-name">@step.Name</div>
+                                <div class="step-users-count">
+                                    @((step.Users?.Count ?? 0) + (step.Teams?.Count ?? 0)) assignments
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_onSubmitMessage))
+                {
+                    <div class="onSubmitMessage">
+                        <span class="onSubmit @(_onSubmitSuccess ? "success" : "fail")">@_onSubmitMessage</span>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Sidebar container care include navbar și butoanele -->
+    <div class="sidebar-container">
+        <!-- Steps navbar -->
+        <div class="steps-navbar">
+            <div class="navbar-header">Available Steps</div>
+
+            @foreach (StepVM step in _availableSteps)
+            {
+                <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : "")"
+                     draggable="true"
+                     @ondragstart="(e) => HandleDragStart(e, step)"
+                     @ondragend="HandleDragEnd">
+
+                    <!-- Step description -->
+                    <div class="step-avatar">
+                        @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
+                    </div>
+                    <div class="step-details">
+                        <div class="step-name">@step.Name</div>
+                        <div class="step-users-count">
+                            @(step.Users!.Count()) moderators
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Modal Footer - acum sub navbar -->
+        <div class="modal-footer">
+            <button class="btn-clear" @onclick="ClearConfiguration">Cancel</button>
+            <button class="btn-primary" @onclick="SaveCurrentWorkflowAsync" disabled="@(!IsWorkflowValid())">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>

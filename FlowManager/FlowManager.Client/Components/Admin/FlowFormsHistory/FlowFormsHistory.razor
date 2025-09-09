@@ -556,7 +556,7 @@
         {
             var request = new QueriedFlowRequestDto
             {
-                Name = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
+                GlobalSearchTerm = string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
                 QueryParams = new QueryParamsDto
                 {
                     Page = currentPage,

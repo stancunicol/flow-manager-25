@@ -1,4 +1,5 @@
-﻿using FlowManager.Client.DTOs;
+﻿using BlazorBootstrap;
+using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
@@ -6,6 +7,7 @@ using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
 using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FormReview;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
@@ -20,6 +22,9 @@ namespace FlowManager.Client.Pages
 {
     public partial class Moderator : ComponentBase, IDisposable
     {
+        [Inject] private FormReviewService FormReviewService { get; set; } = default!;
+        [Inject] private AuthService _authService { get; set; } = default!;
+
         private string _activeTab = "ASSIGNED";
         protected string? errorMessage;
 
@@ -54,7 +59,17 @@ namespace FlowManager.Client.Pages
         private bool showRejectModal = false;
         private string _rejectReason = "";
         private NextStepInfo? nextStepInfo;
-        [Inject] private AuthService _authService { get; set; } = default!;
+
+        // History tab state
+        private List<FormReviewResponseDto>? reviewHistory;
+        private bool isLoadingHistory = false;
+        private int _historyCurrentPage = 1;
+        private int _historyPageSize = 8;
+        private int _historyTotalPages = 0;
+        private int _historyTotalCount = 0;
+        private string historySearchTerm = "";
+        private string actionFilter = "";
+
         private UserVM _currentUser = new();
 
         // Property pentru reject reason cu StateHasChanged
@@ -123,6 +138,150 @@ namespace FlowManager.Client.Pages
         private void SetActiveTab(string tab)
         {
             _activeTab = tab;
+
+            if (tab == "HISTORY" && currentModeratorId != Guid.Empty)
+            {
+                _ = LoadReviewHistory();
+            }
+        }
+
+        private async Task LoadReviewHistory(bool append = false)
+        {
+            isLoadingHistory = true;
+            StateHasChanged();
+
+            try
+            {
+                var response = await FormReviewService.GetReviewHistoryByModeratorAsync(
+                    currentModeratorId,
+                    _historyCurrentPage,
+                    _historyPageSize,
+                    string.IsNullOrEmpty(historySearchTerm) ? null : historySearchTerm,
+                    string.IsNullOrEmpty(actionFilter) ? null : actionFilter);
+
+                if (response != null)
+                {
+                    if (append && reviewHistory != null)
+                    {
+                        reviewHistory.AddRange(response.Reviews);
+                    }
+                    else
+                    {
+                        reviewHistory = response.Reviews;
+                    }
+
+                    _historyTotalCount = response.TotalCount;
+                    _historyTotalPages = (int)Math.Ceiling((double)_historyTotalCount / _historyPageSize);
+
+                    Console.WriteLine($"[Moderator] Loaded {response.Reviews.Count} reviews, total: {_historyTotalCount}");
+                }
+                else
+                {
+                    reviewHistory = new List<FormReviewResponseDto>();
+                    _historyTotalCount = 0;
+                    _historyTotalPages = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Moderator] Error loading review history: {ex.Message}");
+                reviewHistory = new List<FormReviewResponseDto>();
+            }
+            finally
+            {
+                isLoadingHistory = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task RefreshReviewHistory()
+        {
+            historySearchTerm = "";
+            actionFilter = "";
+            _historyCurrentPage = 1;
+            await LoadReviewHistory();
+        }
+
+        private void OnHistorySearchInput(ChangeEventArgs e)
+        {
+            var newSearchTerm = e.Value?.ToString() ?? "";
+            historySearchTerm = newSearchTerm;
+
+            // Debounce search
+            searchDebounceTimer?.Dispose();
+            searchDebounceTimer = new Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    _historyCurrentPage = 1;
+                    await LoadReviewHistory();
+                });
+            }, null, 500, Timeout.Infinite);
+        }
+
+        private async Task OnActionFilterChange(ChangeEventArgs e)
+        {
+            actionFilter = e.Value?.ToString() ?? "";
+            _historyCurrentPage = 1;
+            await LoadReviewHistory();
+        }
+
+        private async Task ClearHistorySearch()
+        {
+            historySearchTerm = "";
+            actionFilter = "";
+            _historyCurrentPage = 1;
+            await LoadReviewHistory();
+        }
+
+        private async Task GoToHistoryFirstPage()
+        {
+            _historyCurrentPage = 1;
+            await LoadReviewHistory();
+        }
+
+        private async Task GoToHistoryPreviousPage()
+        {
+            _historyCurrentPage--;
+            await LoadReviewHistory();
+        }
+
+        private async Task GoToHistoryPage(int page)
+        {
+            _historyCurrentPage = page;
+            await LoadReviewHistory();
+        }
+
+        private async Task GoToHistoryNextPage()
+        {
+            _historyCurrentPage++;
+            await LoadReviewHistory();
+        }
+
+        private async Task GoToHistoryLastPage()
+        {
+            _historyCurrentPage = _historyTotalPages;
+            await LoadReviewHistory();
+        }
+
+        private List<int> GetHistoryPageNumbers()
+        {
+            List<int> pages = new List<int>();
+            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
+            int start = Math.Max(1, _historyCurrentPage - half);
+            int end = Math.Min(_historyTotalPages, start + _maxVisiblePages - 1);
+
+            if (end - start + 1 < _maxVisiblePages)
+            {
+                start = Math.Max(1, end - _maxVisiblePages + 1);
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            return pages;
         }
 
         private async Task LoadAssignedForms(bool append = false)
@@ -138,7 +297,7 @@ namespace FlowManager.Client.Pages
                     QueryParams = new Shared.DTOs.Requests.QueryParamsDto
                     {
                         Page = _currentPage,
-                        PageSize = _pageSize, // SCHIMBAT: folosește _pageSize în loc de pageSize
+                        PageSize = _pageSize,
                         SortBy = "CreatedAt",
                         SortDescending = true
                     }
@@ -152,7 +311,7 @@ namespace FlowManager.Client.Pages
                 var response = await FormResponseService.GetFormResponsesAssignedToModeratorAsync(
                     currentModeratorId,
                     _currentPage,
-                    _pageSize, // SCHIMBAT: folosește _pageSize în loc de pageSize
+                    _pageSize,
                     searchTerm);
 
                 if (response != null)
@@ -167,7 +326,7 @@ namespace FlowManager.Client.Pages
                     }
 
                     _totalCount = response.TotalCount;
-                    _totalPages = (int)Math.Ceiling((double)_totalCount / _pageSize); // SCHIMBAT: folosește _pageSize
+                    _totalPages = (int)Math.Ceiling((double)_totalCount / _pageSize);
                     hasMoreForms = response.HasMore;
                     totalFormsCount = response.TotalCount;
 
@@ -290,7 +449,6 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                // Încarcă template-ul formularului
                 selectedFormTemplate = await FormTemplateService.GetFormTemplateByIdAsync(formResponse.FormTemplateId);
 
                 if (selectedFormTemplate != null)
@@ -317,6 +475,9 @@ namespace FlowManager.Client.Pages
 
             try
             {
+                Console.WriteLine($"[DEBUG STEPS] Loading step info for form: {selectedFormTemplate.Name}");
+                Console.WriteLine($"[DEBUG STEPS] Current step ID: {selectedFormResponse.StepId}");
+
                 // Găsește flow-ul pentru acest form template
                 var flowsResponse = await Http.GetAsync($"api/flows/queried?QueryParams.PageSize=100");
                 if (flowsResponse.IsSuccessStatusCode)
@@ -324,24 +485,44 @@ namespace FlowManager.Client.Pages
                     var flowsData = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
                     var flows = flowsData?.Result?.Data;
 
+                    Console.WriteLine($"[DEBUG STEPS] Found {flows?.Count() ?? 0} flows total");
+
                     if (flows != null)
                     {
                         var associatedFlow = flows.FirstOrDefault(f => f.FormTemplateId == selectedFormTemplate.Id);
+                        Console.WriteLine($"[DEBUG STEPS] Associated flow: {associatedFlow?.Name ?? "NOT FOUND"}");
+                        Console.WriteLine($"[DEBUG STEPS] Flow has {associatedFlow?.Steps?.Count() ?? 0} steps");
 
                         if (associatedFlow?.Steps?.Any() == true)
                         {
                             var orderedSteps = associatedFlow.Steps.ToList();
+                            Console.WriteLine($"[DEBUG STEPS] Steps in order:");
+                            for (int i = 0; i < orderedSteps.Count; i++)
+                            {
+                                Console.WriteLine($"[DEBUG STEPS]   Step {i}: {orderedSteps[i].Name} (ID: {orderedSteps[i].Id})");
+                            }
+
                             var currentStepIndex = orderedSteps.FindIndex(s => s.Id == selectedFormResponse.StepId);
+                            Console.WriteLine($"[DEBUG STEPS] Current step index: {currentStepIndex}");
 
                             if (currentStepIndex >= 0)
                             {
                                 var hasNextStep = currentStepIndex < orderedSteps.Count - 1;
+                                Console.WriteLine($"[DEBUG STEPS] Has next step: {hasNextStep}");
+
+                                if (hasNextStep)
+                                {
+                                    Console.WriteLine($"[DEBUG STEPS] Next step: {orderedSteps[currentStepIndex + 1].Name} (ID: {orderedSteps[currentStepIndex + 1].Id})");
+                                }
+
                                 nextStepInfo = new NextStepInfo
                                 {
                                     HasNextStep = hasNextStep,
                                     NextStepName = hasNextStep ? orderedSteps[currentStepIndex + 1].Name : null,
                                     NextStepId = hasNextStep ? orderedSteps[currentStepIndex + 1].Id : null
                                 };
+
+                                Console.WriteLine($"[DEBUG STEPS] NextStepInfo created: HasNext={nextStepInfo.HasNextStep}, NextName={nextStepInfo.NextStepName}, NextId={nextStepInfo.NextStepId}");
                             }
                         }
                     }
@@ -431,7 +612,6 @@ namespace FlowManager.Client.Pages
             StateHasChanged();
         }
 
-        // Review Actions
         private void ShowRejectModal()
         {
             rejectReason = "";
@@ -447,7 +627,6 @@ namespace FlowManager.Client.Pages
             StateHasChanged();
         }
 
-        // Metodă pentru actualizarea reject reason în timp real
         private void OnRejectReasonInput(ChangeEventArgs e)
         {
             rejectReason = e.Value?.ToString() ?? "";
@@ -462,58 +641,77 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                var nextStepId = nextStepInfo?.NextStepId;
-                var isFinalApproval = nextStepInfo?.HasNextStep != true;
+                var payload = new PatchFormResponseRequestDto
+                {
+                    Id = selectedFormResponse.Id,
+                    ReviewerId = currentModeratorId
+                };
+
+                Console.WriteLine($"[DEBUG APPROVE] Current step: {selectedFormResponse.StepId}");
+                Console.WriteLine($"[DEBUG APPROVE] Form template: {selectedFormResponse.FormTemplateName}");
+                Console.WriteLine($"[DEBUG APPROVE] Next step exists: {nextStepInfo?.HasNextStep}");
+                Console.WriteLine($"[DEBUG APPROVE] Next step ID: {nextStepInfo?.NextStepId}");
+                Console.WriteLine($"[DEBUG APPROVE] Next step Name: {nextStepInfo?.NextStepName}");
 
                 if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId.HasValue)
                 {
-                    var payload = new PatchFormResponseRequestDto
-                    {
-                        Id = selectedFormResponse.Id,
-                        StepId = nextStepInfo.NextStepId.Value,
-                        Status = "Pending"
-                    };
+                    payload.StepId = nextStepInfo.NextStepId.Value;
+                    Console.WriteLine($"[DEBUG APPROVE] MOVING TO NEXT STEP: {nextStepInfo.NextStepId.Value}");
+                    Console.WriteLine($"[DEBUG APPROVE] Payload: StepId={payload.StepId}, Status={payload.Status ?? "NULL"}, ReviewerId={payload.ReviewerId}");
 
                     var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[DEBUG APPROVE] Server response status: {response.StatusCode}");
+                    Console.WriteLine($"[DEBUG APPROVE] Server response content: {responseContent}");
+
                     if (response.IsSuccessStatusCode)
                     {
-                        await JSRuntime.InvokeVoidAsync("alert", "Form approved and moved to next step successfully!");
+                        Console.WriteLine("[Success] Form approved and moved to next step successfully!");
+                        CloseViewFormModal();
+                        await LoadAssignedForms();
+                        if (_activeTab == "HISTORY")
+                        {
+                            await LoadReviewHistory();
+                        }
                     }
                     else
                     {
-                        await JSRuntime.InvokeVoidAsync("alert", "Failed to approve form. Please try again.");
+                        Console.WriteLine("[Error] Failed to approve form. Please try again.");
                     }
                 }
                 else
                 {
-                    var payload = new PatchFormResponseRequestDto
-                    {
-                        Id = selectedFormResponse.Id,
-                        Status = "Approved"
-                    };
+                    payload.Status = "Approved";
+                    Console.WriteLine($"[DEBUG APPROVE] FINAL APPROVAL - setting Status to Approved");
+                    Console.WriteLine($"[DEBUG APPROVE] Payload: StepId={payload.StepId?.ToString() ?? "NULL"}, Status={payload.Status}, ReviewerId={payload.ReviewerId}");
 
                     var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[DEBUG APPROVE] Server response status: {response.StatusCode}");
+                    Console.WriteLine($"[DEBUG APPROVE] Server response content: {responseContent}");
+
                     if (response.IsSuccessStatusCode)
                     {
-                        await JSRuntime.InvokeVoidAsync("alert", "Form approved successfully!");
+                        Console.WriteLine("[Success] Form approved successfully!");
+                        CloseViewFormModal();
+                        await LoadAssignedForms();
+                        // ACTUALIZEAZĂ și istoricul dacă e deschis
+                        if (_activeTab == "HISTORY")
+                        {
+                            await LoadReviewHistory();
+                        }
                     }
                     else
                     {
-                        await JSRuntime.InvokeVoidAsync("alert", "Failed to approve form. Please try again.");
+                        Console.WriteLine("[Error] Failed to approve form. Please try again.");
                     }
                 }
-
-                // Refresh și întoarce la prima pagină pentru consistență
-                CloseViewFormModal();
-                _currentPage = 1;
-                await LoadAssignedForms();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Moderator] Error approving form: {ex.Message}");
-                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while approving the form.");
+                Console.WriteLine($"Error approving form: {ex.Message}");
             }
             finally
             {
@@ -536,30 +734,31 @@ namespace FlowManager.Client.Pages
                 {
                     Id = selectedFormResponse.Id,
                     RejectReason = rejectReason.Trim(),
-                    Status = "Rejected"
+                    ReviewerId = currentModeratorId // ADAUGĂ ID-ul moderatorului
                 };
 
                 var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Form rejected successfully!");
-
-                    // Refresh și întoarce la prima pagină pentru consistență
+                    Console.WriteLine("[Success] Form rejected successfully!");
                     CloseRejectModal();
                     CloseViewFormModal();
-                    _currentPage = 1;
                     await LoadAssignedForms();
+                    // ACTUALIZEAZĂ și istoricul dacă e deschis
+                    if (_activeTab == "HISTORY")
+                    {
+                        await LoadReviewHistory();
+                    }
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Failed to reject form. Please try again.");
+                    Console.WriteLine("[Error] Failed to reject form. Please try again.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Moderator] Error rejecting form: {ex.Message}");
-                await JSRuntime.InvokeVoidAsync("alert", "An error occurred while rejecting the form.");
+                Console.WriteLine($"Error rejecting form: {ex.Message}");
             }
             finally
             {

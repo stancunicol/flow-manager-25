@@ -109,6 +109,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
                 Name = UserToEdit.Name,
                 Email = UserToEdit.Email,
                 UserName = UserToEdit.Email,
+                PhoneNumber = UserToEdit.PhoneNumber,
                 StepId = UserToEdit.Step?.Id,
                 Roles = UserToEdit.Roles?.Select(r => r.Id).ToList()
             });
@@ -122,7 +123,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
                 return;
             }
 
-            await Task.Delay(5000);
+            await Task.Delay(3000);
 
             _onSubmitMessage = string.Empty;
             StateHasChanged();
@@ -143,6 +144,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
         private void SelectStep(StepVM step)
         {
             UserToEdit.Step!.Id = step.Id;
+            UserToEdit.Step.Name = step.Name;
             _isDropdownOpen = false;
         }
     }

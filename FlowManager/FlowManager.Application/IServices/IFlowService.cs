@@ -14,5 +14,6 @@ namespace FlowManager.Application.Interfaces
         Task<FlowResponseDto> UpdateFlowAsync(Guid id, PatchFlowRequestDto payload);
         Task<FlowResponseDto> DeleteFlowAsync(Guid id);
         Task<List<StepResponseDto>> GetStepsForFlowAsync(Guid flowId);
+        Task<FlowResponseDto> GetFlowByIdIncludeStepsAsync(Guid flowId);
     }
 }

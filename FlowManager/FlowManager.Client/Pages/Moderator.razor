@@ -50,6 +50,14 @@
                 </svg>
                 Assigned Forms
             </button>
+            <button class="nav-item @(_activeTab == "HISTORY" ? "active" : "")"
+                    @onclick="@(() => SetActiveTab("HISTORY"))">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clip-rule="evenodd" />
+                </svg>
+                Review History
+            </button>
         </div>
 
         <!-- Logout -->
@@ -305,6 +313,217 @@
                         @if (!string.IsNullOrEmpty(searchTerm))
                         {
                             <button @onclick="ClearSearch" class="clear-search-btn-alt">Clear search</button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (_activeTab == "HISTORY")
+        {
+            <div class="assigned-content">
+                <!-- Header -->
+                <div class="assigned-header">
+                    <h3>Review History</h3>
+                    <div class="header-actions">
+                        <button class="action-btn refresh-btn" @onclick="RefreshReviewHistory">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clip-rule="evenodd" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filter Bar -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                            <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+                        </svg>
+                        <input type="text"
+                               class="search-input"
+                               placeholder="Search by form name, user, or step..."
+                               value="@historySearchTerm"
+                               @oninput="OnHistorySearchInput" />
+                        @if (!string.IsNullOrEmpty(historySearchTerm))
+                        {
+                            <button class="clear-search-btn" @onclick="ClearHistorySearch">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Action Filter -->
+                    <div style="margin-top: 0.75rem;">
+                        <select class="search-input" style="padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 6px;"
+                                @onchange="OnActionFilterChange" value="@actionFilter">
+                            <option value="">All Actions</option>
+                            <option value="Approved">Approved Only</option>
+                            <option value="Rejected">Rejected Only</option>
+                        </select>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(historySearchTerm) || !string.IsNullOrEmpty(actionFilter))
+                    {
+                        <div class="search-results-info">
+                            Showing @_historyTotalCount result(s)
+                            @if (!string.IsNullOrEmpty(historySearchTerm))
+                            {
+                                <span> for "@historySearchTerm"</span>
+                            }
+                            @if (!string.IsNullOrEmpty(actionFilter))
+                            {
+                                <span> with action "@actionFilter"</span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Content -->
+                @if (isLoadingHistory && _historyCurrentPage == 1)
+                {
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Loading review history...</p>
+                    </div>
+                }
+                else if (reviewHistory?.Any() == true)
+                {
+                    <div class="forms-grid">
+                        @foreach (var review in reviewHistory.OrderByDescending(r => r.ReviewedAt))
+                        {
+                            <div class="form-card history-card @(review.Action.ToLower())">
+                                <div class="form-card-header">
+                                    <div class="form-icon @(review.Action.ToLower() == "approved" ? "approved" : "rejected")">
+                                        @if (review.Action.ToLower() == "approved")
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                                            </svg>
+                                        }
+                                    </div>
+                                    <div class="form-info">
+                                        <h4>@(review.FormTemplateName ?? "Unknown Form")</h4>
+                                        <p class="form-meta">@review.Action on @review.ReviewedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-card-body">
+                                    <div class="form-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">User:</span>
+                                            <span class="detail-value">@(review.UserName ?? "Unknown")</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Step:</span>
+                                            <span class="detail-value">@(review.StepName ?? "Unknown")</span>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(review.RejectReason))
+                                        {
+                                            <div class="detail-item reject-reason">
+                                                <span class="detail-label">Reason:</span>
+                                                <span class="detail-value">@review.RejectReason</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="form-card-footer">
+                                    <div class="view-indicator">
+                                        <span class="status-badge @(review.Action.ToLower())">
+                                            @review.Action
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Pagination pentru istoric -->
+                    @if (_historyTotalPages > 1)
+                    {
+                        <div class="pagination-container">
+                            <nav style="display: flex; justify-content: space-between; align-items: center;">
+                                <!-- Previous/Next buttons -->
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="pagination-btn pagination-btn-nav"
+                                            @onclick="GoToHistoryFirstPage"
+                                            disabled="@(_historyCurrentPage == 1)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="pagination-icon">
+                                            <path fill-rule="evenodd" d="M13.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L11.69 12 4.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+
+                                    <button class="pagination-btn pagination-btn-nav"
+                                            @onclick="GoToHistoryPreviousPage"
+                                            disabled="@(_historyCurrentPage == 1)">
+                                        Previous
+                                    </button>
+                                </div>
+
+                                <!-- Page numbers -->
+                                <div style="display: flex; gap: 0.25rem;">
+                                    @foreach (var pageNum in GetHistoryPageNumbers())
+                                    {
+                                        <button class="pagination-btn pagination-btn-page @(_historyCurrentPage == pageNum ? "pagination-btn-active" : "")"
+                                                @onclick="() => GoToHistoryPage(pageNum)">
+                                            @pageNum
+                                        </button>
+                                    }
+                                </div>
+
+                                <!-- Next/Last buttons -->
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="pagination-btn pagination-btn-nav"
+                                            @onclick="GoToHistoryNextPage"
+                                            disabled="@(_historyCurrentPage == _historyTotalPages)">
+                                        Next
+                                    </button>
+
+                                    <button class="pagination-btn pagination-btn-nav"
+                                            @onclick="GoToHistoryLastPage"
+                                            disabled="@(_historyCurrentPage == _historyTotalPages)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="pagination-icon">
+                                            <path fill-rule="evenodd" d="M10.72 11.47a.75.75 0 000 1.06l7.5 7.5a.75.75 0 101.06-1.06L12.31 12l6.97-6.97a.75.75 0 00-1.06-1.06l-7.5 7.5z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </nav>
+
+                            <!-- Page info -->
+                            <div class="pagination-info">
+                                <span class="pagination-info-text">
+                                    Showing @(Math.Min((_historyCurrentPage - 1) * _historyPageSize + 1, _historyTotalCount)) to
+                                    @(Math.Min(_historyCurrentPage * _historyPageSize, _historyTotalCount)) of @_historyTotalCount results
+                                </span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="no-forms">
+                        <div class="no-forms-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <h4>@(string.IsNullOrEmpty(historySearchTerm) && string.IsNullOrEmpty(actionFilter) ? "No review history" : "No matching reviews")</h4>
+                        <p>@(string.IsNullOrEmpty(historySearchTerm) && string.IsNullOrEmpty(actionFilter) ? "You haven't reviewed any forms yet." : "No reviews found matching your criteria.")</p>
+                        @if (!string.IsNullOrEmpty(historySearchTerm) || !string.IsNullOrEmpty(actionFilter))
+                        {
+                            <button class="clear-search-btn-alt" @onclick="ClearHistorySearch">
+                                Clear Filters
+                            </button>
                         }
                     </div>
                 }

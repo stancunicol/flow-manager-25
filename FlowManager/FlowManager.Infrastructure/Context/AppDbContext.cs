@@ -27,6 +27,10 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<FlowStepUser> FlowStepUsers => Set<FlowStepUser>();
         public DbSet<FlowStepTeam> FlowStepTeams => Set<FlowStepTeam>();
         public DbSet<UserTeam> UserTeams => Set<UserTeam>();
+        public DbSet<FormTemplateFlow> FormTemplateFlows => Set<FormTemplateFlow>();
+
+        // ADAUGĂ ACEASTĂ LINIE PENTRU FORMREVIEW
+        public DbSet<FormReview> FormReviews => Set<FormReview>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -38,10 +42,47 @@ namespace FlowManager.Infrastructure.Context
             UniqueTeamNameConstraintConfiguration(builder);
 
             UserRoleRelationshipConfiguration(builder);
-
+            FormTemplateFlowsRelationshipConfiguration(builder);
             UserTeamRelationshipConfiguration(builder);
 
+            // ADAUGĂ ACEASTĂ LINIE PENTRU CONFIGURAȚIA FORMREVIEW
+            FormReviewRelationshipConfiguration(builder);
+
             JSONBConfiguration(builder);
+        }
+
+        // ADAUGĂ ACEASTĂ METODĂ PENTRU CONFIGURAȚIA FORMREVIEW
+        private void FormReviewRelationshipConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FormReview>(entity =>
+            {
+                entity.HasKey(fr => fr.Id);
+
+                entity.HasOne(fr => fr.FormResponse)
+                    .WithMany()
+                    .HasForeignKey(fr => fr.FormResponseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(fr => fr.Reviewer)
+                    .WithMany()
+                    .HasForeignKey(fr => fr.ReviewerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(fr => fr.Step)
+                    .WithMany()
+                    .HasForeignKey(fr => fr.StepId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(fr => fr.Action)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(fr => fr.RejectReason)
+                    .HasMaxLength(500);
+
+                entity.HasIndex(fr => new { fr.ReviewerId, fr.ReviewedAt });
+                entity.HasIndex(fr => fr.FormResponseId);
+            });
         }
 
         private void UserRoleRelationshipConfiguration(ModelBuilder builder)
@@ -95,28 +136,62 @@ namespace FlowManager.Infrastructure.Context
             });
         }
 
+        private void FormTemplateFlowsRelationshipConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FormTemplateFlow>(entity =>
+            {
+                entity.HasKey(ftf => new { ftf.FormTemplateId, ftf.FlowId });
+
+                entity.HasOne(ftf => ftf.FormTemplate)
+                      .WithMany(u => u.FormTemplateFlows)
+                      .HasForeignKey(ut => ut.FormTemplateId)
+                      .IsRequired();
+
+                entity.HasOne(ftf => ftf.Flow)
+                      .WithMany(u => u.FormTemplateFlows)
+                      .HasForeignKey(ut => ut.FlowId)
+                      .IsRequired();
+            });
+
+            builder.Entity<FormTemplate>(entity =>
+            {
+                entity.ToTable("FormTemplates");
+            });
+
+            builder.Entity<Flow>(entity =>
+            {
+                entity.ToTable("Flows");
+            });
+
+            builder.Entity<FormTemplate>()
+                .HasIndex(ft => ft.Name)
+                .IsUnique();
+
+            builder.Entity<Flow>()
+                .HasIndex(f => f.Name)
+                .IsUnique();
+        }
+
         private void JSONBConfiguration(ModelBuilder builder)
         {
             builder.Entity<Component>(entity =>
             {
                 entity.HasKey(e => e.Id);
-
                 entity.Property(e => e.Properties)
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                           v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null))
-                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
+                      .HasColumnType("TEXT"); // JSON
             });
 
             builder.Entity<FormResponse>(entity =>
             {
                 entity.HasKey(e => e.Id);
-
                 entity.Property(e => e.ResponseFields)
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                           v => JsonSerializer.Deserialize<Dictionary<Guid, object>>(v, (JsonSerializerOptions)null))
-                      .HasColumnType("jsonb"); // PostgreSQL jsonb type
+                      .HasColumnType("TEXT"); // JSON
             });
         }
 

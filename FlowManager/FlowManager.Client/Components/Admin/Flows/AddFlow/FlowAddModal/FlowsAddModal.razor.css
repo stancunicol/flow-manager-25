@@ -228,8 +228,8 @@
     color: white;
     border: none;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    width: 1.5em;
+    height: 1.5rem;
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
@@ -238,6 +238,7 @@
     justify-content: center;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
 }
 
     .remove-step:hover {
@@ -255,18 +256,19 @@
 }
 
 .reorder-btn {
+    width: 1.7rem;
+    height: 1.7rem;
     background: #6c757d;
     color: white;
     border: none;
     border-radius: 4px;
-    width: 20px;
-    height: 20px;
     cursor: pointer;
     font-size: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    z-index: 10;
 }
 
     .reorder-btn:hover {
