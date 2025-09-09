@@ -320,7 +320,7 @@ namespace FlowManager.Application.Services
             {
                 formResponse.RejectReason = null;
                 // Verifică dacă e ultimul step pentru a decide statusul
-                if (payload.StepId.HasValue)
+                if (payload.StepId != Guid.Empty)
                 {
                     var isLastStep = await _formResponseRepository.IsLastStepInFlowAsync(payload.StepId.Value);
                     formResponse.Status = isLastStep ? "Approved" : "Pending";
@@ -333,7 +333,7 @@ namespace FlowManager.Application.Services
             }
 
             // LOGICA PENTRU SCHIMBAREA STEP-ULUI (approve și move to next step)
-            if (payload.StepId.HasValue && payload.StepId.Value != formResponse.StepId)
+            if (payload.StepId != Guid.Empty && payload.StepId.Value != formResponse.StepId)
             {
                 // Înregistrează approve-ul pentru step-ul curent ÎNAINTE de mutare
                 if (payload.ReviewerId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))

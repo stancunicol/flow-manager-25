@@ -653,7 +653,7 @@ namespace FlowManager.Client.Pages
                 Console.WriteLine($"[DEBUG APPROVE] Next step ID: {nextStepInfo?.NextStepId}");
                 Console.WriteLine($"[DEBUG APPROVE] Next step Name: {nextStepInfo?.NextStepName}");
 
-                if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId.HasValue)
+                if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId != Guid.Empty)
                 {
                     payload.StepId = nextStepInfo.NextStepId.Value;
                     Console.WriteLine($"[DEBUG APPROVE] MOVING TO NEXT STEP: {nextStepInfo.NextStepId.Value}");

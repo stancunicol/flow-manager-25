@@ -145,7 +145,11 @@ namespace FlowManager.Application.Services
 
         public async Task<StepResponseDto> PatchStepAsync(Guid id, PatchStepRequestDto payload)
         {
-            Step? stepToPatch = await _stepRepository.GetStepByIdAsync(id, includeDeletedStepUser: true, includeDeletedStepTeams: true);
+            Step? stepToPatch = await _stepRepository.GetStepByIdAsync(
+                id,
+                includeDeletedStepUser: true,
+                includeDeletedStepTeams: true
+            );
 
             if (stepToPatch == null)
             {
@@ -157,8 +161,10 @@ namespace FlowManager.Application.Services
                 stepToPatch.Name = payload.Name;
             }
 
-            if (payload.UserIds != null && payload.UserIds.Any())
+            if (payload.UserIds != null)
             {
+                stepToPatch.Users.Clear();
+
                 foreach (Guid userId in payload.UserIds)
                 {
                     var user = await _userRepository.GetUserByIdAsync(userId);
@@ -166,14 +172,7 @@ namespace FlowManager.Application.Services
                     {
                         throw new EntryNotFoundException($"User with id {userId} was not found.");
                     }
-                }
-
-                stepToPatch.Users.Clear();
-
-                foreach (Guid userId in payload.UserIds)
-                {
-                    User existingUser = (await _userRepository.GetUserByIdAsync(userId))!;
-                    stepToPatch.Users.Add(existingUser);
+                    stepToPatch.Users.Add(user);
                 }
             }
 
@@ -189,11 +188,14 @@ namespace FlowManager.Application.Services
                     Name = u.Name,
                     Email = u.Email,
                 }).ToList(),
-                Teams = stepToPatch.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
+                Teams = stepToPatch.Users
+        .SelectMany(u => u.Teams.Select(ut => ut.Team))
+        .Distinct()
+        .Select(t => new TeamResponseDto
+        {
+            Id = t.Id,
+            Name = t.Name,
+        }).ToList()
             };
         }
 
@@ -319,36 +321,58 @@ namespace FlowManager.Application.Services
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
 
+            // Obținem rolul moderator
             Role? moderatorRole = await _roleRepository.GetRoleByRolenameAsync("MODERATOR");
-
-            if(moderatorRole == null)
-            {
+            if (moderatorRole == null)
                 throw new EntryNotFoundException("Moderator role does not exist");
-            }
 
-            (List<Step> data, int totalCount) = await _stepRepository.GetAllStepsIncludeUsersAndTeamsQueriedAsync(moderatorRole.Id, payload.Name, parameters);
+            // Luăm pașii cu paginare și sortare
+            (List<Step> steps, int totalCount) = await _stepRepository.GetAllStepsIncludeUsersAndTeamsQueriedAsync(
+                moderatorRole.Id,
+                payload.Name,
+                parameters
+            );
 
-            return new PagedResponseDto<StepResponseDto>
+            // Obținem DTO-urile
+            var stepDtos = steps.Select(step =>
             {
-                Data = data.Select(step => new StepResponseDto
+                // Users DTO
+                var userDtos = step.Users?.Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    Teams = u.Teams?
+                                .Where(ut => ut.Team != null) // ✅ filtrăm Teams fără obiect Team
+                                .Select(ut => new TeamResponseDto
+                                {
+                                    Id = ut.Team!.Id,
+                                    Name = ut.Team.Name
+                                }).ToList() ?? new List<TeamResponseDto>()
+                }).ToList() ?? new List<UserResponseDto>();
+
+                // Teams DTO (distinct)
+                var teamDtos = userDtos
+                                .SelectMany(u => u.Teams)
+                                .GroupBy(t => t.Id)       // evităm duplicate
+                                .Select(g => g.First())
+                                .ToList();
+
+                return new StepResponseDto
                 {
                     Id = step.Id,
                     Name = step.Name,
-                    Users = step.Users.Select(u => new UserResponseDto
-                    {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email,
-                    }).ToList(),
-                    Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                    {
-                        Id = ut.Team.Id,
-                        Name = ut.Team.Name,
-                    }).ToList(),
-                }).ToList(),
+                    Users = userDtos,
+                    Teams = teamDtos
+                };
+            }).ToList();
+
+            return new PagedResponseDto<StepResponseDto>
+            {
+                Data = stepDtos,
                 TotalCount = totalCount,
                 Page = parameters?.Page ?? 1,
-                PageSize = parameters?.PageSize ?? totalCount,
+                PageSize = parameters?.PageSize ?? totalCount
             };
         }
     }

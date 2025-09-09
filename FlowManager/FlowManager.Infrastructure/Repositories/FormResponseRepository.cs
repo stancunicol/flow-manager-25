@@ -45,7 +45,7 @@ namespace FlowManager.Infrastructure.Repositories
                 query = query.Where(fr => fr.FormTemplateId == formTemplateId.Value);
             }
 
-            if (stepId.HasValue)
+            if (stepId != Guid.Empty)
             {
                 query = query.Where(fr => fr.StepId == stepId.Value);
             }
