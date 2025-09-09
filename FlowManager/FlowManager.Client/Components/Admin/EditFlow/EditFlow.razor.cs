@@ -152,17 +152,14 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             _isDragOver = false;
             if (_draggedStep != null)
             {
-                if (!_configuredSteps.Any(cs => cs.Id == _draggedStep.Id))
+                var stepForWorkflow = new StepVM
                 {
-                    var stepForWorkflow = new StepVM
-                    {
-                        Id = _draggedStep.Id,
-                        Name = _draggedStep.Name,
-                        Users = new List<UserVM>(),
-                        Teams = new List<TeamVM>()
-                    };
-                    _configuredSteps.Add(stepForWorkflow);
-                }
+                    Id = _draggedStep.Id,
+                    Name = _draggedStep.Name,
+                    Users = new List<UserVM>(),
+                    Teams = new List<TeamVM>()
+                };
+                _configuredSteps.Add(stepForWorkflow);
             }
             _draggedStep = null;
             StateHasChanged();

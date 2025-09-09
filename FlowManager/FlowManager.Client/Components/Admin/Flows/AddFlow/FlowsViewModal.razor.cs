@@ -22,7 +22,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
         private System.Threading.Timer? _debounceTimer;
         private int _debounceDelayMs = 250;
 
-        private int _pageSize = 9;
+        private int _pageSize = 12;
         private int _currentPage = 1;
         private int _totalPages = 1;
         private int _totalCount = 1;
@@ -60,8 +60,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 {
                     _flows = new List<FlowResponseDto>();
                 }
-
-                Console.WriteLine($"Flows loaded: {_flows.Count} items.");
             }
             catch (Exception ex)
             {

@@ -144,6 +144,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
         private void SelectStep(StepVM step)
         {
             UserToEdit.Step!.Id = step.Id;
+            UserToEdit.Step.Name = step.Name;
             _isDropdownOpen = false;
         }
     }

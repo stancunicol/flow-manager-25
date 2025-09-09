@@ -69,7 +69,8 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<FlowResponseDto> GetFlowByIdAsync(Guid id)
         {
-            Flow? flow = await _flowRepository.GetFlowByIdAsync(id);
+            Guid moderatorRoleId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
+            Flow? flow = await _flowRepository.GetFlowByIdIncludeStepsAsync(id, moderatorRoleId);
 
             if (flow == null)
             {
@@ -86,6 +87,14 @@ namespace FlowManager.Infrastructure.Services
                     {
                         Id = s.Step.Id,
                         Name = s.Step.Name,
+                        Users = s.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                        {
+                            Id = u.UserId,
+                        }).ToList(),
+                        Teams = s.AssignedTeams?.Select(t => new Shared.DTOs.Responses.Team.TeamResponseDto
+                        {
+                            Id = t.TeamId,
+                        }).ToList(),
                     }).ToList(),
                 FormTemplateId = flow.ActiveFormTemplateId,
                 ActiveFormTemplate = flow.ActiveFormTemplate != null ? MapToFormTemplateResponseDto(flow.ActiveFormTemplate) : null,
@@ -101,7 +110,7 @@ namespace FlowManager.Infrastructure.Services
             Flow? existingFlow = await _flowRepository.GetFlowByNameAsync(payload.Name);
             if (existingFlow != null)
             {
-                if(existingFlow.DeletedAt != null)
+                if (existingFlow.DeletedAt != null)
                 {
                     throw new UniqueConstraintViolationException($"Flow with name {payload.Name} was previously deleted. Please choose a different name.");
                 }
@@ -133,29 +142,25 @@ namespace FlowManager.Infrastructure.Services
 
             if (payload.Steps != null && payload.Steps.Count > 0)
             {
-                int order = 1; // Start ordering from 1
-                foreach (PostFlowStepRequestDto step in payload.Steps)
+                for (int i = 0; i < payload.Steps.Count; i++)
                 {
-                    if ((await _stepRepository.GetStepByIdAsync(step.StepId)) == null)
+                    var stepPayload = payload.Steps[i];
+
+                    if ((await _stepRepository.GetStepByIdAsync(stepPayload.StepId)) == null)
                     {
-                        throw new EntryNotFoundException($"Step with id {step.StepId} not found.");
+                        throw new EntryNotFoundException($"Step with id {stepPayload.StepId} not found.");
                     }
 
-                    flowToPost.Steps.Add(new FlowStep
+                    var flowStep = new FlowStep
                     {
-                        StepId = step.StepId,
+                        StepId = stepPayload.StepId,
                         FlowId = flowToPost.Id,
-                        Order = order++, // Set order sequentially
-                    });
-                }
+                        Order = i + 1,
+                    };
 
-                foreach (var step in flowToPost.Steps)
-                {
-                    var stepPayload = payload.Steps.First(s => s.StepId == step.StepId);
-
-                    step.AssignedUsers = stepPayload.UserIds?.Select(uId => new FlowStepUser
+                    flowStep.AssignedUsers = stepPayload.UserIds?.Select(uId => new FlowStepUser
                     {
-                        FlowStepId = step.Id,
+                        FlowStepId = flowStep.Id,
                         UserId = uId,
                     }).ToList() ?? new List<FlowStepUser>();
 
@@ -165,9 +170,9 @@ namespace FlowManager.Infrastructure.Services
 
                         if (fullTeam?.Users.Count == (teamPayload.UserIds?.Count ?? 0))
                         {
-                            step.AssignedTeams.Add(new FlowStepTeam
+                            flowStep.AssignedTeams.Add(new FlowStepTeam
                             {
-                                FlowStepId = step.Id,
+                                FlowStepId = flowStep.Id,
                                 TeamId = teamPayload.TeamId,
                             });
                         }
@@ -175,14 +180,16 @@ namespace FlowManager.Infrastructure.Services
                         {
                             foreach (var userId in teamPayload.UserIds ?? new List<Guid>())
                             {
-                                step.AssignedUsers.Add(new FlowStepUser
+                                flowStep.AssignedUsers.Add(new FlowStepUser
                                 {
-                                    FlowStepId = step.Id,
+                                    FlowStepId = flowStep.Id,
                                     UserId = userId,
                                 });
                             }
                         }
                     }
+
+                    flowToPost.Steps.Add(flowStep);
                 }
             }
 
@@ -378,6 +385,8 @@ namespace FlowManager.Infrastructure.Services
             {
                 throw new EntryNotFoundException($"Flow with id {flowId} was not found.");
             }
+
+            flow.Steps = flow.Steps.OrderBy(fs => fs.Order).ToList();
 
             FlowResponseDto response = new FlowResponseDto
             {
