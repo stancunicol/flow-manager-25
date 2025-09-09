@@ -8,6 +8,7 @@ namespace FlowManager.Application.Interfaces
 {
     public interface IFlowService
     {
+        Task<FlowResponseDto> GetFlowByFormTemplateIdAsync(Guid formTemplateId);
         Task<PagedResponseDto<FlowResponseDto>> GetAllFlowsQueriedAsync(QueriedFlowRequestDto payload);
         Task<FlowResponseDto> GetFlowByIdAsync(Guid id);
         Task<FlowResponseDto> CreateFlowAsync(PostFlowRequestDto payload);

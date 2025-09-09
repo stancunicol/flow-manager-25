@@ -17,6 +17,7 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
 
         [Required(ErrorMessage = "UserId is required")]
         public Guid UserId { get; set; }
+        public Guid? CompletedByOtherUserId { get; set; }
 
         [Required(ErrorMessage = "ResponseFields is required")]
         public Dictionary<Guid, object> ResponseFields { get; set; } = new();

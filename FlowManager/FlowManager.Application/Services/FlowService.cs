@@ -515,5 +515,15 @@ namespace FlowManager.Infrastructure.Services
                 DeletedAt = ft.DeletedAt
             };
         }
+
+        public async Task<FlowResponseDto> GetFlowByFormTemplateIdAsync(Guid formTemplateId)
+        {
+            Flow? activeFlowForFormTemplate = await _flowRepository.GetFlowByFormTemplateIdAsync(formTemplateId);
+
+            if(activeFlowForFormTemplate == null)
+            {
+
+            }
+        }
     }
 }

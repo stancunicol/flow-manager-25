@@ -168,5 +168,11 @@ namespace FlowManager.API.Controllers
                 Timestamp = DateTime.UtcNow
             });
         }
+
+        [HttpGet("by-form-template-id/{formTemplateId}")]
+        public async Task<IActionResult> GetFlowByFormTemplateIdAsync(Guid formTemplateId)
+        {
+            var result = await _flowService.GetFlowByFormTemplateIdAsync(formTemplateId);
+        }
     }
 }

@@ -178,6 +178,11 @@ namespace FlowManager.Application.Services
                 CreatedAt = DateTime.UtcNow
             };
 
+            if(payload.CompletedByOtherUserId != null && payload.CompletedByOtherUserId != Guid.Empty)
+            {
+                formResponse.CompletedByOtherUserId = payload.CompletedByOtherUserId;
+            }
+
             await _formResponseRepository.AddAsync(formResponse);
 
             _logger.LogInformation("Form response {Id} created with status: Pending", formResponse.Id);
