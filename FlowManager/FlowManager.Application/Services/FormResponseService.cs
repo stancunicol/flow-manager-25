@@ -18,17 +18,20 @@ namespace FlowManager.Application.Services
         private readonly ILogger<FormResponseService> _logger;
         private readonly IEmailService _emailService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IUserService _userService;
 
         public FormResponseService(
             IFormResponseRepository formResponseRepository,
             ILogger<FormResponseService> logger,
             IEmailService emailService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IUserService userService)
         {
             _formResponseRepository = formResponseRepository ?? throw new ArgumentNullException(nameof(formResponseRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
         public async Task<PagedResponseDto<FormResponseResponseDto>> GetAllFormResponsesQueriedAsync(QueriedFormResponseRequestDto payload)
@@ -262,6 +265,8 @@ namespace FlowManager.Application.Services
 
         public async Task<FormResponseResponseDto> PatchFormResponseAsync(PatchFormResponseRequestDto payload)
         {
+            Console.WriteLine("🔥🔥🔥 PATCH FORM RESPONSE CALLED 🔥🔥🔥");
+            Console.WriteLine($"🔥 PatchFormResponseAsync called with ID: {payload.Id}");
             _logger.LogInformation("Updating form response with ID: {Id}", payload.Id);
 
             var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
@@ -329,22 +334,35 @@ namespace FlowManager.Application.Services
                 _logger.LogInformation("Form response {Id} status explicitly set to: {Status}", payload.Id, payload.Status);
             }
 
-            // Check if admin is impersonating for email notifications
+            // Check if admin is acting (either as themselves or impersonating) for email notifications
             var httpContext = _httpContextAccessor.HttpContext;
-            bool isAdminImpersonating = false;
+            bool isAdminActing = false;
             string? adminName = null;
             
             if (httpContext?.User != null)
             {
                 var impersonatingClaim = httpContext.User.FindFirst("IsImpersonating")?.Value;
-                isAdminImpersonating = impersonatingClaim == "true";
-                adminName = httpContext.User.FindFirst("OriginalAdminName")?.Value;
+                bool isImpersonating = impersonatingClaim == "true";
+                bool isAdmin = httpContext.User.HasClaim(c => c.Type == "OriginalAdminId");
                 
-                _logger.LogInformation("PatchFormResponse - IsImpersonating claim: '{ImpersonatingClaim}', AdminName: '{AdminName}'", 
-                    impersonatingClaim, adminName);
+                isAdminActing = isAdmin; // Admin acting either as themselves or impersonating
                 
-                // Track admin approval if impersonating
-                if (isAdminImpersonating && !string.IsNullOrEmpty(adminName))
+                if (isImpersonating)
+                {
+                    // If impersonating, get the original admin name
+                    adminName = httpContext.User.FindFirst("OriginalAdminName")?.Value;
+                }
+                else if (isAdmin)
+                {
+                    // If admin acting as themselves, get their name from Name claim
+                    adminName = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                }
+                
+                _logger.LogInformation("PatchFormResponse - IsAdmin: {IsAdmin}, IsImpersonating: '{IsImpersonating}', AdminName: '{AdminName}'", 
+                    isAdmin, impersonatingClaim, adminName);
+                
+                // Track admin approval if admin is acting
+                if (isAdminActing && !string.IsNullOrEmpty(adminName))
                 {
                     formResponse.ApprovedByAdmin = true;
                     formResponse.ApprovedByAdminName = adminName;
@@ -364,70 +382,62 @@ namespace FlowManager.Application.Services
             // Reîncarcă entitatea cu toate relațiile pentru response
             var updatedFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
 
-            // Send email notifications to moderators if admin is impersonating
-            if (isAdminImpersonating && !string.IsNullOrEmpty(adminName))
+            // Send email notifications to all moderators when admin takes action
+            _logger.LogInformation("🔥 Email Debug - IsAuthenticated: {IsAuthenticated}, IsAdmin: {IsAdmin}", 
+                httpContext?.User?.Identity?.IsAuthenticated, httpContext?.User?.HasClaim(c => c.Type == "OriginalAdminId"));
+                
+            if (httpContext?.User?.Identity?.IsAuthenticated == true && httpContext.User.HasClaim(c => c.Type == "OriginalAdminId"))
             {
-                _logger.LogInformation("Preparing to send email notifications - Admin: {AdminName}, FormId: {FormId}", 
-                    adminName, updatedFormResponse.Id);
+                _logger.LogInformation("🔥 Admin detected - proceeding with moderator notifications");
                 try
                 {
-                    // Get moderators assigned to this step - need to get step users
-                    var stepWithUsers = await _formResponseRepository.GetStepWithFlowInfoAsync(updatedFormResponse.StepId);
-                    _logger.LogInformation("Step with users loaded - StepId: {StepId}, HasUsers: {HasUsers}", 
-                        updatedFormResponse.StepId, stepWithUsers?.Users != null);
-                        
-                    if (stepWithUsers?.Users != null)
+
+                    //var currentAdminName = httpContext.User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value ?? "OriginalAdminName";
+                    var currentAdminName = httpContext.User.FindFirstValue("OriginalAdminName") ?? "Admin";
+                    _logger.LogInformation("🔥 Current admin name: {AdminName}", currentAdminName);
+                    
+                    // Get all moderators dynamically
+                    var allModerators = await _userService.GetAllModeratorsAsync();
+                    _logger.LogInformation("🔥 Found {ModeratorCount} moderators in system", allModerators.Count());
+                    
+                    foreach (var moderator in allModerators.Where(m => !string.IsNullOrEmpty(m.Email)))
                     {
-                        var moderators = stepWithUsers.Users
-                            .Where(u => u.DeletedAt == null && u.Roles.Any(r => r.Role.Name == "Moderator" && r.DeletedAt == null))
-                            .ToList();
+                        _logger.LogInformation("🔥 Processing moderator: {ModeratorEmail}, Status: {Status}, RejectReason: '{RejectReason}', PreviousStatus: {PreviousStatus}", 
+                            moderator.Email, formResponse.Status, payload.RejectReason, previousStatus);
                             
-                        _logger.LogInformation("Found {ModeratorCount} moderators for step {StepId}", 
-                            moderators.Count, updatedFormResponse.StepId);
-                            
-                        foreach (var moderator in moderators)
+                        if (formResponse.Status == "Rejected" && !string.IsNullOrEmpty(payload.RejectReason))
                         {
-                            _logger.LogInformation("Processing moderator {ModeratorEmail} - Status: {Status}, RejectReason: {RejectReason}, PreviousStatus: {PreviousStatus}", 
-                                moderator.Email, formResponse.Status, payload.RejectReason, previousStatus);
-                                
-                            if (formResponse.Status == "Rejected" && !string.IsNullOrEmpty(payload.RejectReason))
-                            {
-                                // Send reject notification
-                                _logger.LogInformation("Sending reject email to {ModeratorEmail}", moderator.Email);
-                                await _emailService.SendFormRejectedByAdminEmailAsync(
-                                    moderator.Email ?? "",
-                                    moderator.Name ?? "",
-                                    updatedFormResponse.FormTemplate?.Name ?? "Unknown Form",
-                                    adminName,
-                                    formResponse.UpdatedAt ?? DateTime.UtcNow,
-                                    payload.RejectReason
-                                );
-                                _logger.LogInformation("Reject email sent to moderator {ModeratorEmail} for form rejected by admin {AdminName}", 
-                                    moderator.Email, adminName);
-                            }
-                            else if (formResponse.Status == "Approved" || (formResponse.Status == "Pending" && previousStatus != "Pending"))
-                            {
-                                // Send approve notification (both intermediate and final approve)
-                                _logger.LogInformation("Sending approve email to {ModeratorEmail}", moderator.Email);
-                                await _emailService.SendFormApprovedByAdminEmailAsync(
-                                    moderator.Email ?? "",
-                                    moderator.Name ?? "",
-                                    updatedFormResponse.FormTemplate?.Name ?? "Unknown Form",
-                                    adminName,
-                                    formResponse.UpdatedAt ?? DateTime.UtcNow
-                                );
-                                _logger.LogInformation("Approve email sent to moderator {ModeratorEmail} for form approved by admin {AdminName}", 
-                                    moderator.Email, adminName);
-                            }
-                            else
-                            {
-                                _logger.LogInformation("No email sent to {ModeratorEmail} - conditions not met", moderator.Email);
-                            }
+                            _logger.LogInformation("🔥 SENDING REJECT EMAIL to {ModeratorEmail}", moderator.Email);
+                            await _emailService.SendFormRejectedByAdminEmailAsync(
+                                moderator.Email!,
+                                moderator.Name ?? "Moderator",
+                                updatedFormResponse.FormTemplate?.Name ?? "Form",
+                                currentAdminName,
+                                DateTime.UtcNow,
+                                payload.RejectReason
+                            );
+                            
+                            _logger.LogInformation("✅ Rejection email sent to moderator {ModeratorEmail} for form {FormId} rejected by admin {AdminName}", 
+                                moderator.Email, updatedFormResponse.Id, currentAdminName);
                         }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("No users found for step {StepId}", updatedFormResponse.StepId);
+                        else if (formResponse.Status == "Approved" || (formResponse.Status == "Pending" && previousStatus != "Pending"))
+                        {
+                            _logger.LogInformation("🔥 SENDING APPROVE EMAIL to {ModeratorEmail}", moderator.Email);
+                            await _emailService.SendFormApprovedByAdminEmailAsync(
+                                moderator.Email!,
+                                moderator.Name ?? "Moderator",
+                                updatedFormResponse.FormTemplate?.Name ?? "Form",
+                                currentAdminName,
+                                DateTime.UtcNow
+                            );
+                            
+                            _logger.LogInformation("✅ Approval email sent to moderator {ModeratorEmail} for form {FormId} approved by admin {AdminName}", 
+                                moderator.Email, updatedFormResponse.Id, currentAdminName);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("🔥 No email sent - conditions not met for moderator {ModeratorEmail}", moderator.Email);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -437,11 +447,10 @@ namespace FlowManager.Application.Services
             }
             else
             {
-                _logger.LogInformation("No email notifications sent - IsAdminImpersonating: {IsImpersonating}, AdminName: {AdminName}", 
-                    isAdminImpersonating, adminName ?? "null");
+                _logger.LogInformation("🔥 Admin check failed - no moderator notifications will be sent");
             }
 
-            return new FormResponseResponseDto
+            var result = new FormResponseResponseDto
             {
                 Id = updatedFormResponse.Id,
                 RejectReason = updatedFormResponse.RejectReason,
@@ -456,8 +465,21 @@ namespace FlowManager.Application.Services
                 UserEmail = updatedFormResponse.User?.Email,
                 CreatedAt = updatedFormResponse.CreatedAt,
                 UpdatedAt = updatedFormResponse.UpdatedAt,
-                DeletedAt = updatedFormResponse.DeletedAt
+                DeletedAt = updatedFormResponse.DeletedAt,
+                CompletedByAdmin = updatedFormResponse.CompletedByAdmin,
+                CompletedByAdminName = updatedFormResponse.CompletedByAdminName,
+                ApprovedByAdmin = updatedFormResponse.ApprovedByAdmin,
+                ApprovedByAdminName = updatedFormResponse.ApprovedByAdminName
             };
+
+            // Add email notification info to result if admin acted
+            if (isAdminActing && !string.IsNullOrEmpty(adminName))
+            {
+                _logger.LogInformation("🔔 ADMIN_ACTION: Admin {AdminName} performed action on form {FormId}, Status: {Status}", 
+                    adminName, updatedFormResponse.Id, formResponse.Status);
+            }
+
+            return result;
         }
 
         public async Task<List<FormResponseResponseDto>> GetFormResponsesByStatusAsync(string status)

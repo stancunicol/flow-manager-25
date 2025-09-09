@@ -277,6 +277,9 @@ namespace FlowManager.Application.Services
 
         public async Task SendFormApprovedByAdminEmailAsync(string email, string firstName, string formName, string adminName, DateTime approvedAt, string? notes = null)
         {
+            _logger.LogInformation("🔥 SendFormApprovedByAdminEmailAsync called for {Email}, Form: {FormName}, Admin: {AdminName}", 
+                email, formName, adminName);
+                
             var subject = "Form Approved by Admin - Siemens FMST";
 
             var notesSection = !string.IsNullOrEmpty(notes) 
@@ -351,6 +354,9 @@ namespace FlowManager.Application.Services
 
         public async Task SendFormRejectedByAdminEmailAsync(string email, string firstName, string formName, string adminName, DateTime rejectedAt, string rejectReason, string? notes = null)
         {
+            _logger.LogInformation("🔥 SendFormRejectedByAdminEmailAsync called for {Email}, Form: {FormName}, Admin: {AdminName}, Reason: {RejectReason}", 
+                email, formName, adminName, rejectReason);
+                
             var subject = "Form Rejected by Admin - Siemens FMST";
 
             var notesSection = !string.IsNullOrEmpty(notes) 
