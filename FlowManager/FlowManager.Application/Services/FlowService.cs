@@ -522,8 +522,21 @@ namespace FlowManager.Infrastructure.Services
 
             if(activeFlowForFormTemplate == null)
             {
-
+                throw new EntryNotFoundException($"Flow not found for form template {formTemplateId}.");
             }
+
+            return new FlowResponseDto
+            {
+                Id = activeFlowForFormTemplate.Id,
+                Name = activeFlowForFormTemplate.Name,
+                Steps = activeFlowForFormTemplate.Steps
+                    .OrderBy(s => s.Order)
+                    .Select(s => new StepResponseDto
+                    {
+                        Id = s.Step.Id,
+                        Name = s.Step.Name,
+                    }).ToList(),
+            };
         }
     }
 }

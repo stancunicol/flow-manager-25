@@ -170,9 +170,21 @@ namespace FlowManager.API.Controllers
         }
 
         [HttpGet("by-form-template-id/{formTemplateId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetFlowByFormTemplateIdAsync(Guid formTemplateId)
         {
             var result = await _flowService.GetFlowByFormTemplateIdAsync(formTemplateId);
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Flow received successfully.",
+                Timestamp = DateTime.UtcNow
+            });
         }
     }
 }
