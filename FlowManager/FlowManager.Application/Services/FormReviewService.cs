@@ -38,7 +38,9 @@ namespace FlowManager.Application.Services
                 {
                     Id = fr.Id,
                     FormResponseId = fr.FormResponseId,
+                    FormTemplateId = fr.FormResponse?.FormTemplateId ?? Guid.Empty,
                     FormTemplateName = fr.FormResponse?.FormTemplate?.Name,
+                    ResponseFields = fr.FormResponse?.ResponseFields ?? new Dictionary<Guid, object>(),
                     UserName = fr.FormResponse?.User?.Name,
                     UserEmail = fr.FormResponse?.User?.Email,
                     ReviewerId = fr.ReviewerId,
@@ -50,7 +52,11 @@ namespace FlowManager.Application.Services
                     ReviewedAt = fr.ReviewedAt,
                     CreatedAt = fr.CreatedAt,
                     UpdatedAt = fr.UpdatedAt,
-                    DeletedAt = fr.DeletedAt
+                    DeletedAt = fr.DeletedAt,
+                    // Impersonation properties
+                    IsImpersonatedAction = fr.IsImpersonatedAction,
+                    ImpersonatedByUserId = fr.ImpersonatedByUserId,
+                    ImpersonatedByUserName = fr.ImpersonatedByUserName
                 }).ToList();
 
             return new PagedResponseDto<FormReviewResponseDto>
@@ -72,6 +78,8 @@ namespace FlowManager.Application.Services
             {
                 Id = fr.Id,
                 FormResponseId = fr.FormResponseId,
+                FormTemplateId = fr.FormResponse?.FormTemplateId ?? Guid.Empty,
+                ResponseFields = fr.FormResponse?.ResponseFields ?? new Dictionary<Guid, object>(),
                 ReviewerId = fr.ReviewerId,
                 ReviewerName = fr.Reviewer?.Name,
                 StepId = fr.StepId,
@@ -81,7 +89,11 @@ namespace FlowManager.Application.Services
                 ReviewedAt = fr.ReviewedAt,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
-                DeletedAt = fr.DeletedAt
+                DeletedAt = fr.DeletedAt,
+                // Impersonation properties
+                IsImpersonatedAction = fr.IsImpersonatedAction,
+                ImpersonatedByUserId = fr.ImpersonatedByUserId,
+                ImpersonatedByUserName = fr.ImpersonatedByUserName
             }).ToList();
         }
     }

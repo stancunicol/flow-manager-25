@@ -396,7 +396,8 @@
                     <div class="forms-grid">
                         @foreach (var review in reviewHistory.OrderByDescending(r => r.ReviewedAt))
                         {
-                            <div class="form-card history-card @(review.Action.ToLower())">
+                            <div class="form-card history-card @(review.Action.ToLower())"
+                                 @onclick="() => ViewFormResponseFromReview(review)">
                                 <div class="form-card-header">
                                     <div class="form-icon @(review.Action.ToLower() == "approved" ? "approved" : "rejected")">
                                         @if (review.Action.ToLower() == "approved")
@@ -427,6 +428,19 @@
                                         <div class="detail-item">
                                             <span class="detail-label">Step:</span>
                                             <span class="detail-value">@(review.StepName ?? "Unknown")</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Reviewed by:</span>
+                                            <span class="detail-value">
+                                                @if (review.IsImpersonatedAction)
+                                                {
+                                                    @(review.ImpersonatedByUserName ?? "Admin")
+                                                }
+                                                else
+                                                {
+                                                    @(review.ReviewerName ?? "Moderator")
+                                                }
+                                            </span>
                                         </div>
                                         @if (!string.IsNullOrEmpty(review.RejectReason))
                                         {

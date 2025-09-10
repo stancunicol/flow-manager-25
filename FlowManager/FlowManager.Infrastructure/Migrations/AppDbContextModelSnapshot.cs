@@ -258,6 +258,16 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<Guid>("FormResponseId")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("ImpersonatedByUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImpersonatedByUserName")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsImpersonatedAction")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("RejectReason")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");

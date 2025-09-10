@@ -29,6 +29,13 @@ namespace FlowManager.Domain.Entities
 
         public DateTime ReviewedAt { get; set; } = DateTime.UtcNow;
 
+        // Impersonation properties
+        public bool IsImpersonatedAction { get; set; } = false;
+        public Guid? ImpersonatedByUserId { get; set; }
+        
+        [StringLength(255)]
+        public string? ImpersonatedByUserName { get; set; }
+
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }

@@ -431,9 +431,28 @@ namespace FlowManager.Application.Services
             // SALVEAZĂ REVIEW-UL ÎN ISTORIC
             if (reviewToRecord != null)
             {
+                // Set impersonation info if admin is impersonating
+                if (httpContext?.User != null)
+                {
+                    var isImpersonating = httpContext.User.FindFirst("IsImpersonating")?.Value == "true";
+                    if (isImpersonating)
+                    {
+                        reviewToRecord.IsImpersonatedAction = true;
+                        var originalAdminIdClaim = httpContext.User.FindFirst("OriginalAdminId")?.Value;
+                        if (Guid.TryParse(originalAdminIdClaim, out var originalAdminId))
+                        {
+                            reviewToRecord.ImpersonatedByUserId = originalAdminId;
+                        }
+                        reviewToRecord.ImpersonatedByUserName = httpContext.User.FindFirst("OriginalAdminName")?.Value;
+                        
+                        _logger.LogInformation("Review marked as impersonated action by admin {AdminName} ({AdminId})", 
+                            reviewToRecord.ImpersonatedByUserName, reviewToRecord.ImpersonatedByUserId);
+                    }
+                }
+
                 await _formReviewRepository.AddAsync(reviewToRecord);
-                _logger.LogInformation("Review recorded: {Action} by {ReviewerId} for form {FormResponseId} at step {StepId}",
-                    reviewToRecord.Action, reviewToRecord.ReviewerId, reviewToRecord.FormResponseId, reviewToRecord.StepId);
+                _logger.LogInformation("Review recorded: {Action} by {ReviewerId} for form {FormResponseId} at step {StepId}, IsImpersonated: {IsImpersonated}",
+                    reviewToRecord.Action, reviewToRecord.ReviewerId, reviewToRecord.FormResponseId, reviewToRecord.StepId, reviewToRecord.IsImpersonatedAction);
             }
 
             _logger.LogInformation("Form response {Id} updated. Previous status: {PreviousStatus}, New status: {NewStatus}",
