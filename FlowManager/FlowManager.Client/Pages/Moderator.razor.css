@@ -2000,7 +2000,14 @@ body {
 /* History Card Styles */
 .history-card {
     border-left: 4px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+    .history-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 
     .history-card.approved {
         border-left-color: #10b981;
@@ -2206,5 +2213,61 @@ body {
         min-width: 90px;
         padding: 0.6rem 0.8rem;
         font-size: 13px;
+    }
+}
+
+/* Impersonation Indicator Styles */
+.detail-item.impersonation-info {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+    .detail-item.impersonation-info .detail-label {
+        color: #92400e;
+        font-weight: 600;
+    }
+
+.impersonated-reviewer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    color: #92400e;
+}
+
+.impersonation-icon-small {
+    width: 14px;
+    height: 14px;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.impersonation-badge {
+    background: rgba(251, 191, 36, 0.2);
+    color: #92400e;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1px solid rgba(146, 64, 14, 0.3);
+    box-shadow: 0 1px 2px rgba(146, 64, 14, 0.1);
+}
+
+/* Responsive adjustments for impersonation info */
+@media (max-width: 768px) {
+    .impersonated-reviewer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .impersonation-badge {
+        font-size: 10px;
+        padding: 1px 4px;
     }
 }

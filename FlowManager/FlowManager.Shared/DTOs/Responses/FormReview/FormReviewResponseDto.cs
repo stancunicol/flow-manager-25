@@ -6,7 +6,9 @@ namespace FlowManager.Shared.DTOs.Responses.FormReview
     {
         public Guid Id { get; set; }
         public Guid FormResponseId { get; set; }
+        public Guid FormTemplateId { get; set; }
         public string? FormTemplateName { get; set; }
+        public Dictionary<Guid, object> ResponseFields { get; set; } = new();
         public string? UserName { get; set; }
         public string? UserEmail { get; set; }
         public Guid ReviewerId { get; set; }
@@ -19,5 +21,10 @@ namespace FlowManager.Shared.DTOs.Responses.FormReview
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
+        
+        // Impersonation properties
+        public bool IsImpersonatedAction { get; set; }
+        public Guid? ImpersonatedByUserId { get; set; }
+        public string? ImpersonatedByUserName { get; set; }
     }
 }

@@ -853,6 +853,45 @@ namespace FlowManager.Client.Pages
             searchDebounceTimer?.Dispose();
         }
 
+        private async Task ViewFormResponseFromReview(FormReviewResponseDto review)
+        {
+            try
+            {
+                // Try to find the form in the currently loaded assigned forms first
+                var formResponse = assignedForms?.FirstOrDefault(f => f.Id == review.FormResponseId);
+                
+                if (formResponse != null)
+                {
+                    // Form is still assigned - use the existing ViewFormResponse method
+                    await ViewFormResponse(formResponse);
+                }
+                else
+                {
+                    // Form is no longer assigned - create a FormResponseResponseDto from review info
+                    var reviewFormResponse = new FormResponseResponseDto
+                    {
+                        Id = review.FormResponseId,
+                        FormTemplateId = review.FormTemplateId,
+                        FormTemplateName = review.FormTemplateName,
+                        ResponseFields = review.ResponseFields,
+                        UserName = review.UserName,
+                        UserEmail = review.UserEmail,
+                        Status = "Reviewed",
+                        CreatedAt = review.CreatedAt ?? DateTime.UtcNow,
+                        UpdatedAt = review.UpdatedAt,
+                        DeletedAt = review.DeletedAt
+                    };
+
+                    await ViewFormResponse(reviewFormResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error loading form response: {ex.Message}";
+                StateHasChanged();
+            }
+        }
+
         private async Task GetCurrentUser()
         {
             UserProfileDto? result = await _authService.GetCurrentUserAsync();
