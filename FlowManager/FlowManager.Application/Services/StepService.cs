@@ -327,7 +327,7 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException("Moderator role does not exist");
 
             // Luăm pașii cu paginare și sortare
-            (List<Step> steps, int totalCount) = await _stepRepository.GetAllStepsIncludeUsersAndTeamsQueriedAsync(
+            (List<Step> steps, int totalCount) = await _stepRepository.GetAllStepsQueriedAsync(
                 moderatorRole.Id,
                 payload.Name,
                 parameters
@@ -373,6 +373,43 @@ namespace FlowManager.Application.Services
                 TotalCount = totalCount,
                 Page = parameters?.Page ?? 1,
                 PageSize = parameters?.PageSize ?? totalCount
+            };
+        }
+
+        public async Task<PagedResponseDto<StepResponseDto>> GetAllStepsIncludeUsersAndTeamsQueriedAsync(QueriedStepRequestDto payload)
+        {
+            QueryParams? parameters = payload.QueryParams?.ToQueryParams();
+
+            Role? moderatorRole = await _roleRepository.GetRoleByRolenameAsync("MODERATOR");
+
+            if (moderatorRole == null)
+            {
+                throw new EntryNotFoundException("Moderator role does not exist");
+            }
+
+            (List<Step> data, int totalCount) = await _stepRepository.GetAllStepsIncludeUsersAndTeamsQueriedAsync(moderatorRole.Id, payload.Name, parameters);
+
+            return new PagedResponseDto<StepResponseDto>
+            {
+                Data = data.Select(step => new StepResponseDto
+                {
+                    Id = step.Id,
+                    Name = step.Name,
+                    Users = step.Users.Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email,
+                    }).ToList(),
+                    Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
+                    {
+                        Id = ut.Team.Id,
+                        Name = ut.Team.Name,
+                    }).ToList(),
+                }).ToList(),
+                TotalCount = totalCount,
+                Page = parameters?.Page ?? 1,
+                PageSize = parameters?.PageSize ?? totalCount,
             };
         }
     }

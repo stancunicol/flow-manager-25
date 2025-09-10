@@ -11,6 +11,7 @@ namespace FlowManager.Application.Interfaces
 {
     public interface IStepService
     {
+        Task<PagedResponseDto<StepResponseDto>> GetAllStepsIncludeUsersAndTeamsQueriedAsync(QueriedStepRequestDto payload);
         Task<PagedResponseDto<StepResponseDto>> GetAllStepsQueriedAsync(QueriedStepRequestDto payload);
         Task<StepResponseDto> GetStepAsync(Guid id);
         Task<List<StepResponseDto>> GetStepsAsync();

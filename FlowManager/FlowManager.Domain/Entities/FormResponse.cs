@@ -36,6 +36,9 @@ namespace FlowManager.Domain.Entities
         public virtual User User { get; set; }
         public Guid UserId { get; set; }
 
+        public virtual User? CompletedByOtherUser { get; set; }
+        public Guid? CompletedByOtherUserId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }

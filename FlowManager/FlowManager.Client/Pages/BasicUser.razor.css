@@ -119,31 +119,30 @@ body {
     margin-bottom: 20px;
 }
 
+.complete-on-behalf-btn,
 .adminViewUsersButton {
+    height: 3rem;
     background: var(--primary-color);
     color: white;
-    padding: 12px;
+    padding: 12px 24px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
-    animation: fadein 0.4s ease-out forwards;
-    transition: background 0.3s;
-    display: flex;
-    max-width: 250px;
-    width: 15%;
-    margin-left: auto;
-    text-align: center;
     font-weight: 500;
-    font-size: 18px;
+    transition: background 0.3s;
+    white-space: nowrap;
+    margin: 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    margin-top: 10px;
-    margin-bottom: 20px;
 }
 
+    .complete-on-behalf-btn:hover,
     .adminViewUsersButton:hover {
         background: #00c494;
     }
+    
 
 .forms-header {
     display: flex;
@@ -164,7 +163,7 @@ body {
         padding: 12px 24px;
         font-size: 16px;
         max-width: none;
-        width: auto;
+        width: 100%;
     }
 
 .header-actions {
@@ -184,6 +183,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0;
 }
 
     .refresh-btn:hover {

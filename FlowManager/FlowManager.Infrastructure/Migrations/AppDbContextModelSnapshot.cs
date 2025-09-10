@@ -196,6 +196,9 @@ namespace FlowManager.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("CompletedByOtherUserId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -226,6 +229,8 @@ namespace FlowManager.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompletedByOtherUserId");
 
                     b.HasIndex("FormTemplateId");
 
@@ -754,6 +759,10 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FormResponse", b =>
                 {
+                    b.HasOne("FlowManager.Domain.Entities.User", "CompletedByOtherUser")
+                        .WithMany("FormResponseCompletedOnBehalf")
+                        .HasForeignKey("CompletedByOtherUserId");
+
                     b.HasOne("FlowManager.Domain.Entities.FormTemplate", "FormTemplate")
                         .WithMany()
                         .HasForeignKey("FormTemplateId")
@@ -771,6 +780,8 @@ namespace FlowManager.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CompletedByOtherUser");
 
                     b.Navigation("FormTemplate");
 
@@ -977,6 +988,8 @@ namespace FlowManager.Infrastructure.Migrations
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
                 {
                     b.Navigation("FlowStepUsers");
+
+                    b.Navigation("FormResponseCompletedOnBehalf");
 
                     b.Navigation("FormResponses");
 

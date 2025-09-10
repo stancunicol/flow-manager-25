@@ -1,0 +1,191 @@
+﻿@page "/complete-on-behalf-form/{TemplateId:guid}"
+@using FlowManager.Client.ViewModels;
+
+
+<PageTitle>Fill Form</PageTitle>
+
+<div class="fill-form-container">
+    <div class="fill-form-header">
+        <button class="back-btn" @onclick="GoBack">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 11H20a.75.75 0 010 1.5H9.31l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" />
+            </svg>
+            Back to My Forms
+        </button>
+
+        <h1>Form: @(_formTemplate?.Name ?? "Loading...")</h1>
+
+        <button class="submit-btn" @onclick="SubmitForm" disabled="@(_isSubmitting || _firstStep == null || !AllRequiredFieldsFilled())">
+            @if (_isSubmitting)
+            {
+                <div class="spinner-small"></div>
+                <span>Submitting...</span>
+            }
+            else
+            {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                </svg>
+                <span>Submit Form</span>
+            }
+        </button>
+    </div>
+
+    <div class="fill-form-content">
+        @if (_isLoading)
+        {
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <p>Loading form...</p>
+            </div>
+        }
+        else if (_formTemplate != null && _formElements != null)
+        {
+            <!-- Workflow Information -->
+            @if (_isLoadingFlow)
+            {
+                <div class="workflow-info loading">
+                    <div class="spinner-small"></div>
+                    <span>Loading workflow information...</span>
+                </div>
+            }
+            else if (_associatedFlow != null && _firstStep != null)
+            {
+                <div class="workflow-info success">
+                    <div class="workflow-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32L12 13.688 1.894 8.16a.75.75 0 010-1.32l9.75-5.25zM3.265 10.206L12 14.688l8.735-4.482a.75.75 0 11.73 1.312L12 16.738l-9.465-5.22a.75.75 0 01.73-1.312zm0 4.5L12 19.188l8.735-4.482a.75.75 0 11.73 1.312L12 21.238l-9.465-5.22a.75.75 0 01.73-1.312z" />
+                        </svg>
+                    </div>
+                    <div class="workflow-details">
+                        <h4>Workflow: @_associatedFlow.Name</h4>
+                        <p>This form will start at step: <strong>@_firstStep.Name</strong></p>
+                        @if (_associatedFlow.Steps?.Count > 1)
+                        {
+                            <p class="workflow-steps-info">Total workflow steps: @_associatedFlow.Steps.Count</p>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="workflow-info warning">
+                    <div class="workflow-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="workflow-details">
+                        <h4>Warning: No Workflow Configured</h4>
+                        <p>This form template is not associated with any workflow. Please contact an administrator to configure the approval process.</p>
+                    </div>
+                </div>
+            }
+
+            <div class="form-canvas">
+                <div class="users-dropdown-container form-search-canvas">
+                    <input type="text"
+                           class="users-dropdown-input"
+                           placeholder="Search users..."
+                           @bind="_usersSearchTerm"
+                           @oninput="((e) => OnUsersSearchTermChanged(e.Value?.ToString() ?? string.Empty))" />
+                    <button type="button" class="dropdown-arrow" @onclick="ChangeAvailableUsersDropdownVisibility">▼</button>
+                     
+                    @if (_isAvailableUsersDropdownOpen)
+                    {
+                        <div class="users-dropdown-options">
+                            @foreach (UserVM user in _availableUsers)
+                            {
+                                <div class="users-dropdown-option" @onclick="() => SelectUser(user)">@user.Name</div>
+                            }
+
+                            <button class="load-more-btn" @onclick="() => LoadMoreUsersAsync()" disabled="@(!_usersHasNextPage)">
+                                Load more
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                @foreach (var element in _formElements.OrderBy(e => e.ZIndex))
+                {
+                    <div class="form-element" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
+                        @if (element.IsTextElement)
+                        {
+                            <div class="static-text">
+                                @element.TextContent
+                            </div>
+                        }
+                        else
+                        {
+                            var component = _components?.FirstOrDefault(c => c.Id == element.ComponentId);
+                            if (component != null)
+                            {
+                                <div class="form-field">
+                                    <label class="field-label">
+                                        @component.Label
+                                        @if (component.Required == true)
+                                        {
+                                            <span class="required-mark">*</span>
+                                        }
+                                    </label>
+                                    @switch (component.Type.ToLower())
+                                    {
+                                        case "textinput":
+                                            <input type="text"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            break;
+                                        case "number":
+                                            <input type="number"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            break;
+                                        case "datetime":
+                                            <input type="datetime-local"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            break;
+                                        case "textarea":
+                                            <textarea class="textarea-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                      readonly="@IsFieldReadonly(component.Id)"
+                                                      @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))">@GetFieldValue(component.Id)</textarea>
+                                            break;
+                                        case "checkbox":
+                                            <div class="checkbox-field">
+                                                <input type="checkbox"
+                                                       checked="@(bool.TryParse(GetFieldValue(component.Id), out bool isChecked) && isChecked)"
+                                                       disabled="@IsFieldReadonly(component.Id)"
+                                                       @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                                <span class="checkbox-label @(IsFieldReadonly(component.Id) ? "readonly-label" : "")">@component.Label</span>
+                                            </div>
+                                            break;
+                                        default:
+                                            <input type="text"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
+                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            break;
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="error-container">
+                <p>Error loading form template.</p>
+                <button class="retry-btn" @onclick="LoadFormTemplateAsync">Try Again</button>
+            </div>
+        }
+    </div>
+</div>
