@@ -47,6 +47,20 @@ namespace FlowManager.Client.Services
             }
         }
 
+        public async Task<ApiResponse<FlowResponseDto?>> GetFlowByFormTemplateIdAsync(Guid formTemplateId)
+        {
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync($"api/flows/by-form-template-id/{formTemplateId}");
+
+                return await response.Content.ReadFromJsonAsync<ApiResponse<FlowResponseDto?>>();
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
         public async Task<Flow?> GetFlowAsync(Guid id)
         {
             try

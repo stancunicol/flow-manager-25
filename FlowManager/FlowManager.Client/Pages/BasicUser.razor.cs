@@ -29,6 +29,8 @@ namespace FlowManager.Client.Pages
 
         // Form selection modal state
         private bool showFormSelectionModal = false;
+        private bool showAddFormModal = false;
+        private bool showCompleteOnBehalfModal = false;
         private bool isLoadingTemplates = false;
         private List<FormTemplateResponseDto>? displayedTemplates;
 
@@ -276,8 +278,23 @@ namespace FlowManager.Client.Pages
         }
 
         // FORM TEMPLATE SELECTION MODAL FUNCTIONALITY
-        private async Task ShowFormSelectionModal()
+        private async Task ShowFormSelectionModalForAddForm()
         {
+            showAddFormModal = true;
+            showFormSelectionModal = true;
+            searchTerm = "";
+            currentPage = 1;
+            displayedTemplates = new List<FormTemplateResponseDto>();
+            hasMoreTemplates = false;
+            totalTemplatesCount = 0;
+
+            StateHasChanged();
+            await LoadActiveTemplates();
+        }
+
+        private async Task ShowFormSelectionModalForCompleteOnBehalf()
+        {
+            showCompleteOnBehalfModal = true;
             showFormSelectionModal = true;
             searchTerm = "";
             currentPage = 1;
@@ -429,7 +446,14 @@ namespace FlowManager.Client.Pages
 
         private async Task SelectTemplate(FormTemplateResponseDto template)
         {
-            Navigation.NavigateTo($"/fill-form/{template.Id}");
+            if (showAddFormModal)
+            {
+                Navigation.NavigateTo($"/fill-form/{template.Id}");
+            }
+            else if(showCompleteOnBehalfModal)
+            {
+                Navigation.NavigateTo($"/complete-on-behalf-form/{template.Id}");
+            }
         }
 
         private async Task ViewFormResponse(FormResponseResponseDto formResponse)
@@ -692,7 +716,7 @@ namespace FlowManager.Client.Pages
 
         private void AddForm()
         {
-            _ = ShowFormSelectionModal();
+            _ = ShowFormSelectionModalForAddForm();
         }
 
         private async Task RefreshUserForms()

@@ -515,5 +515,29 @@ namespace FlowManager.Infrastructure.Services
                 DeletedAt = ft.DeletedAt
             };
         }
+
+        public async Task<FlowResponseDto> GetFlowByFormTemplateIdAsync(Guid formTemplateId)
+        {
+            Flow? activeFlowForFormTemplate = await _flowRepository.GetFlowByFormTemplateIdAsync(formTemplateId);
+
+            if(activeFlowForFormTemplate == null)
+            {
+                throw new EntryNotFoundException($"Flow not found for form template {formTemplateId}.");
+            }
+
+            return new FlowResponseDto
+            {
+                Id = activeFlowForFormTemplate.Id,
+                Name = activeFlowForFormTemplate.Name,
+                FlowSteps = activeFlowForFormTemplate.Steps
+                    .OrderBy(s => s.Order)
+                    .Select(fs => new FlowStepResponseDto
+                    {
+                        FlowId = fs.FlowId,
+                        StepId = fs.StepId,
+                        StepName = fs.Step.Name,
+                    }).ToList(),
+            };
+        }
     }
 }

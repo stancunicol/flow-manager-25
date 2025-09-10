@@ -74,7 +74,14 @@ namespace FlowManager.Application.Services
                 ApprovedByAdminName = fr.ApprovedByAdminName,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
-                DeletedAt = fr.DeletedAt
+                DeletedAt = fr.DeletedAt,
+                CompletedByOtherUser = fr.CompletedByOtherUser == null
+                ? null : new Shared.DTOs.Responses.User.UserResponseDto
+                {
+                    Id = fr.CompletedByOtherUser.Id,
+                    Name = fr.CompletedByOtherUser.Name
+                },
+                CompletedByOtherUserId = fr.CompletedByOtherUserId
             }).ToList();
 
             return new PagedResponseDto<FormResponseResponseDto>
@@ -218,6 +225,11 @@ namespace FlowManager.Application.Services
                 CompletedByAdmin = isAdminCompletingForUser,
                 CompletedByAdminName = isAdminCompletingForUser ? adminName : null
             };
+
+            if(payload.CompletedByOtherUserId != null && payload.CompletedByOtherUserId != Guid.Empty)
+            {
+                formResponse.CompletedByOtherUserId = payload.CompletedByOtherUserId;
+            }
 
             await _formResponseRepository.AddAsync(formResponse);
 

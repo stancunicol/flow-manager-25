@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FlowManager.Shared.DTOs.Responses.User;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,8 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
         public bool ApprovedByAdmin { get; set; } = false;
         public string? ApprovedByAdminName { get; set; }
         
+        public Guid? CompletedByOtherUserId { get; set; }
+        public UserResponseDto? CompletedByOtherUser { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
