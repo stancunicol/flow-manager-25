@@ -8,275 +8,293 @@
 @using System.Text.Json
 
 <div class="edit-form-template-container">
-    @if (_isLoading)
+    @if(showEditFormTemplate)
     {
-        <div class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Loading form template...</p>
-        </div>
-    }
-    else if (_hasError)
-    {
-        <div class="error-state">
-            <div class="error-icon">⚠️</div>
-            <h3>Failed to Load Template</h3>
-            <p>@_errorMessage</p>
-            <button class="retry-btn" @onclick="LoadFormTemplate">Retry</button>
-        </div>
-    }
-    else
-    {
-        <div class="form-template-content">
-            <!-- Template Header -->
-            <div class="template-header">
-                <div class="template-info">
-                    <label class="flow-name-label">*Flow Name (must be different from @initialTemplateName):</label>
-                    <input @bind="templateName"
-                           placeholder="Enter template name..."
-                           class="template-name-input" />
-                    <span class="element-count">@canvasElements.Count elements</span>
-                </div>
+        @if (_isLoading)
+        {
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading form template...</p>
             </div>
+        }
+        else if (_hasError)
+        {
+            <div class="error-state">
+                <div class="error-icon">⚠️</div>
+                <h3>Failed to Load Template</h3>
+                <p>@_errorMessage</p>
+                <button class="retry-btn" @onclick="LoadFormTemplate">Retry</button>
+            </div>
+        }
+        else
+        {
+            <div class="form-template-content">
+                <!-- Template Header -->
+                <div class="template-header">
+                    <div class="template-info">
+                        <label class="flow-name-label">*Flow Name (must be different from @initialTemplateName):</label>
+                        <input @bind="templateName"
+                               placeholder="Enter template name..."
+                               class="template-name-input"/>
+                        <span class="element-count">@canvasElements.Count elements</span>
+                    </div>
+                </div>
 
-            <!-- Canvas and Components Layout -->
-            <div class="template-editor">
-                <!-- Form Canvas - Left Side -->
-                <div class="form-canvas"
-                     @onclick="OnCanvasClick"
-                     @ondrop="@OnDrop"
-                     @ondragover="@OnDragOver"
-                     @ondragover:preventDefault="true"
-                     @ref="canvasRef">
+                <!-- Canvas and Components Layout -->
+                <div class="template-editor">
+                    <!-- Form Canvas - Left Side -->
+                    <div class="form-canvas"
+                         @onclick="OnCanvasClick"
+                         @ondrop="@OnDrop"
+                         @ondragover="@OnDragOver"
+                         @ondragover:preventDefault="true"
+                         @ref="canvasRef">
 
-                    <div class="canvas-workspace"
-                         @onclick="OnWorkspaceClick"
-                         @onmousemove="OnMouseMove"
-                         @onmouseup="OnMouseUp">
+                        <div class="canvas-workspace"
+                             @onclick="OnWorkspaceClick"
+                             @onmousemove="OnMouseMove"
+                             @onmouseup="OnMouseUp">
 
-                        @if (!canvasElements.Any())
-                        {
-                            <div class="empty-workspace">
-                                <div class="empty-icon">📋</div>
-                                <h3>Click anywhere to start writing</h3>
-                                <p>Or drag components from the sidebar</p>
-                            </div>
-                        }
+                            @if (!canvasElements.Any())
+                            {
+                                <div class="empty-workspace">
+                                    <div class="empty-icon">📋</div>
+                                    <h3>Click anywhere to start writing</h3>
+                                    <p>Or drag components from the sidebar</p>
+                                </div>
+                            }
 
-                        <!-- Render all canvas elements -->
-                        @foreach (var element in canvasElements)
-                        {
-                            <div class="canvas-element @(element.IsTextElement ? "text-element" : "component-element")"
-                                 style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @(element.ZIndex);"
-                                 @onmousedown="@((e) => OnElementMouseDown(e, element.Id))"
-                                 @onclick:stopPropagation="true">
+                            <!-- Render all canvas elements -->
+                            @foreach (var element in canvasElements)
+                            {
+                                <div class="canvas-element @(element.IsTextElement ? "text-element" : "component-element")"
+                                     style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @(element.ZIndex);"
+                                     @onmousedown="@((e) => OnElementMouseDown(e, element.Id))"
+                                     @onclick:stopPropagation="true">
 
-                                @if (element.IsTextElement)
-                                {
-                                    @if (isEditingText && editingElementId == element.Id)
+                                    @if (element.IsTextElement)
                                     {
-                                        <!-- Inline text editor -->
-                                        <div class="inline-text-editor" style="min-width: 200px;">
-                                            <textarea @bind="editingText"
-                                                      @onblur="SaveTextEdit"
-                                                      @onkeydown="@((e) => HandleTextKeyDown(e))"
-                                                      class="inline-textarea"
-                                                      placeholder="Type here..."
-                                                      @ref="textareaRef"
-                                                      style="width: auto; min-width: 200px; height: auto;"></textarea>
-                                        </div>
+                                        @if (isEditingText && editingElementId == element.Id)
+                                        {
+                                            <!-- Inline text editor -->
+                                            <div class="inline-text-editor" style="min-width: 200px;">
+                                                <textarea @bind="editingText"
+                                                          @onblur="SaveTextEdit"
+                                                          @onkeydown="@((e) => HandleTextKeyDown(e))"
+                                                          class="inline-textarea"
+                                                          placeholder="Type here..."
+                                                          @ref="textareaRef"
+                                                          style="width: auto; min-width: 200px; height: auto;"></textarea>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <!-- Text display -->
+                                            <div class="text-display" @onclick="@(() => EditTextElement(element.Id))" @onmousedown:stopPropagation="false">
+                                                @if (string.IsNullOrWhiteSpace(element.TextContent))
+                                                {
+                                                    <span class="placeholder-text">Click to edit...</span>
+                                                }
+                                                else
+                                                {
+                                                    @((MarkupString)element.TextContent.Replace("\n", "<br>"))
+                                                }
+                                                <button class="delete-element-btn" @onclick="@(() => RemoveElement(element.Id))" @onclick:stopPropagation="true">×</button>
+                                            </div>
+                                        }
                                     }
                                     else
                                     {
-                                        <!-- Text display -->
-                                        <div class="text-display" @onclick="@(() => EditTextElement(element.Id))" @onmousedown:stopPropagation="false">
-                                            @if (string.IsNullOrWhiteSpace(element.TextContent))
+                                        <!-- Component display -->
+                                        <div class="component-display"
+                                             @ondblclick="@(() => EditComponentElement(element.Id))"
+                                             @ondblclick:stopPropagation="true"
+                                             @onmousedown:stopPropagation="false">
+                                            @if (element.ComponentType == "TextInput" || element.ComponentType == "email" || element.ComponentType == "text")
                                             {
-                                                <span class="placeholder-text">Click to edit...</span>
-                                            }
-                                            else
-                                            {
-                                                @((MarkupString)element.TextContent.Replace("\n", "<br>"))
-                                            }
-                                            <button class="delete-element-btn" @onclick="@(() => RemoveElement(element.Id))" @onclick:stopPropagation="true">×</button>
-                                        </div>
-                                    }
-                                }
-                                else
-                                {
-                                    <!-- Component display -->
-                                    <div class="component-display"
-                                         @ondblclick="@(() => EditComponentElement(element.Id))"
-                                         @ondblclick:stopPropagation="true"
-                                         @onmousedown:stopPropagation="false">
-                                        @if (element.ComponentType == "TextInput" || element.ComponentType == "email" || element.ComponentType == "text")
-                                        {
-                                            <div class="form-field">
-                                                <label class="field-label">
-                                                    @element.Label
-                                                    @if (element.Required == true)
-                                                    {
-                                                        <span class="required-mark">*</span>
-                                                    }
-                                                </label>
-                                                <input type="text" class="field-input" placeholder="@element.Label" readonly />
-                                            </div>
-                                        }
-                                        @if (element.ComponentType == "Checkbox" || element.ComponentType == "checkbox")
-                                        {
-                                            <div class="form-field">
-                                                <label class="checkbox-field">
-                                                    <input type="checkbox" disabled />
-                                                    <span class="checkbox-label">
+                                                <div class="form-field">
+                                                    <label class="field-label">
                                                         @element.Label
                                                         @if (element.Required == true)
                                                         {
                                                             <span class="required-mark">*</span>
                                                         }
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        }
-                                        @if (element.ComponentType == "DateTime" || element.ComponentType == "date")
-                                        {
-                                            <div class="form-field">
-                                                <label class="field-label">
-                                                    @element.Label
-                                                    @if (element.Required == true)
-                                                    {
-                                                        <span class="required-mark">*</span>
-                                                    }
-                                                </label>
-                                                <input type="date" class="field-input" readonly />
-                                            </div>
-                                        }
-                                        @if (element.ComponentType == "RadioButton" || element.ComponentType == "radio")
-                                        {
-                                            <div class="form-field">
-                                                <label class="field-label">
-                                                    @element.Label
-                                                    @if (element.Required == true)
-                                                    {
-                                                        <span class="required-mark">*</span>
-                                                    }
-                                                </label>
-                                                <div class="radio-group">
-                                                    @{
-                                                        var radioOptions = GetRadioOptions(element);
-                                                    }
-                                                    @foreach (var option in radioOptions)
-                                                    {
-                                                        <label class="radio-option">
-                                                            <input type="radio" name="radio_@element.Id" disabled />
-                                                            <span>@option</span>
-                                                        </label>
-                                                    }
+                                                    </label>
+                                                    <input type="text" class="field-input" placeholder="@element.Label" readonly />
                                                 </div>
-                                            </div>
-                                        }
-                                        @if (element.ComponentType == "number")
-                                        {
-                                            <div class="form-field">
-                                                <label class="field-label">
-                                                    @element.Label
-                                                    @if (element.Required == true)
-                                                    {
-                                                        <span class="required-mark">*</span>
-                                                    }
-                                                </label>
-                                                <input type="number" class="field-input" placeholder="@element.Label" readonly />
-                                            </div>
-                                        }
-                                        @if (element.ComponentType == "textarea")
-                                        {
-                                            <div class="form-field">
-                                                <label class="field-label">
-                                                    @element.Label
-                                                    @if (element.Required == true)
-                                                    {
-                                                        <span class="required-mark">*</span>
-                                                    }
-                                                </label>
-                                                <textarea class="field-input textarea-input" placeholder="@element.Label" readonly></textarea>
-                                            </div>
-                                        }
-                                        @if (element.ComponentType == "select")
-                                        {
-                                            <div class="form-field">
-                                                <label class="field-label">
-                                                    @element.Label
-                                                    @if (element.Required == true)
-                                                    {
-                                                        <span class="required-mark">*</span>
-                                                    }
-                                                </label>
-                                                <select class="field-input" disabled>
-                                                    <option>Select an option</option>
-                                                    <option>Option 1</option>
-                                                    <option>Option 2</option>
-                                                </select>
-                                            </div>
-                                        }
+                                            }
+                                            @if (element.ComponentType == "Checkbox" || element.ComponentType == "checkbox")
+                                            {
+                                                <div class="form-field">
+                                                    <label class="checkbox-field">
+                                                        <input type="checkbox" disabled />
+                                                        <span class="checkbox-label">
+                                                            @element.Label
+                                                            @if (element.Required == true)
+                                                            {
+                                                                <span class="required-mark">*</span>
+                                                            }
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            }
+                                            @if (element.ComponentType == "DateTime" || element.ComponentType == "date")
+                                            {
+                                                <div class="form-field">
+                                                    <label class="field-label">
+                                                        @element.Label
+                                                        @if (element.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </label>
+                                                    <input type="date" class="field-input" readonly />
+                                                </div>
+                                            }
+                                            @if (element.ComponentType == "RadioButton" || element.ComponentType == "radio")
+                                            {
+                                                <div class="form-field">
+                                                    <label class="field-label">
+                                                        @element.Label
+                                                        @if (element.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </label>
+                                                    <div class="radio-group">
+                                                        @{
+                                                            var radioOptions = GetRadioOptions(element);
+                                                        }
+                                                        @foreach (var option in radioOptions)
+                                                        {
+                                                            <label class="radio-option">
+                                                                <input type="radio" name="radio_@element.Id" disabled />
+                                                                <span>@option</span>
+                                                            </label>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                            @if (element.ComponentType == "number")
+                                            {
+                                                <div class="form-field">
+                                                    <label class="field-label">
+                                                        @element.Label
+                                                        @if (element.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </label>
+                                                    <input type="number" class="field-input" placeholder="@element.Label" readonly />
+                                                </div>
+                                            }
+                                            @if (element.ComponentType == "textarea")
+                                            {
+                                                <div class="form-field">
+                                                    <label class="field-label">
+                                                        @element.Label
+                                                        @if (element.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </label>
+                                                    <textarea class="field-input textarea-input" placeholder="@element.Label" readonly></textarea>
+                                                </div>
+                                            }
+                                            @if (element.ComponentType == "select")
+                                            {
+                                                <div class="form-field">
+                                                    <label class="field-label">
+                                                        @element.Label
+                                                        @if (element.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </label>
+                                                    <select class="field-input" disabled>
+                                                        <option>Select an option</option>
+                                                        <option>Option 1</option>
+                                                        <option>Option 2</option>
+                                                    </select>
+                                                </div>
+                                            }
 
-                                        <button class="delete-element-btn" @onclick="@(() => RemoveElement(element.Id))" @onclick:stopPropagation="true">×</button>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Available Components - Right Side -->
-                <div class="components-sidebar">
-                    <div class="sidebar-header">
-                        <h3>Available Components</h3>
-                        <span class="component-count">@availableComponents.Count available</span>
-                    </div>
-
-                    <div class="component-list">
-                        @if (_componentsLoading)
-                        {
-                            <div class="loading-components">
-                                <div class="loading-spinner-small"></div>
-                                <p>Loading components...</p>
-                            </div>
-                        }
-                        else if (!availableComponents.Any())
-                        {
-                            <div class="no-components">
-                                <p>No components available</p>
-                            </div>
-                        }
-                        else
-                        {
-                            @foreach (var component in availableComponents)
-                            {
-                                <div class="component-item"
-                                     draggable="true"
-                                     @ondragstart="@(() => OnDragStart(component))">
-                                    <div class="component-icon">
-                                        @GetComponentIcon(component.Type)
-                                    </div>
-                                    <div class="component-info">
-                                        <div class="component-name">@component.Label</div>
-                                        <div class="component-type">@component.Type</div>
-                                    </div>
-                                    <div class="drag-handle">⋮⋮</div>
+                                            <button class="delete-element-btn" @onclick="@(() => RemoveElement(element.Id))" @onclick:stopPropagation="true">×</button>
+                                        </div>
+                                    }
                                 </div>
                             }
-                        }
+                        </div>
                     </div>
 
-                    <div class="palette-footer">
-                        <button class="add-component-btn" @onclick="AddNewComponent" @onclick:stopPropagation="true">
-                            <span class="add-icon">+</span>
-                            New Component
-                        </button>
+                    <!-- Available Components - Right Side -->
+                    <div class="components-sidebar">
+                        <div class="sidebar-header">
+                            <h3>Available Components</h3>
+                            <span class="component-count">@availableComponents.Count available</span>
+                        </div>
+
+                        <div class="component-list">
+                            @if (_componentsLoading)
+                            {
+                                <div class="loading-components">
+                                    <div class="loading-spinner-small"></div>
+                                    <p>Loading components...</p>
+                                </div>
+                            }
+                            else if (!availableComponents.Any())
+                            {
+                                <div class="no-components">
+                                    <p>No components available</p>
+                                </div>
+                            }
+                            else
+                            {
+                                @foreach (var component in availableComponents)
+                                {
+                                    <div class="component-item"
+                                         draggable="true"
+                                         @ondragstart="@(() => OnDragStart(component))">
+                                        <div class="component-icon">
+                                            @GetComponentIcon(component.Type)
+                                        </div>
+                                        <div class="component-info">
+                                            <div class="component-name">@component.Label</div>
+                                            <div class="component-type">@component.Type</div>
+                                        </div>
+                                        <div class="drag-handle">⋮⋮</div>
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <div class="palette-footer">
+                            <button class="add-component-btn" @onclick="AddNewComponent" @onclick:stopPropagation="true">
+                                <span class="add-icon">+</span>
+                                New Component
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="@(() => showEditFormTemplate = false)">
+                    Cancel
+                </button>
+                <button class="btn-primary" @onclick="SaveTemplate" disabled="@(_isLoading || !IsFormValid())">
+                    @if (_isLoading)
+                    {
+                        <span class="loading-spinner"></span>
+                    }
+                    @(FormTemplateId != null && FormTemplateId != Guid.Empty ? "Save Changes" : "Create Template")
+                </button>
+            </div>
+        }
     }
 </div>
+
+
 
 <!-- Add Component Modal -->
 @if (showAddComponentModal)
@@ -430,7 +448,6 @@
                     </div>
                 }
             </div>
-
             <div class="modal-footer">
                 <button class="modal-btn secondary" @onclick="CloseEditComponentModal" @onclick:stopPropagation="true">
                     Cancel
@@ -451,6 +468,8 @@
     [Parameter] public Guid FlowId { get; set; }
     [Parameter] public Guid FormTemplateId { get; set; }
     [Parameter] public EventCallback OnTemplateSaved { get; set; }
+
+    private bool showEditFormTemplate = true;
 
     // State
     private bool _isLoading = true;

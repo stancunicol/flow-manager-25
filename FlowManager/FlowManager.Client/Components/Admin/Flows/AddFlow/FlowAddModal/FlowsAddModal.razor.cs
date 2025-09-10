@@ -44,7 +44,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         private async Task LoadStepsAsync()
         {
-            ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetStepsQueriedAsync();
+            ApiResponse<PagedResponseDto<StepResponseDto>> response = await _stepService.GetAllStepsIncludeUsersAndTeamsQueriedAsync();
             if (!response.Success)
             {
                 return;
@@ -127,9 +127,9 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             StateHasChanged();
         }
 
-        private void RemoveConfiguredStep(Guid stepId)
+        private void RemoveConfiguredStep(int index)
         {
-            _configuredSteps.RemoveAll(cs => cs.Id == stepId);
+            _configuredSteps.RemoveAt(index);
             StateHasChanged();
         }
 

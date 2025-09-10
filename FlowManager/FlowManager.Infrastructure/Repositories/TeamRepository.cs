@@ -164,7 +164,7 @@ namespace FlowManager.Infrastructure.Repositories
                 .Where(t => t.Id == teamId && t.DeletedAt == null)
                 .Include(t => t.Users.Where(ut => ut.DeletedAt == null))
                     .ThenInclude(ut => ut.User)
-                .SelectMany(t => t.Users.Select(ut => ut.User))
+                .SelectMany(t => t.Users.Where(ut => ut.DeletedAt == null).Select(ut => ut.User))
                 .ToListAsync();
 
             List<Guid> assignedUserIds = assignedUsers.Select(u => u.Id).ToList();

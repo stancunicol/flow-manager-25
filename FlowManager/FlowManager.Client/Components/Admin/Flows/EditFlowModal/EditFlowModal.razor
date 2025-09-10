@@ -28,24 +28,10 @@
         {
             <div class="modal-content">
                 @* Încarcă întotdeauna EditFormTemplate, indiferent dacă există FormTemplateId sau nu *@
-            <EditFormTemplate FlowId="@Flow!.Id"
-                              FormTemplateId="@(Flow.FormTemplateId ?? Guid.Empty)"
-                              OnTemplateSaved="@OnTemplateSaved"
-                              @ref="editFormTemplateRef" />
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="@(() => OnClose.InvokeAsync())">
-                    Cancel
-                </button>
-                <button class="btn-primary" @onclick="SaveTemplate" disabled="@(_isSaving)">
-                    @if (_isSaving)
-                    {
-                        <span class="loading-spinner"></span>
-                    }
-                    @(Flow?.FormTemplateId != null ? "Save Changes" : "Create Template")
-                </button>
+                <EditFormTemplate FlowId="@Flow!.Id"
+                                  FormTemplateId="@(Flow.FormTemplateId ?? Guid.Empty)"
+                                  OnTemplateSaved="@OnTemplateSaved"
+                                  @ref="editFormTemplateRef" />
             </div>
         }
         else
@@ -90,7 +76,7 @@
         await OnClose.InvokeAsync();
     }
 
-    private bool IsFormValid()
+    public bool IsFormValid()
     {
         Console.WriteLine($"Checking form validity: {editFormTemplateRef?.IsFormValid()}");
         return editFormTemplateRef?.IsFormValid() ?? false;
@@ -104,37 +90,5 @@
         }
 
         await OnClose.InvokeAsync();
-    }
-
-    private async Task SaveTemplate()
-    {
-        if (_isSaving || editFormTemplateRef == null) return;
-
-        _isSaving = true;
-        StateHasChanged();
-
-        try
-        {
-            await editFormTemplateRef.SaveTemplate();
-            await JSRuntime.InvokeVoidAsync("alert", "Template saved successfully!");
-
-            // Notify parent that flow was updated
-            if (Flow != null && OnFlowUpdated.HasDelegate)
-            {
-                await OnFlowUpdated.InvokeAsync(Flow);
-            }
-
-            // Close the modal
-            await OnClose.InvokeAsync();
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving template: {ex.Message}");
-        }
-        finally
-        {
-            _isSaving = false;
-            StateHasChanged();
-        }
     }
 }

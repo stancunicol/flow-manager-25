@@ -13,7 +13,7 @@ using System.Timers;
 
 namespace FlowManager.Client.Components.Admin.Members.ViewTeams
 {
-    public partial class ViewTeamsModal : ComponentBase
+    public partial class ViewTeamsModal : ComponentBase, IDisposable
     {
         [Inject] private TeamService _teamService { get; set; } = default!;
         private List<TeamVM> _teams = new();
@@ -210,6 +210,11 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
         {
             await _teamService.RestoreTeamAsync(teamId);
             await LoadTeamsAsync();
+        }
+
+        public void Dispose()
+        {
+            _debounceTimer?.Dispose();
         }
     }
 }
