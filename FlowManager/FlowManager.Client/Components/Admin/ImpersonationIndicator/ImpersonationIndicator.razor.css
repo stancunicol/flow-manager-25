@@ -2,11 +2,11 @@
 .impersonation-indicator {
     position: fixed;
     top: 0;
-    left: 0;
-    right: 0;
+    left: 100px;
+    width: 90%;
     background: linear-gradient(90deg, #fbbf24, #f59e0b);
     color: #92400e;
-    padding: 8px 16px;
+    padding: 4px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -14,6 +14,7 @@
     border-bottom: 2px solid #f59e0b;
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
     animation: slideDown 0.3s ease-out;
+    border-radius: 8px;
 }
 
 @keyframes slideDown {
@@ -134,9 +135,10 @@
 /* Responsive Design */
 @media (max-width: 768px) {
     .impersonation-indicator {
-        padding: 6px 12px;
+        padding: 3px 8px;
+        width: 60%;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         text-align: center;
     }
 
@@ -168,30 +170,31 @@
 }
 
 @media (max-width: 480px) {
-    .impersonation-content {
-        flex-direction: column;
-        gap: 4px;
-        text-align: center;
+    .impersonation-indicator {
+        padding: 4px 8px;
+        width: 70%;
     }
 
-    .impersonation-indicator {
-        padding: 8px 12px;
+    .impersonation-content {
+        flex-direction: column;
+        gap: 3px;
+        text-align: center;
     }
 }
 
 /* Adjust main content when impersonation indicator is shown */
 :global(body:has(.impersonation-indicator)) {
-    padding-top: 50px;
+    padding-top: 30px;
 }
 
 @media (max-width: 768px) {
     :global(body:has(.impersonation-indicator)) {
-        padding-top: 70px;
+        padding-top: 45px;
     }
 }
 
 @media (max-width: 480px) {
     :global(body:has(.impersonation-indicator)) {
-        padding-top: 85px;
+        padding-top: 55px;
     }
 }
