@@ -109,9 +109,11 @@ namespace FlowManager.Infrastructure.Repositories
             QueryParams? parameters)
         {
             IQueryable<Step> query = _context.Steps
+                .Where(s => s.Users.Any(u => u.Roles.Any(ur => ur.DeletedAt == null && ur.RoleId == moderatorId)))
                 .Include(s => s.Users.Where(u => u.DeletedAt == null && u.Roles.Any(ur => ur.RoleId == moderatorId)))
                     .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
                         .ThenInclude(ut => ut.Team);
+
 
             query = query.Where(s => s.DeletedAt == null);
 

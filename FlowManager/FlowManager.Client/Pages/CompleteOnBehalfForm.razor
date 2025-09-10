@@ -144,8 +144,8 @@
                                                    readonly="@IsFieldReadonly(component.Id)"
                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
-                                        case "datetime":
-                                            <input type="datetime-local"
+                                        case "date":
+                                            <input type="date"
                                                    class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
                                                    value="@GetFieldValue(component.Id)"
                                                    readonly="@IsFieldReadonly(component.Id)"
