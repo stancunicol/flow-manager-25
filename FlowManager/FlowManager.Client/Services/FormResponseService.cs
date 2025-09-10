@@ -55,7 +55,8 @@ namespace FlowManager.Client.Services
                 if (!string.IsNullOrEmpty(searchTerm))
                     query["SearchTerm"] = searchTerm;
 
-                if (statusFilters?.Any() == true && statusFilters.Count < 3)
+                // TEMPORAR: Trimite întotdeauna statusFilters pentru debugging
+                if (statusFilters?.Any() == true)
                 {
                     for (int i = 0; i < statusFilters.Count; i++)
                     {

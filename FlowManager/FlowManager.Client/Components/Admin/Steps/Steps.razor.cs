@@ -26,9 +26,12 @@ namespace FlowManager.Client.Components.Admin.Steps
         private bool isCreateModalOpen = false;
         private bool isDeleteModalOpen = false;
         private bool isMoveUsersModalOpen = false;
+        private bool isChangeUsersModalOpen = false;
+        private bool isMoveModalOpen = false;
         private Guid selectedReassignDepartmentId { get; set; }
         private StepResponseDto? selectedDepartment;
         private StepResponseDto? departmentToDelete;
+        private StepResponseDto? departmentToMove;
         private string newDepName = string.Empty;
         private string error = string.Empty;
         private List<UserResponseDto> unsignedUsers = new();
@@ -39,9 +42,13 @@ namespace FlowManager.Client.Components.Admin.Steps
         private List<UserResponseDto> allUsers = new();
         private List<TeamResponseDto> allTeams = new();
         private Dictionary<Guid, string> departmentColors = new();
-        private Guid? draggedUserId = null;
+        private Guid draggedUserId = Guid.Empty;
         private List<TeamResponseDto> selectedTeams = new();
-
+        private bool isEditTypeModalOpen = false;
+        private enum EditType { None, ChangeName, MoveUsers }
+        private EditType currentEditType = EditType.None;
+        private bool isSelectMoveDepartmentModalOpen = false;
+        private bool isEditDropdownOpen = false;
 
         [Inject]
         private StepService stepService { get; set; } = default!;
@@ -53,17 +60,6 @@ namespace FlowManager.Client.Components.Admin.Steps
         protected override async Task OnInitializedAsync()
         {
             await LoadDepartments();
-
-            if (departments != null)
-            {
-                foreach (var dep in departments)
-                {
-                    if (!departmentColors.ContainsKey(dep.Id))
-                    {
-                        departmentColors[dep.Id] = GetRandomGradient();
-                    }
-                }
-            }
         }
 
         private async Task LoadDepartments()
@@ -73,28 +69,46 @@ namespace FlowManager.Client.Components.Admin.Steps
                 var response = await stepService.GetStepsQueriedAsync();
                 if (response != null && response.Success && response.Result != null)
                 {
-                    departments = response.Result.Data.Where(d => d.DeletedAt == null).ToList();
+                    departments = response.Result.Data
+                        .Where(d => d.DeletedAt == null)
+                        .ToList();
+
+                    // Pentru fiecare departament, încarcă detaliile complete inclusiv echipele
+                    for (int i = 0; i < departments.Count; i++)
+                    {
+                        var departmentDetails = await stepService.GetStepAsync(departments[i].Id);
+                        if (departmentDetails != null)
+                        {
+                            // Înlocuiește departamentul cu versiunea completă
+                            departments[i] = departmentDetails;
+                        }
+
+                        // Asigură-te că listele sunt inițializate
+                        departments[i].Users ??= new List<UserResponseDto>();
+                        departments[i].Teams ??= new List<TeamResponseDto>();
+
+                        // Generează culori pentru departament
+                        if (!departmentColors.ContainsKey(departments[i].Id))
+                        {
+                            departmentColors[departments[i].Id] = GetRandomGradient();
+                        }
+
+                        Console.WriteLine($"Department {departments[i].Name}: {departments[i].Users.Count} users, {departments[i].Teams.Count} teams");
+                    }
+
+                    // Curăță culorile pentru departamentele care nu mai există
+                    var toRemove = departmentColors.Keys
+                        .Where(k => !departments.Any(d => d.Id == k))
+                        .ToList();
+                    foreach (var key in toRemove)
+                    {
+                        departmentColors.Remove(key);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading departments: {ex.Message}");
-            }
-        }
-
-        private async Task LoadTeams()
-        {
-            try
-            {
-                var response = await teamService.GetAllTeamsQueriedAsync();
-                if (response != null && response.Success && response.Result != null)
-                {
-                    allTeams = response.Result.Data.Where(t => t.DeletedAt == null).ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading teams: {ex.Message}");
             }
         }
 
@@ -127,12 +141,14 @@ namespace FlowManager.Client.Components.Admin.Steps
             isCreateModalOpen = false;
             error = string.Empty;
             newDepName = string.Empty;
+            isEditDropdownOpen = false;
         }
 
         private void CloseModal()
         {
             isModalOpen = false;
             selectedDepartment = null;
+            isEditDropdownOpen = false;
         }
 
         private async Task SaveDepartment()
@@ -231,7 +247,7 @@ namespace FlowManager.Client.Components.Admin.Steps
             }
         }
 
-        private async Task OpenDeleteDepartmentModal(Guid departmentId)
+        private async Task OpenSelectDepartmentModal(Guid departmentId)
         {
             var step = await stepService.GetStepAsync(departmentId);
 
@@ -245,9 +261,10 @@ namespace FlowManager.Client.Components.Admin.Steps
             }
         }
 
-        private void CloseDeleteDepartmentModal()
+        private void CloseSelectDepartmentModal()
         {
             isDeleteModalOpen = false;
+            isEditDropdownOpen = false;
             StateHasChanged();
         }
 
@@ -262,85 +279,37 @@ namespace FlowManager.Client.Components.Admin.Steps
             {
                 selectedDepartment = target;
                 isMoveUsersModalOpen = true;
-                CloseDeleteDepartmentModal();
+                CloseSelectDepartmentModal();
                 StateHasChanged();
             }
         }
 
-
-        private async Task OpenEditModal(StepResponseDto department)
-        {
-            var stepDetails = await stepService.GetStepAsync(department.Id);
-
-            if (stepDetails != null)
-            {
-                selectedDepartment = stepDetails;
-                editDepName = stepDetails.Name;
-                selectedUsers = stepDetails.Users.ToList();
-
-                var response = await userService.GetAllUsersQueriedAsync();
-                if (response != null && response.Success && response.Result != null)
-                {
-                    allUsersList = ((List<UserResponseDto>)response.Result.Data);
-
-                    var filteredUsers = new List<UserResponseDto>();
-
-                    foreach (var u in allUsersList)
-                    {
-                        var isAssigned = await userService.VerifyIfAssigned(u.Id);
-
-                        if ((isAssigned.Success && !isAssigned.Result) || selectedDepartment.Users.Any(su => su.Id == u.Id))
-                        {
-                            filteredUsers.Add(u);
-                        }
-                    }
-
-                    allUsers = filteredUsers;
-                }
-
-                var teamResponse = await teamService.GetAllTeamsQueriedAsync();
-                if (teamResponse != null && teamResponse.Success && teamResponse.Result != null)
-                {
-                    var allTeamsList = teamResponse.Result.Data;
-
-                    var filteredTeams = new List<TeamResponseDto>();
-
-                    foreach (var t in allTeamsList)
-                    {
-                        if (selectedDepartment.Teams.Any(st => st.Id == t.Id) || true)
-                        {
-                            filteredTeams.Add(t);
-                        }
-                    }
-
-                    allTeams = filteredTeams;
-                }
-
-                selectedTeams = selectedDepartment.Teams.ToList();
-
-                isEditModalOpen = true;
-                StateHasChanged();
-            }
-        }
-
-        private async Task SaveEditDepartment()
+        private async Task SaveEditNameDepartment()
         {
             if (selectedDepartment == null)
                 return;
 
             try
             {
+                selectedDepartment.Name = editDepName.Trim();
+
+                var updatePayload = new PatchStepRequestDto
+                {
+                    Name = selectedDepartment.Name,
+                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
+                };
+
+                await stepService.UpdateStepAsync(selectedDepartment.Id, updatePayload);
+
                 await RefreshAllData();
-                await LoadDepartments();
-
                 StateHasChanged();
-
                 CloseEditModal();
-                Console.WriteLine("✅ Department updated successfully!");
+
+                Console.WriteLine("✅ Department name updated successfully!");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"💥 Error updating department: {ex.Message}");
+                Console.WriteLine($"💥 Error updating department name: {ex.Message}");
                 error = "Unexpected error occurred.";
             }
         }
@@ -348,6 +317,7 @@ namespace FlowManager.Client.Components.Admin.Steps
         private void CloseEditModal()
         {
             isEditModalOpen = false;
+            isEditDropdownOpen = false;
             selectedDepartment = null;
             editDepName = string.Empty;
             selectedUsers.Clear();
@@ -394,6 +364,14 @@ namespace FlowManager.Client.Components.Admin.Steps
             selectedDepartment.Teams ??= new List<TeamResponseDto>();
             selectedDepartment.Teams.Add(team);
 
+            foreach (var user in team.Users)
+            {
+                if (!selectedDepartment.Users.Any(u => u.Id == user.Id))
+                {
+                    selectedDepartment.Users.Add(user);
+                }
+            }
+
             StateHasChanged();
         }
 
@@ -403,14 +381,12 @@ namespace FlowManager.Client.Components.Admin.Steps
             {
                 var targetPayload = new PatchStepRequestDto
                 {
-                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList(),
-                    TeamIds = selectedDepartment.Teams.Select(t => t.Id).ToList()
+                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
                 };
 
                 await stepService.UpdateStepAsync(selectedDepartment.Id, targetPayload);
 
-                if ((departmentToDelete.Users == null || !departmentToDelete.Users.Any()) &&
-                    (departmentToDelete.Teams == null || !departmentToDelete.Teams.Any()))
+                if (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
                 {
                     await stepService.DeleteStepAsync(departmentToDelete.Id);
                     departments.RemoveAll(d => d.Id == departmentToDelete.Id);
@@ -420,15 +396,14 @@ namespace FlowManager.Client.Components.Admin.Steps
                 {
                     var deletePayload = new PatchStepRequestDto
                     {
-                        UserIds = departmentToDelete.Users.Select(u => u.Id).ToList(),
-                        TeamIds = departmentToDelete.Teams.Select(t => t.Id).ToList()
+                        UserIds = departmentToDelete.Users.Select(u => u.Id).ToList()
                     };
 
                     await stepService.UpdateStepAsync(departmentToDelete.Id, deletePayload);
                 }
 
                 await CloseMoveUsersModal();
-                await OpenDeleteDepartmentModal(departmentToDelete.Id);
+                await OpenSelectDepartmentModal(departmentToDelete.Id);
                 StateHasChanged();
             }
             catch (Exception ex)
@@ -442,8 +417,138 @@ namespace FlowManager.Client.Components.Admin.Steps
             isMoveUsersModalOpen = false;
             selectedDepartment = null;
             selectedReassignDepartmentId = Guid.Empty;
+            isEditDropdownOpen = false;
 
             StateHasChanged();
+        }
+
+        private void OpenChangeNameModal(StepResponseDto department)
+        {
+            selectedDepartment = department;
+            editDepName = department.Name;
+            currentEditType = EditType.ChangeName;
+            isEditModalOpen = true;
+            StateHasChanged();
+        }
+
+   
+        private void OpenChangeUsersModal(StepResponseDto department)
+        {
+            selectedDepartment = department;
+            isChangeUsersModalOpen = true;
+            StateHasChanged();
+        }
+
+        private async Task OpenMoveModal()
+        {
+            CloseSelectDepartmentModal();
+            if (selectedDepartment == null || selectedReassignDepartmentId == Guid.Empty)
+                return;
+
+            var target = await stepService.GetStepAsync(selectedReassignDepartmentId);
+
+            if (target != null)
+            {
+                departmentToMove = target;
+                isMoveModalOpen = true;
+                isChangeUsersModalOpen = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task CloseMoveModal()
+        {
+            isMoveModalOpen = false;
+            selectedDepartment = null;
+            departmentToMove = null;
+            selectedReassignDepartmentId = Guid.Empty;
+            await RefreshAllData();
+            StateHasChanged();
+        }
+
+        private async Task SaveUserMovesWithoutDelete()
+        {
+            try
+            {
+                departmentToMove.Users ??= new List<UserResponseDto>();
+                selectedDepartment.Users ??= new List<UserResponseDto>();
+
+                Console.WriteLine($"Before save - Source: {selectedDepartment.Users.Count} users");
+                Console.WriteLine($"Before save - Target: {departmentToMove.Users.Count} users");
+
+                var sourcePayload = new PatchStepRequestDto
+                {
+                    Name = selectedDepartment.Name,
+                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
+                };
+
+                await stepService.UpdateStepAsync(selectedDepartment.Id, sourcePayload);
+
+                var targetPayload = new PatchStepRequestDto
+                {
+                    Name = departmentToMove.Name,
+                    UserIds = departmentToMove.Users.Select(u => u.Id).ToList()
+                };
+
+                await stepService.UpdateStepAsync(departmentToMove.Id, targetPayload);
+
+                Console.WriteLine($"Target payload: {targetPayload.UserIds.Count} users");
+                Console.WriteLine($"Source payload: {sourcePayload.UserIds.Count} users");
+
+                await RefreshAllData();
+                await CloseMoveModal();
+
+                Console.WriteLine("✅ Users moved successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"💥 Error moving users: {ex.Message}");
+                error = "Unexpected error occurred while moving users.";
+            }
+        }
+
+        private void MoveEditUserToTarget(UserResponseDto user)
+        {
+            if (departmentToMove == null || selectedDepartment == null)
+                return;
+
+            selectedDepartment.Users?.Remove(user);
+
+            departmentToMove.Users ??= new List<UserResponseDto>();
+            departmentToMove.Users.Add(user);
+
+            StateHasChanged();
+        }
+
+        private void MoveEditTeamToTarget(TeamResponseDto team)
+        {
+            if (departmentToMove == null || selectedDepartment == null)
+                return;
+
+            selectedDepartment.Teams?.Remove(team);
+
+            departmentToMove.Teams ??= new List<TeamResponseDto>();
+            departmentToMove.Teams.Add(team);
+
+            // ✅ Null check și inițializare
+            var teamUsers = team.Users ?? new List<UserResponseDto>();
+            departmentToMove.Users ??= new List<UserResponseDto>();
+
+            foreach (var user in teamUsers)
+            {
+                if (!departmentToMove.Users.Any(u => u.Id == user.Id))
+                {
+                    departmentToMove.Users.Add(user);
+                }
+            }
+
+            StateHasChanged();
+        }
+
+
+        private void ToggleEditDropdown()
+        {
+            isEditDropdownOpen = !isEditDropdownOpen;
         }
     }
 }

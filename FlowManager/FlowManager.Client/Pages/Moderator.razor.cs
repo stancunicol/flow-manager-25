@@ -68,7 +68,10 @@ namespace FlowManager.Client.Pages
         private int _historyTotalPages = 0;
         private int _historyTotalCount = 0;
         private string historySearchTerm = "";
-        private string actionFilter = "";
+
+        // Status filter state for history (like BasicUser)
+        private HashSet<string> selectedHistoryActions = new HashSet<string> { "Approved", "Rejected" };
+        private const int _historyMaxVisiblePages = 5;
 
         private UserVM _currentUser = new();
 
@@ -157,7 +160,7 @@ namespace FlowManager.Client.Pages
                     _historyCurrentPage,
                     _historyPageSize,
                     string.IsNullOrEmpty(historySearchTerm) ? null : historySearchTerm,
-                    string.IsNullOrEmpty(actionFilter) ? null : actionFilter);
+                    selectedHistoryActions.Count == 1 ? selectedHistoryActions.First() : null);
 
                 if (response != null)
                 {
@@ -197,7 +200,7 @@ namespace FlowManager.Client.Pages
         private async Task RefreshReviewHistory()
         {
             historySearchTerm = "";
-            actionFilter = "";
+            selectedHistoryActions = new HashSet<string> { "Approved", "Rejected" };
             _historyCurrentPage = 1;
             await LoadReviewHistory();
         }
@@ -219,17 +222,37 @@ namespace FlowManager.Client.Pages
             }, null, 500, Timeout.Infinite);
         }
 
-        private async Task OnActionFilterChange(ChangeEventArgs e)
+        // History status filter methods (like BasicUser)
+        private async Task FilterHistoryByAction(string action)
         {
-            actionFilter = e.Value?.ToString() ?? "";
+            selectedHistoryActions = new HashSet<string> { action };
             _historyCurrentPage = 1;
             await LoadReviewHistory();
+        }
+
+        private async Task ShowAllHistoryActions()
+        {
+            selectedHistoryActions = new HashSet<string> { "Approved", "Rejected" };
+            _historyCurrentPage = 1;
+            await LoadReviewHistory();
+        }
+
+        private bool IsOnlyHistoryActionSelected(string action)
+        {
+            return selectedHistoryActions.Count == 1 && selectedHistoryActions.Contains(action);
+        }
+
+        private bool AreAllHistoryActionsSelected()
+        {
+            return selectedHistoryActions.Count == 2 &&
+                   selectedHistoryActions.Contains("Approved") &&
+                   selectedHistoryActions.Contains("Rejected");
         }
 
         private async Task ClearHistorySearch()
         {
             historySearchTerm = "";
-            actionFilter = "";
+            selectedHistoryActions = new HashSet<string> { "Approved", "Rejected" };
             _historyCurrentPage = 1;
             await LoadReviewHistory();
         }
@@ -264,25 +287,22 @@ namespace FlowManager.Client.Pages
             await LoadReviewHistory();
         }
 
-        private List<int> GetHistoryPageNumbers()
+        // History pagination helper methods (like BasicUser)
+        private IEnumerable<int> GetHistoryPageNumbers()
         {
-            List<int> pages = new List<int>();
-            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
-            int start = Math.Max(1, _historyCurrentPage - half);
-            int end = Math.Min(_historyTotalPages, start + _maxVisiblePages - 1);
+            var startPage = Math.Max(1, _historyCurrentPage - _historyMaxVisiblePages / 2);
+            var endPage = Math.Min(_historyTotalPages, startPage + _historyMaxVisiblePages - 1);
 
-            if (end - start + 1 < _maxVisiblePages)
+            // Adjust start if we're near the end
+            if (endPage - startPage < _historyMaxVisiblePages - 1)
             {
-                start = Math.Max(1, end - _maxVisiblePages + 1);
+                startPage = Math.Max(1, endPage - _historyMaxVisiblePages + 1);
             }
 
-            for (int i = start; i <= end; i++)
-            {
-                pages.Add(i);
-            }
-
-            return pages;
+            return Enumerable.Range(startPage, endPage - startPage + 1);
         }
+
+
 
         private async Task LoadAssignedForms(bool append = false)
         {
@@ -653,7 +673,7 @@ namespace FlowManager.Client.Pages
                 Console.WriteLine($"[DEBUG APPROVE] Next step ID: {nextStepInfo?.NextStepId}");
                 Console.WriteLine($"[DEBUG APPROVE] Next step Name: {nextStepInfo?.NextStepName}");
 
-                if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId.HasValue)
+                if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId != Guid.Empty)
                 {
                     payload.StepId = nextStepInfo.NextStepId.Value;
                     Console.WriteLine($"[DEBUG APPROVE] MOVING TO NEXT STEP: {nextStepInfo.NextStepId.Value}");

@@ -98,48 +98,67 @@ namespace FlowManager.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(Guid moderatorId, string? name, QueryParams? parameters)
+        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(
+    Guid moderatorId,
+    string? name,
+    QueryParams? parameters)
         {
+            // 1. Pornim query simplu pe Steps
             IQueryable<Step> query = _context.Steps
-                .Where(s => s.Users.Any(u => u.Roles.Any(ur => ur.DeletedAt == null && ur.RoleId == moderatorId)))
-                .Include(s => s.Users.Where(u => u.DeletedAt == null && u.Roles.Any(ur => ur.RoleId == moderatorId)))
-                    .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
-                        .ThenInclude(ut => ut.Team);
+                .Where(s => s.DeletedAt == null);
 
-            query = query.Where(s => s.DeletedAt == null);
-
+            // 2. Filtrare după nume dacă există
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(s => s.Name.ToUpper().Contains(name.ToUpper()));
+                var upperName = name.ToUpper();
+                query = query.Where(s => s.Name.ToUpper().Contains(upperName));
             }
 
-            int totalCount = query.Count();
+            // 3. Total count înainte de paginare
+            int totalCount = await query.CountAsync();
 
-            if (parameters == null)
+            // 4. Sortare
+            if (!string.IsNullOrEmpty(parameters?.SortBy))
             {
-                return (await query.ToListAsync(), totalCount);
-            }
-
-            if (parameters.SortBy != null)
-            {
-                if (parameters.SortDescending is bool sortDesc)
-                    query = query.ApplySorting<Step>(parameters.SortBy, sortDesc);
-                else
-                    query = query.ApplySorting<Step>(parameters.SortBy, false);
+                query = query.ApplySorting<Step>(parameters.SortBy, parameters.SortDescending ?? false);
             }
 
-            if (parameters.Page == null || parameters.Page < 0 ||
-               parameters.PageSize == null || parameters.PageSize < 0)
+            // 5. Paginare
+            if (parameters?.Page != null && parameters?.PageSize != null &&
+                parameters.Page > 0 && parameters.PageSize > 0)
             {
-                return (await query.ToListAsync(), totalCount);
+                query = query
+                    .Skip(parameters.PageSize.Value * (parameters.Page.Value - 1))
+                    .Take(parameters.PageSize.Value);
             }
-            else
+
+            // 6. Obținem doar Id-urile Steps filtrate + paginate
+            var stepIds = await query.Select(s => s.Id).ToListAsync();
+            if (!stepIds.Any())
+                return (new List<Step>(), totalCount);
+
+            // 7. Luăm Steps simple
+            var steps = await _context.Steps
+                .Where(s => stepIds.Contains(s.Id))
+                .ToListAsync();
+
+            // 8. Luăm Users pentru aceste Steps
+            var users = await _context.Users
+    .Where(u => stepIds.Contains(u.StepId))
+    .Include(u => u.Teams)      // doar UserTeams, fără ThenInclude
+    .ToListAsync();
+
+            // 9. Grupăm Users pe StepId
+            var usersGrouped = users.GroupBy(u => u.StepId)
+                                    .ToDictionary(g => g.Key, g => g.ToList());
+
+            // 10. Mapăm Users la Steps
+            foreach (var step in steps)
             {
-                List<Step> steps = await query.Skip((int)parameters.PageSize * ((int)parameters.Page - 1))
-                                               .Take((int)parameters.PageSize)
-                                               .ToListAsync();
-                return (steps, totalCount);
+                step.Users = usersGrouped.TryGetValue(step.Id, out var stepUsers) ? stepUsers : new List<User>();
             }
+
+            return (steps, totalCount);
         }
     }
 }

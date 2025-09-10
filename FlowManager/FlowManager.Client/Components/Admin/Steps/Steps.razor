@@ -35,19 +35,6 @@
                 <button class="close-icon" @onclick="CloseModal">✕</button>
             </div>
 
-            @if (selectedDepartment.Teams != null && selectedDepartment.Teams.Any())
-            {
-                <div class="modal-section">
-                    <h4>Teams</h4>
-                    <ul>
-                        @foreach (var team in selectedDepartment.Teams)
-                        {
-                            <li>@team.Name</li>
-                        }
-                    </ul>
-                </div>
-            }
-
             @if (selectedDepartment.Users != null && selectedDepartment.Users.Any())
             {
                 <div class="modal-section">
@@ -61,9 +48,32 @@
                 </div>
             }
 
+            @if (selectedDepartment.Teams != null && selectedDepartment.Teams.Any())
+            {
+                <div class="modal-section">
+                    <h4>Teams</h4>
+                    <ul>
+                        @foreach (var team in selectedDepartment.Teams)
+                        {
+                            <li>@team.Name</li>
+                        }
+                    </ul>
+                </div>
+            }
+
             <div class="modal-actions">
-                <button class="action-btn edit-btn" @onclick="async () => await OpenEditModal(selectedDepartment)">✎ Edit</button>
-                <button class="action-btn delete-btn" @onclick="async () => await OpenDeleteDepartmentModal(selectedDepartment.Id)">🗑 Delete</button>
+                <div class="edit-dropdown @(isEditDropdownOpen ? "active" : "")">
+                    <button class="action-btn edit-btn" @onclick="ToggleEditDropdown">
+                        ✎ Edit
+                        <span class="icon">▾</span>
+                    </button>
+
+                    <ul class="edit-dropdown-menu">
+                        <li @onclick="() => OpenChangeNameModal(selectedDepartment)">Change Name</li>
+                        <li @onclick="() => OpenChangeUsersModal(selectedDepartment)">Change Users</li>
+                    </ul>
+                </div>
+                <button class="action-btn delete-btn" @onclick="async () => await OpenSelectDepartmentModal(selectedDepartment.Id)">🗑 Delete</button>
             </div>
         </div>
     </div>
@@ -82,46 +92,6 @@
                 <p class="error-text">@error</p>
             }
 
-            <div class="users-list">
-                <h3>Select Users</h3>
-                @if (unsignedUsers?.Any() == true)
-                {
-                    @foreach (var user in unsignedUsers)
-                    {
-                        <label class="user-checkbox">
-                            <input type="checkbox"
-                                   value="@user.Id"
-                                   @onchange="e => ToggleUserSelection(user, (bool)e.Value)" />
-                            <span>@user.Name (@user.Email)</span>
-                        </label>
-                    }
-                }
-                else
-                {
-                    <p class="no-users">No available users</p>
-                }
-            </div>
-
-            <div class="teams-list">
-                <h3>Select Teams</h3>
-                @if (allTeams?.Any() == true)
-                {
-                    @foreach (var team in allTeams)
-                    {
-                        <label class="team-checkbox">
-                            <input type="checkbox"
-                                   value="@team.Id"
-                                   @onchange="e => ToggleTeamSelection(team, (bool)e.Value)" />
-                            <span>@team.Name</span>
-                        </label>
-                    }
-                }
-                else
-                {
-                    <p class="no-teams">No available teams</p>
-                }
-            </div>
-
             <div class="modal-actions">
                 <button class="btn save-btn" @onclick="SaveDepartment">💾 Save</button>
                 <button class="btn cancel-btn" @onclick="CloseCreateModal">✕ Cancel</button>
@@ -130,61 +100,35 @@
     </div>
 }
 
-@if (isEditModalOpen && selectedDepartment != null)
+@if (isEditModalOpen && currentEditType == EditType.ChangeName && selectedDepartment != null)
 {
     <div class="edit-dep-modal-overlay" @onclick="CloseEditModal">
         <div class="edit-dep-modal" @onclick:stopPropagation="true">
-            <h2>Edit Department</h2>
+            <!-- Header -->
+            <div class="edit-dep-modal-header">
+                <h3>Change Department Name</h3>
+                <button class="close-btn" @onclick="CloseEditModal">✕</button>
+            </div>
 
-            <div class="users-list">
-                <h3>Assigned Users</h3>
-                @if (allUsers?.Any() == true)
+            <!-- Body -->
+            <div class="edit-dep-name">
+                <label for="depName">Department Name:</label>
+                <input id="depName" type="text" @bind="editDepName" placeholder="Enter department name" />
+                @if (!string.IsNullOrEmpty(error))
                 {
-                    @foreach (var user in allUsers)
-                    {
-                        <label class="user-checkbox">
-                            <input type="checkbox"
-                                   value="@user.Id"
-                                   checked="@selectedUsers.Any(u => u.Id == user.Id)"
-                                   @onchange="e => ToggleUserSelection(user, (bool)e.Value)" />
-                            <span>@user.Name (@user.Email)</span>
-                        </label>
-                    }
-                }
-                else
-                {
-                    <p class="no-users">No users found</p>
+                    <div class="error-text">@error</div>
                 }
             </div>
 
-            <div class="teams-list">
-                <h3>Assigned Teams</h3>
-                @if (allTeams?.Any() == true)
-                {
-                    @foreach (var team in allTeams)
-                    {
-                        <label class="team-checkbox">
-                            <input type="checkbox"
-                                   value="@team.Id"
-                                   checked="@selectedTeams.Any(t => t.Id == team.Id)"
-                                   @onchange="e => ToggleTeamSelection(team, (bool)e.Value)" />
-                            <span>@team.Name</span>
-                        </label>
-                    }
-                }
-                else
-                {
-                    <p class="no-teams">No teams found</p>
-                }
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn save-btn" @onclick="SaveEditDepartment">💾 Save</button>
-                <button class="btn cancel-btn" @onclick="CloseEditModal">✕ Cancel</button>
+            <!-- Footer Actions -->
+            <div class="edit-dep-modal-actions">
+                <button class="btn cancel-btn" @onclick="CloseEditModal">Cancel</button>
+                <button class="btn save-btn" @onclick="SaveEditNameDepartment">Save Changes</button>
             </div>
         </div>
     </div>
 }
+
 
 @if (isDeleteModalOpen && departmentToDelete != null)
 {
@@ -206,7 +150,7 @@
             </select>
 
             <div class="delete-modal-actions">
-                <button class="btn cancel-btn" @onclick="CloseDeleteDepartmentModal">✕ Cancel</button>
+                <button class="btn cancel-btn" @onclick="CloseSelectDepartmentModal">✕ Cancel</button>
                 <button class="btn save-btn" @onclick="OpenMoveUsersModal">➡ Next</button>
             </div>
         </div>
@@ -302,6 +246,112 @@
             <div class="select-modal-actions">
                 <button class="btn cancel-btn" @onclick="CloseMoveUsersModal">✕ Cancel</button>
                 <button class="btn save-btn" @onclick="SaveUserMoves">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (isChangeUsersModalOpen && selectedDepartment != null)
+{
+    <div class="delete-modal-backdrop" @onclick="() => isChangeUsersModalOpen = false">
+        <div class="delete-modal-content" @onclick:stopPropagation="true">
+            <div class="delete-modal-header">
+                <h3>Move users from @selectedDepartment.Name</h3>
+                <button class="close-icon" @onclick="() => isChangeUsersModalOpen = false">✕</button>
+            </div>
+
+            <p>Select the department where you want to move the employees:</p>
+
+            <select @bind="selectedReassignDepartmentId">
+                <option value="">-- Select department --</option>
+                @foreach (var dep in departments.Where(d => d.Id != selectedDepartment.Id))
+                {
+                    <option value="@dep.Id">@dep.Name</option>
+                }
+            </select>
+
+            <div class="delete-modal-actions">
+                <button class="btn cancel-btn" @onclick="() => isChangeUsersModalOpen = false">✕ Cancel</button>
+                <button class="btn save-btn" @onclick="OpenMoveModal">➡ Next</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (isMoveModalOpen && selectedDepartment != null && departmentToMove != null)
+{
+    <div class="select-modal-backdrop" @onclick="() => isMoveModalOpen = false">
+        <div class="select-modal-content wide" @onclick:stopPropagation="true">
+            <div class="select-modal-header">
+                <h3>Move Users from @selectedDepartment.Name to @departmentToMove.Name</h3>
+                <button class="close-icon" @onclick="() => isMoveModalOpen = false">✕</button>
+            </div>
+
+            <div class="select-move-users-container">
+                <div class="users-column">
+                    <h4>@selectedDepartment.Name - Users</h4>
+                    <ul>
+                        @foreach (var user in selectedDepartment.Users)
+                        {
+                            <li>
+                                <span>@user.Name (@user.Email)</span>
+                                <button class="move-btn" @onclick="() => MoveEditUserToTarget(user)">➡</button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class="users-column">
+                    <h4>@departmentToMove.Name - Users</h4>
+                    <ul>
+                        @foreach (var user in departmentToMove.Users)
+                        {
+                            <li>@user.Name (@user.Email)</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="select-move-teams-container">
+                <div class="teams-column">
+                    <h4>@selectedDepartment.Name - Teams</h4>
+                    <ul>
+                        @if (selectedDepartment.Teams != null && selectedDepartment.Teams.Any())
+                        {
+                            @foreach (var team in selectedDepartment.Teams)
+                            {
+                                <li class="team-item">
+                                    <span>@team.Name</span>
+                                    <button class="move-btn" @onclick="() => MoveEditTeamToTarget(team)">➡</button>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="empty-slot">No teams to move</li>
+                        }
+                    </ul>
+                </div>
+
+                <div class="teams-column">
+                    <h4>@departmentToMove.Name - Teams</h4>
+                    <ul>
+                        @if (departmentToMove.Teams != null && departmentToMove.Teams.Any())
+                        {
+                            @foreach (var team in departmentToMove.Teams)
+                            {
+                                <li class="team-item"><span>@team.Name</span></li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="empty-slot">No teams yet</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="select-modal-actions">
+                <button class="btn cancel-btn" @onclick="() => isMoveModalOpen = false">Cancel</button>
+                <button class="btn save-btn" @onclick="SaveUserMovesWithoutDelete">Save Changes</button>
             </div>
         </div>
     </div>

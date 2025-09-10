@@ -336,7 +336,33 @@
                 </div>
 
                 <!-- Search and Filter Bar -->
-                <div class="search-container">
+                <div class="user-forms-search-container">
+                    <!-- Action Filter Buttons (like BasicUser status filters) -->
+                    <div class="status-filter-container">
+                        <div class="status-filter-header">
+                            <span class="filter-label">Filter by action:</span>
+                        </div>
+                        <div class="status-filter-buttons">
+                            <button class="status-filter-btn all @(AreAllHistoryActionsSelected() ? "active" : "")"
+                                    @onclick="ShowAllHistoryActions">
+                                <div class="status-indicator all"></div>
+                                <span>All</span>
+                            </button>
+
+                            <button class="status-filter-btn approved @(IsOnlyHistoryActionSelected("Approved") ? "active" : "")"
+                                    @onclick="@(() => FilterHistoryByAction("Approved"))">
+                                <div class="status-indicator approved"></div>
+                                <span>Approved</span>
+                            </button>
+
+                            <button class="status-filter-btn rejected @(IsOnlyHistoryActionSelected("Rejected") ? "active" : "")"
+                                    @onclick="@(() => FilterHistoryByAction("Rejected"))">
+                                <div class="status-indicator rejected"></div>
+                                <span>Rejected</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="search-input-wrapper">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
                             <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
@@ -355,31 +381,6 @@
                             </button>
                         }
                     </div>
-
-                    <!-- Action Filter -->
-                    <div style="margin-top: 0.75rem;">
-                        <select class="search-input" style="padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 6px;"
-                                @onchange="OnActionFilterChange" value="@actionFilter">
-                            <option value="">All Actions</option>
-                            <option value="Approved">Approved Only</option>
-                            <option value="Rejected">Rejected Only</option>
-                        </select>
-                    </div>
-
-                    @if (!string.IsNullOrEmpty(historySearchTerm) || !string.IsNullOrEmpty(actionFilter))
-                    {
-                        <div class="search-results-info">
-                            Showing @_historyTotalCount result(s)
-                            @if (!string.IsNullOrEmpty(historySearchTerm))
-                            {
-                                <span> for "@historySearchTerm"</span>
-                            }
-                            @if (!string.IsNullOrEmpty(actionFilter))
-                            {
-                                <span> with action "@actionFilter"</span>
-                            }
-                        </div>
-                    }
                 </div>
 
                 <!-- Content -->
@@ -448,62 +449,84 @@
                         }
                     </div>
 
-                    <!-- Pagination pentru istoric -->
+                    <!-- PAGINATION (same style as BasicUser) -->
                     @if (_historyTotalPages > 1)
                     {
                         <div class="pagination-container">
-                            <nav style="display: flex; justify-content: space-between; align-items: center;">
-                                <!-- Previous/Next buttons -->
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button class="pagination-btn pagination-btn-nav"
-                                            @onclick="GoToHistoryFirstPage"
-                                            disabled="@(_historyCurrentPage == 1)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="pagination-icon">
-                                            <path fill-rule="evenodd" d="M13.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L11.69 12 4.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clip-rule="evenodd" />
-                                        </svg>
+                            <nav>
+                                <!-- First page btn-->
+                                <button @onclick="GoToHistoryFirstPage"
+                                        disabled="@(_historyCurrentPage == 1)"
+                                        class="pagination-btn pagination-btn-first pagination-btn-nav">
+                                    <svg class="pagination-icon"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 20 20"
+                                         fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                              d="M15.707 15.707a1 1 0 01-1.414 0L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z"
+                                              clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <!-- Previous page btn -->
+                                <button @onclick="GoToHistoryPreviousPage"
+                                        disabled="@(_historyCurrentPage == 1)"
+                                        class="pagination-btn pagination-btn-nav">
+                                    <svg class="pagination-icon"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 20 20"
+                                         fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                              clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <!-- Paged Numbers - go to page x -->
+                                @foreach (int pageNumber in GetHistoryPageNumbers())
+                                {
+                                    <button @onclick="() => GoToHistoryPage(pageNumber)"
+                                            class="pagination-btn pagination-btn-page @(pageNumber == _historyCurrentPage ? "pagination-btn-active" : "")">
+                                        @pageNumber
                                     </button>
-
-                                    <button class="pagination-btn pagination-btn-nav"
-                                            @onclick="GoToHistoryPreviousPage"
-                                            disabled="@(_historyCurrentPage == 1)">
-                                        Previous
-                                    </button>
-                                </div>
-
-                                <!-- Page numbers -->
-                                <div style="display: flex; gap: 0.25rem;">
-                                    @foreach (var pageNum in GetHistoryPageNumbers())
-                                    {
-                                        <button class="pagination-btn pagination-btn-page @(_historyCurrentPage == pageNum ? "pagination-btn-active" : "")"
-                                                @onclick="() => GoToHistoryPage(pageNum)">
-                                            @pageNum
-                                        </button>
-                                    }
-                                </div>
-
-                                <!-- Next/Last buttons -->
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button class="pagination-btn pagination-btn-nav"
-                                            @onclick="GoToHistoryNextPage"
-                                            disabled="@(_historyCurrentPage == _historyTotalPages)">
-                                        Next
-                                    </button>
-
-                                    <button class="pagination-btn pagination-btn-nav"
-                                            @onclick="GoToHistoryLastPage"
-                                            disabled="@(_historyCurrentPage == _historyTotalPages)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="pagination-icon">
-                                            <path fill-rule="evenodd" d="M10.72 11.47a.75.75 0 000 1.06l7.5 7.5a.75.75 0 101.06-1.06L12.31 12l6.97-6.97a.75.75 0 00-1.06-1.06l-7.5 7.5z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
+                                }
+                                <!-- Ellipsis if are more pages available -->
+                                @if (_historyTotalPages > _historyMaxVisiblePages && _historyCurrentPage < _historyTotalPages - 2)
+                                {
+                                    <span class="pagination-ellipsis">
+                                        ...
+                                    </span>
+                                }
+                                <!-- Next page button -->
+                                <button @onclick="GoToHistoryNextPage"
+                                        disabled="@(_historyCurrentPage == _historyTotalPages)"
+                                        class="pagination-btn pagination-btn-nav">
+                                    <svg class="pagination-icon"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 20 20"
+                                         fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                              clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <!-- Last page button -->
+                                <button @onclick="GoToHistoryLastPage"
+                                        disabled="@(_historyCurrentPage == _historyTotalPages)"
+                                        class="pagination-btn pagination-btn-last pagination-btn-nav">
+                                    <svg class="pagination-icon"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 20 20"
+                                         fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                              d="M10.293 15.707a1 1 0 010-1.414L13.586 11H3a1 1 0 110-2h10.586l-3.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
+                                              clip-rule="evenodd" />
+                                    </svg>
+                                </button>
                             </nav>
 
-                            <!-- Page info -->
+                            <!-- Pagination info -->
                             <div class="pagination-info">
                                 <span class="pagination-info-text">
-                                    Showing @(Math.Min((_historyCurrentPage - 1) * _historyPageSize + 1, _historyTotalCount)) to
-                                    @(Math.Min(_historyCurrentPage * _historyPageSize, _historyTotalCount)) of @_historyTotalCount results
+                                    Showing @((_historyCurrentPage - 1) * _historyPageSize + 1) - @((_historyCurrentPage - 1) * _historyPageSize + (reviewHistory?.Count ?? 0)) of @(_historyTotalCount) reviews
                                 </span>
                             </div>
                         </div>
@@ -517,9 +540,9 @@
                                 <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <h4>@(string.IsNullOrEmpty(historySearchTerm) && string.IsNullOrEmpty(actionFilter) ? "No review history" : "No matching reviews")</h4>
-                        <p>@(string.IsNullOrEmpty(historySearchTerm) && string.IsNullOrEmpty(actionFilter) ? "You haven't reviewed any forms yet." : "No reviews found matching your criteria.")</p>
-                        @if (!string.IsNullOrEmpty(historySearchTerm) || !string.IsNullOrEmpty(actionFilter))
+                        <h4>@(string.IsNullOrEmpty(historySearchTerm) && AreAllHistoryActionsSelected() ? "No review history" : "No matching reviews")</h4>
+                        <p>@(string.IsNullOrEmpty(historySearchTerm) && AreAllHistoryActionsSelected() ? "You haven't reviewed any forms yet." : "No reviews found matching your criteria.")</p>
+                        @if (!string.IsNullOrEmpty(historySearchTerm) || !AreAllHistoryActionsSelected())
                         {
                             <button class="clear-search-btn-alt" @onclick="ClearHistorySearch">
                                 Clear Filters

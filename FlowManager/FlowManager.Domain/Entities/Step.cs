@@ -15,8 +15,8 @@ namespace FlowManager.Domain.Entities
         public string Name { get; set; } = string.Empty;
 
         // navigation properties
-        public virtual ICollection<FlowStep> FlowSteps { get; set; } = new List<FlowStep>();
-        public virtual ICollection<User> Users { get; set; } = new List<User>();
+    public virtual ICollection<FlowStep> FlowSteps { get; set; } = new List<FlowStep>();
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

@@ -45,7 +45,7 @@ namespace FlowManager.Infrastructure.Repositories
                 query = query.Where(fr => fr.FormTemplateId == formTemplateId.Value);
             }
 
-            if (stepId.HasValue)
+            if (stepId.HasValue && stepId != Guid.Empty)
             {
                 query = query.Where(fr => fr.StepId == stepId.Value);
             }
@@ -76,7 +76,7 @@ namespace FlowManager.Infrastructure.Repositories
             }
 
             // ADAUGĂ filtrarea după statusuri
-            if (statusFilters?.Any() == true)
+            if (statusFilters != null && statusFilters.Any())
             {
                 query = query.Where(fr => statusFilters.Contains(fr.Status ?? "Pending"));
             }
@@ -182,8 +182,10 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(fr => fr.User)
                 .Where(fr =>
                     // Doar formularele unde moderatorul este asignat la step-ul curent
-                    fr.Step.Users.Any(u => u.Id == moderatorId && u.DeletedAt == null) ||
-                    fr.Step.Users.SelectMany(ut => ut.Teams).Any(st => st.Team.Users.Any(ut => ut.UserId == moderatorId && ut.DeletedAt == null) && st.DeletedAt == null)
+                    (fr.Step.Users.Any(u => u.Id == moderatorId && u.DeletedAt == null) ||
+                    fr.Step.Users.SelectMany(ut => ut.Teams).Any(st => st.Team.Users.Any(ut => ut.UserId == moderatorId && ut.DeletedAt == null) && st.DeletedAt == null)) &&
+                    // IMPORTANT: Doar formularele în status "Pending" - care așteaptă review
+                    (fr.Status == null || fr.Status == "Pending")
                 );
 
             // Exclude deleted unless explicitly requested
@@ -198,7 +200,8 @@ namespace FlowManager.Infrastructure.Repositories
                 query = query.Where(fr =>
                     (fr.FormTemplate != null && fr.FormTemplate.Name.Contains(searchTerm)) ||
                     (fr.Step != null && fr.Step.Name.Contains(searchTerm)) ||
-                    (fr.User != null && (fr.User.Name.Contains(searchTerm) || fr.User.Email.Contains(searchTerm))) ||
+                    (fr.User != null && (!string.IsNullOrEmpty(fr.User.Name) && fr.User.Name.Contains(searchTerm) ||
+                                        !string.IsNullOrEmpty(fr.User.Email) && fr.User.Email.Contains(searchTerm))) ||
                     (fr.RejectReason != null && fr.RejectReason.Contains(searchTerm))
                 );
             }

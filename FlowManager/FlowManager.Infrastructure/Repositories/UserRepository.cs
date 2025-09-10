@@ -62,62 +62,53 @@ namespace FlowManager.Infrastructure.Repositories
             return await GetUsersWithIncludes(query).ToListAsync();
         }
 
-        public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email,string? globalSearchTerm, QueryParams? parameters, bool includeDeleted = false)
+        public async Task<(List<User> Data, int TotalCount)> GetAllUsersQueriedAsync(string? email, string? globalSearchTerm, QueryParams? parameters, bool includeDeleted = false)
         {
             IQueryable<User> query = _context.Users
-                .Include(u => u.Roles.Where(ur => ur.DeletedAt == null))
+                .Include(u => u.Roles)
                     .ThenInclude(ur => ur.Role)
-                .Include(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                .Include(u => u.Teams)
                     .ThenInclude(ut => ut.Team)
                 .Include(u => u.Step);
 
             if (!includeDeleted)
                 query = query.Where(u => u.DeletedAt == null);
 
-            if(!string.IsNullOrEmpty(globalSearchTerm))
+            if (!string.IsNullOrEmpty(globalSearchTerm))
             {
-                query = query.Where(u => u.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) || 
-                                         u.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()) || 
-                                         u.Step.Name.ToUpper().Contains(globalSearchTerm) || 
-                                         u.Roles.Any(ur => ur.Role.Name.ToUpper().Contains(globalSearchTerm)));
+                var term = globalSearchTerm.ToUpper();
+                query = query.Where(u =>
+                    (u.Name != null && u.Name.ToUpper().Contains(term)) ||
+                    (u.NormalizedEmail != null && u.NormalizedEmail.Contains(term)) ||
+                    (u.Step != null && u.Step.Name.ToUpper().Contains(term)) ||
+                    u.Roles.Any(r => r.Role != null && r.Role.Name.ToUpper().Contains(term))
+                );
             }
 
             if (!string.IsNullOrEmpty(email))
-            {
-                query = query.Where(u => u.NormalizedEmail!.Contains(email.ToUpper()));
-            }
+                query = query.Where(u => u.NormalizedEmail != null && u.NormalizedEmail.Contains(email.ToUpper()));
 
             int totalCount = await query.CountAsync();
 
-            if (parameters == null)
+            if (!string.IsNullOrEmpty(parameters?.SortBy))
+                query = query.ApplySorting<User>(parameters.SortBy, parameters.SortDescending ?? false);
+
+            if (parameters?.Page != null && parameters?.Page > 0 &&
+                parameters?.PageSize != null && parameters.PageSize > 0)
             {
-                var data = await query.ToListAsync();
-                return (data, totalCount);
+                query = query.Skip(parameters.PageSize.Value * (parameters.Page.Value - 1))
+                             .Take(parameters.PageSize.Value);
             }
 
-            // Sortare
-            if (parameters.SortBy != null)
-            {
-                if (parameters.SortDescending is bool SortDesc)
-                    query = query.ApplySorting<User>(parameters.SortBy, SortDesc);
-                else
-                    query = query.ApplySorting<User>(parameters.SortBy, false);
-            }
+            var users = await query.ToListAsync();
 
-            // Paginare
-            if (parameters.Page == null || parameters.Page < 0 ||
-                parameters.PageSize == null || parameters.PageSize < 0)
+            users.ForEach(u =>
             {
-                List<User> data = await query.ToListAsync();
-                return (data, totalCount);
-            }
-            else
-            {
-                List<User> data = await query.Skip((int)parameters.PageSize * ((int)parameters.Page - 1))
-                                                     .Take((int)parameters.PageSize)
-                                                     .ToListAsync();
-                return (data, totalCount);
-            }
+                u.Roles = u.Roles.Where(r => r.DeletedAt == null).ToList();
+                u.Teams = u.Teams.Where(t => t.DeletedAt == null).ToList();
+            });
+
+            return (users, totalCount);
         }
 
         public async Task<(List<User> Data, int TotalCount)> GetAllUsersFilteredAsync(string? email, QueryParams? parameters)

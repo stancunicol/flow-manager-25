@@ -19,7 +19,7 @@ namespace FlowManager.Application.Services
         private readonly IEmailService _emailService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserService _userService;
-         private readonly IFormReviewRepository _formReviewRepository;
+        private readonly IFormReviewRepository _formReviewRepository;
         public FormResponseService(
             IFormResponseRepository formResponseRepository,
             IFormReviewRepository formReviewRepository,
@@ -27,7 +27,7 @@ namespace FlowManager.Application.Services
             IEmailService emailService,
             IHttpContextAccessor httpContextAccessor,
             IUserService userService)
-        
+
 
         {
             _formResponseRepository = formResponseRepository ?? throw new ArgumentNullException(nameof(formResponseRepository));
@@ -200,7 +200,7 @@ namespace FlowManager.Application.Services
             var httpContext = _httpContextAccessor.HttpContext;
             bool isAdminCompletingForUser = false;
             string? adminName = null;
-            
+
             if (httpContext?.User != null)
             {
                 isAdminCompletingForUser = httpContext.User.FindFirst("IsImpersonating")?.Value == "true";
@@ -238,12 +238,12 @@ namespace FlowManager.Application.Services
                         adminName,
                         formResponse.CreatedAt
                     );
-                    _logger.LogInformation("Email sent to user {UserEmail} for form completed by admin {AdminName}", 
+                    _logger.LogInformation("Email sent to user {UserEmail} for form completed by admin {AdminName}",
                         createdFormResponse.User?.Email, adminName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to send email to user {UserEmail} for form completed by admin", 
+                    _logger.LogError(ex, "Failed to send email to user {UserEmail} for form completed by admin",
                         createdFormResponse.User?.Email);
                 }
             }
@@ -319,21 +319,13 @@ namespace FlowManager.Application.Services
             else if (payload.RejectReason == null && !string.IsNullOrEmpty(formResponse.RejectReason))
             {
                 formResponse.RejectReason = null;
-                // Verifică dacă e ultimul step pentru a decide statusul
-                if (payload.StepId.HasValue)
-                {
-                    var isLastStep = await _formResponseRepository.IsLastStepInFlowAsync(payload.StepId.Value);
-                    formResponse.Status = isLastStep ? "Approved" : "Pending";
-                }
-                else
-                {
-                    formResponse.Status = "Pending";
-                }
+                // Status-ul rămâne "Pending" - moderatorul trebuie să dea manual approve
+                formResponse.Status = "Pending";
                 _logger.LogInformation("Form response {Id} reject reason cleared, status set to: {Status}", payload.Id, formResponse.Status);
             }
 
             // LOGICA PENTRU SCHIMBAREA STEP-ULUI (approve și move to next step)
-            if (payload.StepId.HasValue && payload.StepId.Value != formResponse.StepId)
+            if (payload.StepId.HasValue && payload.StepId != Guid.Empty && payload.StepId.Value != formResponse.StepId)
             {
                 // Înregistrează approve-ul pentru step-ul curent ÎNAINTE de mutare
                 if (payload.ReviewerId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
@@ -350,11 +342,11 @@ namespace FlowManager.Application.Services
 
                 formResponse.StepId = payload.StepId.Value;
 
-                // SCHIMBAT: Nu setez automat status-ul la "Approved" când ajunge la ultimul step
-                // Formularele rămân "Pending" la fiecare step pentru review de către moderatori
+                // MODIFICAT: Setez statusul să rămână "Pending" pentru toate step-urile
+                // Moderatorul trebuie să dea manual approve/reject, chiar și la ultimul step
                 if (string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
                 {
-                    formResponse.Status = "Pending"; // Întotdeauna "Pending" pentru review
+                    formResponse.Status = "Pending"; // Așteaptă review la noul step
                 }
 
                 _logger.LogInformation("Form response {Id} moved from step {PreviousStepId} to step {NewStepId}, status: {Status}",
@@ -365,6 +357,20 @@ namespace FlowManager.Application.Services
             if (!string.IsNullOrEmpty(payload.Status))
             {
                 formResponse.Status = payload.Status;
+
+                // Dacă e approve explicit (fără schimbarea step-ului), înregistrează review-ul
+                if (payload.Status == "Approved" && payload.ReviewerId.HasValue && reviewToRecord == null)
+                {
+                    reviewToRecord = new FormReview
+                    {
+                        FormResponseId = payload.Id,
+                        ReviewerId = payload.ReviewerId.Value,
+                        StepId = formResponse.StepId,
+                        Action = "Approved",
+                        ReviewedAt = DateTime.UtcNow
+                    };
+                }
+
                 _logger.LogInformation("Form response {Id} status explicitly set to: {Status}", payload.Id, payload.Status);
             }
 
@@ -372,15 +378,15 @@ namespace FlowManager.Application.Services
             var httpContext = _httpContextAccessor.HttpContext;
             bool isAdminActing = false;
             string? adminName = null;
-            
+
             if (httpContext?.User != null)
             {
                 var impersonatingClaim = httpContext.User.FindFirst("IsImpersonating")?.Value;
                 bool isImpersonating = impersonatingClaim == "true";
                 bool isAdmin = httpContext.User.HasClaim(c => c.Type == "OriginalAdminId");
-                
+
                 isAdminActing = isAdmin; // Admin acting either as themselves or impersonating
-                
+
                 if (isImpersonating)
                 {
                     // If impersonating, get the original admin name
@@ -391,16 +397,16 @@ namespace FlowManager.Application.Services
                     // If admin acting as themselves, get their name from Name claim
                     adminName = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
                 }
-                
-                _logger.LogInformation("PatchFormResponse - IsAdmin: {IsAdmin}, IsImpersonating: '{IsImpersonating}', AdminName: '{AdminName}'", 
+
+                _logger.LogInformation("PatchFormResponse - IsAdmin: {IsAdmin}, IsImpersonating: '{IsImpersonating}', AdminName: '{AdminName}'",
                     isAdmin, impersonatingClaim, adminName);
-                
+
                 // Track admin approval if admin is acting
                 if (isAdminActing && !string.IsNullOrEmpty(adminName))
                 {
                     formResponse.ApprovedByAdmin = true;
                     formResponse.ApprovedByAdminName = adminName;
-                    _logger.LogInformation("Admin approval tracked for form {FormId} by admin {AdminName}", 
+                    _logger.LogInformation("Admin approval tracked for form {FormId} by admin {AdminName}",
                         formResponse.Id, adminName);
                 }
             }
@@ -425,9 +431,9 @@ namespace FlowManager.Application.Services
             var updatedFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
 
             // Send email notification to impersonated user when admin takes action
-            _logger.LogInformation("🔥 Email Debug - IsAuthenticated: {IsAuthenticated}, IsAdmin: {IsAdmin}", 
+            _logger.LogInformation("🔥 Email Debug - IsAuthenticated: {IsAuthenticated}, IsAdmin: {IsAdmin}",
                 httpContext?.User?.Identity?.IsAuthenticated, httpContext?.User?.HasClaim(c => c.Type == "OriginalAdminId"));
-                
+
             if (httpContext?.User?.Identity?.IsAuthenticated == true && httpContext.User.HasClaim(c => c.Type == "OriginalAdminId"))
             {
                 _logger.LogInformation("🔥 Admin detected - proceeding with impersonated user notification");
@@ -435,7 +441,7 @@ namespace FlowManager.Application.Services
                 {
                     var currentAdminName = httpContext.User.FindFirstValue("OriginalAdminName") ?? "Admin";
                     _logger.LogInformation("🔥 Current admin name: {AdminName}", currentAdminName);
-                    
+
                     // Get the impersonated user (the user who owns this form response)
                     var impersonatedUserName = httpContext.User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name");
                     var impersonatedUserEmail = httpContext.User.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
@@ -443,7 +449,7 @@ namespace FlowManager.Application.Services
                     {
                         _logger.LogInformation("🔥 Processing impersonated user: {UserEmail}, Status: {Status}, RejectReason: '{RejectReason}', PreviousStatus: {PreviousStatus}",
                             impersonatedUserEmail, formResponse.Status, payload.RejectReason, previousStatus);
-                            
+
                         if (formResponse.Status == "Rejected" && !string.IsNullOrEmpty(payload.RejectReason))
                         {
                             _logger.LogInformation("🔥 SENDING REJECT EMAIL to impersonated user {UserEmail}", impersonatedUserEmail);
@@ -455,8 +461,8 @@ namespace FlowManager.Application.Services
                                 DateTime.UtcNow,
                                 payload.RejectReason
                             );
-                            
-                            _logger.LogInformation("✅ Rejection email sent to impersonated user {UserEmail} for form {FormId} rejected by admin {AdminName}", 
+
+                            _logger.LogInformation("✅ Rejection email sent to impersonated user {UserEmail} for form {FormId} rejected by admin {AdminName}",
                                 impersonatedUserEmail, updatedFormResponse.Id, currentAdminName);
                         }
                         else if (formResponse.Status == "Approved" || formResponse.Status == "Pending")
@@ -469,8 +475,8 @@ namespace FlowManager.Application.Services
                                 currentAdminName,
                                 DateTime.UtcNow
                             );
-                            
-                            _logger.LogInformation("✅ Approval email sent to impersonated user {UserEmail} for form {FormId} approved by admin {AdminName}", 
+
+                            _logger.LogInformation("✅ Approval email sent to impersonated user {UserEmail} for form {FormId} approved by admin {AdminName}",
                                 impersonatedUserEmail, updatedFormResponse.Id, currentAdminName);
                         }
                         else
@@ -518,7 +524,7 @@ namespace FlowManager.Application.Services
             // Add email notification info to result if admin acted
             if (isAdminActing && !string.IsNullOrEmpty(adminName))
             {
-                _logger.LogInformation("🔔 ADMIN_ACTION: Admin {AdminName} performed action on form {FormId}, Status: {Status}", 
+                _logger.LogInformation("🔔 ADMIN_ACTION: Admin {AdminName} performed action on form {FormId}, Status: {Status}",
                     adminName, updatedFormResponse.Id, formResponse.Status);
             }
 
