@@ -191,6 +191,19 @@
                                             <span class="detail-label">Status</span>
                                             <span class="status-badge @(GetFormStatus(form).ToLower())">@GetFormStatus(form)</span>
                                         </div>
+
+                                        <div class="detail-item">
+                                            <span class="detail-label">Completed by</span>
+                                            @if (form.CompletedByOtherUserId != null && form.CompletedByOtherUserId != Guid.Empty)
+                                            {
+                                                <span class="detail-value">@form.CompletedByOtherUser!.Name</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="detail-value">@form.UserName</span>
+                                            }
+                                        </div>
+
                                         @if (!string.IsNullOrEmpty(form.RejectReason))
                                         {
                                             <div class="detail-item reject-reason">

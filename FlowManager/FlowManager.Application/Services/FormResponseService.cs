@@ -58,7 +58,14 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
-                DeletedAt = fr.DeletedAt
+                DeletedAt = fr.DeletedAt,
+                CompletedByOtherUser = fr.CompletedByOtherUser == null
+                ? null : new Shared.DTOs.Responses.User.UserResponseDto
+                {
+                    Id = fr.CompletedByOtherUser.Id,
+                    Name = fr.CompletedByOtherUser.Name
+                },
+                CompletedByOtherUserId = fr.CompletedByOtherUserId
             }).ToList();
 
             return new PagedResponseDto<FormResponseResponseDto>

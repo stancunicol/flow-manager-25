@@ -32,6 +32,7 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(fr => fr.FormTemplate)
                 .Include(fr => fr.Step)
                 .Include(fr => fr.User)
+                .Include(fr => fr.CompletedByOtherUser)
                 .AsQueryable();
 
             // Apply filters

@@ -359,6 +359,7 @@ namespace FlowManager.Client.Pages
                 var l when l.Contains("email") || l.Contains("e-mail") || l.Contains("mail") => user.Email,
                 var l when l.Contains("phone") || l.Contains("telefon") || l.Contains("mobil") => user.PhoneNumber,
                 var l when l.Contains("name") || l.Contains("nume") || l.Contains("prenume") => user.Name,
+                var l when l.Contains("department") || l.Contains("step") => user.Step?.Name ?? null,
                 _ => null
             };
         }

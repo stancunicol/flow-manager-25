@@ -83,18 +83,27 @@
 }
 
 .form-search {
-    margin-left: 20px;
-    margin-top: 20px;
-    margin-bottom: 20px;
     width: fit-content;
-    position: relative;
+    position: absolute;
+    margin: 0;
+    top: 15px;
+    right: 15px;
 }
 
 .users-dropdown-container {
+    margin-left: auto;
     position: relative;
     display: flex;
     align-items: center;
 }
+
+    .users-dropdown-container.form-search-canvas {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 100;
+        margin-left: 0;
+    }
 
 .users-dropdown-input {
     padding: 8px 12px;
@@ -506,7 +515,7 @@
 
     .form-search-canvas {
         top: 10px;
-        left: 10px;
+        right: 10px;
     }
 
     .users-dropdown-input {
