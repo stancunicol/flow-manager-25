@@ -17,6 +17,56 @@ namespace FlowManager.Client.Services
             _httpClient = httpClient;
         }
 
+        public async Task<PagedResponseDto<FormResponseResponseDto>> GetAllFormResponsesQueriedAsync(QueriedFormResponseRequestDto payload)
+        {
+            try
+            {
+                Console.WriteLine($"[FormResponseService] Making API call to get all form responses queried with payload: {System.Text.Json.JsonSerializer.Serialize(payload)}");
+
+                var response = await _httpClient.PostAsJsonAsync("api/FormResponses/queried", payload);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FormResponseResponseDto>>>();
+
+                    if (apiResponse?.Result != null)
+                    {
+                        Console.WriteLine($"[FormResponseService] Successfully retrieved {apiResponse.Result.Data?.Count() ?? 0} form responses (total: {apiResponse.Result.TotalCount})");
+                        return apiResponse.Result;
+                    }
+                    else
+                    {
+                        Console.WriteLine("[FormResponseService] API returned null result");
+                        return new PagedResponseDto<FormResponseResponseDto>
+                        {
+                            Data = new List<FormResponseResponseDto>(),
+                            TotalCount = 0,
+                            Page = payload.QueryParams?.Page ?? 1,
+                            PageSize = payload.QueryParams?.PageSize ?? 10
+                        };
+                    }
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[FormResponseService] API call failed with status {response.StatusCode}: {errorContent}");
+
+                    return new PagedResponseDto<FormResponseResponseDto>
+                    {
+                        Data = new List<FormResponseResponseDto>(),
+                        TotalCount = 0,
+                        Page = payload.QueryParams?.Page ?? 1,
+                        PageSize = payload.QueryParams?.PageSize ?? 10
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FormResponseService] Exception during API call: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<List<FormResponseResponseDto>> GetFormResponsesByUserAsync(Guid userId)
         {
             try

@@ -1,0 +1,428 @@
+﻿@using FlowManager.Shared.DTOs.Responses.FormTemplate
+@using FlowManager.Shared.DTOs.Requests.FormResponse
+@using FlowManager.Shared.DTOs
+@using FlowManager.Shared.DTOs.Responses.Component
+
+<div class="completed-forms-content">
+    <!-- Header with title and refresh button -->
+    <div class="forms-header">
+        <h3>Completed Forms</h3>
+        <div class="header-actions">
+            <button @onclick="RefreshForms" class="refresh-btn" title="Refresh forms">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Filter Buttons -->
+    <div class="status-filter-container">
+        <div class="status-filter-header">
+            <span class="filter-label">Filter by status:</span>
+        </div>
+        <div class="status-filter-buttons">
+            <button class="status-filter-btn all @(AreAllStatusesSelected() ? "active" : "")"
+                    @onclick="ShowAllStatuses">
+                <div class="status-indicator all"></div>
+                <span>All</span>
+            </button>
+
+            <button class="status-filter-btn pending @(IsOnlyStatusSelected("Pending") ? "active" : "")"
+                    @onclick="@(() => FilterByStatus("Pending"))">
+                <div class="status-indicator pending"></div>
+                <span>Pending</span>
+            </button>
+
+            <button class="status-filter-btn rejected @(IsOnlyStatusSelected("Rejected") ? "active" : "")"
+                    @onclick="@(() => FilterByStatus("Rejected"))">
+                <div class="status-indicator rejected"></div>
+                <span>Rejected</span>
+            </button>
+
+            <button class="status-filter-btn approved @(IsOnlyStatusSelected("Approved") ? "active" : "")"
+                    @onclick="@(() => FilterByStatus("Approved"))">
+                <div class="status-indicator approved"></div>
+                <span>Approved</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <div class="search-input-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+            </svg>
+            <input type="text"
+                   class="search-input"
+                   placeholder="Search forms by name, user, step, or reject reason..."
+                   value="@searchTerm"
+                   @oninput="OnSearchInput" />
+            @if (!string.IsNullOrEmpty(searchTerm))
+            {
+                <button class="clear-search-btn" @onclick="ClearSearch">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(searchTerm))
+        {
+            <div class="search-results-info">
+                <span>Showing results for "<strong>@searchTerm</strong>"</span>
+            </div>
+        }
+    </div>
+
+    @if (isLoadingForms)
+    {
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Loading completed forms...</p>
+        </div>
+    }
+    else if (completedForms?.Any() == true)
+    {
+        <div class="forms-grid">
+            @foreach (var form in completedForms)
+            {
+                <div class="form-card" @onclick="() => ViewFormResponse(form)">
+                    <div class="form-card-header">
+                        <div class="form-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75-4.5a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clip-rule="evenodd" />
+                                <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+                            </svg>
+                        </div>
+                        <div class="form-info">
+                            <h4>@form.FormTemplateName</h4>
+                            <p class="form-meta">User: @form.UserName | Step: @form.StepName</p>
+                        </div>
+                    </div>
+
+                    <div class="form-card-body">
+                        <div class="form-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Created</span>
+                                <span class="detail-value">@form.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            @if (form.UpdatedAt.HasValue)
+                            {
+                                <div class="detail-item">
+                                    <span class="detail-label">Updated</span>
+                                    <span class="detail-value">@form.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            }
+                            <div class="detail-item">
+                                <span class="detail-label">User</span>
+                                <span class="detail-value">@form.UserEmail</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Status</span>
+                                <span class="status-badge @(GetFormStatus(form).ToLower())">@GetFormStatus(form)</span>
+                            </div>
+                            @if (form.CompletedByAdmin && !string.IsNullOrEmpty(form.CompletedByAdminName))
+                            {
+                                <div class="detail-item completed-by-admin">
+                                    <span class="detail-label">Completed by Admin</span>
+                                    <span class="detail-value admin-name">@form.CompletedByAdminName</span>
+                                </div>
+                            }
+                            @if (form.ApprovedByAdmin && !string.IsNullOrEmpty(form.ApprovedByAdminName))
+                            {
+                                <div class="detail-item approved-by-admin">
+                                    <span class="detail-label">Approved by Admin</span>
+                                    <span class="detail-value admin-name">@form.ApprovedByAdminName</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(form.RejectReason))
+                            {
+                                <div class="detail-item reject-reason">
+                                    <span class="detail-label">Reject Reason</span>
+                                    <span class="detail-value">@form.RejectReason</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="form-card-footer">
+                        <div class="view-indicator">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Click to view</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (_totalPages > 1)
+        {
+            <div class="pagination-container">
+                <nav>
+                    <button @onclick="GoToFirstPage"
+                            disabled="@(_currentPage == 1)"
+                            class="pagination-btn pagination-btn-first pagination-btn-nav">
+                        <svg class="pagination-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button @onclick="GoToPreviousPage"
+                            disabled="@(_currentPage == 1)"
+                            class="pagination-btn pagination-btn-nav">
+                        <svg class="pagination-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    @foreach (int pageNumber in GetPageNumbers())
+                    {
+                        <button @onclick="() => GoToPage(pageNumber)"
+                                class="pagination-btn pagination-btn-page @(pageNumber == _currentPage ? "pagination-btn-active" : "")">
+                            @pageNumber
+                        </button>
+                    }
+                    @if (_totalPages > _maxVisiblePages && _currentPage < _totalPages - 2)
+                    {
+                        <span class="pagination-ellipsis">...</span>
+                    }
+                    <button @onclick="GoToNextPage"
+                            disabled="@(_currentPage == _totalPages)"
+                            class="pagination-btn pagination-btn-nav">
+                        <svg class="pagination-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button @onclick="GoToLastPage"
+                            disabled="@(_currentPage == _totalPages)"
+                            class="pagination-btn pagination-btn-last pagination-btn-nav">
+                        <svg class="pagination-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L13.586 11H3a1 1 0 110-2h10.586l-3.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </nav>
+                <div class="pagination-info">
+                    <span class="pagination-info-text">
+                        Showing @((_currentPage - 1) * _pageSize + 1) - @((_currentPage - 1) * _pageSize + (completedForms?.Count ?? 0)) of @(_totalCount) forms
+                    </span>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="no-forms">
+            <div class="no-forms-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75-4.5a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clip-rule="evenodd" />
+                    <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+                </svg>
+            </div>
+            <h4>No forms found</h4>
+            <p>
+                @if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    <text>No forms match your search criteria. Try adjusting your search or </text>
+                    <button @onclick="ClearSearch" class="clear-search-btn-alt">clear search</button>
+                    <text>.</text>
+                }
+                else
+                {
+                    <text>No completed forms found in the system.</text>
+                }
+            </p>
+        </div>
+    }
+</div>
+
+<!-- View Form Modal - Same as BasicUser -->
+@if (showViewFormModal && selectedFormResponse != null)
+{
+    <div class="modal-overlay" @onclick="CloseViewFormModal">
+        <div class="view-form-modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h3>@(selectedFormTemplate?.Name ?? "Form Response") - Admin View</h3>
+                    <div class="form-metadata">
+                        <span class="metadata-item">
+                            <strong>User:</strong> @(selectedFormResponse.UserName ?? "Unknown") (@(selectedFormResponse.UserEmail ?? "Unknown"))
+                        </span>
+                        <span class="metadata-item">
+                            <strong>Step:</strong> @(selectedFormResponse.StepName ?? "Unknown")
+                        </span>
+                        <span class="metadata-item">
+                            <strong>Submitted:</strong> @selectedFormResponse.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </span>
+                        @if (selectedFormResponse.UpdatedAt.HasValue)
+                        {
+                            <span class="metadata-item">
+                                <strong>Updated:</strong> @selectedFormResponse.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                        }
+                    </div>
+                </div>
+                <button class="close-btn" @onclick="CloseViewFormModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(selectedFormResponse.RejectReason))
+                {
+                    <div class="reject-reason-banner">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                        </svg>
+                        <div>
+                            <strong>Form Rejected</strong>
+                            <p>@selectedFormResponse.RejectReason</p>
+                        </div>
+                    </div>
+                }
+
+                @if (isLoadingFormDetails)
+                {
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Loading form details...</p>
+                    </div>
+                }
+                else if (formElements?.Any() == true)
+                {
+                    <div class="form-canvas-container">
+                        <div class="form-canvas-header">
+                            <h4>Form Preview</h4>
+                            <span class="readonly-indicator">🔒 Read Only</span>
+                        </div>
+
+                        <div class="form-canvas-readonly">
+                            @if (!formElements.Any())
+                            {
+                                <div class="empty-form">
+                                    <p>No form elements to display</p>
+                                </div>
+                            }
+                            else
+                            {
+                                @foreach (var element in formElements)
+                                {
+                                    <div class="form-element-readonly" style="left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
+                                        @if (element.IsTextElement)
+                                        {
+                                            <div class="static-text-readonly">
+                                                @element.TextContent
+                                            </div>
+                                        }
+                                        else if (element.ComponentId.HasValue)
+                                        {
+                                            var component = formComponents?.FirstOrDefault(c => c.Id == element.ComponentId);
+                                            if (component != null)
+                                            {
+                                                var fieldValue = GetFieldValue(component.Id);
+
+                                                <div class="form-field-readonly">
+                                                    <label class="field-label-readonly">
+                                                        @component.Label
+                                                        @if (component.Required == true)
+                                                        {
+                                                            <span class="required-mark">*</span>
+                                                        }
+                                                    </label>
+
+                                                    @switch (component.Type?.ToLower())
+                                                    {
+                                                        case "textinput":
+                                                        case "text":
+                                                            <div class="field-value-readonly text-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+                                                        case "textarea":
+                                                            <div class="field-value-readonly textarea-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+                                                        case "number":
+                                                            <div class="field-value-readonly number-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+                                                        case "email":
+                                                            <div class="field-value-readonly email-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+                                                        case "datetime":
+                                                        case "date":
+                                                            <div class="field-value-readonly datetime-input-readonly">
+                                                                @(DateTime.TryParse(fieldValue?.ToString(), out var date) ? date.ToString("dd/MM/yyyy HH:mm") : "No response")
+                                                            </div>
+                                                            break;
+                                                        case "checkbox":
+                                                            <div class="checkbox-field-readonly">
+                                                                <div class="checkbox-display @(fieldValue?.ToString() == "True" ? "checked" : "unchecked")">
+                                                                    @if (fieldValue?.ToString() == "True")
+                                                                    {
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                                            <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                                                                        </svg>
+                                                                    }
+                                                                </div>
+                                                                <span class="checkbox-label-readonly">@component.Label</span>
+                                                            </div>
+                                                            break;
+                                                        case "radio":
+                                                            <div class="field-value-readonly radio-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No selection")
+                                                            </div>
+                                                            break;
+                                                        case "select":
+                                                        case "dropdown":
+                                                            <div class="field-value-readonly select-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No selection")
+                                                            </div>
+                                                            break;
+                                                        default:
+                                                            <div class="field-value-readonly default-input-readonly">
+                                                                @(fieldValue?.ToString() ?? "No response")
+                                                            </div>
+                                                            break;
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-form-data">
+                        <p>Unable to load form structure.</p>
+                    </div>
+                }
+
+                <FlowManager.Client.Components.FlowVisualizer.FlowVisualizer FlowSteps="flowSteps"
+                                                                             FormResponse="selectedFormResponse"
+                                                                             IsLoading="isLoadingFlowSteps" />
+            </div>
+
+            <div class="modal-footer">
+                <div class="form-status">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value" style="background: @GetStatusColor(GetFormStatus(selectedFormResponse)); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 12px; font-weight: 600; border: none;">
+                        @GetFormStatus(selectedFormResponse)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+}

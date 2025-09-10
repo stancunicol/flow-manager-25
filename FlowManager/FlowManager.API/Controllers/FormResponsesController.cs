@@ -17,6 +17,41 @@ namespace FlowManager.API.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        [HttpPost("queried")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllFormResponsesQueriedAsync([FromBody] QueriedFormResponseRequestDto payload)
+        {
+            try
+            {
+                _logger.LogInformation("POST /queried called with payload: {Payload}", System.Text.Json.JsonSerializer.Serialize(payload));
+
+                var result = await _formResponseService.GetAllFormResponsesQueriedAsync(payload);
+
+                _logger.LogInformation("Retrieved {Count} form responses (total: {Total})", result.Data?.Count() ?? 0, result.TotalCount);
+
+                return Ok(new
+                {
+                    Result = result,
+                    Success = true,
+                    Message = "All form responses retrieved successfully.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving form responses");
+                return BadRequest(new
+                {
+                    Result = new List<object>(),
+                    Success = false,
+                    Message = $"Error retrieving form responses: {ex.Message}",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+        }
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
