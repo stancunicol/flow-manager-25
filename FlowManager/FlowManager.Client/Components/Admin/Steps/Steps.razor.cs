@@ -10,12 +10,14 @@ using FlowManager.Shared.DTOs.Responses.Step;
 using StepService = FlowManager.Client.Services.StepService;
 using UserService = FlowManager.Client.Services.UserService;
 using TeamService = FlowManager.Client.Services.TeamService;
+using StepHistoryService = FlowManager.Client.Services.StepHistoryService;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Linq.Expressions;
 using FlowManager.Shared.DTOs.Requests.Step;
 using FlowManager.Shared.DTOs.Requests.Team;
 using Microsoft.AspNetCore.Components.Web;
 using FlowManager.Shared.DTOs.Responses.Team;
+using FlowManager.Shared.DTOs.Requests.StepHistory;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
@@ -56,6 +58,8 @@ namespace FlowManager.Client.Components.Admin.Steps
         private UserService userService { get; set; } = default!;
         [Inject]
         private TeamService teamService { get; set; } = default!;
+        [Inject]
+        private StepHistoryService stepHistoryService { get; set; } = default!;
 
         protected override async Task OnInitializedAsync()
         {
@@ -73,21 +77,17 @@ namespace FlowManager.Client.Components.Admin.Steps
                         .Where(d => d.DeletedAt == null)
                         .ToList();
 
-                    // Pentru fiecare departament, încarcă detaliile complete inclusiv echipele
                     for (int i = 0; i < departments.Count; i++)
                     {
                         var departmentDetails = await stepService.GetStepAsync(departments[i].Id);
                         if (departmentDetails != null)
                         {
-                            // Înlocuiește departamentul cu versiunea completă
                             departments[i] = departmentDetails;
                         }
 
-                        // Asigură-te că listele sunt inițializate
                         departments[i].Users ??= new List<UserResponseDto>();
                         departments[i].Teams ??= new List<TeamResponseDto>();
 
-                        // Generează culori pentru departament
                         if (!departmentColors.ContainsKey(departments[i].Id))
                         {
                             departmentColors[departments[i].Id] = GetRandomGradient();
@@ -96,7 +96,6 @@ namespace FlowManager.Client.Components.Admin.Steps
                         Console.WriteLine($"Department {departments[i].Name}: {departments[i].Users.Count} users, {departments[i].Teams.Count} teams");
                     }
 
-                    // Curăță culorile pentru departamentele care nu mai există
                     var toRemove = departmentColors.Keys
                         .Where(k => !departments.Any(d => d.Id == k))
                         .ToList();
@@ -178,8 +177,17 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                 var result = await stepService.CreateStepAsync(step);
 
+
                 if (result != null)
                 {
+                    var payload = new CreateStepHistoryRequestDto
+                    {
+                        NewDepartmentName = newDepName,
+                        StepId = result.Id
+                    };
+
+                    await stepHistoryService.CreateStepHistoryForCreateDepartmentAsync(payload);
+
                     await LoadDepartments();
 
                     await RefreshAllData();
@@ -254,12 +262,41 @@ namespace FlowManager.Client.Components.Admin.Steps
             if (step != null)
             {
                 departmentToDelete = step;
+
+                if ((departmentToDelete.Users == null || !departmentToDelete.Users.Any()) &&
+                    (departmentToDelete.Teams == null || !departmentToDelete.Teams.Any()))
+                {
+                    var payload = new CreateStepHistoryRequestDto
+                    {
+                        OldDepartmentName = departmentToDelete.Name,
+                        StepId = departmentToDelete.Id
+                    };
+
+                    var result = await stepService.DeleteStepAsync(departmentToDelete.Id);
+                    if (result != false)
+                    {
+                        await stepHistoryService.CreateStepHistoryForDeleteDepartmentAsync(payload);
+                        departments.RemoveAll(d => d.Id == departmentToDelete.Id);
+                    }
+
+                    isDeleteModalOpen = false;
+                    CloseSelectDepartmentModal();
+                    CloseModal();
+                    CloseEditModal();
+                    await RefreshAllData();
+                    StateHasChanged();
+
+                    Console.WriteLine($"✅ Department '{departmentToDelete.Name}' deleted directly (no users/teams).");
+                    return;
+                }
+
                 isDeleteModalOpen = true;
                 CloseModal();
                 CloseEditModal();
                 StateHasChanged();
             }
         }
+
 
         private void CloseSelectDepartmentModal()
         {
@@ -291,6 +328,13 @@ namespace FlowManager.Client.Components.Admin.Steps
 
             try
             {
+                var payload = new CreateStepHistoryRequestDto
+                {
+                    StepId = selectedDepartment.Id,
+                    OldDepartmentName = selectedDepartment.Name,
+                    NewName = editDepName.Trim()
+                };
+
                 selectedDepartment.Name = editDepName.Trim();
 
                 var updatePayload = new PatchStepRequestDto
@@ -300,6 +344,8 @@ namespace FlowManager.Client.Components.Admin.Steps
                 };
 
                 await stepService.UpdateStepAsync(selectedDepartment.Id, updatePayload);
+
+                await stepHistoryService.CreateStepHistoryForNameChangeAsync(payload);
 
                 await RefreshAllData();
                 StateHasChanged();
@@ -388,8 +434,20 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                 if (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
                 {
-                    await stepService.DeleteStepAsync(departmentToDelete.Id);
+                    var payload = new CreateStepHistoryRequestDto
+                    {
+                        OldDepartmentName = departmentToDelete.Name,
+                        StepId = departmentToDelete.Id
+                    };
+
+                    var result = await stepService.DeleteStepAsync(departmentToDelete.Id);
                     departments.RemoveAll(d => d.Id == departmentToDelete.Id);
+
+                    if(result != false)
+                    {
+                        await stepHistoryService.CreateStepHistoryForDeleteDepartmentAsync(payload);
+                    }
+
                     StateHasChanged();
                 }
                 else
@@ -490,10 +548,20 @@ namespace FlowManager.Client.Components.Admin.Steps
                     UserIds = departmentToMove.Users.Select(u => u.Id).ToList()
                 };
 
+                var payload = new CreateStepHistoryRequestDto
+                {
+                    StepId = selectedDepartment.Id,
+                    Users = departmentToMove.Users.Select(u => u.Id).ToList(),
+                    FromDepartment = selectedDepartment.Name,
+                    ToDepartment = departmentToMove.Name
+                };
+
                 await stepService.UpdateStepAsync(departmentToMove.Id, targetPayload);
 
                 Console.WriteLine($"Target payload: {targetPayload.UserIds.Count} users");
                 Console.WriteLine($"Source payload: {sourcePayload.UserIds.Count} users");
+
+                await stepHistoryService.CreateStepHistoryForMoveUsersAsync(payload);
 
                 await RefreshAllData();
                 await CloseMoveModal();
@@ -530,7 +598,6 @@ namespace FlowManager.Client.Components.Admin.Steps
             departmentToMove.Teams ??= new List<TeamResponseDto>();
             departmentToMove.Teams.Add(team);
 
-            // ✅ Null check și inițializare
             var teamUsers = team.Users ?? new List<UserResponseDto>();
             departmentToMove.Users ??= new List<UserResponseDto>();
 
@@ -544,7 +611,6 @@ namespace FlowManager.Client.Components.Admin.Steps
 
             StateHasChanged();
         }
-
 
         private void ToggleEditDropdown()
         {

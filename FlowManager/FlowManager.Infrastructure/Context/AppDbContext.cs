@@ -29,6 +29,7 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<UserTeam> UserTeams => Set<UserTeam>();
         public DbSet<FormTemplateFlow> FormTemplateFlows => Set<FormTemplateFlow>();
         public DbSet<FormReview> FormReviews => Set<FormReview>();
+        public DbSet<StepHistory> StepHistory => Set<StepHistory>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -47,6 +48,19 @@ namespace FlowManager.Infrastructure.Context
             FormReviewRelationshipConfiguration(builder);
 
             JSONBConfiguration(builder);
+
+            builder.Entity<StepHistory>(entity =>
+            {
+                entity.HasKey(e => e.IdStepHistory);
+                entity.Property(e => e.Action).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.Details).HasMaxLength(100);
+                entity.Property(e => e.DateTime).IsRequired();
+
+                entity.HasOne(e => e.Step)
+                    .WithMany()
+                    .HasForeignKey(e => e.StepId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
 
         private void FormReviewRelationshipConfiguration(ModelBuilder builder)
