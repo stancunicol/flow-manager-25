@@ -11,6 +11,7 @@ using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using System.Threading.Tasks;
 
 
 namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
@@ -379,6 +380,23 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     Email = u.Email
                 }).ToList() ?? new List<UserVM>()
             }).ToList() ?? new List<TeamVM>();
+
+            StateHasChanged();
+        }
+
+        public string GetFlowName()
+        {
+            return _flowName;
+        }
+
+        public async Task SetFlowSubmitMessageAsync(string message, bool succes)
+        {
+            _onSubmitMessage = message;
+            _onSubmitSuccess = succes;
+
+            StateHasChanged();
+
+            await Task.Delay(2000);
 
             StateHasChanged();
         }

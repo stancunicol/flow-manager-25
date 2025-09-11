@@ -539,5 +539,12 @@ namespace FlowManager.Infrastructure.Services
                     }).ToList(),
             };
         }
+
+        public async Task<bool> GetFlowNameUnicityAsync(string flowName)
+        {
+            Flow? existingFlow = await _flowRepository.GetFlowByNameAsync(flowName);
+
+            return existingFlow == null;
+        }
     }
 }

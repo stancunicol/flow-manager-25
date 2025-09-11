@@ -107,6 +107,11 @@ namespace FlowManager.Infrastructure.Services
             };
         }
 
+        public async Task<bool> GetFormTemplateNameUnicityAsync(string formTemplateName)
+        {
+            return await _formTemplateRepository.GetFormTemplateNameUnicityAsync(formTemplateName);
+        }
+
         public async Task<FormTemplateResponseDto> PatchFormTemplateAsync(Guid id, PatchFormTemplateRequestDto payload)
         {
             var formTemplateToPatch = await _formTemplateRepository.GetFormTemplateByIdAsync(id);

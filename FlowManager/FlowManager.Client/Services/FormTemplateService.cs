@@ -1,11 +1,13 @@
-﻿using FlowManager.Shared.DTOs.Requests.FormTemplate;
+﻿using FlowManager.Client.DTOs;
+using FlowManager.Shared.DTOs.Requests;
+using FlowManager.Shared.DTOs.Requests.FormTemplate;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Client.DTOs;
 using System.Net.Http.Json;
-using System.Web;
 using System.Text.Json;
+using System.Web;
 
 namespace FlowManager.Client.Services
 {
@@ -206,6 +208,18 @@ namespace FlowManager.Client.Services
                 Console.WriteLine($"Error getting queried form templates: {ex.Message}");
                 return null;
             }
+        }
+
+        public async Task<bool> GetFormTemplateNameUnicityAsync(string formTemplateName)
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync($"api/formTemplates/form-template-valid/{formTemplateName}");
+
+            ApiResponse<bool>? result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+
+            if (result == null)
+                return false;
+
+            return result.Result;
         }
 
         public async Task<FormTemplateResponseDto?> GetFormTemplateByIdAsync(Guid id)

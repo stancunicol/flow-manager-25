@@ -4,6 +4,7 @@
 @using FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal;
 @using FlowManager.Client
 @using FlowManager.Shared.DTOs.Responses.Flow
+@using FlowManager.Client.Services;
 
 @namespace FlowManager.Client.Components.Admin.WorkflowCarousel
 
@@ -67,6 +68,8 @@
 }
 @code {
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private FlowService _flowService { get; set; } = default!;
+    [Inject] private FormTemplateService _formTemplateService { get; set; } = default!;
     private int _currentPage = 0;
     private int _totalPages = 3;
 
@@ -97,22 +100,40 @@
     {
         try
         {
-            Console.WriteLine("flows modal");
             // PASUL 1: Creează Flow-ul (FormTemplateId = null)
             if (flowsAddModalRef != null)
             {
-                Console.WriteLine("calling save flow");
+                bool isFlowValid = await _flowService.GetFlowNameUnicityAsync(flowsAddModalRef.GetFlowName());
+
+                if (formTemplateRef == null)
+                    return;
+
+                bool isFormTemplateValid = await _formTemplateService.GetFormTemplateNameUnicityAsync(formTemplateRef.GetFormTemplateName());
+
+                if (!isFlowValid && !isFormTemplateValid)
+                {
+                    await flowsAddModalRef.SetFlowSubmitMessageAsync("Flow and form template names already exist!", false);
+                    return;
+                }
+                else if (!isFlowValid)
+                {
+                    await flowsAddModalRef.SetFlowSubmitMessageAsync("Flow name already exists!", false);
+                    return;
+                }
+                else if (!isFormTemplateValid)
+                {
+                    await flowsAddModalRef.SetFlowSubmitMessageAsync("Form template name already exists!", false);
+                    return;
+                }
+
                 var savedFlow = await flowsAddModalRef.SaveWorkflowFirst();
-                Console.WriteLine("saved flow");
+
                 if (savedFlow.HasValue)
                 {
-                    Console.WriteLine("saved flow has value");
                     // PASUL 2: Creează Template-ul cu FlowId (GATA!)
                     if (formTemplateRef != null)
                     {
-                        Console.WriteLine("ft ref not null");
                         var savedTemplate = await formTemplateRef.SaveTemplateFromLocalStorageToDatabase(savedFlow.Value.Id);
-                        Console.WriteLine("ft saved");
                         if (savedTemplate.HasValue)
                         {
                             _savedFormTemplateId = savedTemplate.Value.Id;

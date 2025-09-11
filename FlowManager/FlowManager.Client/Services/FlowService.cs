@@ -6,6 +6,7 @@ using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.User;
 using System.Net.Http.Json;
+using System.Security;
 using System.Web;
 
 namespace FlowManager.Client.Services
@@ -31,6 +32,18 @@ namespace FlowManager.Client.Services
             {
                 return new List<Flow>();
             }
+        }
+
+        public async Task<bool> GetFlowNameUnicityAsync(string flowName)
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync($"api/flows/flow-valid/{flowName}");
+
+            ApiResponse<bool>? result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+
+            if (result == null)
+                return false;
+
+            return result.Result;
         }
 
         public async Task<ApiResponse<FlowResponseDto?>> GetFlowByIdIncludeStepsAsync(Guid flowId)
