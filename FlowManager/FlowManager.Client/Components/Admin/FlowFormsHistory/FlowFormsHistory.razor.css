@@ -739,6 +739,68 @@
     background: #f3f4f6;
 }
 
+/* Radio options display styles - matching FormTemplate design */
+.radio-options-display {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    margin-top: 4px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.radio-option-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.radio-option-display:hover {
+    background-color: #f9fafb;
+}
+
+.radio-option-display.selected {
+    color: #059669;
+    font-weight: 500;
+    background-color: #f0fdf4;
+}
+
+.radio-indicator {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ced4da;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+}
+
+.radio-indicator.selected {
+    border-color: #059669;
+    background: white;
+}
+
+.radio-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #059669;
+}
+
+.radio-option-text {
+    user-select: none;
+}
+
 .default-input-readonly {
     border-left: 4px solid #9ca3af;
     background: #f3f4f6;
