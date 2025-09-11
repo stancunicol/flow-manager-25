@@ -744,5 +744,35 @@ namespace FlowManager.Client.Pages
                 Email = result.Email
             };
         }
+
+        // Metodă pentru a obține opțiunile radio button-ului din component
+        private List<string> GetRadioOptions(ComponentResponseDto component)
+        {
+            if (component.Properties != null && component.Properties.ContainsKey("Options"))
+            {
+                try
+                {
+                    if (component.Properties["Options"] is JsonElement jsonElement)
+                    {
+                        var optionsList = JsonSerializer.Deserialize<List<string>>(jsonElement.GetRawText());
+                        return optionsList ?? new List<string> { "Option 1", "Option 2" };
+                    }
+                    else if (component.Properties["Options"] is List<string> directList)
+                    {
+                        return directList;
+                    }
+                    else if (component.Properties["Options"] is string[] stringArray)
+                    {
+                        return stringArray.ToList();
+                    }
+                }
+                catch
+                {
+                    // Fallback la opțiuni default
+                }
+            }
+
+            return new List<string> { "Option 1", "Option 2" };
+        }
     }
 }

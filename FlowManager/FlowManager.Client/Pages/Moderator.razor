@@ -717,10 +717,34 @@
                                                             </div>
                                                             break;
 
+                                                        case "radiobutton":
                                                         case "radio":
-                                                            <div class="field-value-readonly radio-input-readonly">
-                                                                @(fieldValue?.ToString() ?? "No selection")
-                                                            </div>
+                                                            var selectedValue = fieldValue?.ToString() ?? "No selection";
+                                                            var radioOptions = GetRadioOptions(component);
+                                                            
+                                                            if (radioOptions.Any() && selectedValue != "No selection")
+                                                            {
+                                                                <div class="radio-options-display">
+                                                                    @foreach (var option in radioOptions)
+                                                                    {
+                                                                        <div class="radio-option-display @(option == selectedValue ? "selected" : "")">
+                                                                            <div class="radio-indicator @(option == selectedValue ? "selected" : "")">
+                                                                                @if (option == selectedValue)
+                                                                                {
+                                                                                    <div class="radio-dot"></div>
+                                                                                }
+                                                                            </div>
+                                                                            <span class="radio-option-text">@option</span>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="field-value-readonly radio-input-readonly">
+                                                                    @selectedValue
+                                                                </div>
+                                                            }
                                                             break;
 
                                                         case "select":
