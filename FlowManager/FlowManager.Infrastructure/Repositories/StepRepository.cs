@@ -1,14 +1,19 @@
-﻿using System;
+﻿using FlowManager.Domain.Dtos;
+using FlowManager.Domain.Entities;
+using FlowManager.Domain.Exceptions;
+using FlowManager.Domain.IRepositories;
+using FlowManager.Infrastructure.Context;
+using FlowManager.Infrastructure.Utils;
+using FlowManager.Shared.DTOs.Responses;
+using FlowManager.Shared.DTOs.Responses.Step;
+using FlowManager.Shared.DTOs.Responses.Team;
+using FlowManager.Shared.DTOs.Responses.User;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using FlowManager.Domain.Dtos;
-using FlowManager.Domain.Entities;
-using FlowManager.Domain.IRepositories;
-using FlowManager.Infrastructure.Context;
-using FlowManager.Infrastructure.Utils;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowManager.Infrastructure.Repositories
 {
@@ -99,9 +104,54 @@ namespace FlowManager.Infrastructure.Repositories
         }
 
         public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsIncludeUsersAndTeamsQueriedAsync(
-    Guid moderatorId,
-    string? name,
-    QueryParams? parameters)
+            Guid moderatorId,
+            string? name,
+            QueryParams? parameters)
+        {
+            IQueryable<Step> query = _context.Steps
+                .Where(s => s.Users.Any(u => u.Roles.Any(ur => ur.DeletedAt == null && ur.RoleId == moderatorId)))
+                .Include(s => s.Users.Where(u => u.DeletedAt == null && u.Roles.Any(ur => ur.RoleId == moderatorId)))
+                    .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                        .ThenInclude(ut => ut.Team);
+
+
+            query = query.Where(s => s.DeletedAt == null);
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(s => s.Name.ToUpper().Contains(name.ToUpper()));
+            }
+
+            int totalCount = query.Count();
+
+            if (parameters == null)
+            {
+                return (await query.ToListAsync(), totalCount);
+            }
+
+            if (parameters.SortBy != null)
+            {
+                if (parameters.SortDescending is bool sortDesc)
+                    query = query.ApplySorting<Step>(parameters.SortBy, sortDesc);
+                else
+                    query = query.ApplySorting<Step>(parameters.SortBy, false);
+            }
+
+            if (parameters.Page == null || parameters.Page < 0 ||
+               parameters.PageSize == null || parameters.PageSize < 0)
+            {
+                return (await query.ToListAsync(), totalCount);
+            }
+            else
+            {
+                List<Step> steps = await query.Skip((int)parameters.PageSize * ((int)parameters.Page - 1))
+                                               .Take((int)parameters.PageSize)
+                                               .ToListAsync();
+                return (steps, totalCount);
+            }
+        }
+
+        public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsQueriedAsync(Guid moderatorId, string? name, QueryParams? parameters)
         {
             // 1. Pornim query simplu pe Steps
             IQueryable<Step> query = _context.Steps

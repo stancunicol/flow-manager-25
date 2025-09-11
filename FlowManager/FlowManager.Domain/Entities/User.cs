@@ -19,6 +19,8 @@ namespace FlowManager.Domain.Entities
 
         public virtual ICollection<UserTeam> Teams { get; set; } = new List<UserTeam>();
         public virtual ICollection<FlowStepUser> FlowStepUsers { get; set; } = new List<FlowStepUser>();
+        
+        public virtual ICollection<FormResponse> FormResponseCompletedOnBehalf { get;set; } = new List<FormResponse>(); 
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

@@ -152,5 +152,18 @@ namespace FlowManager.Infrastructure.Repositories
             return _context.Flows
                 .FirstOrDefaultAsync(f => f.Name == flowName);
         }
+
+        public async Task<Flow?> GetFlowByFormTemplateIdAsync(Guid formTemplateId)
+        {
+            var flows = await _context.Flows
+                .Where(f => f.DeletedAt == null)
+                .Include(f => f.Steps.Where(fs => fs.DeletedAt == null))
+                    .ThenInclude(fs => fs.Step)
+                .Include(f => f.FormTemplateFlows.Where(ftf => ftf.DeletedAt == null))
+                    .ThenInclude(ftf => ftf.FormTemplate)
+                .ToListAsync();
+
+            return flows.FirstOrDefault(f => f.ActiveFormTemplateId == formTemplateId);
+        }
     }
 }

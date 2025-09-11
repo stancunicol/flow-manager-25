@@ -28,8 +28,6 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<FlowStepTeam> FlowStepTeams => Set<FlowStepTeam>();
         public DbSet<UserTeam> UserTeams => Set<UserTeam>();
         public DbSet<FormTemplateFlow> FormTemplateFlows => Set<FormTemplateFlow>();
-
-        // ADAUGĂ ACEASTĂ LINIE PENTRU FORMREVIEW
         public DbSet<FormReview> FormReviews => Set<FormReview>();
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -44,14 +42,13 @@ namespace FlowManager.Infrastructure.Context
             UserRoleRelationshipConfiguration(builder);
             FormTemplateFlowsRelationshipConfiguration(builder);
             UserTeamRelationshipConfiguration(builder);
+            CompleteOnBehalfUserFormResponseConfiguration(builder);
 
-            // ADAUGĂ ACEASTĂ LINIE PENTRU CONFIGURAȚIA FORMREVIEW
             FormReviewRelationshipConfiguration(builder);
 
             JSONBConfiguration(builder);
         }
 
-        // ADAUGĂ ACEASTĂ METODĂ PENTRU CONFIGURAȚIA FORMREVIEW
         private void FormReviewRelationshipConfiguration(ModelBuilder builder)
         {
             builder.Entity<FormReview>(entity =>
@@ -234,6 +231,14 @@ namespace FlowManager.Infrastructure.Context
                 .HasIndex(t => t.Name)
                 .IsUnique()
                 .HasDatabaseName("IX_Teams_Name");
+        }
+
+        private void CompleteOnBehalfUserFormResponseConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FormResponse>()
+                .HasOne(formResponse => formResponse.CompletedByOtherUser)
+                .WithMany(user => user.FormResponseCompletedOnBehalf)
+                .HasForeignKey(formResponse => formResponse.CompletedByOtherUserId);
         }
     }
 }

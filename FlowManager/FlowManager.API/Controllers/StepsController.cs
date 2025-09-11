@@ -46,6 +46,35 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        [HttpGet("include-teams-users/queried")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllStepsIncludeUsersAndTeamsQueriedAsync([FromQuery] QueriedStepRequestDto payload)
+        {
+            var result = await _stepService.GetAllStepsIncludeUsersAndTeamsQueriedAsync(payload);
+
+            if (result.Data == null || !result.Data.Any())
+            {
+                return NotFound(new
+                {
+                    Result = new List<StepResponseDto>(),
+                    Success = false,
+                    Message = "No steps found matching the criteria.",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Steps retrieved successfully.",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
         [HttpGet("all")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

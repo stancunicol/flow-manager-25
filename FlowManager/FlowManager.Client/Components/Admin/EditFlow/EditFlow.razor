@@ -49,7 +49,7 @@
                         <div class="step-order">@(stepIndex + 1)</div>
 
                         <!-- Remove button -->
-                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(step.Id)" @onclick:stopPropagation="true">×</button>
+                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(stepIndex)" @onclick:stopPropagation="true">×</button>
 
                         <!-- Reorder buttons -->
                         <div class="reorder-buttons">

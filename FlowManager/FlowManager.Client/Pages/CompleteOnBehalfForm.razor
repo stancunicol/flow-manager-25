@@ -1,18 +1,6 @@
-﻿@page "/fill-form/{TemplateId:guid}"
-@layout MainLayout
-@using FlowManager.Shared.DTOs.Responses.FormTemplate
-@using FlowManager.Shared.DTOs.Responses.Component
-@using FlowManager.Shared.DTOs.Responses.Step
-@using FlowManager.Shared.DTOs.Responses.Flow
-@using FlowManager.Shared.DTOs.Requests.FormResponse
-@using FlowManager.Shared.DTOs
-@using System.Text.Json
-@inject FlowManager.Client.Services.FormTemplateService FormTemplateService
-@inject FlowManager.Client.Services.ComponentService ComponentService
-@inject FlowManager.Client.Services.FlowService FlowService
-@inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
-@inject HttpClient Http
+﻿@page "/complete-on-behalf-form/{TemplateId:guid}"
+@using FlowManager.Client.ViewModels;
+
 
 <PageTitle>Fill Form</PageTitle>
 
@@ -24,9 +12,11 @@
             </svg>
             Back to My Forms
         </button>
-        <h1>@(formTemplate?.Name ?? "Loading...")</h1>
-        <button class="submit-btn" @onclick="SubmitForm" disabled="@(isSubmitting || firstStep == null)">
-            @if (isSubmitting)
+
+        <h1>Form: @(_formTemplate?.Name ?? "Loading...")</h1>
+
+        <button class="submit-btn" @onclick="SubmitForm" disabled="@(_isSubmitting || _firstStep == null || !AllRequiredFieldsFilled())">
+            @if (_isSubmitting)
             {
                 <div class="spinner-small"></div>
                 <span>Submitting...</span>
@@ -42,24 +32,24 @@
     </div>
 
     <div class="fill-form-content">
-        @if (isLoading)
+        @if (_isLoading)
         {
             <div class="loading-container">
                 <div class="spinner"></div>
                 <p>Loading form...</p>
             </div>
         }
-        else if (formTemplate != null && formElements != null)
+        else if (_formTemplate != null && _formElements != null)
         {
             <!-- Workflow Information -->
-            @if (isLoadingFlow)
+            @if (_isLoadingFlow)
             {
                 <div class="workflow-info loading">
                     <div class="spinner-small"></div>
                     <span>Loading workflow information...</span>
                 </div>
             }
-            else if (associatedFlow != null && firstStep != null)
+            else if (_associatedFlow != null && _firstStep != null)
             {
                 <div class="workflow-info success">
                     <div class="workflow-icon">
@@ -68,11 +58,11 @@
                         </svg>
                     </div>
                     <div class="workflow-details">
-                        <h4>Workflow: @associatedFlow.Name</h4>
-                        <p>This form will start at step: <strong>@firstStep.Name</strong></p>
-                        @if (associatedFlow.Steps?.Count > 1)
+                        <h4>Workflow: @_associatedFlow.Name</h4>
+                        <p>This form will start at step: <strong>@_firstStep.Name</strong></p>
+                        @if (_associatedFlow.Steps?.Count > 1)
                         {
-                            <p class="workflow-steps-info">Total workflow steps: @associatedFlow.Steps.Count</p>
+                            <p class="workflow-steps-info">Total workflow steps: @_associatedFlow.Steps.Count</p>
                         }
                     </div>
                 </div>
@@ -93,7 +83,30 @@
             }
 
             <div class="form-canvas">
-                @foreach (var element in formElements.OrderBy(e => e.ZIndex))
+                <div class="users-dropdown-container form-search-canvas">
+                    <input type="text"
+                           class="users-dropdown-input"
+                           placeholder="Search users..."
+                           @bind="_usersSearchTerm"
+                           @oninput="((e) => OnUsersSearchTermChanged(e.Value?.ToString() ?? string.Empty))" />
+                    <button type="button" class="dropdown-arrow" @onclick="ChangeAvailableUsersDropdownVisibility">▼</button>
+                     
+                    @if (_isAvailableUsersDropdownOpen)
+                    {
+                        <div class="users-dropdown-options">
+                            @foreach (UserVM user in _availableUsers)
+                            {
+                                <div class="users-dropdown-option" @onclick="() => SelectUser(user)">@user.Name</div>
+                            }
+
+                            <button class="load-more-btn" @onclick="() => LoadMoreUsersAsync()" disabled="@(!_usersHasNextPage)">
+                                Load more
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                @foreach (var element in _formElements.OrderBy(e => e.ZIndex))
                 {
                     <div class="form-element" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
                         @if (element.IsTextElement)
@@ -104,7 +117,7 @@
                         }
                         else
                         {
-                            var component = components?.FirstOrDefault(c => c.Id == element.ComponentId);
+                            var component = _components?.FirstOrDefault(c => c.Id == element.ComponentId);
                             if (component != null)
                             {
                                 <div class="form-field">
@@ -118,46 +131,45 @@
                                     @switch (component.Type.ToLower())
                                     {
                                         case "textinput":
-                                            <input type="text" class="field-input"
+                                            <input type="text"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "number":
-                                            <input type="number" class="field-input"
+                                            <input type="number"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "date":
-                                            <input type="date" class="field-input"
+                                            <input type="date"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "textarea":
-                                            <textarea class="textarea-input"
-                                                      @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))"></textarea>
+                                            <textarea class="textarea-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                      readonly="@IsFieldReadonly(component.Id)"
+                                                      @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))">@GetFieldValue(component.Id)</textarea>
                                             break;
                                         case "checkbox":
                                             <div class="checkbox-field">
                                                 <input type="checkbox"
+                                                       checked="@(bool.TryParse(GetFieldValue(component.Id), out bool isChecked) && isChecked)"
+                                                       disabled="@IsFieldReadonly(component.Id)"
                                                        @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
-                                                <span class="checkbox-label">@component.Label</span>
-                                            </div>
-                                            break;
-                                        case "radiobutton":
-                                        case "radio":
-                                            var radioOptions = GetRadioOptions(component);
-                                            <div class="radio-field">
-                                                @foreach (var option in radioOptions)
-                                                {
-                                                    <label class="radio-option">
-                                                        <input type="radio" 
-                                                               name="radio_@component.Id" 
-                                                               value="@option"
-                                                               @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
-                                                        <span class="radio-option-text">@option</span>
-                                                    </label>
-                                                }
+                                                <span class="checkbox-label @(IsFieldReadonly(component.Id) ? "readonly-label" : "")">@component.Label</span>
                                             </div>
                                             break;
                                         default:
-                                            <input type="text" class="field-input"
+                                            <input type="text"
+                                                   class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
+                                                   value="@GetFieldValue(component.Id)"
+                                                   readonly="@IsFieldReadonly(component.Id)"
                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                     }
@@ -172,7 +184,7 @@
         {
             <div class="error-container">
                 <p>Error loading form template.</p>
-                <button class="retry-btn" @onclick="LoadFormTemplate">Try Again</button>
+                <button class="retry-btn" @onclick="LoadFormTemplateAsync">Try Again</button>
             </div>
         }
     </div>
