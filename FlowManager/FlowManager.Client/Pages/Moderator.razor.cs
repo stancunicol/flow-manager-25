@@ -936,34 +936,5 @@ namespace FlowManager.Client.Pages
 
             return new List<string> { "Option 1", "Option 2" };
         }
-
-        // Helper classes
-        public class NextStepInfo
-        {
-            public bool HasNextStep { get; set; }
-            public string? NextStepName { get; set; }
-            public Guid? NextStepId { get; set; }
-        }
-
-        public class FormContent
-        {
-            public string Layout { get; set; } = "";
-            public List<FormElement> Elements { get; set; } = new();
-        }
-
-        public class FormElement
-        {
-            public string Id { get; set; } = "";
-            public int X { get; set; }
-            public int Y { get; set; }
-            public int ZIndex { get; set; }
-            public bool IsTextElement { get; set; }
-            public string? TextContent { get; set; }
-            public Guid? ComponentId { get; set; }
-            public string? ComponentType { get; set; }
-            public string? Label { get; set; }
-            public bool? Required { get; set; }
-            public Dictionary<string, object>? Properties { get; set; }
-        }
     }
 }
