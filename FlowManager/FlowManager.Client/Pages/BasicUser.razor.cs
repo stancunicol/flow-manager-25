@@ -1,4 +1,5 @@
-﻿using FlowManager.Client.DTOs;
+﻿using FlowManager.Client.Deserialization;
+using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
@@ -24,9 +25,6 @@ namespace FlowManager.Client.Pages
         private string _activeTab = "MYFORMS";
         protected string? errorMessage;
 
-        // Status filter state
-        private HashSet<string> selectedStatuses = new HashSet<string> { "Pending", "Rejected", "Approved" };
-
         // Form selection modal state
         private bool showFormSelectionModal = false;
         private bool showAddFormModal = false;
@@ -42,20 +40,7 @@ namespace FlowManager.Client.Pages
         private int totalTemplatesCount = 0;
         private Timer? searchDebounceTimer;
 
-        // User forms state with search
-        private bool isLoadingUserForms = false;
-        private List<FormResponseResponseDto>? userForms;
-        private List<FormResponseResponseDto>? filteredUserForms;
-        private string userFormsSearchTerm = "";
-        private Timer? userFormsSearchDebounceTimer;
         private Guid currentUserId = Guid.Empty;
-
-        // Pagination state for user forms
-        private int _pageSize = 8;
-        private int _currentPage = 1;
-        private int _totalPages = 0;
-        private int _maxVisiblePages = 4;
-        private int _totalCount = 0;
 
         //View Form modal state
         private bool showViewFormModal = false;
@@ -96,10 +81,6 @@ namespace FlowManager.Client.Pages
             }
 
             await LoadCurrentUser();
-            if (currentUserId != Guid.Empty)
-            {
-                await LoadUserForms();
-            }
 
             await GetCurrentUser();
         }
@@ -125,159 +106,6 @@ namespace FlowManager.Client.Pages
             }
         }
 
-        private async Task LoadUserForms()
-        {
-            isLoadingUserForms = true;
-            StateHasChanged();
-
-            try
-            {
-                Console.WriteLine($"[BasicUser] Loading forms - Page: {_currentPage}, PageSize: {_pageSize}, Search: '{userFormsSearchTerm}', Statuses: [{string.Join(", ", selectedStatuses)}]");
-
-                var response = await FormResponseService.GetFormResponsesByUserPagedAsync(
-                    currentUserId,
-                    _currentPage,
-                    _pageSize,
-                    userFormsSearchTerm,
-                    selectedStatuses.ToList());
-
-                if (response != null)
-                {
-                    userForms = response.FormResponses;
-                    _totalCount = response.TotalCount;
-                    _totalPages = (int)Math.Ceiling((double)_totalCount / _pageSize);
-
-                    Console.WriteLine($"[BasicUser] Loaded {userForms?.Count ?? 0} forms for user {currentUserId} (page {_currentPage}/{_totalPages}, total: {_totalCount})");
-                }
-                else
-                {
-                    Console.WriteLine("[BasicUser] Failed to load forms - response was null");
-                    userForms = new List<FormResponseResponseDto>();
-                    _totalCount = 0;
-                    _totalPages = 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[BasicUser] Error loading user forms: {ex.Message}");
-                userForms = new List<FormResponseResponseDto>();
-                _totalCount = 0;
-                _totalPages = 0;
-            }
-            finally
-            {
-                isLoadingUserForms = false;
-                StateHasChanged();
-            }
-        }
-
-        private async Task FilterByStatus(string status)
-        {
-            selectedStatuses = new HashSet<string> { status };
-
-            _currentPage = 1;
-            await LoadUserForms();
-        }
-
-        private async Task ShowAllStatuses()
-        {
-            // Selectează toate statusurile
-            selectedStatuses = new HashSet<string> { "Pending", "Rejected", "Approved" };
-            _currentPage = 1;
-            await LoadUserForms();
-        }
-
-        private bool IsOnlyStatusSelected(string status)
-        {
-            return selectedStatuses.Count == 1 && selectedStatuses.Contains(status);
-        }
-
-        private bool AreAllStatusesSelected()
-        {
-            return selectedStatuses.Count == 3 &&
-                   selectedStatuses.Contains("Pending") &&
-                   selectedStatuses.Contains("Rejected") &&
-                   selectedStatuses.Contains("Approved");
-        }
-
-        // USER FORMS SEARCH FUNCTIONALITY
-        private void OnUserFormsSearchInput(ChangeEventArgs e)
-        {
-            var newSearchTerm = e.Value?.ToString() ?? "";
-
-            // Debounce search to avoid too many API calls
-            userFormsSearchDebounceTimer?.Dispose();
-            userFormsSearchDebounceTimer = new Timer(async _ =>
-            {
-                await InvokeAsync(async () =>
-                {
-                    userFormsSearchTerm = newSearchTerm;
-                    _currentPage = 1; // Reset la prima pagină la search nou
-                    await LoadUserForms();
-                });
-            }, null, 500, Timeout.Infinite); // 500ms debounce
-        }
-
-        private async Task ClearUserFormsSearch()
-        {
-            userFormsSearchTerm = "";
-            _currentPage = 1;
-            await LoadUserForms();
-        }
-
-        private async Task GoToFirstPage()
-        {
-            _currentPage = 1;
-            await LoadUserForms();
-        }
-
-        private async Task GoToPreviousPage()
-        {
-            _currentPage--;
-            await LoadUserForms();
-        }
-
-        private List<int> GetPageNumbers()
-        {
-            List<int> pages = new List<int>();
-
-            int half = (int)Math.Floor(_maxVisiblePages / 2.0);
-
-            int start = Math.Max(1, _currentPage - half);
-            int end = Math.Min(_totalPages, start + _maxVisiblePages - 1);
-
-            if (end - start + 1 < _maxVisiblePages)
-            {
-                start = Math.Max(1, end - _maxVisiblePages + 1);
-            }
-
-            for (int i = start; i <= end; i++)
-            {
-                pages.Add(i);
-            }
-
-            return pages;
-        }
-
-        private async Task GoToPage(int page)
-        {
-            _currentPage = page;
-            await LoadUserForms();
-        }
-
-        private async Task GoToNextPage()
-        {
-            _currentPage++;
-            await LoadUserForms();
-        }
-
-        private async Task GoToLastPage()
-        {
-            _currentPage = _totalPages;
-            await LoadUserForms();
-        }
-
-        // FORM TEMPLATE SELECTION MODAL FUNCTIONALITY
         private async Task ShowFormSelectionModalForAddForm()
         {
             showAddFormModal = true;
@@ -315,7 +143,6 @@ namespace FlowManager.Client.Pages
             {
                 Console.WriteLine($"[BasicUser] Loading active templates - Page: {currentPage}, Search: '{searchTerm}', Append: {append}");
 
-                // SCHIMBAT: folosește metoda pentru template-uri active
                 var response = await FormTemplateService.GetActiveFormTemplatesPagedAsync(
                     page: currentPage,
                     pageSize: pageSize,
@@ -352,50 +179,6 @@ namespace FlowManager.Client.Pages
                 displayedTemplates = new List<FormTemplateResponseDto>();
                 hasMoreTemplates = false;
                 totalTemplatesCount = 0;
-                await JSRuntime.InvokeVoidAsync("alert", $"Error loading form templates: {ex.Message}");
-            }
-            finally
-            {
-                isLoadingTemplates = false;
-                StateHasChanged();
-            }
-        }
-
-        private async Task LoadTemplates(bool append = false)
-        {
-            isLoadingTemplates = true;
-            StateHasChanged();
-
-            try
-            {
-                Console.WriteLine($"Loading templates - Page: {currentPage}, Search: '{searchTerm}', Append: {append}");
-
-                var response = await FormTemplateService.GetFormTemplatesPagedAsync(
-                    page: currentPage,
-                    pageSize: pageSize,
-                    searchTerm: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm
-                );
-
-                if (response != null)
-                {
-                    if (append && displayedTemplates != null)
-                    {
-                        displayedTemplates.AddRange(response.Templates);
-                    }
-                    else
-                    {
-                        displayedTemplates = response.Templates.ToList();
-                    }
-
-                    hasMoreTemplates = response.HasMore;
-                    totalTemplatesCount = response.TotalCount;
-
-                    Console.WriteLine($"Loaded {response.Templates.Count} templates. Total: {totalTemplatesCount}, HasMore: {hasMoreTemplates}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading templates: {ex.Message}");
                 await JSRuntime.InvokeVoidAsync("alert", $"Error loading form templates: {ex.Message}");
             }
             finally
@@ -450,7 +233,7 @@ namespace FlowManager.Client.Pages
             {
                 Navigation.NavigateTo($"/fill-form/{template.Id}");
             }
-            else if(showCompleteOnBehalfModal)
+            else if (showCompleteOnBehalfModal)
             {
                 Navigation.NavigateTo($"/complete-on-behalf-form/{template.Id}");
             }
@@ -461,23 +244,19 @@ namespace FlowManager.Client.Pages
             selectedFormResponse = formResponse;
             showViewFormModal = true;
             isLoadingFormDetails = true;
-            isLoadingFlowSteps = true; // ADAUGĂ
+            isLoadingFlowSteps = true;
             StateHasChanged();
 
             try
             {
-                // Încarcă template-ul formularului
                 selectedFormTemplate = await FormTemplateService.GetFormTemplateByIdAsync(formResponse.FormTemplateId);
 
                 if (selectedFormTemplate != null)
                 {
-                    // Parsează conținutul formularului
                     await ParseFormContent();
 
-                    // Încarcă componentele
                     await LoadFormComponents();
 
-                    // ADAUGĂ - Încarcă step-urile flow-ului
                     await LoadFlowSteps();
                 }
             }
@@ -489,7 +268,7 @@ namespace FlowManager.Client.Pages
             finally
             {
                 isLoadingFormDetails = false;
-                isLoadingFlowSteps = false; // ADAUGĂ
+                isLoadingFlowSteps = false;
                 StateHasChanged();
             }
         }
@@ -677,18 +456,6 @@ namespace FlowManager.Client.Pages
             return null;
         }
 
-        private string FormatFieldValue(object? value, string componentType)
-        {
-            if (value == null) return "No response";
-
-            return componentType.ToLower() switch
-            {
-                "checkbox" => value.ToString() == "True" ? "Yes" : "No",
-                "datetime" => DateTime.TryParse(value.ToString(), out var date) ? date.ToString("dd/MM/yyyy HH:mm") : value.ToString()!,
-                _ => value.ToString() ?? "No response"
-            };
-        }
-
         private void SetActiveTab(string tab)
         {
             _activeTab = tab;
@@ -713,24 +480,9 @@ namespace FlowManager.Client.Pages
                 errorMessage = "Logout failed. Please try again.";
             }
         }
-
-        private void AddForm()
-        {
-            _ = ShowFormSelectionModalForAddForm();
-        }
-
-        private async Task RefreshUserForms()
-        {
-            Console.WriteLine("[BasicUser] Refreshing user forms...");
-            _currentPage = 1;
-            await LoadUserForms();
-        }
-
-        // Implementează IDisposable
         public void Dispose()
         {
             searchDebounceTimer?.Dispose();
-            userFormsSearchDebounceTimer?.Dispose();
         }
 
         private async Task GetCurrentUser()
@@ -748,7 +500,6 @@ namespace FlowManager.Client.Pages
             };
         }
 
-        // Metodă pentru a obține opțiunile radio button-ului din component
         private List<string> GetRadioOptions(ComponentResponseDto component)
         {
             if (component.Properties != null && component.Properties.ContainsKey("Options"))

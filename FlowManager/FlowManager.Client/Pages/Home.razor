@@ -56,7 +56,6 @@
     {
         @if (isImpersonating && HasRole("Moderator"))
         {
-            <!-- Afișează doar opțiunile pentru moderator când adminul impersonează -->
             <div class="roles-grid impersonation-roles">
                 <div class="role-card moderator-card" @onclick="NavigateToModerator">
                     <div class="role-icon">🛡️</div>
@@ -75,7 +74,6 @@
         }
         else
         {
-            <!-- Logica normală pentru utilizatorii neimpersonați -->
             <div class="roles-grid">
                 @if (HasRole("Admin"))
                 {

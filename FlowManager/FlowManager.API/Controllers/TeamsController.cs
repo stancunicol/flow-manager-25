@@ -76,11 +76,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        /// <summary>
-        ///  Splits the users in assigned to the teamId team and unassigned in two different lists
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         [HttpGet("queried/splitUsers/{teamId}/byStep/{stepId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

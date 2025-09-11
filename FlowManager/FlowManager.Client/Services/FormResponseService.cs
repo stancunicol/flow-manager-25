@@ -105,7 +105,6 @@ namespace FlowManager.Client.Services
                 if (!string.IsNullOrEmpty(searchTerm))
                     query["SearchTerm"] = searchTerm;
 
-                // TEMPORAR: Trimite întotdeauna statusFilters pentru debugging
                 if (statusFilters?.Any() == true)
                 {
                     for (int i = 0; i < statusFilters.Count; i++)
@@ -167,7 +166,6 @@ namespace FlowManager.Client.Services
         {
             try
             {
-                // SCHIMBAT: Folosește endpoint-ul specific pentru moderator
                 var uriBuilder = new UriBuilder(_httpClient.BaseAddress!)
                 {
                     Path = $"api/formresponses/assigned-to-moderator/{moderatorId}"
@@ -254,31 +252,5 @@ namespace FlowManager.Client.Services
                 return null;
             }
         }
-    }
-
-    public class FormResponseApiResponse
-    {
-        public PagedResponseDto<FormResponseResponseDto>? Result { get; set; }
-        public bool Success { get; set; }
-        public string? Message { get; set; }
-        public DateTime Timestamp { get; set; }
-    }
-
-    public class PagedUserFormsResponse
-    {
-        public List<FormResponseResponseDto> FormResponses { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public bool HasMore { get; set; }
-    }
-
-    public class PagedModeratorFormsResponse
-    {
-        public List<FormResponseResponseDto> FormResponses { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public bool HasMore { get; set; }
     }
 }

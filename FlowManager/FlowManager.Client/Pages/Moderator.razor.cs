@@ -1,5 +1,6 @@
 ﻿using BlazorBootstrap;
 using FlowManager.Client.DTOs;
+using FlowManager.Client.Deserialization;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;

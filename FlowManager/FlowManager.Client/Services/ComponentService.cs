@@ -72,11 +72,9 @@ namespace FlowManager.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Citește răspunsul ca string pentru debugging
                     var responseContent = await response.Content.ReadAsStringAsync();
                     _logger.LogInformation($"API Response Content: {responseContent}");
 
-                    // Deserializează cu wrapper-ul corect conform controller-ului
                     var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<PagedResponseDto<ComponentResponseDto>>>(
                         responseContent,
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true }

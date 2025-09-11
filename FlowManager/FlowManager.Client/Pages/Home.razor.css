@@ -102,7 +102,6 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    /* Eliminăm position: center */
 }
 
     .role-card::before {
@@ -166,7 +165,6 @@ body {
     margin-top: auto;
 }
 
-/* Admin card - portocaliu cald */
 .admin-card::before {
     background: linear-gradient(90deg, #f59e0b, #d97706);
 }
@@ -185,7 +183,6 @@ body {
     color: #d97706;
 }
 
-/* User card - verde în ton cu tema */
 .user-card::before {
     background: linear-gradient(90deg, #10b981, #059669);
 }
@@ -204,7 +201,6 @@ body {
     color: #059669;
 }
 
-/* Manager card - teal în ton cu navbar */
 .manager-card::before {
     background: linear-gradient(90deg, #0d9488, #0f766e);
 }
@@ -223,7 +219,6 @@ body {
     color: #0f766e;
 }
 
-/* Moderator card - albastru/violet */
 .moderator-card::before {
     background: linear-gradient(90deg, #8b5cf6, #7c3aed);
 }

@@ -1,4 +1,4 @@
-﻿namespace FlowManager.Client.ViewModels
+﻿namespace FlowManager.Client.Deserialization
 {
     public class FormElement
     {

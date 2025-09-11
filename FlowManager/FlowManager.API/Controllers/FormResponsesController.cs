@@ -86,7 +86,6 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetFormResponsesQueriedAsync([FromQuery] QueriedFormResponseRequestDto payload)
         {
-            // ADAUGĂ logging pentru debugging
             _logger.LogInformation("Getting form responses with filters - UserId: {UserId}, StatusFilters: [{StatusFilters}], Search: {SearchTerm}",
                 payload.UserId,
                 payload.StatusFilters != null ? string.Join(", ", payload.StatusFilters) : "All",
