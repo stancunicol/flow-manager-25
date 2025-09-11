@@ -92,8 +92,16 @@
                     <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
                     <button class="btn-save" @onclick="@(() => string.IsNullOrEmpty(SavedFormTemplateName) ?
                            SaveWorkflow() : SaveWorkflowInvokeAsync())"
-                        disabled="@(!IsWorkflowValid())">
-                        Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"
+                        disabled="@(_isSaving || !IsWorkflowValid())">
+                        @if(_isSaving)
+                        {
+                            <text>Saving...</text>
+                        }
+                        else
+                        {
+                            <text>Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")"</text>
+                        }
+
                     </button>
                 </div>
 

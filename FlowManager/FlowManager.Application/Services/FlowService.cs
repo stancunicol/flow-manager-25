@@ -63,7 +63,9 @@ namespace FlowManager.Infrastructure.Services
                     UpdatedAt = f.UpdatedAt,
                     DeletedAt = f.DeletedAt
                 }).ToList(),
-                TotalCount = totalCount
+                TotalCount = totalCount,
+                PageSize = parameters?.PageSize ?? totalCount,
+                Page = parameters?.Page ?? 1,
             };
         }
 

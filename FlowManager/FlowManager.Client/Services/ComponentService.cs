@@ -65,15 +65,12 @@ namespace FlowManager.Client.Services
                 }
 
                 uriBuilder.Query = query.ToString();
-                _logger.LogInformation($"Making API call to: {uriBuilder.Uri}");
 
                 var response = await _httpClient.GetAsync(uriBuilder.Uri);
-                _logger.LogInformation($"API Response Status: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogInformation($"API Response Content: {responseContent}");
 
                     var apiResponse = JsonSerializer.Deserialize<ApiResponseWrapper<PagedResponseDto<ComponentResponseDto>>>(
                         responseContent,
@@ -82,25 +79,18 @@ namespace FlowManager.Client.Services
 
                     if (apiResponse?.Success == true && apiResponse.Result != null)
                     {
-                        _logger.LogInformation($"Successfully loaded {apiResponse.Result.Data?.Count() ?? 0} components");
                         return apiResponse.Result;
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"API call failed. Success: {apiResponse?.Success}, Message: {apiResponse?.Message}");
                     }
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"API call failed with status {response.StatusCode}: {errorContent}");
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in GetAllComponentsQueriedAsync");
                 return null;
             }
         }

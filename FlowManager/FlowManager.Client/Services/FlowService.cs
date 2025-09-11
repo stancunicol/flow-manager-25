@@ -209,6 +209,7 @@ namespace FlowManager.Client.Services
                 var response = await _httpClient.GetAsync(uriBuilder.Uri);
 
                 var result = await response.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
+
                 return result ?? new ApiResponse<PagedResponseDto<FlowResponseDto>>();
             }
             catch (HttpRequestException ex)

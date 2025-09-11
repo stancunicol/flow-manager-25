@@ -55,6 +55,8 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 if (response.Success && response.Result != null)
                 {
                     _flows = response.Result.Data.ToList();
+                    _totalPages = response.Result.TotalPages;
+                    _totalCount = response.Result.TotalCount;
                 }
                 else
                 {
@@ -87,6 +89,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
                 _searchTerm = newSearchTerm;
                 await InvokeAsync(async () =>
                 {
+                    _currentPage = 1;
                     await LoadFlows();
                 });
             }, null, _debounceDelayMs, Timeout.Infinite);
@@ -110,7 +113,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow
             }
             else
             {
-                // Altfel funcționăm local (pentru Flows.razor)
                 _selectedFlow = flow;
                 _showEditModal = true;
                 StateHasChanged();

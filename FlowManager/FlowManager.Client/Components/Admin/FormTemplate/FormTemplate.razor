@@ -1,5 +1,4 @@
-﻿@page "/form-template"
-@using FlowManager.Shared.DTOs.Requests.Component
+﻿@using FlowManager.Shared.DTOs.Requests.Component
 @using FlowManager.Shared.DTOs.Requests.FormTemplate
 @using FlowManager.Shared.DTOs.Responses.Component
 @using FlowManager.Shared.DTOs.Responses.FormTemplate
@@ -7,7 +6,6 @@
 @using FlowManager.Client.Services
 @using FlowManager.Client.DTOs
 @using static MudBlazor.CategoryTypes
-@using FlowManager.Client.Services
 @using System.Text.Json
 
 <PageTitle>Form Template Builder</PageTitle>
@@ -16,12 +14,20 @@
     <div class="form-template-header">
         <h1>Form Template Builder</h1>
         <div class="template-actions">
+
+            @if (!string.IsNullOrEmpty(_onSaveTemplateMessage))
+            {
+                <div class="onSubmitMessage">
+                    <span class="onSubmit @(_onSaveTemplateSuccess ? "success" : "fail")">@_onSaveTemplateMessage</span>
+                </div>
+            }
+
             <input @bind="templateName"
                    placeholder="Enter template name..."
                    class="template-name-input" />
             <button class="save-button"
                     @onclick="SaveTemplate"
-                    disabled="@isSaving">
+                    disabled="@(isSaving || string.IsNullOrWhiteSpace(templateName) || !canvasElements.Any())">
                 @if (isSaving)
                 {
                     <span class="loading-spinner"></span>
@@ -242,7 +248,6 @@
                 {
                     <div class="no-components">
                         <p>No components found</p>
-                        <p>Status: @apiCallStatus</p>
                     </div>
                 }
                 else
@@ -362,10 +367,17 @@
                 <button class="modal-btn secondary" @onclick="CloseAddComponentModal" @onclick:stopPropagation="true">
                     Cancel
                 </button>
-                <button class="modal-btn primary" @onclick="SaveNewComponent" @onclick:stopPropagation="true">
+                <button class="modal-btn primary" @onclick="SaveNewComponent" @onclick:stopPropagation="true" disabled="@(string.IsNullOrWhiteSpace(newComponent.Label))">
                     Add Component
                 </button>
             </div>
+
+            @if (!string.IsNullOrEmpty(_onSaveComponentMessage))
+            {
+                <div class="onSubmitMessage">
+                    <span class="onSubmit @(_onSaveComponentSuccess ? "success" : "fail")">@_onSaveComponentMessage</span>
+                </div>
+            }
         </div>
     </div>
 }
@@ -487,9 +499,6 @@
     // Grid settings
     private const int GRID_SIZE = 25; // 20px for element + 5px spacing
 
-    // Debug pentru API call
-    private string apiCallStatus = "Not started";
-
     // Z-index counter for layering
     private int zIndexCounter = 1;
 
@@ -513,6 +522,12 @@
         public Dictionary<string, object>? Properties { get; set; }
     }
 
+    private string _onSaveTemplateMessage = "";
+    private bool _onSaveTemplateSuccess = false;  
+
+    private string _onSaveComponentMessage = "";    
+    private bool _onSaveComponentSuccess = false;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadAvailableComponents();
@@ -523,7 +538,6 @@
         try
         {
             isLoading = true;
-            apiCallStatus = "Starting API call...";
             StateHasChanged();
 
             var result = await ComponentService.GetAllComponentsQueriedAsync(new QueriedComponentRequestDto());
@@ -531,17 +545,14 @@
             if (result?.Data != null)
             {
                 availableComponents = result.Data.ToList();
-                apiCallStatus = $"Successfully loaded {availableComponents.Count} components from database";
             }
             else
             {
-                apiCallStatus = "No data returned from API - check if backend is running";
                 availableComponents = new List<ComponentResponseDto>();
             }
         }
         catch (Exception ex)
         {
-            apiCallStatus = $"Error loading components: {ex.Message}";
             availableComponents = new List<ComponentResponseDto>();
         }
         finally
@@ -551,7 +562,6 @@
         }
     }
 
-    // Metodă pentru a obține opțiunile radio button-ului
     private List<string> GetRadioOptions(CanvasElement element)
     {
         if (element.Properties != null && element.Properties.ContainsKey("Options"))
@@ -646,7 +656,6 @@
 
     private async Task OnCanvasClick(MouseEventArgs e)
     {
-        // This handles clicks on the canvas container, but we want workspace clicks
     }
 
     private async Task CreateTextElement(double x, double y)
@@ -662,7 +671,6 @@
 
         canvasElements.Add(textElement);
 
-        // Start editing immediately
         await EditTextElement(textElement.Id);
         StateHasChanged();
     }
@@ -677,7 +685,6 @@
             isEditingText = true;
             StateHasChanged();
 
-            // Focus on textarea after render
             await Task.Delay(50);
             await textareaRef.FocusAsync();
         }
@@ -692,7 +699,6 @@
             {
                 element.TextContent = editingText;
 
-                // Remove element if text is empty
                 if (string.IsNullOrWhiteSpace(editingText))
                 {
                     canvasElements.Remove(element);
@@ -700,7 +706,6 @@
             }
         }
 
-        // Reset editing state
         isEditingText = false;
         editingText = "";
         editingElementId = null;
@@ -747,7 +752,6 @@
 
     private void OnDragOver()
     {
-        // Allow drop
     }
 
     private async Task OnDrop(DragEventArgs e)
@@ -756,9 +760,8 @@
         {
             try
             {
-                // Snap to grid
                 var gridX = SnapToGrid(e.OffsetX);
-                var gridY = SnapToGrid(e.OffsetY - 60); // Subtract header height
+                var gridY = SnapToGrid(e.OffsetY - 60);
 
                 var componentElement = new CanvasElement
                 {
@@ -781,7 +784,6 @@
             }
             catch (Exception ex)
             {
-                // Fallback positioning with grid snap
                 var componentElement = new CanvasElement
                 {
                     X = SnapToGrid(150),
@@ -804,7 +806,6 @@
         }
     }
 
-    // Edit component modal methods
     private void EditComponentElement(Guid elementId)
     {
         var element = canvasElements.FirstOrDefault(e => e.Id == elementId && !e.IsTextElement);
@@ -812,7 +813,6 @@
         {
             editingComponent = element;
 
-            // Pentru radio buttons, încarcă opțiunile existente
             if (element.ComponentType == "RadioButton" || element.ComponentType == "radio")
             {
                 editRadioOptions = GetRadioOptions(element).ToList();
@@ -835,7 +835,6 @@
     {
         if (editingComponent != null)
         {
-            // Salvează modificările pentru radio buttons
             if ((editingComponent.ComponentType == "RadioButton" || editingComponent.ComponentType == "radio")
                 && editRadioOptions.Any())
             {
@@ -863,7 +862,6 @@
         }
     }
 
-    // New component modal methods
     private void AddNewComponent()
     {
         try
@@ -877,7 +875,6 @@
             };
             newComponentMaxLength = 0;
 
-            // Reset radio options pentru new component
             radioOptions = new List<string> { "Option 1", "Option 2" };
 
             showAddComponentModal = true;
@@ -885,13 +882,11 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in AddNewComponent: {ex.Message}");
         }
     }
 
     private void OnComponentTypeChange(ChangeEventArgs e)
     {
-        // Reset radio options când se schimbă tipul
         if (e.Value?.ToString() == "RadioButton")
         {
             radioOptions = new List<string> { "Option 1", "Option 2" };
@@ -926,28 +921,19 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in CloseAddComponentModal: {ex.Message}");
         }
     }
 
     private async Task SaveNewComponent()
     {
-        if (string.IsNullOrWhiteSpace(newComponent.Label))
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Please enter a component label");
-            return;
-        }
-
         try
         {
-            // Adaugă proprietăți specifice tipului
             if (newComponent.Type == "TextInput" && newComponentMaxLength > 0)
             {
                 newComponent.Properties ??= new Dictionary<string, object>();
                 newComponent.Properties["MaxLength"] = newComponentMaxLength;
             }
 
-            // Pentru radio buttons, salvează opțiunile
             if (newComponent.Type == "RadioButton" && radioOptions.Any())
             {
                 newComponent.Properties ??= new Dictionary<string, object>();
@@ -958,58 +944,65 @@
             if (result != null)
             {
                 availableComponents.Add(result);
-                CloseAddComponentModal();
+
+                _onSaveComponentMessage = "Component created successfully!";
+                _onSaveComponentSuccess = true;
+
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("alert", "Component created successfully!");
+
+                await Task.Delay(2000);
+
+                CloseAddComponentModal();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error creating component");
+                _onSaveComponentMessage = "Failed to create component.";
+                _onSaveComponentSuccess = false;
+
+                await Task.Delay(2000);
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            _onSaveComponentMessage = $"Error creating component: {ex.Message}";
+            _onSaveComponentSuccess = false;
+
+            await Task.Delay(2000);
+
+            _onSaveComponentMessage = string.Empty;
         }
+
+        _onSaveComponentMessage = string.Empty;
     }
 
     private async Task SaveTemplate()
     {
-        if (string.IsNullOrWhiteSpace(templateName))
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Please enter a template name");
-            return;
-        }
-
-        if (!canvasElements.Any())
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Please add at least one element to the form");
-            return;
-        }
-
         isSaving = true;
         try
         {
             if (ShouldSaveToDatabase)
             {
-                // Salvează în baza de date (logica originală)
                 await SaveTemplateFromLocalStorageToDatabase();
             }
             else
             {
-                // Salvează în localStorage
                 await SaveToLocalStorage();
 
-                // Trigger event cu un temporary ID pentru navigare
                 var tempId = Guid.NewGuid();
                 await OnTemplateSaved.InvokeAsync((tempId, templateName));
+                
+                _onSaveTemplateMessage = "Template saved to local storage successfully!";
+                _onSaveTemplateSuccess = true;
 
-                await JSRuntime.InvokeVoidAsync("alert", "Template saved locally! Continue to build your workflow.");
+                await Task.Delay(1000);
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            _onSaveTemplateMessage = $"Error saving template: {ex.Message}";
+            _onSaveTemplateSuccess = false;
+
+            await Task.Delay(1000);
         }
         finally
         {
@@ -1018,7 +1011,6 @@
         }
     }
 
-    // Metodă pentru salvare în localStorage
     private async Task SaveToLocalStorage()
     {
         var templateData = new
@@ -1045,7 +1037,6 @@
         await JSRuntime.InvokeVoidAsync("localStorage.setItem", "formTemplate", jsonString);
     }
 
-    // Metodă pentru încărcare din localStorage
     public async Task LoadFromLocalStorage()
     {
         try
@@ -1057,10 +1048,8 @@
                 using var document = System.Text.Json.JsonDocument.Parse(jsonString);
                 var root = document.RootElement;
 
-                // Restore template name
                 templateName = root.GetProperty("TemplateName").GetString() ?? "";
 
-                // Restore canvas elements
                 canvasElements.Clear();
                 var elementsJson = root.GetProperty("CanvasElements");
 
@@ -1075,7 +1064,6 @@
                         IsTextElement = elementJson.GetProperty("IsTextElement").GetBoolean()
                     };
 
-                    // Handle optional properties
                     if (elementJson.TryGetProperty("TextContent", out var textContentProperty))
                     {
                         element.TextContent = textContentProperty.GetString();
@@ -1114,7 +1102,6 @@
                     canvasElements.Add(element);
                 }
 
-                // Restore z-index counter
                 if (root.TryGetProperty("ZIndexCounter", out var zCounterProperty))
                 {
                     zIndexCounter = zCounterProperty.GetInt32();
@@ -1125,7 +1112,8 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error loading template: {ex.Message}");
+            _onSaveTemplateMessage = $"Error loading template: {ex.Message}";
+            _onSaveTemplateSuccess = false;
         }
     }
 
@@ -1133,24 +1121,21 @@
     {
         try
         {
-            // 1. CITEȘTE din localStorage (NU din canvasElements!)
             var jsonString = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "formTemplate");
-            Console.WriteLine($"JSON from localStorage: {jsonString}");
 
             if (string.IsNullOrEmpty(jsonString))
             {
-                await JSRuntime.InvokeVoidAsync("alert", "No template found in localStorage");
+                _onSaveTemplateMessage = "No template found in localStorage.";
+                _onSaveTemplateSuccess = false;
                 return null;
             }
 
-            // 2. PARSEAZĂ localStorage data
             using var document = System.Text.Json.JsonDocument.Parse(jsonString);
             var root = document.RootElement;
 
-            var storedTemplateName = root.GetProperty("TemplateName").GetString(); // DIN localStorage
+            var storedTemplateName = root.GetProperty("TemplateName").GetString();
             var elementsJson = root.GetProperty("CanvasElements");
 
-            // 3. Convertește elementele din localStorage în CanvasElement objects
             var storedElements = new List<CanvasElement>();
 
             foreach (var elementJson in elementsJson.EnumerateArray())
@@ -1164,7 +1149,6 @@
                     IsTextElement = elementJson.GetProperty("IsTextElement").GetBoolean()
                 };
 
-                // Handle optional properties
                 if (elementJson.TryGetProperty("TextContent", out var textContent))
                     element.TextContent = textContent.GetString();
                 if (elementJson.TryGetProperty("ComponentType", out var compType))
@@ -1183,10 +1167,8 @@
                 storedElements.Add(element);
             }
 
-            // 4. ACUM folosește datele din localStorage (NU din UI!)
             var componentIds = new List<Guid>();
 
-            // Create components folosind storedElements (NU canvasElements!)
             foreach (var element in storedElements.Where(e => !e.IsTextElement))
             {
                 if (element.ComponentId.HasValue)
@@ -1212,7 +1194,6 @@
                 }
             }
 
-            // 5. Create JSON content folosind storedElements (NU canvasElements!)
             var templateContent = System.Text.Json.JsonSerializer.Serialize(new
             {
                 Layout = "FreeCanvas",
@@ -1234,7 +1215,7 @@
 
             var formTemplateRequest = new PostFormTemplateRequestDto
             {
-                Name = storedTemplateName ?? "Untitled Template", // DIN localStorage (NU templateName!)
+                Name = storedTemplateName ?? "Untitled Template",
                 Content = templateContent,
                 FlowId = flowId,
                 Components = componentIds
@@ -1243,7 +1224,6 @@
             var templateResponse = await FormTemplateService.PostFormTemplateAsync(formTemplateRequest);
             if (templateResponse != null)
             {
-                // Clear localStorage după salvare
                 await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "formTemplate");
 
                 canvasElements.Clear();
@@ -1257,7 +1237,8 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving template: {ex.Message}");
+            _onSaveTemplateMessage = $"Error saving template to database: {ex.Message}";
+            _onSaveTemplateSuccess = false;
             return null;
         }
     }
