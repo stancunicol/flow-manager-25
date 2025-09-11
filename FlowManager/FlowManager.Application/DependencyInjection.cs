@@ -24,6 +24,7 @@ namespace FlowManager.Application
             services.AddScoped<IFlowService, FlowService>();
             services.AddScoped<IFormResponseService, FormResponseService>();
             // services.AddScoped<IFlowStepService, FlowStepService>();
+            services.AddScoped<IStepHistoryService, StepHistoryService>();
 
             return services;
         }

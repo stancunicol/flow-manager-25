@@ -18,6 +18,7 @@ namespace FlowManager.Client
             services.AddScoped<TeamService>();
             services.AddScoped<AuthService>();
             services.AddScoped<FlowStepService>();
+            services.AddScoped<StepHistoryService>();
             services.AddScoped < ImpersonationService>();
             return services;
         }

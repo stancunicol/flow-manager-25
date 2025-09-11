@@ -451,6 +451,35 @@ namespace FlowManager.Infrastructure.Migrations
                     b.ToTable("Steps");
                 });
 
+            modelBuilder.Entity("FlowManager.Domain.Entities.StepHistory", b =>
+                {
+                    b.Property<Guid>("IdStepHistory")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("StepId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("IdStepHistory");
+
+                    b.HasIndex("StepId");
+
+                    b.ToTable("StepHistory");
+                });
+
             modelBuilder.Entity("FlowManager.Domain.Entities.Team", b =>
                 {
                     b.Property<Guid>("Id")
@@ -853,6 +882,17 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Navigation("Flow");
 
                     b.Navigation("FormTemplate");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.StepHistory", b =>
+                {
+                    b.HasOne("FlowManager.Domain.Entities.Step", "Step")
+                        .WithMany()
+                        .HasForeignKey("StepId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Step");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.User", b =>
