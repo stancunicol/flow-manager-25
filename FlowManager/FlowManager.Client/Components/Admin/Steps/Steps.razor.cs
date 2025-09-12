@@ -548,13 +548,20 @@ namespace FlowManager.Client.Components.Admin.Steps
                     UserIds = departmentToMove.Users.Select(u => u.Id).ToList()
                 };
 
+                var movedUsers = departmentToMove.Users
+                .Where(u => !selectedDepartment.Users.Any(su => su.Id == u.Id))
+                .Select(u => u.Name)
+                .ToList();
+
                 var payload = new CreateStepHistoryRequestDto
                 {
                     StepId = selectedDepartment.Id,
-                    Users = departmentToMove.Users.Select(u => u.Id).ToList(),
+                    Users = movedUsers,
                     FromDepartment = selectedDepartment.Name,
                     ToDepartment = departmentToMove.Name
                 };
+
+                Console.WriteLine($"History payload users: {string.Join(", ", payload.Users)}");
 
                 await stepService.UpdateStepAsync(departmentToMove.Id, targetPayload);
 

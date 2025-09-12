@@ -1,10 +1,40 @@
-﻿.page-title {
+﻿.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.page-title {
     font-size: 26px;
     font-weight: 700;
     color: #1f2937;
-    margin-top: 15px;
-    margin-bottom: 25px;
+    margin: 0;
 }
+
+.btn-nav {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+    .btn-nav:hover {
+        background: #e5e7eb;
+    }
+
+    .btn-nav.active {
+        background: #2563eb;
+        color: white;
+    }
+
+
 
 .departments-grid {
     display: grid;

@@ -56,7 +56,7 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllStepHistoriesAsync()
         {
-            IEnumerable<StepHistory> result = await _stepHistoryService.GetAllAsync();
+            IEnumerable<StepHistoryResponseDto> result = await _stepHistoryService.GetAllAsync();
 
             return Ok(new
             {
@@ -131,7 +131,7 @@ namespace FlowManager.API.Controllers
 
             StepHistoryResponseDto result = await _stepHistoryService.CreateStepHistoryForMoveUsersAsync(payload);
 
-            return CreatedAtAction(nameof(GetStepHistoryByIdAsync), new { id = result.Id }, new
+            return Ok(new
             {
                 Result = result,
                 Message = "Step history for user move created successfully",

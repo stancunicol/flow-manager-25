@@ -1,0 +1,58 @@
+﻿.page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-top: 15px;
+    margin-bottom: 25px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+    color: #374151;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+    .btn:hover {
+        background-color: #e5e7eb;
+        color: #111827;
+    }
+
+.btn-active {
+    background-color: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+    .history-table th, .history-table td {
+        border: 1px solid #e5e7eb;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .history-table th {
+        background-color: #f3f4f6;
+        font-weight: bold;
+    }
+
+    .history-table tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+

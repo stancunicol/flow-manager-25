@@ -53,10 +53,18 @@ namespace FlowManager.Application.Services
             };
         }
 
-        public async Task<IEnumerable<StepHistory>> GetAllAsync()
+        public async Task<IEnumerable<StepHistoryResponseDto>> GetAllAsync()
         {
             var stepHistories = await _repository.GetAllAsync();
-            return stepHistories;
+            var stepHistoryResponses = stepHistories.Select(sh => new StepHistoryResponseDto
+            {
+                Id = sh.IdStepHistory,
+                StepId = sh.StepId,
+                Action = sh.Action,
+                Details = sh.Details,
+                DateTime = sh.DateTime
+            });
+            return stepHistoryResponses;
         }
 
         public async Task<StepHistoryResponseDto> GetByIdAsync(Guid id)

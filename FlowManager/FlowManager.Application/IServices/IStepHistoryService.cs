@@ -9,8 +9,8 @@ namespace FlowManager.Application.Interfaces
 {
     public interface IStepHistoryService
     {
-        Task<PagedResponseDto<StepHistoryResponseDto>> GetStepHistoriesQueriedAsync(QueriedStepHistoryRequestDto payload);
-        Task<IEnumerable<StepHistory>> GetAllAsync();
+        Task<PagedResponseDto<StepHistoryResponseDto>> GetStepHistoriesQueriedAsync(QueriedStepHistoryRequestDto? payload);
+        Task<IEnumerable<StepHistoryResponseDto>> GetAllAsync();
         Task<StepHistoryResponseDto> GetByIdAsync(Guid id);
         Task<StepHistoryResponseDto> CreateStepHistoryForNameChangeAsync(CreateStepHistoryRequestDto payload);
         Task<StepHistoryResponseDto> CreateStepHistoryForMoveUsersAsync(CreateStepHistoryRequestDto payload);

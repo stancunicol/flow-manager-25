@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Authorization
+﻿@page "/steps"
+@using Microsoft.AspNetCore.Authorization
 @using FlowManager.Client.ViewModels
 @attribute [Authorize(Roles = "Admin")]
 
@@ -104,13 +105,11 @@
 {
     <div class="edit-dep-modal-overlay" @onclick="CloseEditModal">
         <div class="edit-dep-modal" @onclick:stopPropagation="true">
-            <!-- Header -->
             <div class="edit-dep-modal-header">
                 <h3>Change Department Name</h3>
                 <button class="close-btn" @onclick="CloseEditModal">✕</button>
             </div>
 
-            <!-- Body -->
             <div class="edit-dep-name">
                 <label for="depName">Department Name:</label>
                 <input id="depName" type="text" @bind="editDepName" placeholder="Enter department name" />
@@ -120,7 +119,6 @@
                 }
             </div>
 
-            <!-- Footer Actions -->
             <div class="edit-dep-modal-actions">
                 <button class="btn cancel-btn" @onclick="CloseEditModal">Cancel</button>
                 <button class="btn save-btn" @onclick="SaveEditNameDepartment">Save Changes</button>
