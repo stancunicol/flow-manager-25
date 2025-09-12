@@ -70,20 +70,6 @@
                 Departments
             </button>
 
-            <button class="nav-item @(_activeTab == "HISTORY" ? "active" : "")"
-                    @onclick="@(() => SetActiveTab("HISTORY"))">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     viewBox="0 0 24 24"
-                     fill="currentColor"
-                     style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;">
-                    <path fill-rule="evenodd"
-                          d="M2.25 4.125c0-1.036.84-1.875 1.875-1.875h5.25c1.036 0 1.875.84 1.875 1.875V17.25a4.5 4.5 0 11-9 0V4.125zM4.5 14.25a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25zm0-3.75a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25zM4.5 6.75a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25z"
-                          clip-rule="evenodd" />
-                    <path d="M12.75 2.25a.75.75 0 00-1.5 0v15a2.25 2.25 0 104.5 0V3.375c0-.621-.504-1.125-1.125-1.125H12.75z" />
-                </svg>
-                History
-            </button>
-
             <!-- FORM TEMPLATES -->
            
         
@@ -177,11 +163,7 @@
         }
         @if (_activeTab == "DEPARTMENTS")
         {
-            <FlowManager.Client.Components.Admin.Steps.Steps></FlowManager.Client.Components.Admin.Steps.Steps>
-        }
-        @if (_activeTab == "HISTORY")
-        {
-            <FlowManager.Client.Components.Admin.Steps.StepsHistory></FlowManager.Client.Components.Admin.Steps.StepsHistory>
+            <FlowManager.Client.Components.Admin.Steps.Steps OnTabChange="SetActiveTab"></FlowManager.Client.Components.Admin.Steps.Steps>
         }
          @if (_activeTab == "WORKFLOW") 
         {
@@ -195,6 +177,11 @@
         {
             <FlowManager.Client.Components.Admin.FlowFormsHistory.FlowFormsHistory />
         }
+        @if (_activeTab == "STEPS_HISTORY")
+        {
+            <FlowManager.Client.Components.Admin.Steps.StepsHistory OnTabChange="SetActiveTab" />
+        }
+
     </main>
 </div>
 <!-- Impersonation Modal -->

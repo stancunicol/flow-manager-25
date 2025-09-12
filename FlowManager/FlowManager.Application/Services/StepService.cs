@@ -320,30 +320,25 @@ namespace FlowManager.Application.Services
         public async Task<PagedResponseDto<StepResponseDto>> GetAllStepsQueriedAsync(QueriedStepRequestDto payload)
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
-
-            // Obținem rolul moderator
             Role? moderatorRole = await _roleRepository.GetRoleByRolenameAsync("MODERATOR");
             if (moderatorRole == null)
                 throw new EntryNotFoundException("Moderator role does not exist");
 
-            // Luăm pașii cu paginare și sortare
             (List<Step> steps, int totalCount) = await _stepRepository.GetAllStepsQueriedAsync(
                 moderatorRole.Id,
                 payload.Name,
                 parameters
             );
 
-            // Obținem DTO-urile
             var stepDtos = steps.Select(step =>
             {
-                // Users DTO
                 var userDtos = step.Users?.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
                     Name = u.Name,
                     Email = u.Email,
                     Teams = u.Teams?
-                                .Where(ut => ut.Team != null) // ✅ filtrăm Teams fără obiect Team
+                                .Where(ut => ut.Team != null)
                                 .Select(ut => new TeamResponseDto
                                 {
                                     Id = ut.Team!.Id,
@@ -351,10 +346,9 @@ namespace FlowManager.Application.Services
                                 }).ToList() ?? new List<TeamResponseDto>()
                 }).ToList() ?? new List<UserResponseDto>();
 
-                // Teams DTO (distinct)
                 var teamDtos = userDtos
                                 .SelectMany(u => u.Teams)
-                                .GroupBy(t => t.Id)       // evităm duplicate
+                                .GroupBy(t => t.Id)
                                 .Select(g => g.First())
                                 .ToList();
 

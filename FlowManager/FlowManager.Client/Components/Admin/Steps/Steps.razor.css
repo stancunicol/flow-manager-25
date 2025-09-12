@@ -12,28 +12,67 @@
     margin: 0;
 }
 
-.btn-nav {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 12px;
-    background: #f3f4f6;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #374151;
-    text-decoration: none;
-    transition: background 0.2s;
+.go-to-history-btn {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    border: none;
+    outline: none;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-    .btn-nav:hover {
-        background: #e5e7eb;
+    .go-to-history-btn:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+        background: linear-gradient(135deg, #059669, #047857);
     }
 
-    .btn-nav.active {
-        background: #2563eb;
-        color: white;
+    .go-to-history-btn:active {
+        transform: translateY(1px) scale(0.98);
+        box-shadow: 0 3px 10px rgba(16, 185, 129, 0.2);
     }
 
+    .go-to-history-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+.load-more-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+    .load-more-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .load-more-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .load-more-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
 
 
 .departments-grid {
@@ -197,7 +236,7 @@
     max-width: 600px;
     width: 100%;
     max-height: 90vh;
-    overflow-x: visible; /* Pentru dropdown-uri */
+    overflow-x: visible;
     overflow-y: auto;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
     animation: fadeIn 0.3s ease;
@@ -251,6 +290,7 @@
     }
 
 .actions-bar {
+    gap: 12px;
     margin-bottom: 20px;
     display: flex;
     justify-content: flex-end;

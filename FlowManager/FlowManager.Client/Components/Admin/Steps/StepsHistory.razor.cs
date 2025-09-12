@@ -1,6 +1,10 @@
 ﻿using FlowManager.Shared.DTOs.Responses.StepHistory;
 using Microsoft.AspNetCore.Components;
 using FlowManager.Client.Services;
+using FlowManager.Domain.Dtos;
+using FlowManager.Shared.DTOs.Requests.Step;
+using FlowManager.Shared.DTOs.Requests.StepHistory;
+using QueryParams = FlowManager.Shared.DTOs.Requests.QueryParamsDto;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
@@ -8,14 +12,27 @@ namespace FlowManager.Client.Components.Admin.Steps
     {
         List<StepHistoryResponseDto> history = new();
         private List<string> messages = new();
+        private int pageSize = 10;
+        private int currentPage = 1;
+        private bool hasMoreHistory = false;
+        private List<StepHistoryResponseDto> historyInUI = new();
+        private List<string> messagesInUI = new();
+
 
         [Inject]
         public StepService stepService { get; set; } = default!;
 
         [Inject]
         public StepHistoryService stepHistoryService { get; set; } = default!;
+
         [Inject]
         public UserService userService { get; set; } = default!;
+
+        [Inject] 
+        private NavigationManager Navigation { get; set; }
+
+        [Parameter]
+        public EventCallback<string> OnTabChange { get; set; }
 
         protected override async Task OnInitializedAsync()
         {
@@ -23,16 +40,47 @@ namespace FlowManager.Client.Components.Admin.Steps
             await LoadMessagesAsync();
         }
 
-        public async Task LoadHistory()
+        private async Task GoBack()
+        {
+            if (OnTabChange.HasDelegate)
+            {
+                await OnTabChange.InvokeAsync("DEPARTMENTS");
+            }
+        }
+
+        private async Task LoadHistory(int page = 1)
         {
             try
             {
-                var response = await stepHistoryService.GetAllAsync();
+                var payload = new QueriedStepHistoryRequestDto
+                {
+                    QueryParams = new QueryParams
+                    {
+                        Page = page,
+                        PageSize = pageSize
+                    }
+                };
+
+                var response = await stepHistoryService.GetStepHistoriesQueriedAsync(payload);
 
                 if (response != null)
-                    history = response.ToList();
+                {
+                    var pageHistory = response.Result.Data
+                        .OrderByDescending(h => h.DateTime)
+                        .ToList();
 
-                Console.WriteLine($"Loaded {response?.Count() ?? 0} history items");
+                    historyInUI.AddRange(pageHistory);
+
+                    foreach (var item in pageHistory)
+                    {
+                        messagesInUI.Add(await RenderMessageAsync(item));
+                    }
+
+                    currentPage++;
+                    hasMoreHistory = pageHistory.Count == pageSize;
+
+                    StateHasChanged();
+                }
             }
             catch (Exception ex)
             {
