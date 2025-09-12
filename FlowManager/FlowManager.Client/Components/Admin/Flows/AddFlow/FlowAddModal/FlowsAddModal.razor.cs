@@ -11,6 +11,7 @@ using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using System.Threading.Tasks;
 
 
 namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
@@ -36,6 +37,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         private string _onSubmitMessage = string.Empty;
         private bool _onSubmitSuccess;
+        private bool _isSaving = false;
 
         protected override async Task OnInitializedAsync()
         {
@@ -157,12 +159,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         public async Task SaveWorkflow()
         {
-            if (!IsWorkflowValid())
-            {
-                await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
-                return;
-            }
-
             PostFlowRequestDto payload = new PostFlowRequestDto
             {
                 Name = _flowName,
@@ -230,11 +226,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         {
             try
             {
-                if (!IsWorkflowValid())
-                {
-                    await _jsRuntime.InvokeVoidAsync("alert", "Please complete the workflow configuration.");
-                    return null;
-                }
+                _isSaving = true;
 
                 var workflowStepIds = GetConfiguredStepIds();
 
@@ -254,29 +246,17 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     FormTemplateId = null
                 });
 
+                _isSaving = false;
+
                 if (apiResponse != null && apiResponse.Success && apiResponse.Result != null)
                 {
-                    Console.WriteLine($"Flow created: Id={apiResponse.Result.Id}");
-
-                    ClearConfiguration();
-
                     return (apiResponse.Result.Id, apiResponse.Result.Name ?? "Unnamed Flow");
                 }
-
-                // Log error message if available
-                if (apiResponse != null && !apiResponse.Success)
-                {
-                    Console.WriteLine($"Flow creation failed: {apiResponse.Message}");
-                }
-
-                _onSubmitMessage = apiResponse.Message;
-                _onSubmitSuccess = apiResponse.Success;
 
                 return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error creating flow: {ex.Message}");
                 throw;
             }
         }
@@ -379,6 +359,24 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     Email = u.Email
                 }).ToList() ?? new List<UserVM>()
             }).ToList() ?? new List<TeamVM>();
+
+            StateHasChanged();
+        }
+
+        public string GetFlowName()
+        {
+            return _flowName;
+        }
+
+        public async Task SetFlowSubmitMessageAsync(string message, bool succes)
+        {
+            _onSubmitMessage = message;
+            _onSubmitSuccess = succes;
+
+            StateHasChanged();
+
+            await Task.Delay(3000);
+            _onSubmitMessage = string.Empty;
 
             StateHasChanged();
         }

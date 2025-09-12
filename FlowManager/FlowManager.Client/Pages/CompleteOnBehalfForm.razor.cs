@@ -1,4 +1,5 @@
-﻿using FlowManager.Client.DTOs;
+﻿using FlowManager.Client.Deserialization;
+using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
@@ -407,30 +408,38 @@ namespace FlowManager.Client.Pages
             return _components?.Where(c => c.Required == true).All(c => _responses.ContainsKey(c.Id)) ?? false;
         }
 
+        private List<string> GetRadioOptions(ComponentVM component)
+        {
+            if (component.Properties != null && component.Properties.ContainsKey("Options"))
+            {
+                try
+                {
+                    if (component.Properties["Options"] is JsonElement jsonElement)
+                    {
+                        var optionsList = JsonSerializer.Deserialize<List<string>>(jsonElement.GetRawText());
+                        return optionsList ?? new List<string> { "Option 1", "Option 2" };
+                    }
+                    else if (component.Properties["Options"] is List<string> directList)
+                    {
+                        return directList;
+                    }
+                    else if (component.Properties["Options"] is string[] stringArray)
+                    {
+                        return stringArray.ToList();
+                    }
+                }
+                catch
+                {
+                    // Fallback la opțiuni default
+                }
+            }
+
+            return new List<string> { "Option 1", "Option 2" };
+        }
+
         private void GoBack()
         {
             Navigation.NavigateTo("/basic-user");
-        }
-
-        public class FormContent
-        {
-            public string Layout { get; set; } = "";
-            public List<FormElement> Elements { get; set; } = new();
-        }
-
-        public class FormElement
-        {
-            public string Id { get; set; } = "";
-            public int X { get; set; }
-            public int Y { get; set; }
-            public int ZIndex { get; set; }
-            public bool IsTextElement { get; set; }
-            public string? TextContent { get; set; }
-            public Guid? ComponentId { get; set; }
-            public string? ComponentType { get; set; }
-            public string? Label { get; set; }
-            public bool? Required { get; set; }
-            public Dictionary<string, object>? Properties { get; set; }
         }
     }
 }

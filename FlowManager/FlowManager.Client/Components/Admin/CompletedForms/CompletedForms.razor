@@ -130,13 +130,7 @@
                                     <span class="detail-value admin-name">@form.CompletedByAdminName</span>
                                 </div>
                             }
-                            @if (form.ApprovedByAdmin && !string.IsNullOrEmpty(form.ApprovedByAdminName))
-                            {
-                                <div class="detail-item approved-by-admin">
-                                    <span class="detail-label">Approved by Admin</span>
-                                    <span class="detail-value admin-name">@form.ApprovedByAdminName</span>
-                                </div>
-                            }
+                            
                             @if (!string.IsNullOrEmpty(form.RejectReason))
                             {
                                 <div class="detail-item reject-reason">

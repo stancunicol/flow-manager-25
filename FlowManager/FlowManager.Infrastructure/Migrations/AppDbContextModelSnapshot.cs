@@ -182,13 +182,6 @@ namespace FlowManager.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("ApprovedByAdmin")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ApprovedByAdminName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("CompletedByAdmin")
                         .HasColumnType("INTEGER");
 

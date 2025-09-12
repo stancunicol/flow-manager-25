@@ -63,7 +63,9 @@ namespace FlowManager.Infrastructure.Services
                     UpdatedAt = f.UpdatedAt,
                     DeletedAt = f.DeletedAt
                 }).ToList(),
-                TotalCount = totalCount
+                TotalCount = totalCount,
+                PageSize = parameters?.PageSize ?? totalCount,
+                Page = parameters?.Page ?? 1,
             };
         }
 
@@ -538,6 +540,13 @@ namespace FlowManager.Infrastructure.Services
                         StepName = fs.Step.Name,
                     }).ToList(),
             };
+        }
+
+        public async Task<bool> GetFlowNameUnicityAsync(string flowName)
+        {
+            Flow? existingFlow = await _flowRepository.GetFlowByNameAsync(flowName);
+
+            return existingFlow == null;
         }
     }
 }

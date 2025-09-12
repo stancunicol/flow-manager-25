@@ -131,5 +131,13 @@ namespace FlowManager.Infrastructure.Repositories
                 query = query.Where(ftc => ftc.DeletedAt == null);
             return await query.FirstOrDefaultAsync(ftc => ftc.Id == id);
         }
+
+        public async Task<bool> GetFormTemplateNameUnicityAsync(string formTemplateName)
+        {
+            FormTemplate? ft = await _context.FormTemplates
+                .FirstOrDefaultAsync(ft => ft.Name == formTemplateName);    
+
+            return ft == null;
+        }
     }
 }

@@ -165,6 +165,22 @@
                                                 <span class="checkbox-label @(IsFieldReadonly(component.Id) ? "readonly-label" : "")">@component.Label</span>
                                             </div>
                                             break;
+                                        case "radiobutton":
+                                        case "radio":
+                                            var radioOptions = GetRadioOptions(component);
+                                            <div class="radio-field">
+                                                @foreach (var option in radioOptions)
+                                                {
+                                                    <label class="radio-option">
+                                                        <input type="radio"
+                                                               name="radio_@component.Id"
+                                                               value="@option"
+                                                               @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                                        <span class="radio-option-text">@option</span>
+                                                    </label>
+                                                }
+                                            </div>
+                                            break;
                                         default:
                                             <input type="text"
                                                    class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"

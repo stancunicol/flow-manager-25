@@ -1,10 +1,13 @@
-﻿using FlowManager.Shared.DTOs.Requests.FormTemplate;
+﻿using FlowManager.Client.DTOs;
+using FlowManager.Shared.DTOs.Requests;
+using FlowManager.Shared.DTOs.Requests.FormTemplate;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Requests;
+using FlowManager.Client.DTOs;
 using System.Net.Http.Json;
-using System.Web;
 using System.Text.Json;
+using System.Web;
 
 namespace FlowManager.Client.Services
 {
@@ -17,14 +20,12 @@ namespace FlowManager.Client.Services
             _httpClient = httpClient;
         }
 
-        // METODĂ NOUĂ pentru a obține doar template-urile active
         public async Task<List<FormTemplateResponseDto>?> GetActiveFormTemplatesAsync()
         {
             try
             {
                 Console.WriteLine("[FormTemplateService] Loading active form templates...");
 
-                // Obține toate template-urile
                 var response = await _httpClient.GetAsync("api/formtemplates/queried?QueryParams.PageSize=1000");
 
                 if (response.IsSuccessStatusCode)
@@ -40,12 +41,11 @@ namespace FlowManager.Client.Services
                     var allTemplates = apiResponse?.Result?.Data?.ToList() ?? new List<FormTemplateResponseDto>();
                     Console.WriteLine($"[FormTemplateService] Found {allTemplates.Count} total templates");
 
-                    // Filtrează doar template-urile active (cele mai recente pentru fiecare flow)
                     var activeTemplates = allTemplates
-                        .Where(t => t.FlowId.HasValue) // Doar template-urile care au flow asociat
-                        .GroupBy(t => t.FlowId) // Grupează pe flow
+                        .Where(t => t.FlowId.HasValue) 
+                        .GroupBy(t => t.FlowId) 
                         .Select(group => group
-                            .OrderByDescending(t => t.CreatedAt) // Ia cel mai recent pentru fiecare flow
+                            .OrderByDescending(t => t.CreatedAt) 
                             .First())
                         .ToList();
 
@@ -62,12 +62,10 @@ namespace FlowManager.Client.Services
             }
         }
 
-        // METODĂ NOUĂ pentru search și paginare pe template-uri active
         public async Task<PagedTemplatesResponse?> GetActiveFormTemplatesPagedAsync(int page, int pageSize, string? searchTerm = null)
         {
             try
             {
-                // Obține toate template-urile active
                 var activeTemplates = await GetActiveFormTemplatesAsync();
 
                 if (activeTemplates == null)
@@ -82,7 +80,6 @@ namespace FlowManager.Client.Services
                     };
                 }
 
-                // Aplică filtrul de căutare pe template-urile active
                 var filteredTemplates = activeTemplates;
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -93,7 +90,6 @@ namespace FlowManager.Client.Services
                         .ToList();
                 }
 
-                // Aplică paginarea
                 var totalCount = filteredTemplates.Count;
                 var skip = (page - 1) * pageSize;
                 var pagedTemplates = filteredTemplates
@@ -124,7 +120,6 @@ namespace FlowManager.Client.Services
             }
         }
 
-        // METODĂ existentă - păstrată pentru compatibilitate cu alte părți
         public async Task<List<FormTemplateResponseDto>?> GetAllFormTemplatesAsync()
         {
             try
@@ -152,10 +147,8 @@ namespace FlowManager.Client.Services
             }
         }
 
-        // METODĂ existentă - MODIFICATĂ pentru a folosi template-uri active în modalul BasicUser
         public async Task<PagedTemplatesResponse?> GetFormTemplatesPagedAsync(int page, int pageSize, string? searchTerm = null)
         {
-            // SCHIMBAT: Folosește GetActiveFormTemplatesPagedAsync pentru BasicUser
             return await GetActiveFormTemplatesPagedAsync(page, pageSize, searchTerm);
         }
 
@@ -215,6 +208,18 @@ namespace FlowManager.Client.Services
                 Console.WriteLine($"Error getting queried form templates: {ex.Message}");
                 return null;
             }
+        }
+
+        public async Task<bool> GetFormTemplateNameUnicityAsync(string formTemplateName)
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync($"api/formTemplates/form-template-valid/{formTemplateName}");
+
+            ApiResponse<bool>? result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+
+            if (result == null)
+                return false;
+
+            return result.Result;
         }
 
         public async Task<FormTemplateResponseDto?> GetFormTemplateByIdAsync(Guid id)
@@ -308,23 +313,5 @@ namespace FlowManager.Client.Services
                 return false;
             }
         }
-    }
-
-    // Clasele existente rămân neschimbate
-    public class FormTemplateApiResponse<T>
-    {
-        public T? Result { get; set; }
-        public bool Success { get; set; }
-        public string? Message { get; set; }
-        public DateTime Timestamp { get; set; }
-    }
-
-    public class PagedTemplatesResponse
-    {
-        public List<FormTemplateResponseDto> Templates { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public bool HasMore { get; set; }
     }
 }

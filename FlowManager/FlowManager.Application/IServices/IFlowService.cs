@@ -7,7 +7,7 @@ using FlowManager.Shared.DTOs.Responses.Step;
 namespace FlowManager.Application.Interfaces
 {
     public interface IFlowService
-    {
+    { 
         Task<FlowResponseDto> GetFlowByFormTemplateIdAsync(Guid formTemplateId);
         Task<PagedResponseDto<FlowResponseDto>> GetAllFlowsQueriedAsync(QueriedFlowRequestDto payload);
         Task<FlowResponseDto> GetFlowByIdAsync(Guid id);
@@ -16,5 +16,6 @@ namespace FlowManager.Application.Interfaces
         Task<FlowResponseDto> DeleteFlowAsync(Guid id);
         Task<List<StepResponseDto>> GetStepsForFlowAsync(Guid flowId);
         Task<FlowResponseDto> GetFlowByIdIncludeStepsAsync(Guid flowId);
+        Task<bool> GetFlowNameUnicityAsync(string flowName);
     }
 }

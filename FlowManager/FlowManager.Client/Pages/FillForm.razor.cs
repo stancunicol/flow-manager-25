@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;
+using FlowManager.Client.Deserialization;
 
 namespace FlowManager.Client.Pages
 {
@@ -89,7 +90,6 @@ namespace FlowManager.Client.Pages
             isLoadingFlow = true;
             try
             {
-                // Găsește flow-ul care are acest FormTemplateId
                 var flowsResponse = await Http.GetAsync($"api/flows/queried?QueryParams.PageSize=100");
                 if (flowsResponse.IsSuccessStatusCode)
                 {
@@ -102,7 +102,6 @@ namespace FlowManager.Client.Pages
                         
                         if (associatedFlow?.Steps?.Any() == true)
                         {
-                            // Primul step din flow (cel cu ordinea cea mai mică sau primul din listă)
                             firstStep = associatedFlow.Steps.First();
                             Console.WriteLine($"[DEBUG] Found flow '{associatedFlow.Name}' with first step: '{firstStep.Name}'");
                         }
@@ -182,7 +181,6 @@ namespace FlowManager.Client.Pages
                 return;
             }
 
-            // Convertim valoarea în tipul corespunzător
             object convertedValue = componentType.ToLower() switch
             {
                 "number" => int.TryParse(value, out var intVal) ? intVal : value,
@@ -208,7 +206,6 @@ namespace FlowManager.Client.Pages
                 return;
             }
 
-            // Validare: verifică câmpurile obligatorii
             var requiredComponents = components?.Where(c => c.Required == true) ?? new List<ComponentResponseDto>();
             var missingRequiredFields = requiredComponents.Where(c => !responses.ContainsKey(c.Id)).ToList();
 
@@ -227,7 +224,7 @@ namespace FlowManager.Client.Pages
                 var formResponseData = new PostFormResponseRequestDto
                 {
                     FormTemplateId = TemplateId,
-                    StepId = firstStep.Id, // Folosește primul step din flow
+                    StepId = firstStep.Id,
                     UserId = currentUserId,
                     ResponseFields = responses
                 };
@@ -266,7 +263,6 @@ namespace FlowManager.Client.Pages
             Navigation.NavigateTo("/basic-user");
         }
 
-        // Metodă pentru a obține opțiunile radio button-ului din component
         private List<string> GetRadioOptions(ComponentResponseDto component)
         {
             if (component.Properties != null && component.Properties.ContainsKey("Options"))
@@ -294,28 +290,6 @@ namespace FlowManager.Client.Pages
             }
 
             return new List<string> { "Option 1", "Option 2" };
-        }
-
-        // Classes pentru deserializare
-        public class FormContent
-        {
-            public string Layout { get; set; } = "";
-            public List<FormElement> Elements { get; set; } = new();
-        }
-
-        public class FormElement
-        {
-            public string Id { get; set; } = "";
-            public int X { get; set; }
-            public int Y { get; set; }
-            public int ZIndex { get; set; }
-            public bool IsTextElement { get; set; }
-            public string? TextContent { get; set; }
-            public Guid? ComponentId { get; set; }
-            public string? ComponentType { get; set; }
-            public string? Label { get; set; }
-            public bool? Required { get; set; }
-            public Dictionary<string, object>? Properties { get; set; }
         }
     }
 }

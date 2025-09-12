@@ -44,7 +44,6 @@ namespace FlowManager.Client.Pages
                 isLoading = true;
                 StateHasChanged();
 
-                // Încarcă rolurile utilizatorului din API
                 var response = await Http.GetAsync("api/auth/me");
 
                 if (response.IsSuccessStatusCode)

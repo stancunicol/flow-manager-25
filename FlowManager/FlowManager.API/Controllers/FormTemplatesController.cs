@@ -63,6 +63,24 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        [HttpGet("form-template-valid/{formName}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetFormTemplateNameUnicityAsync(string formName)
+        {
+            var result = await _formTemplateService.GetFormTemplateNameUnicityAsync(formName);
+
+            return Ok(new
+            {
+                Result = result,
+                Success = true,
+                Message = "Form template name unicity retrieved successfully.",
+                Timestamp = DateTime.UtcNow,
+            });
+        }
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

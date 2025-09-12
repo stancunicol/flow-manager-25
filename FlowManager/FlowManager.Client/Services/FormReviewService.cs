@@ -1,6 +1,7 @@
 ﻿using FlowManager.Shared.DTOs.Requests.FormReview;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.FormReview;
+using FlowManager.Client.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Web;
@@ -86,22 +87,5 @@ namespace FlowManager.Client.Services
                 return null;
             }
         }
-    }
-
-    public class FormReviewApiResponse
-    {
-        public PagedResponseDto<FormReviewResponseDto>? Result { get; set; }
-        public bool Success { get; set; }
-        public string? Message { get; set; }
-        public DateTime Timestamp { get; set; }
-    }
-
-    public class PagedReviewHistoryResponse
-    {
-        public List<FormReviewResponseDto> Reviews { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public bool HasMore { get; set; }
     }
 }
