@@ -160,3 +160,20 @@
 .detail-item.status-item {
     align-items: center;
 }
+
+/* Admin completion indicator */
+.detail-item.admin-completed {
+    align-items: center;
+}
+
+.admin-badge {
+    background: #ede9fe;
+    color: #7c3aed;
+    border: 1px solid #c4b5fd;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 70px;
+    text-align: center;
+}

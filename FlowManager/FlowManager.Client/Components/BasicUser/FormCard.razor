@@ -46,6 +46,13 @@
                     <span class="detail-value">@FormResponse.RejectReason</span>
                 </div>
             }
+            @if (FormResponse.CompletedByAdmin && !string.IsNullOrEmpty(FormResponse.CompletedByAdminName))
+            {
+                <div class="detail-item admin-completed">
+                    <span class="detail-label">Completed by Admin</span>
+                    <span class="detail-value admin-badge">@FormResponse.CompletedByAdminName</span>
+                </div>
+            }
         </div>
     </div>
 
