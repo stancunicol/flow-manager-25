@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace FlowManager.Domain.Entities
 {
     public class FlowStepTeam
@@ -13,9 +8,8 @@ namespace FlowManager.Domain.Entities
         public Guid FlowStepId { get; set; }
         public Guid TeamId { get; set; }
 
-        // navigation properties
-        public virtual FlowStep FlowStep { get; set; }
-        public virtual Team Team { get; set; }
+        public virtual FlowStep FlowStep { get; set; } = null!;
+        public virtual Team Team { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

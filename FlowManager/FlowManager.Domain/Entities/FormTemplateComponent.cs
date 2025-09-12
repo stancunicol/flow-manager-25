@@ -1,20 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace FlowManager.Domain.Entities
 {
     public class FormTemplateComponent
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        // navigation properties
-        public virtual FormTemplate FormTemplate { get; set; }
+        public virtual FormTemplate FormTemplate { get; set; } = null!;
         public Guid FormTemplateId { get; set; }
 
-        public virtual Component Component { get; set; }
+        public virtual Component Component { get; set; } = null!;
         public Guid ComponentId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

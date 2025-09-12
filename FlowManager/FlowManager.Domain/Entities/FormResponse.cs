@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FlowManager.Domain.Entities
 {
@@ -14,7 +9,7 @@ namespace FlowManager.Domain.Entities
         [MaxLength(100)]
         public string? RejectReason { get; set; }
         public string? Status { get; set; } = "Pending";
-        public Dictionary<Guid, object> ResponseFields { get; set; }
+        public Dictionary<Guid, object> ResponseFields { get; set; } = new Dictionary<Guid, object>();
 
         public bool CompletedByAdmin { get; set; } = false;
         [MaxLength(100)]
@@ -24,14 +19,13 @@ namespace FlowManager.Domain.Entities
         [MaxLength(100)]
         public string? ApprovedByAdminName { get; set; }
 
-        // navigation fields
-        public virtual FormTemplate FormTemplate { get; set; }
+        public virtual FormTemplate FormTemplate { get; set; } = null!;
         public Guid FormTemplateId { get; set; }
 
-        public virtual Step Step { get; set; }
+        public virtual Step Step { get; set; } = null!;
         public Guid StepId { get; set; }
 
-        public virtual User User { get; set; }
+        public virtual User User { get; set; } = null!;
         public Guid UserId { get; set; }
 
         public virtual User? CompletedByOtherUser { get; set; }

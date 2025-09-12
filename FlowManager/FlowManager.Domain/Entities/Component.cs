@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace FlowManager.Domain.Entities
 {
     public class Component
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        public string Type { get; set; }
-        public string Label { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
         public bool Required { get; set; }
-        public Dictionary<string, object> Properties { get; set; }
+        public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
 
-        // navigation properties
         public virtual ICollection<FormTemplateComponent> FormTemplates { get; set; } = new List<FormTemplateComponent>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

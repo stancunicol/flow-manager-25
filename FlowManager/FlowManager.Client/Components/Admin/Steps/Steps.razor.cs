@@ -1,29 +1,16 @@
-﻿using FlowManager.Client.DTOs;
-using FlowManager.Client.ViewModels;
-using FlowManager.Shared.DTOs.Responses.User;
-using FlowManager.Shared.DTOs.Responses;
+﻿using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
-using FlowManager.Client.Services;
-using FlowManager.Application.Services;
 using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Responses.Step;
 using StepService = FlowManager.Client.Services.StepService;
 using UserService = FlowManager.Client.Services.UserService;
 using TeamService = FlowManager.Client.Services.TeamService;
 using StepHistoryService = FlowManager.Client.Services.StepHistoryService;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Linq.Expressions;
 using FlowManager.Shared.DTOs.Requests.Step;
-using FlowManager.Shared.DTOs.Requests.Team;
-using Microsoft.AspNetCore.Components.Web;
 using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
-using FlowManager.Domain.Dtos;
-using Microsoft.AspNetCore.Identity;
-using FlowManager.Shared.DTOs.Requests;
 using MudBlazor;
 using QueryParams = FlowManager.Shared.DTOs.Requests.QueryParamsDto;
-using Azure;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
@@ -43,20 +30,13 @@ namespace FlowManager.Client.Components.Admin.Steps
         private StepResponseDto? departmentToMove;
         private string newDepName = string.Empty;
         private string error = string.Empty;
-        private List<UserResponseDto> unsignedUsers = new();
         private List<UserResponseDto> selectedUsers = new();
         private bool isEditModalOpen = false;
         private string editDepName = string.Empty;
-        private List<UserResponseDto> allUsersList = new();
-        private List<UserResponseDto> allUsers = new();
-        private List<TeamResponseDto> allTeams = new();
         private Dictionary<Guid, string> departmentColors = new();
-        private Guid draggedUserId = Guid.Empty;
         private List<TeamResponseDto> selectedTeams = new();
-        private bool isEditTypeModalOpen = false;
         private enum EditType { None, ChangeName, MoveUsers }
         private EditType currentEditType = EditType.None;
-        private bool isSelectMoveDepartmentModalOpen = false;
         private bool isEditDropdownOpen = false;
         private int pageSize = 12;
         private int currentPage = 1;
@@ -70,8 +50,9 @@ namespace FlowManager.Client.Components.Admin.Steps
         private TeamService teamService { get; set; } = default!;
         [Inject]
         private StepHistoryService stepHistoryService { get; set; } = default!;
-        [Inject] 
-        private NavigationManager Navigation { get; set; }
+        [Inject]
+        private NavigationManager Navigation { get; set; } = default!;
+
         [Parameter]
         public EventCallback<string> OnTabChange { get; set; }
 
@@ -277,7 +258,6 @@ namespace FlowManager.Client.Components.Admin.Steps
                 departments.Clear();
                 departmentsInUI.Clear();
                 currentPage = 1;
-                unsignedUsers.Clear();
                 hasMoreDepartments = false;
 
                 await LoadDepartments(currentPage);
@@ -403,8 +383,6 @@ namespace FlowManager.Client.Components.Admin.Steps
             editDepName = string.Empty;
             selectedUsers.Clear();
             selectedTeams.Clear();
-            allUsers.Clear();
-            allTeams.Clear();
         }
 
         private string GetRandomGradient()

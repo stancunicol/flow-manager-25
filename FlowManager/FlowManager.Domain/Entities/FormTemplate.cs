@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Reflection.Metadata.BlobBuilder;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FlowManager.Domain.Entities
 {
@@ -13,11 +7,10 @@ namespace FlowManager.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
 
         [MaxLength(50)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         [MaxLength(1000000)]
-        public string Content { get; set; }
+        public string Content { get; set; } = string.Empty;
 
-        // navigation properties
         public virtual ICollection<FormTemplateComponent> Components { get; set; } = new List<FormTemplateComponent>();
         public virtual ICollection<FormTemplateFlow> FormTemplateFlows { get; set; } = new List<FormTemplateFlow>();
         public Flow? ActiveFlow => FormTemplateFlows

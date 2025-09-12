@@ -6,12 +6,9 @@ using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
-using System.Linq;
 using FlowManager.Application.Utils;
 using FlowManager.Shared.DTOs.Responses.User;
 using FlowManager.Shared.DTOs.Responses.Team;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowManager.Application.Services
 {
@@ -221,95 +218,6 @@ namespace FlowManager.Application.Services
                     Email = u.Email,
                 }).ToList(),
                 Teams = stepToDelete.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
-            };
-        }
-
-        public async Task<StepResponseDto> AssignUserToStepAsync(Guid stepId, Guid userId)
-        {
-            var user = await _userRepository.GetUserByIdAsync(userId);
-            if (user == null)
-                throw new EntryNotFoundException($"User with id {userId} was not found.");
-
-            var step = await _stepRepository.GetStepByIdAsync(stepId, includeDeletedStepUser: true, includeUsers: true, includeTeams: true);
-            if (step == null)
-                throw new EntryNotFoundException($"Step with id {stepId} was not found.");
-
-            var existingActive = step.Users.FirstOrDefault(u => u.Id == userId && u.DeletedAt == null);
-            if (existingActive != null)
-                throw new UniqueConstraintViolationException($"User {user.Name} is already assigned to step {step.Name}.");
-
-            var existingDeleted = step.Users.FirstOrDefault(u => u.Id == userId && u.DeletedAt != null);
-            if (existingDeleted != null)
-            {
-                existingDeleted.DeletedAt = null;
-                step.Users.Add(existingDeleted);
-            }
-            else
-            {
-                step.Users.Add(user);
-            }
-
-            await _stepRepository.SaveChangesAsync();
-
-            step = await _stepRepository.GetStepByIdAsync(step.Id, includeUsers: true, includeTeams: true);
-
-            return new StepResponseDto
-            {
-                Id = step.Id,
-                Name = step.Name,
-                Users = step.Users.Select(u => new UserResponseDto
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
-                }).ToList(),
-                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
-            };
-        }
-
-        public async Task<StepResponseDto> UnassignUserFromStepAsync(Guid stepId, Guid userId)
-        {
-            var user = await _userRepository.GetUserByIdAsync(userId, includeDeleted: true);
-            if (user == null)
-                throw new EntryNotFoundException($"User with id {userId} was not found.");
-
-            var step = await _stepRepository.GetStepByIdAsync(
-                stepId,
-                includeDeletedStepUser: true,
-                includeUsers: true,
-                includeTeams: true
-            );
-            if (step == null)
-                throw new EntryNotFoundException($"Step with id {stepId} was not found.");
-
-            if (!step.Users.Contains(user))
-                throw new EntryNotFoundException($"User {user.Name} is not assigned to step {step.Name}.");
-            else
-                step.Users.Remove(user);
-
-            await _stepRepository.SaveChangesAsync();
-
-            step = await _stepRepository.GetStepByIdAsync(stepId, includeUsers: true, includeTeams: true);
-
-            return new StepResponseDto
-            {
-                Id = step.Id,
-                Name = step.Name,
-                Users = step.Users.Select(u => new UserResponseDto
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
-                }).ToList(),
-                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
                 {
                     Id = ut.Team.Id,
                     Name = ut.Team.Name,

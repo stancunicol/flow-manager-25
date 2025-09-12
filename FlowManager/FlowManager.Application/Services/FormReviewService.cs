@@ -53,7 +53,7 @@ namespace FlowManager.Application.Services
                     CreatedAt = fr.CreatedAt,
                     UpdatedAt = fr.UpdatedAt,
                     DeletedAt = fr.DeletedAt,
-                    // Impersonation properties
+
                     IsImpersonatedAction = fr.IsImpersonatedAction,
                     ImpersonatedByUserId = fr.ImpersonatedByUserId,
                     ImpersonatedByUserName = fr.ImpersonatedByUserName
@@ -90,7 +90,7 @@ namespace FlowManager.Application.Services
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt,
-                // Impersonation properties
+
                 IsImpersonatedAction = fr.IsImpersonatedAction,
                 ImpersonatedByUserId = fr.ImpersonatedByUserId,
                 ImpersonatedByUserName = fr.ImpersonatedByUserName

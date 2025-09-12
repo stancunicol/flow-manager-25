@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace FlowManager.Shared.DTOs.Requests.Component
 {
     public class PostComponentRequestDto
     {
-        public string Type { get; set; }
-        public string Label { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
         public bool Required { get; set; }
-        public Dictionary<string, object> Properties { get; set; }
+        public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
     }
 }

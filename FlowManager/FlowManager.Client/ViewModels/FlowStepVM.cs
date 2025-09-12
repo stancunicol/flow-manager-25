@@ -1,13 +1,10 @@
-﻿using FlowManager.Domain.Entities;
-
+﻿
 namespace FlowManager.Client.ViewModels
 {
     public class FlowStepVM
     {
         public Guid Id { get; set; } = Guid.Empty;
         public bool? IsApproved { get; set; }
-
-        // navigation properties
         public List<FlowStepUserVM>? AssignedUsers { get; set; }
         public List<FlowStepTeamVM>? AssignedTeams { get; set; }
 
