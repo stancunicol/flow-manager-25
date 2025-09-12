@@ -1,10 +1,8 @@
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.StepHistory;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
-using FlowManager.Domain.Entities;
 using System.Net.Http.Json;
 using FlowManager.Client.DTOs;
-using FlowManager.Shared.DTOs.Responses.Step;
 using System.Web;
 using System.Text.Json;
 
@@ -76,11 +74,22 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<IEnumerable<StepHistory>?> GetAllAsync()
+        public async Task<List<StepHistoryResponseDto>?> GetAllAsync()
         {
-            var response = await _httpClient.GetAsync("api/stephistory/all");
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<IEnumerable<StepHistory>>();
+            try
+            {
+                var response = await _httpClient.GetAsync("api/stephistory/all");
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<StepHistoryResponseDto>>>();
+                    return apiResponse?.Result ?? new List<StepHistoryResponseDto>();
+                }
+                return new List<StepHistoryResponseDto>();
+            }
+            catch
+            {
+                return new List<StepHistoryResponseDto>();
+            }
         }
 
         public async Task<StepHistoryResponseDto?> GetByIdAsync(int id)

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FlowManager.Domain.Entities
 {
@@ -12,9 +7,8 @@ namespace FlowManager.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
 
         [MaxLength(50)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        // navigation properties
         public virtual ICollection<FlowStep> Steps { get; set; } = new List<FlowStep>();
         public virtual ICollection<FormTemplateFlow> FormTemplateFlows { get; set; } = new List<FormTemplateFlow>();
         public FormTemplate? ActiveFormTemplate => FormTemplateFlows

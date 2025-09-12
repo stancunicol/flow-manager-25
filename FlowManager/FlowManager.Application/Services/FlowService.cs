@@ -7,11 +7,9 @@ using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Application.Utils;
-using Microsoft.EntityFrameworkCore;
 using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
-using FlowManager.Shared.DTOs.Requests.FlowStep;
 using FlowManager.Shared.DTOs.Responses.FlowStep;
 using FlowManager.Shared.DTOs.Responses.Team;
 
@@ -50,7 +48,7 @@ namespace FlowManager.Infrastructure.Services
                     Id = f.Id,
                     Name = f.Name,
                     Steps = f.Steps
-                        .OrderBy(s => s.Order) // Order by Order field
+                        .OrderBy(s => s.Order)
                         .Select(s => new StepResponseDto
                         {
                             Id = s.Step.Id,
@@ -84,7 +82,7 @@ namespace FlowManager.Infrastructure.Services
                 Id = flow.Id,
                 Name = flow.Name,
                 Steps = flow.Steps
-                    .OrderBy(s => s.Order) // Order by Order field
+                    .OrderBy(s => s.Order)
                     .Select(s => new StepResponseDto
                     {
                         Id = s.Step.Id,
@@ -202,7 +200,7 @@ namespace FlowManager.Infrastructure.Services
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
                 Steps = flowToPost.Steps
-                    .OrderBy(s => s.Order) // Order by Order field
+                    .OrderBy(s => s.Order)
                     .Select(s => new StepResponseDto
                     {
                         Id = s.StepId,
@@ -248,7 +246,7 @@ namespace FlowManager.Infrastructure.Services
                     Id = flowToUpdate.Id,
                     Name = flowToUpdate.Name,
                     Steps = flowToUpdate.Steps
-                        .OrderBy(s => s.Order) // Order by Order field
+                        .OrderBy(s => s.Order)
                         .Select(s => new StepResponseDto
                         {
                             Id = s.Step.Id,
@@ -276,7 +274,6 @@ namespace FlowManager.Infrastructure.Services
                 step.DeletedAt = DateTime.UtcNow;
             }
 
-            // Get the next order number
             int nextOrder = 1;
             if (flowToUpdate.Steps.Any(s => s.DeletedAt == null))
             {
@@ -299,7 +296,7 @@ namespace FlowManager.Infrastructure.Services
                     {
                         StepId = stepId,
                         FlowId = flowToUpdate.Id,
-                        Order = nextOrder++ // Set order sequentially
+                        Order = nextOrder++
                     });
                 }
             }
@@ -310,7 +307,7 @@ namespace FlowManager.Infrastructure.Services
                 Id = flowToUpdate.Id,
                 Name = flowToUpdate.Name,
                 Steps = flowToUpdate.Steps
-                    .OrderBy(s => s.Order) // Order by Order field
+                    .OrderBy(s => s.Order)
                     .Select(s => new StepResponseDto
                     {
                         Id = s.Step.Id,
@@ -340,7 +337,7 @@ namespace FlowManager.Infrastructure.Services
                 Id = flowToDelete.Id,
                 Name = flowToDelete.Name,
                 Steps = flowToDelete.Steps
-                    .OrderBy(s => s.Order) // Order by Order field
+                    .OrderBy(s => s.Order)
                     .Select(s => new StepResponseDto
                     {
                         Id = s.Step.Id,
@@ -366,7 +363,7 @@ namespace FlowManager.Infrastructure.Services
 
             return new List<StepResponseDto>(
                 flow.Steps
-                    .OrderBy(fs => fs.Order) // Order by Order field instead of CreatedAt
+                    .OrderBy(fs => fs.Order)
                     .Select(fs => new StepResponseDto
                     {
                         Id = fs.Step.Id,

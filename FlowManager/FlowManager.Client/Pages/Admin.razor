@@ -163,7 +163,7 @@
         }
         @if (_activeTab == "DEPARTMENTS")
         {
-            <FlowManager.Client.Components.Admin.Steps.Steps></FlowManager.Client.Components.Admin.Steps.Steps>
+            <FlowManager.Client.Components.Admin.Steps.Steps OnTabChange="SetActiveTab"></FlowManager.Client.Components.Admin.Steps.Steps>
         }
          @if (_activeTab == "WORKFLOW") 
         {
@@ -177,6 +177,11 @@
         {
             <FlowManager.Client.Components.Admin.FlowFormsHistory.FlowFormsHistory />
         }
+        @if (_activeTab == "STEPS_HISTORY")
+        {
+            <FlowManager.Client.Components.Admin.Steps.StepsHistory OnTabChange="SetActiveTab" />
+        }
+
     </main>
 </div>
 <!-- Impersonation Modal -->

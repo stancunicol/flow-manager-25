@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
-using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Step;
 using FlowManager.Shared.DTOs.Responses.Step;
 
@@ -167,38 +166,6 @@ namespace FlowManager.API.Controllers
                 Result = result,
                 Success = true,
                 Message = "Step deleted successfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        [HttpPost("{stepId:guid}/assign-user/{userId:guid}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AssignUserToStep(Guid stepId, Guid userId)
-        {
-            var result = await _stepService.AssignUserToStepAsync(stepId, userId);
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "User assigned to step successfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        [HttpDelete("{stepId:guid}/unassign-user/{userId:guid}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UnassignUserFromStep(Guid stepId, Guid userId)
-        {
-            var result = await _stepService.UnassignUserFromStepAsync(stepId, userId);
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "User unassigned to step successfully.",
                 Timestamp = DateTime.UtcNow
             });
         }

@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace FlowManager.Shared.DTOs.Responses.FormReview
 {
     public class FormReviewResponseDto
@@ -21,8 +20,7 @@ namespace FlowManager.Shared.DTOs.Responses.FormReview
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
-        
-        // Impersonation properties
+
         public bool IsImpersonatedAction { get; set; }
         public Guid? ImpersonatedByUserId { get; set; }
         public string? ImpersonatedByUserName { get; set; }

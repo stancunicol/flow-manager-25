@@ -6,12 +6,9 @@ using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
-using System.Linq;
 using FlowManager.Application.Utils;
 using FlowManager.Shared.DTOs.Responses.User;
 using FlowManager.Shared.DTOs.Responses.Team;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowManager.Application.Services
 {
@@ -228,122 +225,28 @@ namespace FlowManager.Application.Services
             };
         }
 
-        public async Task<StepResponseDto> AssignUserToStepAsync(Guid stepId, Guid userId)
-        {
-            var user = await _userRepository.GetUserByIdAsync(userId);
-            if (user == null)
-                throw new EntryNotFoundException($"User with id {userId} was not found.");
-
-            var step = await _stepRepository.GetStepByIdAsync(stepId, includeDeletedStepUser: true, includeUsers: true, includeTeams: true);
-            if (step == null)
-                throw new EntryNotFoundException($"Step with id {stepId} was not found.");
-
-            var existingActive = step.Users.FirstOrDefault(u => u.Id == userId && u.DeletedAt == null);
-            if (existingActive != null)
-                throw new UniqueConstraintViolationException($"User {user.Name} is already assigned to step {step.Name}.");
-
-            var existingDeleted = step.Users.FirstOrDefault(u => u.Id == userId && u.DeletedAt != null);
-            if (existingDeleted != null)
-            {
-                existingDeleted.DeletedAt = null;
-                step.Users.Add(existingDeleted);
-            }
-            else
-            {
-                step.Users.Add(user);
-            }
-
-            await _stepRepository.SaveChangesAsync();
-
-            step = await _stepRepository.GetStepByIdAsync(step.Id, includeUsers: true, includeTeams: true);
-
-            return new StepResponseDto
-            {
-                Id = step.Id,
-                Name = step.Name,
-                Users = step.Users.Select(u => new UserResponseDto
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
-                }).ToList(),
-                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
-            };
-        }
-
-        public async Task<StepResponseDto> UnassignUserFromStepAsync(Guid stepId, Guid userId)
-        {
-            var user = await _userRepository.GetUserByIdAsync(userId, includeDeleted: true);
-            if (user == null)
-                throw new EntryNotFoundException($"User with id {userId} was not found.");
-
-            var step = await _stepRepository.GetStepByIdAsync(
-                stepId,
-                includeDeletedStepUser: true,
-                includeUsers: true,
-                includeTeams: true
-            );
-            if (step == null)
-                throw new EntryNotFoundException($"Step with id {stepId} was not found.");
-
-            if (!step.Users.Contains(user))
-                throw new EntryNotFoundException($"User {user.Name} is not assigned to step {step.Name}.");
-            else
-                step.Users.Remove(user);
-
-            await _stepRepository.SaveChangesAsync();
-
-            step = await _stepRepository.GetStepByIdAsync(stepId, includeUsers: true, includeTeams: true);
-
-            return new StepResponseDto
-            {
-                Id = step.Id,
-                Name = step.Name,
-                Users = step.Users.Select(u => new UserResponseDto
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email,
-                }).ToList(),
-                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
-            };
-        }
-
         public async Task<PagedResponseDto<StepResponseDto>> GetAllStepsQueriedAsync(QueriedStepRequestDto payload)
         {
             QueryParams? parameters = payload.QueryParams?.ToQueryParams();
-
-            // Obținem rolul moderator
             Role? moderatorRole = await _roleRepository.GetRoleByRolenameAsync("MODERATOR");
             if (moderatorRole == null)
                 throw new EntryNotFoundException("Moderator role does not exist");
 
-            // Luăm pașii cu paginare și sortare
             (List<Step> steps, int totalCount) = await _stepRepository.GetAllStepsQueriedAsync(
                 moderatorRole.Id,
                 payload.Name,
                 parameters
             );
 
-            // Obținem DTO-urile
             var stepDtos = steps.Select(step =>
             {
-                // Users DTO
                 var userDtos = step.Users?.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
                     Name = u.Name,
                     Email = u.Email,
                     Teams = u.Teams?
-                                .Where(ut => ut.Team != null) // ✅ filtrăm Teams fără obiect Team
+                                .Where(ut => ut.Team != null)
                                 .Select(ut => new TeamResponseDto
                                 {
                                     Id = ut.Team!.Id,
@@ -351,10 +254,9 @@ namespace FlowManager.Application.Services
                                 }).ToList() ?? new List<TeamResponseDto>()
                 }).ToList() ?? new List<UserResponseDto>();
 
-                // Teams DTO (distinct)
                 var teamDtos = userDtos
                                 .SelectMany(u => u.Teams)
-                                .GroupBy(t => t.Id)       // evităm duplicate
+                                .GroupBy(t => t.Id)
                                 .Select(g => g.First())
                                 .ToList();
 

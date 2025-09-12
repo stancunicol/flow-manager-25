@@ -1,10 +1,7 @@
 ﻿using FlowManager.Client.DTOs;
-using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Shared.DTOs.Requests.FormTemplate;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
-using FlowManager.Shared.DTOs.Requests;
-using FlowManager.Client.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Web;

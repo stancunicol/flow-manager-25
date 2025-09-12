@@ -1,5 +1,4 @@
-﻿// Domain/IRepositories/IFormResponseRepository.cs
-using FlowManager.Domain.Dtos;
+﻿using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 
 namespace FlowManager.Domain.IRepositories
@@ -39,7 +38,7 @@ namespace FlowManager.Domain.IRepositories
         Task SaveChangesAsync();
         Task AddAsync(FormResponse formResponse);
         Task UpdateAsync(FormResponse formResponse);
-        Task DeleteAsync(Guid id); // Soft delete
+        Task DeleteAsync(Guid id);
         Task<int> BulkMoveToNextStepAsync(List<Guid> formResponseIds, Guid nextStepId);
     }
 }

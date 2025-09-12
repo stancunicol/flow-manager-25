@@ -1,0 +1,44 @@
+﻿@layout MainLayout
+@using FlowManager.Shared.DTOs.Responses.StepHistory
+
+<PageTitle>History</PageTitle>
+
+<h2 class="page-title">History</h2>
+
+<button class="back-to-steps-btn" @onclick="GoBack">← Back to Departments</button>
+
+@if (history == null)
+{
+    <p>Loading...</p>
+}
+else if (!historyInUI.Any())
+{
+    <p>No history records found.</p>
+}
+else
+{
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Action</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < historyInUI.Count; i++)
+            {
+                <tr>
+                    <td>@historyInUI[i].DateTime.ToLocalTime().ToString("g")</td>
+                    <td>@historyInUI[i].Action</td>
+                    <td class="message-col">@messagesInUI[i]</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (hasMoreHistory)
+{
+    <button class="load-more-btn" @onclick="() => LoadHistory(currentPage)">Load More</button>
+}

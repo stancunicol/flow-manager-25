@@ -1,4 +1,3 @@
-using System;
 using Microsoft.AspNetCore.Identity;
 
 namespace FlowManager.Domain.Entities
@@ -6,9 +5,8 @@ namespace FlowManager.Domain.Entities
    
     public class UserRole : IdentityUserRole<Guid>
     {
-        // navigation properties
-        public virtual User User { get; set; } 
-        public virtual Role Role { get; set; }
+        public virtual User User { get; set; } = null!;
+        public virtual Role Role { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

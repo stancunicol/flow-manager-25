@@ -1,29 +1,23 @@
-﻿using FlowManager.Client.DTOs;
-using FlowManager.Client.ViewModels;
-using FlowManager.Shared.DTOs.Responses.User;
-using FlowManager.Shared.DTOs.Responses;
+﻿using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
-using FlowManager.Client.Services;
-using FlowManager.Application.Services;
 using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Responses.Step;
 using StepService = FlowManager.Client.Services.StepService;
 using UserService = FlowManager.Client.Services.UserService;
 using TeamService = FlowManager.Client.Services.TeamService;
 using StepHistoryService = FlowManager.Client.Services.StepHistoryService;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Linq.Expressions;
 using FlowManager.Shared.DTOs.Requests.Step;
-using FlowManager.Shared.DTOs.Requests.Team;
-using Microsoft.AspNetCore.Components.Web;
 using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
+using MudBlazor;
+using QueryParams = FlowManager.Shared.DTOs.Requests.QueryParamsDto;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
     public partial class Steps : ComponentBase
     {
         private List<StepResponseDto> departments = new();
+        private List<StepResponseDto> departmentsInUI = new();
         private bool isModalOpen = false;
         private bool isCreateModalOpen = false;
         private bool isDeleteModalOpen = false;
@@ -36,21 +30,17 @@ namespace FlowManager.Client.Components.Admin.Steps
         private StepResponseDto? departmentToMove;
         private string newDepName = string.Empty;
         private string error = string.Empty;
-        private List<UserResponseDto> unsignedUsers = new();
         private List<UserResponseDto> selectedUsers = new();
         private bool isEditModalOpen = false;
         private string editDepName = string.Empty;
-        private List<UserResponseDto> allUsersList = new();
-        private List<UserResponseDto> allUsers = new();
-        private List<TeamResponseDto> allTeams = new();
         private Dictionary<Guid, string> departmentColors = new();
-        private Guid draggedUserId = Guid.Empty;
         private List<TeamResponseDto> selectedTeams = new();
-        private bool isEditTypeModalOpen = false;
         private enum EditType { None, ChangeName, MoveUsers }
         private EditType currentEditType = EditType.None;
-        private bool isSelectMoveDepartmentModalOpen = false;
         private bool isEditDropdownOpen = false;
+        private int pageSize = 12;
+        private int currentPage = 1;
+        private bool hasMoreDepartments = false;
 
         [Inject]
         private StepService stepService { get; set; } = default!;
@@ -60,49 +50,72 @@ namespace FlowManager.Client.Components.Admin.Steps
         private TeamService teamService { get; set; } = default!;
         [Inject]
         private StepHistoryService stepHistoryService { get; set; } = default!;
+        [Inject]
+        private NavigationManager Navigation { get; set; } = default!;
+
+        [Parameter]
+        public EventCallback<string> OnTabChange { get; set; }
+
+        private async Task GoToHistory()
+        {
+            if (OnTabChange.HasDelegate)
+            {
+                await OnTabChange.InvokeAsync("STEPS_HISTORY");
+            }
+        }
 
         protected override async Task OnInitializedAsync()
         {
-            await LoadDepartments();
+            await LoadDepartments(currentPage);
+            await LoadAllDepartments();
         }
 
-        private async Task LoadDepartments()
+        private async Task LoadAllDepartments()
+        {
+            var result = await stepService.GetStepsQueriedAsync();
+            if (result != null)
+                departments = result.Result.Data
+                        .Where(d => d.DeletedAt == null)
+                        .ToList();
+        }
+
+        private async Task LoadDepartments(int page)
         {
             try
             {
-                var response = await stepService.GetStepsQueriedAsync();
+                var payload = new QueriedStepRequestDto
+                {
+                    QueryParams = new QueryParams
+                    {
+                        Page = page,
+                        PageSize = pageSize
+                    }
+                };
+
+                var response = await stepService.GetStepsQueriedAsync(payload);
+
                 if (response != null && response.Success && response.Result != null)
                 {
-                    departments = response.Result.Data
+                    var pageDepartments = response.Result.Data
                         .Where(d => d.DeletedAt == null)
                         .ToList();
 
-                    for (int i = 0; i < departments.Count; i++)
+                    for (int i = 0; i < pageDepartments.Count; i++)
                     {
-                        var departmentDetails = await stepService.GetStepAsync(departments[i].Id);
+                        var departmentDetails = await stepService.GetStepAsync(pageDepartments[i].Id);
                         if (departmentDetails != null)
-                        {
-                            departments[i] = departmentDetails;
-                        }
+                            pageDepartments[i] = departmentDetails;
 
-                        departments[i].Users ??= new List<UserResponseDto>();
-                        departments[i].Teams ??= new List<TeamResponseDto>();
+                        pageDepartments[i].Users ??= new List<UserResponseDto>();
+                        pageDepartments[i].Teams ??= new List<TeamResponseDto>();
 
-                        if (!departmentColors.ContainsKey(departments[i].Id))
-                        {
-                            departmentColors[departments[i].Id] = GetRandomGradient();
-                        }
-
-                        Console.WriteLine($"Department {departments[i].Name}: {departments[i].Users.Count} users, {departments[i].Teams.Count} teams");
+                        if (!departmentColors.ContainsKey(pageDepartments[i].Id))
+                            departmentColors[pageDepartments[i].Id] = GetRandomGradient();
                     }
 
-                    var toRemove = departmentColors.Keys
-                        .Where(k => !departments.Any(d => d.Id == k))
-                        .ToList();
-                    foreach (var key in toRemove)
-                    {
-                        departmentColors.Remove(key);
-                    }
+                    departmentsInUI.AddRange(pageDepartments);
+                    currentPage++;
+                    hasMoreDepartments = pageDepartments.Count == pageSize;
                 }
             }
             catch (Exception ex)
@@ -188,7 +201,7 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                     await stepHistoryService.CreateStepHistoryForCreateDepartmentAsync(payload);
 
-                    await LoadDepartments();
+                    await LoadDepartments(currentPage);
 
                     await RefreshAllData();
 
@@ -243,9 +256,11 @@ namespace FlowManager.Client.Components.Admin.Steps
             try
             {
                 departments.Clear();
-                unsignedUsers.Clear();
+                departmentsInUI.Clear();
+                currentPage = 1;
+                hasMoreDepartments = false;
 
-                await LoadDepartments();
+                await LoadDepartments(currentPage);
 
                 StateHasChanged();
             }
@@ -368,8 +383,6 @@ namespace FlowManager.Client.Components.Admin.Steps
             editDepName = string.Empty;
             selectedUsers.Clear();
             selectedTeams.Clear();
-            allUsers.Clear();
-            allTeams.Clear();
         }
 
         private string GetRandomGradient()
@@ -548,13 +561,20 @@ namespace FlowManager.Client.Components.Admin.Steps
                     UserIds = departmentToMove.Users.Select(u => u.Id).ToList()
                 };
 
+                var movedUsers = departmentToMove.Users
+                .Where(u => !selectedDepartment.Users.Any(su => su.Id == u.Id))
+                .Select(u => u.Name)
+                .ToList();
+
                 var payload = new CreateStepHistoryRequestDto
                 {
                     StepId = selectedDepartment.Id,
-                    Users = departmentToMove.Users.Select(u => u.Id).ToList(),
+                    Users = movedUsers,
                     FromDepartment = selectedDepartment.Name,
                     ToDepartment = departmentToMove.Name
                 };
+
+                Console.WriteLine($"History payload users: {string.Join(", ", payload.Users)}");
 
                 await stepService.UpdateStepAsync(departmentToMove.Id, targetPayload);
 

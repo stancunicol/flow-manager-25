@@ -7,17 +7,19 @@
 <h2 class="page-title">Departments</h2>
 
 <div class="actions-bar">
+    <button class="go-to-history-btn" @onclick="GoToHistory">View History</button>
+
     <button class="action-btn create-btn" @onclick="OpenCreateModal">+ Create Department</button>
 </div>
 
 <div class="departments-grid">
-    @if (departments == null || !departments.Any())
+    @if (departmentsInUI == null || !departmentsInUI.Any())
     {
         <p>No departments available.</p>
     }
     else
     {
-        @foreach (var department in departments)
+        @foreach (var department in departmentsInUI)
         {
             <div class="department-card" style="background:@departmentColors[department.Id]" @onclick="() => OpenModal(department)">
                 <span class="department-name">@department.Name</span>
@@ -25,6 +27,11 @@
         }
     }
 </div>
+
+@if (hasMoreDepartments)
+{
+    <button class="load-more-btn" @onclick="() => LoadDepartments(currentPage)">Load More</button>
+}
 
 @if (isModalOpen && selectedDepartment != null)
 {
@@ -104,13 +111,11 @@
 {
     <div class="edit-dep-modal-overlay" @onclick="CloseEditModal">
         <div class="edit-dep-modal" @onclick:stopPropagation="true">
-            <!-- Header -->
             <div class="edit-dep-modal-header">
                 <h3>Change Department Name</h3>
                 <button class="close-btn" @onclick="CloseEditModal">✕</button>
             </div>
 
-            <!-- Body -->
             <div class="edit-dep-name">
                 <label for="depName">Department Name:</label>
                 <input id="depName" type="text" @bind="editDepName" placeholder="Enter department name" />
@@ -120,7 +125,6 @@
                 }
             </div>
 
-            <!-- Footer Actions -->
             <div class="edit-dep-modal-actions">
                 <button class="btn cancel-btn" @onclick="CloseEditModal">Cancel</button>
                 <button class="btn save-btn" @onclick="SaveEditNameDepartment">Save Changes</button>
@@ -193,7 +197,9 @@
                         {
                             @foreach (var user in selectedDepartment.Users)
                             {
-                                <li class="user-item"><span>@user.Name (@user.Email)</span></li>
+                                <li class="user-item">
+                                    <span>@user.Name (@user.Email)</span>
+                                    </li>
                             }
                         }
                         else
@@ -291,21 +297,35 @@
                 <div class="users-column">
                     <h4>@selectedDepartment.Name - Users</h4>
                     <ul>
-                        @foreach (var user in selectedDepartment.Users)
+                        @if (selectedDepartment != null && selectedDepartment.Users.Any())
                         {
-                            <li>
-                                <span>@user.Name (@user.Email)</span>
-                                <button class="move-btn" @onclick="() => MoveEditUserToTarget(user)">➡</button>
-                            </li>
+                                @foreach (var user in selectedDepartment.Users)
+                            {
+                                <li class="user-item">
+                                    <span>@user.Name (@user.Email)</span>
+                                    <button class="move-btn" @onclick="() => MoveEditUserToTarget(user)">➡</button>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                             <li class="empty-slot">No users to move</li>
                         }
                     </ul>
                 </div>
                 <div class="users-column">
                     <h4>@departmentToMove.Name - Users</h4>
                     <ul>
-                        @foreach (var user in departmentToMove.Users)
+                        @if(departmentToMove != null && departmentToMove.Users.Any())
                         {
-                            <li>@user.Name (@user.Email)</li>
+                            @foreach (var user in departmentToMove.Users)
+                            {
+                                <li class="user-item">@user.Name (@user.Email)</li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="empty-slot">No users yet</li>
                         }
                     </ul>
                 </div>
