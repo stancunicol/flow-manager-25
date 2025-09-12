@@ -21,10 +21,7 @@ namespace FlowManager.Domain.Entities
         [MaxLength(100)]
         public string? CompletedByAdminName { get; set; }
 
-        // Admin approval tracking  
-        public bool ApprovedByAdmin { get; set; } = false;
-        [MaxLength(100)]
-        public string? ApprovedByAdminName { get; set; }
+        // Admin approval tracking removed - use FormReview for complete audit trail
 
         // navigation fields
         public virtual FormTemplate FormTemplate { get; set; }

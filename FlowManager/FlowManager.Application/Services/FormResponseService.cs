@@ -70,8 +70,7 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                ApprovedByAdmin = fr.ApprovedByAdmin,
-                ApprovedByAdminName = fr.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt,
@@ -114,8 +113,7 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                ApprovedByAdmin = fr.ApprovedByAdmin,
-                ApprovedByAdminName = fr.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -146,8 +144,7 @@ namespace FlowManager.Application.Services
                 UserEmail = formResponse.User?.Email,
                 CompletedByAdmin = formResponse.CompletedByAdmin,
                 CompletedByAdminName = formResponse.CompletedByAdminName,
-                ApprovedByAdmin = formResponse.ApprovedByAdmin,
-                ApprovedByAdminName = formResponse.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = formResponse.CreatedAt,
                 UpdatedAt = formResponse.UpdatedAt,
                 DeletedAt = formResponse.DeletedAt
@@ -183,8 +180,7 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                ApprovedByAdmin = fr.ApprovedByAdmin,
-                ApprovedByAdminName = fr.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -416,8 +412,7 @@ namespace FlowManager.Application.Services
                 // Track admin approval if admin is acting
                 if (isAdminActing && !string.IsNullOrEmpty(adminName))
                 {
-                    formResponse.ApprovedByAdmin = true;
-                    formResponse.ApprovedByAdminName = adminName;
+                    // Removed ApprovedByAdmin logic - FormReview handles approval tracking
                     _logger.LogInformation("Admin approval tracked for form {FormId} by admin {AdminName}",
                         formResponse.Id, adminName);
                 }
@@ -548,8 +543,7 @@ namespace FlowManager.Application.Services
                 DeletedAt = updatedFormResponse.DeletedAt,
                 CompletedByAdmin = updatedFormResponse.CompletedByAdmin,
                 CompletedByAdminName = updatedFormResponse.CompletedByAdminName,
-                ApprovedByAdmin = updatedFormResponse.ApprovedByAdmin,
-                ApprovedByAdminName = updatedFormResponse.ApprovedByAdminName
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
             };
 
             // Add email notification info to result if admin acted
@@ -583,8 +577,7 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                ApprovedByAdmin = fr.ApprovedByAdmin,
-                ApprovedByAdminName = fr.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -618,8 +611,7 @@ namespace FlowManager.Application.Services
                 UserEmail = formResponse.User?.Email,
                 CompletedByAdmin = formResponse.CompletedByAdmin,
                 CompletedByAdminName = formResponse.CompletedByAdminName,
-                ApprovedByAdmin = formResponse.ApprovedByAdmin,
-                ApprovedByAdminName = formResponse.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = formResponse.CreatedAt,
                 UpdatedAt = formResponse.UpdatedAt,
                 DeletedAt = formResponse.DeletedAt
@@ -647,8 +639,7 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                ApprovedByAdmin = fr.ApprovedByAdmin,
-                ApprovedByAdminName = fr.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -675,8 +666,7 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                ApprovedByAdmin = fr.ApprovedByAdmin,
-                ApprovedByAdminName = fr.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -703,8 +693,7 @@ namespace FlowManager.Application.Services
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                ApprovedByAdmin = fr.ApprovedByAdmin,
-                ApprovedByAdminName = fr.ApprovedByAdminName,
+                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt

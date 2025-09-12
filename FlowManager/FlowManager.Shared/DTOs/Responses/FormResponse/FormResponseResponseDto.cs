@@ -25,9 +25,7 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
         public bool CompletedByAdmin { get; set; } = false;
         public string? CompletedByAdminName { get; set; }
         
-        // Admin approval tracking
-        public bool ApprovedByAdmin { get; set; } = false;
-        public string? ApprovedByAdminName { get; set; }
+        // Admin approval tracking removed - use FormReview for complete audit trail
         
         public Guid? CompletedByOtherUserId { get; set; }
         public UserResponseDto? CompletedByOtherUser { get; set; }
