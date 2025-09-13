@@ -47,11 +47,17 @@ namespace FlowManager.Application.Services
                     Name = u.Name,
                     Email = u.Email,
                 }).ToList(),
-                Teams = s.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
+                Teams = s.Users
+            .SelectMany(u => u.Teams)
+            .Select(ut => ut.Team)
+            .Where(t => t != null)
+            .GroupBy(t => t!.Id)
+            .Select(g => new TeamResponseDto
+            {
+                Id = g.Key,
+                Name = g.First()!.Name
+            })
+            .ToList()
             }).ToList();
         }
 
@@ -74,11 +80,17 @@ namespace FlowManager.Application.Services
                     Name = u.Name,
                     Email = u.Email,
                 }).ToList(),
-                Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
+                Teams = step.Users
+            .SelectMany(u => u.Teams)
+            .Select(ut => ut.Team)
+            .Where(t => t != null)
+            .GroupBy(t => t!.Id)
+            .Select(g => new TeamResponseDto
+            {
+                Id = g.Key,
+                Name = g.First()!.Name
+            })
+            .ToList(),
                 DeletedAt = step.DeletedAt
             };
         }
@@ -132,11 +144,17 @@ namespace FlowManager.Application.Services
                     Name = u.Name,
                     Email = u.Email,
                 }).ToList(),
-                Teams = stepToPost.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
+                Teams = stepToPost.Users
+            .SelectMany(u => u.Teams)
+            .Select(ut => ut.Team)
+            .Where(t => t != null)
+            .GroupBy(t => t!.Id)
+            .Select(g => new TeamResponseDto
+            {
+                Id = g.Key,
+                Name = g.First()!.Name
+            })
+            .ToList()
             };
         }
 
@@ -173,6 +191,26 @@ namespace FlowManager.Application.Services
                 }
             }
 
+            if (payload.TeamIds != null && payload.TeamIds.Any())
+            {
+                foreach (Guid teamId in payload.TeamIds)
+                {
+                    var team = await _teamRepository.GetTeamByIdAsync(teamId);
+                    if (team == null)
+                    {
+                        throw new EntryNotFoundException($"Team with id {teamId} was not found.");
+                    }
+
+                    foreach (var user in team.Users)
+                    {
+                        if (!stepToPatch.Users.Any(u => u.Id == user.UserId))
+                        {
+                            stepToPatch.Users.Add(user.User);
+                        }
+                    }
+                }
+            }
+
             await _stepRepository.SaveChangesAsync();
 
             return new StepResponseDto
@@ -186,13 +224,17 @@ namespace FlowManager.Application.Services
                     Email = u.Email,
                 }).ToList(),
                 Teams = stepToPatch.Users
-        .SelectMany(u => u.Teams.Select(ut => ut.Team))
-        .Distinct()
-        .Select(t => new TeamResponseDto
-        {
-            Id = t.Id,
-            Name = t.Name,
-        }).ToList()
+            .SelectMany(u => u.Teams)
+            .Select(ut => ut.Team)
+            .Where(t => t != null)
+            .GroupBy(t => t!.Id)
+            .Select(g => new TeamResponseDto
+            {
+                Id = g.Key,
+                Name = g.First()!.Name
+            })
+            .ToList()
+
             };
         }
 
@@ -217,11 +259,17 @@ namespace FlowManager.Application.Services
                     Name = u.Name,
                     Email = u.Email,
                 }).ToList(),
-                Teams = stepToDelete.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                {
-                    Id = ut.Team.Id,
-                    Name = ut.Team.Name,
-                }).ToList(),
+                Teams = stepToDelete.Users
+            .SelectMany(u => u.Teams)
+            .Select(ut => ut.Team)
+            .Where(t => t != null)
+            .GroupBy(t => t!.Id)
+            .Select(g => new TeamResponseDto
+            {
+                Id = g.Key,
+                Name = g.First()!.Name
+            })
+            .ToList()
             };
         }
 
@@ -303,12 +351,18 @@ namespace FlowManager.Application.Services
                         Name = u.Name,
                         Email = u.Email,
                     }).ToList(),
-                    Teams = step.Users.SelectMany(u => u.Teams).Select(ut => new TeamResponseDto
-                    {
-                        Id = ut.Team.Id,
-                        Name = ut.Team.Name,
-                    }).ToList(),
-                }).ToList(),
+                    Teams = step.Users
+            .SelectMany(u => u.Teams)
+            .Select(ut => ut.Team)
+            .Where(t => t != null)
+            .GroupBy(t => t!.Id)
+            .Select(g => new TeamResponseDto
+            {
+                Id = g.Key,
+                Name = g.First()!.Name
+            })
+            .ToList()
+                }),
                 TotalCount = totalCount,
                 Page = parameters?.Page ?? 1,
                 PageSize = parameters?.PageSize ?? totalCount,

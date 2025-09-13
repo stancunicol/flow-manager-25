@@ -63,16 +63,22 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                 if (response != null)
                 {
-                    var pageHistory = response.Result.Data
-                        .OrderByDescending(h => h.DateTime)
-                        .ToList();
+                    var pageHistory = response.Result.Data.ToList();
 
-                    historyInUI.AddRange(pageHistory);
-
+                    var pageMessages = new List<string>();
                     foreach (var item in pageHistory)
                     {
-                        messagesInUI.Add(await RenderMessageAsync(item));
+                        pageMessages.Add(await RenderMessageAsync(item));
                     }
+
+                    var combined = historyInUI
+                        .Zip(messagesInUI, (history, message) => new { history, message })
+                        .Concat(pageHistory.Zip(pageMessages, (history, message) => new { history, message }))
+                        .OrderByDescending(x => x.history.DateTime)
+                        .ToList();
+
+                    historyInUI = combined.Select(x => x.history).ToList();
+                    messagesInUI = combined.Select(x => x.message).ToList();
 
                     currentPage++;
                     hasMoreHistory = pageHistory.Count == pageSize;

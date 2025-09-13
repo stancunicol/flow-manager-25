@@ -41,6 +41,8 @@ namespace FlowManager.Client.Components.Admin.Steps
         private int pageSize = 12;
         private int currentPage = 1;
         private bool hasMoreDepartments = false;
+        private string searchTerm = string.Empty;
+        private System.Timers.Timer? debounceTimer;
 
         [Inject]
         private StepService stepService { get; set; } = default!;
@@ -75,8 +77,9 @@ namespace FlowManager.Client.Components.Admin.Steps
             var result = await stepService.GetStepsQueriedAsync();
             if (result != null)
                 departments = result.Result.Data
-                        .Where(d => d.DeletedAt == null)
-                        .ToList();
+                .Where(d => d.DeletedAt == null)
+                .ToList();
+
         }
 
         private async Task LoadDepartments(int page)
@@ -203,6 +206,8 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                     await LoadDepartments(currentPage);
 
+                    await LoadAllDepartments();
+
                     await RefreshAllData();
 
                     newDepName = string.Empty;
@@ -261,6 +266,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                 hasMoreDepartments = false;
 
                 await LoadDepartments(currentPage);
+                await LoadAllDepartments();
 
                 StateHasChanged();
             }
@@ -502,17 +508,28 @@ namespace FlowManager.Client.Components.Admin.Steps
             StateHasChanged();
         }
 
-   
+
         private void OpenChangeUsersModal(StepResponseDto department)
         {
             selectedDepartment = department;
+
+            selectedDepartment.Users ??= new List<UserResponseDto>();
+
+            foreach (var user in selectedDepartment.Users)
+            {
+                user.Teams ??= new List<TeamResponseDto>();
+            }
+
+            selectedDepartment.Users = selectedDepartment.Users
+                .Where(u => !u.Teams.Any())
+                .ToList();
+
             isChangeUsersModalOpen = true;
             StateHasChanged();
         }
 
         private async Task OpenMoveModal()
         {
-            CloseSelectDepartmentModal();
             if (selectedDepartment == null || selectedReassignDepartmentId == Guid.Empty)
                 return;
 
@@ -550,7 +567,8 @@ namespace FlowManager.Client.Components.Admin.Steps
                 var sourcePayload = new PatchStepRequestDto
                 {
                     Name = selectedDepartment.Name,
-                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
+                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList(),
+                    TeamIds = selectedDepartment.Teams.Select(t => t.Id).ToList()
                 };
 
                 await stepService.UpdateStepAsync(selectedDepartment.Id, sourcePayload);
@@ -558,12 +576,16 @@ namespace FlowManager.Client.Components.Admin.Steps
                 var targetPayload = new PatchStepRequestDto
                 {
                     Name = departmentToMove.Name,
-                    UserIds = departmentToMove.Users.Select(u => u.Id).ToList()
+                    UserIds = departmentToMove.Users.Select(u => u.Id).ToList(),
+                    TeamIds = departmentToMove.Teams.Select(t => t.Id).ToList()
                 };
 
                 var movedUsers = departmentToMove.Users
-                .Where(u => !selectedDepartment.Users.Any(su => su.Id == u.Id))
+                .Concat(departmentToMove.Teams.SelectMany(t => t.Users))
+                .Where(u => !selectedDepartment.Users.Any(su => su.Id == u.Id) &&
+                            !selectedDepartment.Teams.SelectMany(t => t.Users).Any(su => su.Id == u.Id))
                 .Select(u => u.Name)
+                .Distinct()
                 .ToList();
 
                 var payload = new CreateStepHistoryRequestDto
@@ -601,14 +623,14 @@ namespace FlowManager.Client.Components.Admin.Steps
                 return;
 
             selectedDepartment.Users?.Remove(user);
-
             departmentToMove.Users ??= new List<UserResponseDto>();
             departmentToMove.Users.Add(user);
 
             StateHasChanged();
         }
 
-        private void MoveEditTeamToTarget(TeamResponseDto team)
+
+        private async Task MoveEditTeamToTargetAsync(TeamResponseDto team)
         {
             if (departmentToMove == null || selectedDepartment == null)
                 return;
@@ -618,23 +640,53 @@ namespace FlowManager.Client.Components.Admin.Steps
             departmentToMove.Teams ??= new List<TeamResponseDto>();
             departmentToMove.Teams.Add(team);
 
-            var teamUsers = team.Users ?? new List<UserResponseDto>();
-            departmentToMove.Users ??= new List<UserResponseDto>();
-
-            foreach (var user in teamUsers)
-            {
-                if (!departmentToMove.Users.Any(u => u.Id == user.Id))
-                {
-                    departmentToMove.Users.Add(user);
-                }
-            }
-
             StateHasChanged();
         }
+
 
         private void ToggleEditDropdown()
         {
             isEditDropdownOpen = !isEditDropdownOpen;
+        }
+
+        private void OnSearchChanged(ChangeEventArgs e)
+        {
+            searchTerm = e.Value?.ToString() ?? string.Empty;
+
+            debounceTimer?.Stop();
+            debounceTimer = new System.Timers.Timer(300);
+            debounceTimer.Elapsed += async (sender, args) =>
+            {
+                debounceTimer?.Stop();
+                await InvokeAsync(ApplySearchFilter);
+            };
+            debounceTimer.Start();
+        }
+
+        private Task ApplySearchFilter()
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                departmentsInUI = departments.Take(pageSize * currentPage).ToList();
+            }
+            else
+            {
+                departmentsInUI = departments
+                    .Where(d => d.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            StateHasChanged();
+            return Task.CompletedTask;
+        }
+
+        private string GetDepartmentColor(Guid departmentId)
+        {
+            if (!departmentColors.ContainsKey(departmentId))
+            {
+                departmentColors[departmentId] = GetRandomGradient();
+            }
+            return departmentColors[departmentId];
         }
     }
 }

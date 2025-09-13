@@ -1,5 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using FlowManager.Client.ViewModels
+@using FlowManager.Shared.DTOs.Responses.User
+@using FlowManager.Shared.DTOs.Responses.Team
 @attribute [Authorize(Roles = "Admin")]
 
 <PageTitle>Departments</PageTitle>
@@ -7,10 +9,18 @@
 <h2 class="page-title">Departments</h2>
 
 <div class="actions-bar">
+    <div class="search-bar">
+        <input type="text"
+               placeholder="🔍 Search departments..."
+               value="@searchTerm"
+               @oninput="OnSearchChanged" />
+               </div>
+
     <button class="go-to-history-btn" @onclick="GoToHistory">View History</button>
 
     <button class="action-btn create-btn" @onclick="OpenCreateModal">+ Create Department</button>
 </div>
+
 
 <div class="departments-grid">
     @if (departmentsInUI == null || !departmentsInUI.Any())
@@ -21,8 +31,10 @@
     {
         @foreach (var department in departmentsInUI)
         {
-            <div class="department-card" style="background:@departmentColors[department.Id]" @onclick="() => OpenModal(department)">
-                <span class="department-name">@department.Name</span>
+            <div class="department-card" style="background:@GetDepartmentColor(department.Id)" @onclick="() => OpenModal(department)">
+                <span class="department-name">
+                    @department.Name
+                    </span>
             </div>
         }
     }
@@ -297,9 +309,17 @@
                 <div class="users-column">
                     <h4>@selectedDepartment.Name - Users</h4>
                     <ul>
-                        @if (selectedDepartment != null && selectedDepartment.Users.Any())
+                        @{
+                            selectedDepartment.Users ??= new List<UserResponseDto>();
+                            selectedDepartment.Teams ??= new List<TeamResponseDto>();
+                            var usersNotInTeams = selectedDepartment.Users
+                            .Where(u => u.Teams == null || !u.Teams.Any())
+                            .ToList();
+                        }
+
+                        @if (usersNotInTeams.Any())
                         {
-                                @foreach (var user in selectedDepartment.Users)
+                            @foreach (var user in usersNotInTeams)
                             {
                                 <li class="user-item">
                                     <span>@user.Name (@user.Email)</span>
@@ -309,7 +329,7 @@
                         }
                         else
                         {
-                             <li class="empty-slot">No users to move</li>
+                            <li class="empty-slot">No users to move</li>
                         }
                     </ul>
                 </div>
@@ -340,7 +360,7 @@
                             {
                                 <li class="team-item">
                                     <span>@team.Name</span>
-                                    <button class="move-btn" @onclick="() => MoveEditTeamToTarget(team)">➡</button>
+                                    <button class="move-btn" @onclick="() => MoveEditTeamToTargetAsync(team)">➡</button>
                                 </li>
                             }
                         }
