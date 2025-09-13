@@ -1,4 +1,5 @@
-﻿using FlowManager.Client.DTOs;
+﻿using BlazorBootstrap;
+using FlowManager.Client.DTOs;
 using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Responses;

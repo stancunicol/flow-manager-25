@@ -1,13 +1,18 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
 namespace FlowManager.Shared.DTOs.Requests.User
 {
     public class PostUserRequestDto
     {
-        public string Username { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
-        public List<Guid> Roles { get; set; } = new List<Guid>();
+        public string Username { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; } 
+        public List<Guid> Roles { get; set; }
         public ICollection<Guid>? TeamsIds { get; set; }
         public Guid StepId { get; set; }
     }

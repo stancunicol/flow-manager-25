@@ -236,5 +236,39 @@ namespace FlowManager.Client.Services
                 return false;
             }
         }
+
+        public async Task<StepResponseDto?> AssignUserToStepAsync(Guid stepId, Guid userId)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync($"api/steps/{stepId}/assign-user/{userId}", null);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
+                return apiResponse?.Result;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<StepResponseDto?> UnassignUserFromStepAsync(Guid stepId, Guid userId)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"api/steps/{stepId}/unassign-user/{userId}");
+                if (!response.IsSuccessStatusCode) 
+                    return null;
+
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
+                return apiResponse?.Result;
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

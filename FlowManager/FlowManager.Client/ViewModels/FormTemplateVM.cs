@@ -1,4 +1,6 @@
-﻿
+﻿using FlowManager.Domain.Entities;
+using System.ComponentModel.DataAnnotations;
+
 namespace FlowManager.Client.ViewModels
 {
     public class FormTemplateVM

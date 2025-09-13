@@ -1,3 +1,4 @@
+using System;
 
 namespace FlowManager.Domain.Entities
 {

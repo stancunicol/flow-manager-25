@@ -40,6 +40,7 @@ namespace FlowManager.Server.Controllers
         {
             try
             {
+                // Get current admin user
                 var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(adminUserId))
                 {
@@ -60,6 +61,7 @@ namespace FlowManager.Server.Controllers
                     });
                 }
 
+                // Get user to impersonate
                 var targetUser = await _userManager.Users
                     .Include(u => u.Step)
                     .FirstOrDefaultAsync(u => u.Id == request.UserId && u.DeletedAt == null);
@@ -73,6 +75,7 @@ namespace FlowManager.Server.Controllers
                     });
                 }
 
+                // Check if target user can be impersonated (not another admin)
                 var targetUserRoles = await _userManager.GetRolesAsync(targetUser);
                 if (targetUserRoles.Contains("Admin"))
                 {
@@ -83,33 +86,39 @@ namespace FlowManager.Server.Controllers
                     });
                 }
 
+                // Create impersonation session
                 var sessionId = Guid.NewGuid();
 
                 _logger.LogInformation("Admin {AdminId} ({AdminName}) started impersonating user {UserId} ({UserName}). Reason: {Reason}",
                     adminUser.Id, adminUser.Name, targetUser.Id, targetUser.Name, request.Reason ?? "No reason provided");
 
+                // Sign out the current admin user
                 await _signInManager.SignOutAsync();
 
+                // Create claims for the impersonated user
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.NameIdentifier, targetUser.Id.ToString()),
                     new Claim(ClaimTypes.Name, targetUser.Name),
                     new Claim(ClaimTypes.Email, targetUser.Email ?? ""),
-
+                    // Add impersonation info to track this is an impersonation session
                     new Claim("OriginalAdminId", adminUser.Id.ToString()),
                     new Claim("OriginalAdminName", adminUser.Name),
                     new Claim("ImpersonationSessionId", sessionId.ToString()),
                     new Claim("IsImpersonating", "true")
                 };
 
+                // Add roles as claims
                 foreach (var role in targetUserRoles)
                 {
                     claims.Add(new Claim(ClaimTypes.Role, role));
                 }
 
+                // Create new claims identity for the impersonated user
                 var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
                 var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
+                // Sign in as the impersonated user
                 await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, claimsPrincipal);
 
                 var response = new ImpersonationResponseDto
@@ -146,15 +155,17 @@ namespace FlowManager.Server.Controllers
         }
 
         [HttpPost("end")]
-        [AllowAnonymous]
+        [AllowAnonymous] // Temporarily allow anonymous to debug the 403 issue
         public async Task<ActionResult<ApiResponseDto<bool>>> EndImpersonation()
         {
             try
             {
+                // Debug: Log all claims to understand the authentication context
                 _logger.LogInformation("EndImpersonation called. User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
                 _logger.LogInformation("Claims in context: {Claims}", 
                     string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}")));
 
+                // Check if user is authenticated
                 if (!User.Identity?.IsAuthenticated ?? true)
                 {
                     _logger.LogWarning("User not authenticated when trying to end impersonation");
@@ -165,6 +176,7 @@ namespace FlowManager.Server.Controllers
                     });
                 }
 
+                // Check if this is actually an impersonation session
                 var isImpersonating = User.FindFirstValue("IsImpersonating") == "true";
                 _logger.LogInformation("IsImpersonating claim value: {IsImpersonating}", isImpersonating);
                 
@@ -177,6 +189,7 @@ namespace FlowManager.Server.Controllers
                     });
                 }
 
+                // Get original admin info from claims
                 var originalAdminId = User.FindFirstValue("OriginalAdminId");
                 var originalAdminName = User.FindFirstValue("OriginalAdminName");
                 var impersonatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -191,6 +204,7 @@ namespace FlowManager.Server.Controllers
                     });
                 }
 
+                // Get the original admin user
                 var originalAdmin = await _userManager.FindByIdAsync(originalAdminId);
                 if (originalAdmin == null)
                 {
@@ -204,8 +218,10 @@ namespace FlowManager.Server.Controllers
                 _logger.LogInformation("Admin {AdminId} ({AdminName}) ended impersonation of user {UserId} ({UserName})",
                     originalAdminId, originalAdminName ?? "Unknown", impersonatedUserId ?? "Unknown", impersonatedUserName ?? "Unknown");
 
+                // Sign out the impersonated user
                 await _signInManager.SignOutAsync();
 
+                // Get admin roles and create new claims for the original admin
                 var adminRoles = await _userManager.GetRolesAsync(originalAdmin);
                 var adminClaims = new List<Claim>
                 {
@@ -214,14 +230,17 @@ namespace FlowManager.Server.Controllers
                     new Claim(ClaimTypes.Email, originalAdmin.Email ?? "")
                 };
 
+                // Add admin roles as claims
                 foreach (var role in adminRoles)
                 {
                     adminClaims.Add(new Claim(ClaimTypes.Role, role));
                 }
 
+                // Create new claims identity for the original admin
                 var adminClaimsIdentity = new ClaimsIdentity(adminClaims, IdentityConstants.ApplicationScheme);
                 var adminClaimsPrincipal = new ClaimsPrincipal(adminClaimsIdentity);
 
+                // Sign back in as the original admin
                 await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, adminClaimsPrincipal);
 
                 return Ok(new ApiResponseDto<bool>
@@ -243,7 +262,7 @@ namespace FlowManager.Server.Controllers
         }
 
         [HttpGet("status")]
-        [AllowAnonymous]
+        [AllowAnonymous] // Allow both admin and impersonated users to check status
         public async Task<ActionResult<ApiResponseDto<bool>>> GetImpersonationStatus()
         {
             try
@@ -267,7 +286,7 @@ namespace FlowManager.Server.Controllers
         }
 
         [HttpGet("original-admin")]
-        [AllowAnonymous]
+        [AllowAnonymous] // Allow impersonated users to get original admin name
         public async Task<ActionResult<ApiResponseDto<string>>> GetOriginalAdminName()
         {
             try
@@ -291,7 +310,7 @@ namespace FlowManager.Server.Controllers
         }
 
         [HttpGet("current-user")]
-        [AllowAnonymous]
+        [AllowAnonymous] // Allow both admin and impersonated users to get current user name
         public async Task<ActionResult<ApiResponseDto<string>>> GetCurrentUserName()
         {
             try
@@ -315,6 +334,7 @@ namespace FlowManager.Server.Controllers
         }
     }
 
+    // Controller pentru a obține utilizatorii disponibili pentru impersonare
     [ApiController]
     [Route("api/admin/users")]
     [Authorize(Roles = "Admin")]
@@ -343,12 +363,14 @@ namespace FlowManager.Server.Controllers
                     .ThenInclude(ur => ur.Role)
                     .Where(u => u.DeletedAt == null);
 
+                // Exclude current admin user
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
                     query = query.Where(u => u.Id.ToString() != currentUserId);
                 }
 
+                // Apply search filter
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     var searchTerm = search.Trim().ToLower();
@@ -357,6 +379,7 @@ namespace FlowManager.Server.Controllers
                         (u.Email != null && u.Email.ToLower().Contains(searchTerm)));
                 }
 
+                // Get users with pagination
                 var users = await query
                     .OrderBy(u => u.Name)
                     .Skip((page - 1) * pageSize)
@@ -369,6 +392,7 @@ namespace FlowManager.Server.Controllers
                 {
                     var roles = user.Roles.Select(ur => ur.Role.Name).ToList();
 
+                    // Don't include other admin users
                     if (roles.Contains("Admin"))
                         continue;
 
@@ -400,6 +424,8 @@ namespace FlowManager.Server.Controllers
                 });
             }
         }
+        
+        
     }
 
 }

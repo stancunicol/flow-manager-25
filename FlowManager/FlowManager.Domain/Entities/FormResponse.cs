@@ -1,4 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace FlowManager.Domain.Entities
 {
@@ -9,7 +14,7 @@ namespace FlowManager.Domain.Entities
         [MaxLength(100)]
         public string? RejectReason { get; set; }
         public string? Status { get; set; } = "Pending";
-        public Dictionary<Guid, object> ResponseFields { get; set; } = new Dictionary<Guid, object>();
+        public Dictionary<Guid, object> ResponseFields { get; set; }
 
         // Admin completion tracking
         public bool CompletedByAdmin { get; set; } = false;
@@ -18,13 +23,14 @@ namespace FlowManager.Domain.Entities
 
         // Admin approval tracking removed - use FormReview for complete audit trail
 
-        public virtual FormTemplate FormTemplate { get; set; } = null!;
+        // navigation fields
+        public virtual FormTemplate FormTemplate { get; set; }
         public Guid FormTemplateId { get; set; }
 
-        public virtual Step Step { get; set; } = null!;
+        public virtual Step Step { get; set; }
         public Guid StepId { get; set; }
 
-        public virtual User User { get; set; } = null!;
+        public virtual User User { get; set; }
         public Guid UserId { get; set; }
 
         public virtual User? CompletedByOtherUser { get; set; }

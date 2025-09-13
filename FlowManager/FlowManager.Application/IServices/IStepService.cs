@@ -4,6 +4,8 @@ using FlowManager.Shared.DTOs.Responses.Step;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace FlowManager.Application.Interfaces
 {
@@ -16,5 +18,7 @@ namespace FlowManager.Application.Interfaces
         Task<StepResponseDto> PostStepAsync(PostStepRequestDto payload);
         Task<StepResponseDto> PatchStepAsync(Guid id, PatchStepRequestDto payload);
         Task<StepResponseDto> DeleteStepAsync(Guid id);
+        Task<StepResponseDto> UnassignUserFromStepAsync(Guid id, Guid userId);
+        Task<StepResponseDto> AssignUserToStepAsync(Guid id, Guid userId);
     }
 }

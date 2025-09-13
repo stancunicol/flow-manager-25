@@ -1,12 +1,17 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
 namespace FlowManager.Domain.Entities
 {
     public class UserTeam
     {
-        public virtual User User { get; set; } = null!;
+        public virtual User User { get; set; }
         public Guid UserId { get; set; } 
 
-        public virtual Team Team { get; set; } = null!;
+        public virtual Team Team { get; set; }
         public Guid TeamId { get; set; }    
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

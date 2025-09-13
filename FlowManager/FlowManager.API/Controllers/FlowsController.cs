@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
+using FlowManager.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.Step;
@@ -82,6 +84,7 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -118,6 +121,7 @@ namespace FlowManager.API.Controllers
             });
         }
 
+        //[Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

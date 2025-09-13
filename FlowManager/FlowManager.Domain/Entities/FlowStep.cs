@@ -1,4 +1,9 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
 namespace FlowManager.Domain.Entities
 {
     public class FlowStep
@@ -8,6 +13,7 @@ namespace FlowManager.Domain.Entities
         public bool? IsApproved { get; set; } = null;
         public int Order { get; set; } = 0;
 
+        // navigation properties
         public virtual List<FlowStepUser> AssignedUsers { get; set; } = new List<FlowStepUser>();
         public virtual List<FlowStepTeam> AssignedTeams { get; set; } = new List<FlowStepTeam>();
 

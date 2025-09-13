@@ -1,4 +1,5 @@
-﻿
+﻿using FlowManager.Shared.DTOs.Requests;
+
 namespace FlowManager.Shared.DTOs.Requests.FormReview
 {
     public class QueriedFormReviewRequestDto

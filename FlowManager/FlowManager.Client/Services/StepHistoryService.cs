@@ -1,8 +1,10 @@
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.StepHistory;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
+using FlowManager.Domain.Entities;
 using System.Net.Http.Json;
 using FlowManager.Client.DTOs;
+using FlowManager.Shared.DTOs.Responses.Step;
 using System.Web;
 using System.Text.Json;
 

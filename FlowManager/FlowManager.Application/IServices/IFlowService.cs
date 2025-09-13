@@ -1,3 +1,4 @@
+using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Flow;

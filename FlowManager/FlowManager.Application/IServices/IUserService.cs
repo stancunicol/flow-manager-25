@@ -1,6 +1,11 @@
 ﻿using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.User;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace FlowManager.Application.Interfaces
 {
@@ -18,6 +23,7 @@ namespace FlowManager.Application.Interfaces
         Task<UserResponseDto> DeleteUserAsync(Guid id);
         Task<UserResponseDto> RestoreUserAsync(Guid id);
         Task<bool> ResetPassword(Guid id, string newPassword);
+
         Task<List<string>> GetUserRolesByEmailAsync(string email);
         Task<bool> VerifyIfAssignedAsync(Guid id);
         Task<PagedResponseDto<UserResponseDto>> GetUnassignedModeratorsByStepIdQueriedAsync(Guid stepId, QueriedUserRequestDto payload);

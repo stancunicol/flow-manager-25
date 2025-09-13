@@ -1,4 +1,5 @@
-﻿
+﻿using FlowManager.Domain.Entities;
+
 namespace FlowManager.Client.ViewModels
 {
     public class ComponentVM

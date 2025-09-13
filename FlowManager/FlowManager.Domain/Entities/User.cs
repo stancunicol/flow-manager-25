@@ -1,4 +1,8 @@
 using Microsoft.AspNetCore.Identity;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FlowManager.Domain.Entities
 {
@@ -6,9 +10,10 @@ namespace FlowManager.Domain.Entities
     {   
         public string Name { get; set; } = string.Empty;
         
-        public virtual Step Step { get; set; } = null!;
+        public virtual Step Step { get; set; }
         public Guid StepId { get; set; }
 
+        // navigation properties
         public virtual ICollection<FormResponse> FormResponses { get; set; } = new List<FormResponse>();
         public virtual ICollection<UserRole> Roles { get; set; } = new List<UserRole>();
 

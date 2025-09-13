@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 
 namespace FlowManager.Shared.DTOs.Requests.StepHistory
 {

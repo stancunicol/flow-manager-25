@@ -1,6 +1,8 @@
 ﻿using FlowManager.Shared.DTOs.Responses.StepHistory;
 using Microsoft.AspNetCore.Components;
 using FlowManager.Client.Services;
+using FlowManager.Domain.Dtos;
+using FlowManager.Shared.DTOs.Requests.Step;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
 using QueryParams = FlowManager.Shared.DTOs.Requests.QueryParamsDto;
 
