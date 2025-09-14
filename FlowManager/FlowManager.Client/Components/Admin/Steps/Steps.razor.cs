@@ -72,7 +72,7 @@ namespace FlowManager.Client.Components.Admin.Steps
         private TeamService teamService { get; set; } = default!;
         [Inject]
         private StepHistoryService stepHistoryService { get; set; } = default!;
-        [Inject] 
+        [Inject]
         private NavigationManager Navigation { get; set; }
         [Parameter]
         public EventCallback<string> OnTabChange { get; set; }
@@ -303,39 +303,12 @@ namespace FlowManager.Client.Components.Admin.Steps
             if (step != null)
             {
                 departmentToDelete = step;
-
-                if ((departmentToDelete.Users == null || !departmentToDelete.Users.Any()) &&
-                    (departmentToDelete.Teams == null || !departmentToDelete.Teams.Any()))
-                {
-                    var payload = new CreateStepHistoryRequestDto
-                    {
-                        OldDepartmentName = departmentToDelete.Name,
-                        StepId = departmentToDelete.Id
-                    };
-
-                    var result = await stepService.DeleteStepAsync(departmentToDelete.Id);
-                    if (result != false)
-                    {
-                        await stepHistoryService.CreateStepHistoryForDeleteDepartmentAsync(payload);
-                        departments.RemoveAll(d => d.Id == departmentToDelete.Id);
-                    }
-
-                    isDeleteModalOpen = false;
-                    CloseSelectDepartmentModal();
-                    CloseModal();
-                    CloseEditModal();
-                    await RefreshAllData();
-                    StateHasChanged();
-
-                    Console.WriteLine($"✅ Department '{departmentToDelete.Name}' deleted directly (no users/teams).");
-                    return;
-                }
+            }
 
                 isDeleteModalOpen = true;
                 CloseModal();
                 CloseEditModal();
                 StateHasChanged();
-            }
         }
 
 
@@ -436,7 +409,10 @@ namespace FlowManager.Client.Components.Admin.Steps
             departmentToDelete.Users?.Remove(user);
 
             selectedDepartment.Users ??= new List<UserResponseDto>();
-            selectedDepartment.Users.Add(user);
+            if (!selectedDepartment.Users.Any(u => u.Id == user.Id))
+            {
+                selectedDepartment.Users.Add(user);
+            }
 
             StateHasChanged();
         }
@@ -449,14 +425,9 @@ namespace FlowManager.Client.Components.Admin.Steps
             departmentToDelete.Teams?.Remove(team);
 
             selectedDepartment.Teams ??= new List<TeamResponseDto>();
-            selectedDepartment.Teams.Add(team);
-
-            foreach (var user in team.Users)
+            if (!selectedDepartment.Teams.Any(t => t.Id == team.Id))
             {
-                if (!selectedDepartment.Users.Any(u => u.Id == user.Id))
-                {
-                    selectedDepartment.Users.Add(user);
-                }
+                selectedDepartment.Teams.Add(team);
             }
 
             StateHasChanged();
@@ -468,12 +439,24 @@ namespace FlowManager.Client.Components.Admin.Steps
             {
                 var targetPayload = new PatchStepRequestDto
                 {
-                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
+                    UserIds = selectedDepartment.Users.Select(u => u.Id).ToList(),
+                    TeamIds = selectedDepartment.Teams.Select(t => t.Id).ToList()
                 };
 
                 await stepService.UpdateStepAsync(selectedDepartment.Id, targetPayload);
 
-                if (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
+                var deletePayload = new PatchStepRequestDto
+                {
+                    UserIds = departmentToDelete.Users?.Select(u => u.Id).ToList() ?? new List<Guid>(),
+                    TeamIds = departmentToDelete.Teams?.Select(t => t.Id).ToList() ?? new List<Guid>()
+                };
+
+                await stepService.UpdateStepAsync(departmentToDelete.Id, deletePayload);
+
+                bool isEmpty = (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
+                               && (departmentToDelete.Teams == null || !departmentToDelete.Teams.Any());
+
+                if (isEmpty)
                 {
                     var payload = new CreateStepHistoryRequestDto
                     {
@@ -482,28 +465,24 @@ namespace FlowManager.Client.Components.Admin.Steps
                     };
 
                     var result = await stepService.DeleteStepAsync(departmentToDelete.Id);
-                    departments.RemoveAll(d => d.Id == departmentToDelete.Id);
-
-                    if(result != false)
+                    if (result != false)
                     {
                         await stepHistoryService.CreateStepHistoryForDeleteDepartmentAsync(payload);
+                        departmentsInUI.RemoveAll(d => d.Id == departmentToDelete.Id);
+                        departments.RemoveAll(d => d.Id == departmentToDelete.Id);
                     }
 
+                    await CloseMoveUsersModal();
                     StateHasChanged();
                 }
                 else
                 {
-                    var deletePayload = new PatchStepRequestDto
-                    {
-                        UserIds = departmentToDelete.Users.Select(u => u.Id).ToList()
-                    };
+                    await CloseMoveUsersModal();
+                    isDeleteModalOpen = true;
+                    StateHasChanged();
 
-                    await stepService.UpdateStepAsync(departmentToDelete.Id, deletePayload);
+                    Console.WriteLine($"♻️ Department '{departmentToDelete.Name}' still has users/teams, reopening selection.");
                 }
-
-                await CloseMoveUsersModal();
-                await OpenSelectDepartmentModal(departmentToDelete.Id);
-                StateHasChanged();
             }
             catch (Exception ex)
             {
@@ -515,7 +494,6 @@ namespace FlowManager.Client.Components.Admin.Steps
         {
             isMoveUsersModalOpen = false;
             selectedDepartment = null;
-            selectedReassignDepartmentId = Guid.Empty;
             isEditDropdownOpen = false;
 
             StateHasChanged();
@@ -536,15 +514,12 @@ namespace FlowManager.Client.Components.Admin.Steps
             selectedDepartment = department;
 
             selectedDepartment.Users ??= new List<UserResponseDto>();
+            selectedDepartment.Teams ??= new List<TeamResponseDto>();
 
             foreach (var user in selectedDepartment.Users)
             {
                 user.Teams ??= new List<TeamResponseDto>();
             }
-
-            selectedDepartment.Users = selectedDepartment.Users
-                .Where(u => !u.Teams.Any())
-                .ToList();
 
             isChangeUsersModalOpen = true;
             StateHasChanged();
@@ -645,8 +620,12 @@ namespace FlowManager.Client.Components.Admin.Steps
                 return;
 
             selectedDepartment.Users?.Remove(user);
+
             departmentToMove.Users ??= new List<UserResponseDto>();
-            departmentToMove.Users.Add(user);
+            if (!departmentToMove.Users.Any(u => u.Id == user.Id))
+            {
+                departmentToMove.Users.Add(user);
+            }
 
             StateHasChanged();
         }
@@ -660,7 +639,10 @@ namespace FlowManager.Client.Components.Admin.Steps
             selectedDepartment.Teams?.Remove(team);
 
             departmentToMove.Teams ??= new List<TeamResponseDto>();
-            departmentToMove.Teams.Add(team);
+            if (!departmentToMove.Teams.Any(t => t.Id == team.Id))
+            {
+                departmentToMove.Teams.Add(team);
+            }
 
             StateHasChanged();
         }
@@ -709,6 +691,30 @@ namespace FlowManager.Client.Components.Admin.Steps
                 departmentColors[departmentId] = GetRandomGradient();
             }
             return departmentColors[departmentId];
+        }
+
+        private List<UserResponseDto> GetIndividualUsers(StepResponseDto department)
+        {
+            if (department?.Users == null) return new List<UserResponseDto>();
+
+            var usersInTeams = new HashSet<Guid>();
+            if (department.Teams != null)
+            {
+                foreach (var team in department.Teams)
+                {
+                    if (team.Users != null)
+                    {
+                        foreach (var teamUser in team.Users)
+                        {
+                            usersInTeams.Add(teamUser.Id);
+                        }
+                    }
+                }
+            }
+
+            return department.Users
+                .Where(user => !usersInTeams.Contains(user.Id))
+                .ToList();
         }
     }
 }

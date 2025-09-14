@@ -55,15 +55,21 @@ namespace FlowManager.Infrastructure.Repositories
             {
                 if (includeDeletedStepTeams)
                 {
-                    query = query.Include(s => s.Users)
-                                .ThenInclude(u => u.Teams)
-                                    .ThenInclude(ut => ut.Team);
+                    query = query
+                        .Include(s => s.Users)
+                            .ThenInclude(u => u.Teams)
+                                .ThenInclude(ut => ut.Team)
+                                    .ThenInclude(t => t.Users)
+                                        .ThenInclude(tu => tu.User);
                 }
                 else
                 {
-                    query = query.Include(s => s.Users)
-                                .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
-                                    .ThenInclude(ut => ut.Team);
+                    query = query
+                        .Include(s => s.Users.Where(u => u.DeletedAt == null))
+                            .ThenInclude(u => u.Teams.Where(ut => ut.DeletedAt == null))
+                                .ThenInclude(ut => ut.Team)
+                                    .ThenInclude(t => t.Users.Where(tu => tu.DeletedAt == null))
+                                        .ThenInclude(tu => tu.User);
                 }
             }
 
@@ -153,27 +159,22 @@ namespace FlowManager.Infrastructure.Repositories
 
         public async Task<(List<Step> Steps, int TotalCount)> GetAllStepsQueriedAsync(Guid moderatorId, string? name, QueryParams? parameters)
         {
-            // 1. Pornim query simplu pe Steps
             IQueryable<Step> query = _context.Steps
                 .Where(s => s.DeletedAt == null);
 
-            // 2. Filtrare după nume dacă există
             if (!string.IsNullOrEmpty(name))
             {
                 var upperName = name.ToUpper();
                 query = query.Where(s => s.Name.ToUpper().Contains(upperName));
             }
 
-            // 3. Total count înainte de paginare
             int totalCount = await query.CountAsync();
 
-            // 4. Sortare
             if (!string.IsNullOrEmpty(parameters?.SortBy))
             {
                 query = query.ApplySorting<Step>(parameters.SortBy, parameters.SortDescending ?? false);
             }
 
-            // 5. Paginare
             if (parameters?.Page != null && parameters?.PageSize != null &&
                 parameters.Page > 0 && parameters.PageSize > 0)
             {
@@ -182,27 +183,22 @@ namespace FlowManager.Infrastructure.Repositories
                     .Take(parameters.PageSize.Value);
             }
 
-            // 6. Obținem doar Id-urile Steps filtrate + paginate
             var stepIds = await query.Select(s => s.Id).ToListAsync();
             if (!stepIds.Any())
                 return (new List<Step>(), totalCount);
 
-            // 7. Luăm Steps simple
             var steps = await _context.Steps
                 .Where(s => stepIds.Contains(s.Id))
                 .ToListAsync();
 
-            // 8. Luăm Users pentru aceste Steps
             var users = await _context.Users
     .Where(u => stepIds.Contains(u.StepId))
-    .Include(u => u.Teams)      // doar UserTeams, fără ThenInclude
+    .Include(u => u.Teams).ThenInclude(ut => ut.Team)
     .ToListAsync();
 
-            // 9. Grupăm Users pe StepId
             var usersGrouped = users.GroupBy(u => u.StepId)
                                     .ToDictionary(g => g.Key, g => g.ToList());
 
-            // 10. Mapăm Users la Steps
             foreach (var step in steps)
             {
                 step.Users = usersGrouped.TryGetValue(step.Id, out var stepUsers) ? stepUsers : new List<User>();

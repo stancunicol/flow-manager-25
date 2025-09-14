@@ -183,11 +183,14 @@
 
             <div class="select-move-users-container">
                 <div class="users-column">
-                    <h4>@departmentToDelete.Name - Users</h4>
+                    <h4>@departmentToDelete.Name - Individual Users</h4>
                     <ul>
-                        @if (departmentToDelete.Users != null && departmentToDelete.Users.Any())
+                        @{
+                            var individualUsersToDelete = GetIndividualUsers(departmentToDelete);
+                        }
+                        @if (individualUsersToDelete.Any())
                         {
-                            @foreach (var user in departmentToDelete.Users)
+                            @foreach (var user in individualUsersToDelete)
                             {
                                 <li class="user-item">
                                     <span>@user.Name (@user.Email)</span>
@@ -197,26 +200,29 @@
                         }
                         else
                         {
-                            <li class="empty-slot">No users to move</li>
+                            <li class="empty-slot">No individual users to move</li>
                         }
                     </ul>
                 </div>
 
                 <div class="users-column">
-                    <h4>@selectedDepartment.Name - Users</h4>
+                    <h4>@selectedDepartment.Name - Individual Users</h4>
                     <ul>
-                        @if (selectedDepartment.Users != null && selectedDepartment.Users.Any())
+                        @{
+                            var individualUsersTarget = GetIndividualUsers(selectedDepartment);
+                        }
+                        @if (individualUsersTarget.Any())
                         {
-                            @foreach (var user in selectedDepartment.Users)
+                            @foreach (var user in individualUsersTarget)
                             {
                                 <li class="user-item">
                                     <span>@user.Name (@user.Email)</span>
-                                    </li>
+                                </li>
                             }
                         }
                         else
                         {
-                            <li class="empty-slot">No users yet</li>
+                            <li class="empty-slot">No individual users yet</li>
                         }
                     </ul>
                 </div>
@@ -231,7 +237,7 @@
                             @foreach (var team in departmentToDelete.Teams)
                             {
                                 <li class="team-item">
-                                    <span>@team.Name</span>
+                                    <span>@team.Name (@(team.Users?.Count ?? 0) users)</span>
                                     <button class="move-btn" @onclick="() => MoveTeamToTarget(team)">➡</button>
                                 </li>
                             }
@@ -250,7 +256,9 @@
                         {
                             @foreach (var team in selectedDepartment.Teams)
                             {
-                                <li class="team-item"><span>@team.Name</span></li>
+                                <li class="team-item">
+                                    <span>@team.Name (@(team.Users?.Count ?? 0) users)</span>
+                                </li>
                             }
                         }
                         else
@@ -307,19 +315,15 @@
 
             <div class="select-move-users-container">
                 <div class="users-column">
-                    <h4>@selectedDepartment.Name - Users</h4>
+                    <h4>@selectedDepartment.Name - Individual Users</h4>
                     <ul>
                         @{
-                            selectedDepartment.Users ??= new List<UserResponseDto>();
-                            selectedDepartment.Teams ??= new List<TeamResponseDto>();
-                            var usersNotInTeams = selectedDepartment.Users
-                            .Where(u => u.Teams == null || !u.Teams.Any())
-                            .ToList();
+                            var individualUsersSource = GetIndividualUsers(selectedDepartment);
                         }
 
-                        @if (usersNotInTeams.Any())
+                        @if (individualUsersSource.Any())
                         {
-                            @foreach (var user in usersNotInTeams)
+                            @foreach (var user in individualUsersSource)
                             {
                                 <li class="user-item">
                                     <span>@user.Name (@user.Email)</span>
@@ -329,27 +333,32 @@
                         }
                         else
                         {
-                            <li class="empty-slot">No users to move</li>
+                            <li class="empty-slot">No individual users to move</li>
                         }
                     </ul>
                 </div>
+
                 <div class="users-column">
-                    <h4>@departmentToMove.Name - Users</h4>
+                    <h4>@departmentToMove.Name - Individual Users</h4>
                     <ul>
-                        @if(departmentToMove != null && departmentToMove.Users.Any())
+                        @{
+                            var individualUsersDestination = GetIndividualUsers(departmentToMove);
+                        }
+                        @if (individualUsersDestination.Any())
                         {
-                            @foreach (var user in departmentToMove.Users)
+                            @foreach (var user in individualUsersDestination)
                             {
                                 <li class="user-item">@user.Name (@user.Email)</li>
                             }
                         }
                         else
                         {
-                            <li class="empty-slot">No users yet</li>
+                            <li class="empty-slot">No individual users yet</li>
                         }
                     </ul>
                 </div>
             </div>
+
             <div class="select-move-teams-container">
                 <div class="teams-column">
                     <h4>@selectedDepartment.Name - Teams</h4>
@@ -359,7 +368,7 @@
                             @foreach (var team in selectedDepartment.Teams)
                             {
                                 <li class="team-item">
-                                    <span>@team.Name</span>
+                                    <span>@team.Name (@(team.Users?.Count ?? 0) users)</span>
                                     <button class="move-btn" @onclick="() => MoveEditTeamToTargetAsync(team)">➡</button>
                                 </li>
                             }
@@ -378,7 +387,9 @@
                         {
                             @foreach (var team in departmentToMove.Teams)
                             {
-                                <li class="team-item"><span>@team.Name</span></li>
+                                <li class="team-item">
+                                    <span>@team.Name</span>
+                                </li>
                             }
                         }
                         else

@@ -103,7 +103,7 @@ namespace FlowManager.API.Controllers
 
             StepHistoryResponseDto result = await _stepHistoryService.CreateStepHistoryForNameChangeAsync(payload);
 
-            return CreatedAtAction(nameof(GetStepHistoryByIdAsync), new { id = result.Id }, new
+            return Ok(new
             {
                 Result = result,
                 Message = "Step history for name change created successfully",
@@ -159,10 +159,10 @@ namespace FlowManager.API.Controllers
 
             StepHistoryResponseDto result = await _stepHistoryService.CreateStepHistoryForCreateDepartmentAsync(payload);
 
-            return CreatedAtAction(nameof(GetStepHistoryByIdAsync), new { id = result.Id }, new
+            return Ok(new
             {
                 Result = result,
-                Message = "Step history for department creation created successfully",
+                Message = "Step history for department created successfully",
                 Success = true,
                 Timestamp = DateTime.UtcNow
             });
@@ -187,7 +187,7 @@ namespace FlowManager.API.Controllers
 
             StepHistoryResponseDto result = await _stepHistoryService.CreateStepHistoryForDeleteDepartmentAsync(payload);
 
-            return CreatedAtAction(nameof(GetStepHistoryByIdAsync), new { id = result.Id }, new
+            return Ok(new
             {
                 Result = result,
                 Message = "Step history for department deletion created successfully",
