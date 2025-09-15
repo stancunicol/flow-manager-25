@@ -27,7 +27,7 @@
                    class="template-name-input" />
             <button class="save-button"
                     @onclick="SaveTemplate"
-                    disabled="@(isSaving || string.IsNullOrWhiteSpace(templateName) || !canvasElements.Any())">
+                    disabled="@(!IsSaveValid())">
                 @if (isSaving)
                 {
                     <span class="loading-spinner"></span>
@@ -973,6 +973,11 @@
         }
 
         _onSaveComponentMessage = string.Empty;
+    }
+
+    private bool IsSaveValid()
+    {
+        return !isSaving && !string.IsNullOrWhiteSpace(templateName) && canvasElements.Any();
     }
 
     private async Task SaveTemplate()
