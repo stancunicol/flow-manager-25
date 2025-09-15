@@ -168,14 +168,15 @@ namespace FlowManager.Infrastructure.Repositories
         }
 
         public async Task<(List<FormResponse> data, int totalCount)> GetFormResponsesAssignedToModeratorAsync(
-    Guid moderatorId,
-    string? searchTerm = null,
-    DateTime? createdFrom = null,
-    DateTime? createdTo = null,
-    bool includeDeleted = false,
-    QueryParams? queryParams = null)
+            Guid moderatorId,
+            string? searchTerm = null,
+            DateTime? createdFrom = null,
+            DateTime? createdTo = null,
+            bool includeDeleted = false,
+            QueryParams? queryParams = null)
         {
             var responses = await _context.FormResponses
+                .Include(formResponse => formResponse.User)
                 .Include(formResponse => formResponse.FormTemplate)
                     .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
                         .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)

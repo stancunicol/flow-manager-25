@@ -192,30 +192,16 @@ namespace FlowManager.Client.Pages
             responses[componentId] = convertedValue;
         }
 
-        private async Task SubmitForm()
+        private bool IsSubmitValid()
         {
-            if (currentUserId == Guid.Empty)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "User not authenticated. Please login again.");
-                return;
-            }
-
-            if (firstStep == null)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "No workflow configured for this form template. Please contact an administrator.");
-                return;
-            }
-
             var requiredComponents = components?.Where(c => c.Required == true) ?? new List<ComponentResponseDto>();
             var missingRequiredFields = requiredComponents.Where(c => !responses.ContainsKey(c.Id)).ToList();
 
-            if (missingRequiredFields.Any())
-            {
-                var fieldNames = string.Join(", ", missingRequiredFields.Select(f => f.Label));
-                await JSRuntime.InvokeVoidAsync("alert", $"Please fill in all required fields: {fieldNames}");
-                return;
-            }
+            return isSubmitting == false && currentUserId != Guid.Empty && firstStep != null && !missingRequiredFields.Any();
+        }
 
+        private async Task SubmitForm()
+        {
             isSubmitting = true;
             StateHasChanged();
 
