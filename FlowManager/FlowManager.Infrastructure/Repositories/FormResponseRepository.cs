@@ -177,6 +177,7 @@ namespace FlowManager.Infrastructure.Repositories
         {
             var responses = await _context.FormResponses
                 .Include(formResponse => formResponse.User)
+                .Include(formResponse => formResponse.Step)
                 .Include(formResponse => formResponse.FormTemplate)
                     .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
                         .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
