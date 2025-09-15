@@ -79,7 +79,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
         private bool IsSubmitValid()
         {
-            return _isSubmitting == false && _selectedUsers.Count() != 0;
+            return _isSubmitting == false;
         }
 
         private async Task LoadUsersAsync(bool resetPageSize = false)

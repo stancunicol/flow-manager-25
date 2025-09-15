@@ -44,7 +44,7 @@
                     var step = _configuredSteps[i];
                     var stepIndex = i;
 
-                    <div class="dropped-step" key="@step.Id" @onclick="() => ShowAssingToStepModal(step)">
+                    <div class="dropped-step" key="@step.Id" @onclick="() => ShowAssingToStepModal(step, stepIndex)">
                         <!-- Step order indicator -->
                         <div class="step-order">@(stepIndex + 1)</div>
 
