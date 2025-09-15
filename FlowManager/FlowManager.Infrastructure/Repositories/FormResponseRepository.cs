@@ -168,58 +168,67 @@ namespace FlowManager.Infrastructure.Repositories
         }
 
         public async Task<(List<FormResponse> data, int totalCount)> GetFormResponsesAssignedToModeratorAsync(
-            Guid moderatorId,
-            string? searchTerm = null,
-            DateTime? createdFrom = null,
-            DateTime? createdTo = null,
-            bool includeDeleted = false,
-            QueryParams? queryParams = null)
+    Guid moderatorId,
+    string? searchTerm = null,
+    DateTime? createdFrom = null,
+    DateTime? createdTo = null,
+    bool includeDeleted = false,
+    QueryParams? queryParams = null)
         {
-            var query = _context.FormResponses
+            var responses = await _context.FormResponses
+                .Include(formResponse => formResponse.FormTemplate)
+                    .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
+                        .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
+                            .ThenInclude(flow => flow.Steps)
+                                .ThenInclude(flowStep => flowStep.AssignedUsers)
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
-                    .ThenInclude(s => s.Users.Where(su => su.DeletedAt == null))
-                .Include(fr => fr.Step)
-                .Include(fr => fr.User)
-                .Where(fr =>
-                    // Doar formularele unde moderatorul este asignat la step-ul curent
-                    (fr.Step.Users.Any(u => u.Id == moderatorId && u.DeletedAt == null) ||
-                    fr.Step.Users.SelectMany(ut => ut.Teams).Any(st => st.Team.Users.Any(ut => ut.UserId == moderatorId && ut.DeletedAt == null) && st.DeletedAt == null)) &&
-                    // IMPORTANT: Doar formularele în status "Pending" - care așteaptă review
-                    (fr.Status == null || fr.Status == "Pending")
-                );
+                    .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
+                        .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
+                            .ThenInclude(flow => flow.Steps)
+                                .ThenInclude(flowStep => flowStep.AssignedTeams)
+                                    .ThenInclude(flowStepTeam => flowStepTeam.Team)
+                                        .ThenInclude(flowStepTeam => flowStepTeam.Users)
+                .ToListAsync();
+
+            responses = responses.Where(formResponse =>
+                (formResponse.Status == null || formResponse.Status == "Pending") &&
+                (formResponse.FormTemplate.ActiveFlow?.Steps.Any(flowStep =>
+                    flowStep.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId) ||
+                    flowStep.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId))
+                ) ?? false)
+            ).ToList();
 
             // Exclude deleted unless explicitly requested
             if (!includeDeleted)
             {
-                query = query.Where(fr => fr.DeletedAt == null);
+                responses = responses.Where(fr => fr.DeletedAt == null).ToList();
             }
 
             // Apply search filter
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(fr =>
+                responses = responses.Where(fr =>
                     (fr.FormTemplate != null && fr.FormTemplate.Name.Contains(searchTerm)) ||
                     (fr.Step != null && fr.Step.Name.Contains(searchTerm)) ||
                     (fr.User != null && (!string.IsNullOrEmpty(fr.User.Name) && fr.User.Name.Contains(searchTerm) ||
                                         !string.IsNullOrEmpty(fr.User.Email) && fr.User.Email.Contains(searchTerm))) ||
                     (fr.RejectReason != null && fr.RejectReason.Contains(searchTerm))
-                );
+                ).ToList();
             }
 
             // Apply date filters
             if (createdFrom.HasValue)
             {
-                query = query.Where(fr => fr.CreatedAt >= createdFrom.Value);
+                responses = responses.Where(fr => fr.CreatedAt >= createdFrom.Value).ToList();
             }
 
             if (createdTo.HasValue)
             {
-                query = query.Where(fr => fr.CreatedAt <= createdTo.Value);
+                responses = responses.Where(fr => fr.CreatedAt <= createdTo.Value).ToList();
             }
 
             // Get total count before pagination
-            var totalCount = await query.CountAsync();
+            var totalCount = responses.Count();
 
             //// Apply sorting
             //query = ApplySorting(query, queryParams);
@@ -227,10 +236,11 @@ namespace FlowManager.Infrastructure.Repositories
             //// Apply pagination
             //query = ApplyPagination(query, queryParams);
 
-            var data = await query.ToListAsync();
+            var data = responses.ToList();
 
             return (data, totalCount);
         }
+
 
         public async Task<Step?> GetStepWithFlowInfoAsync(Guid stepId)
         {

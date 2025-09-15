@@ -589,3 +589,71 @@
     background-size: contain;
     pointer-events: none;
 }
+
+/* Radio field styling - with distinct background */
+.radio-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 200px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #dee2e6;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #374151;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+    .radio-option:hover {
+        background-color: #e9ecef;
+        color: #059669;
+    }
+
+    .radio-option input[type="radio"] {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        cursor: pointer;
+        border: 2px solid #ced4da;
+        background: white;
+        appearance: none;
+        border-radius: 50%;
+        position: relative;
+    }
+
+        .radio-option input[type="radio"]:checked {
+            border-color: #059669;
+            background: white;
+        }
+
+            .radio-option input[type="radio"]:checked::after {
+                content: '';
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #059669;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+
+        .radio-option input[type="radio"]:hover {
+            border-color: #9ca3af;
+        }
+
+.radio-option-text {
+    user-select: none;
+    cursor: pointer;
+}
