@@ -24,12 +24,15 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
         public DbSet<Team> Teams => Set<Team>();
-        public DbSet<FlowStepUser> FlowStepUsers => Set<FlowStepUser>();
-        public DbSet<FlowStepTeam> FlowStepTeams => Set<FlowStepTeam>();
+        public DbSet<FlowStepItemUser> FlowStepUsers => Set<FlowStepItemUser>();
+        public DbSet<FlowStepItemTeam> FlowStepTeams => Set<FlowStepItemTeam>();
         public DbSet<UserTeam> UserTeams => Set<UserTeam>();
         public DbSet<FormTemplateFlow> FormTemplateFlows => Set<FormTemplateFlow>();
         public DbSet<FormReview> FormReviews => Set<FormReview>();
         public DbSet<StepHistory> StepHistory => Set<StepHistory>();
+        public DbSet<FlowStepItem> FlowStepItems => Set<FlowStepItem>();    
+        public DbSet<FlowStepItemUser> FlowStepItemUsers => Set<FlowStepItemUser>();    
+        public DbSet<FlowStepItemTeam> FlowStepItemsTeams => Set<FlowStepItemTeam>();   
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -47,7 +50,7 @@ namespace FlowManager.Infrastructure.Context
 
             FormReviewRelationshipConfiguration(builder);
 
-            JSONBConfiguration(builder);
+            JSONConfiguration(builder);
 
             builder.Entity<StepHistory>(entity =>
             {
@@ -183,7 +186,7 @@ namespace FlowManager.Infrastructure.Context
                 .IsUnique();
         }
 
-        private void JSONBConfiguration(ModelBuilder builder)
+        private void JSONConfiguration(ModelBuilder builder)
         {
             builder.Entity<Component>(entity =>
             {

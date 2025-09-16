@@ -15,6 +15,6 @@ namespace FlowManager.Shared.DTOs.Requests.Flow
 
         public virtual Guid? FormTemplateId { get; set; }
 
-        public virtual List<PostFlowStepRequestDto> Steps { get; set; } = new List<PostFlowStepRequestDto>();
+        public virtual List<PostFlowStepRequestDto> FlowSteps { get; set; } = new List<PostFlowStepRequestDto>();
     }
 }

@@ -26,12 +26,13 @@ namespace FlowManager.Infrastructure.Repositories
         {
             IQueryable<FlowStep> query = _context.FlowSteps
                 .Include(fs => fs.Flow)
-                .Include(fs => fs.Step)
+                .Include(fs => fs.FlowStepItems)
+                    .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Where(fs => fs.DeletedAt == null);
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(fs => fs.Flow.Name.ToUpper().Contains(name.ToUpper()) || fs.Step.Name.ToUpper().Contains(name.ToUpper()));
+                query = query.Where(fs => fs.Flow.Name.ToUpper().Contains(name.ToUpper()) || fs.FlowStepItems.Any(flowStepItem => flowStepItem.Step.Name.ToUpper().Contains(name.ToUpper())));
             }
             int totalCount = await query.CountAsync();
 
@@ -49,7 +50,8 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FlowSteps
                 .Include(fs => fs.Flow)
-                .Include(fs => fs.Step)
+                .Include(fs => fs.FlowStepItems)
+                    .ThenInclude(flowStepItem => flowStepItem.Step)
                 .ToListAsync();
         }
 
@@ -116,8 +118,9 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FlowSteps
                 .Include(fs => fs.Flow)
-                .Include(fs => fs.Step)
-                .FirstOrDefaultAsync(fs => fs.FlowId == flowId && fs.StepId == stepId);
+                .Include(fs => fs.FlowStepItems.Where(flowStepItem => flowStepItem.StepId == stepId))
+                    .ThenInclude(flowStepItem => flowStepItem.Step)
+                .FirstOrDefaultAsync(fs => fs.FlowId == flowId);
         }
 
         public async Task UpdateFlowStepUsersAsync(Guid flowStepId, List<Guid> userIds)
@@ -146,7 +149,7 @@ namespace FlowManager.Infrastructure.Repositories
                 }
                 else
                 {
-                    var newFlowStepUser = new FlowStepUser
+                    var newFlowStepUser = new FlowStepItemUser
                     {
                         UserId = userId,
                         FlowStepId = flowStepId,
@@ -184,7 +187,7 @@ namespace FlowManager.Infrastructure.Repositories
                 }
                 else
                 {
-                    var newFlowStepTeam = new FlowStepTeam
+                    var newFlowStepTeam = new FlowStepItemTeam
                     {
                         TeamId = teamId,
                         FlowStepId = flowStepId,

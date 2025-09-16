@@ -92,8 +92,8 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             _availableSteps = response.Result.Data
                 .Select(step => new StepVM
                 {
-                    Id = step.Id,
-                    Name = step.Name,
+                    Id = step.StepId,
+                    Name = step.StepName,
                     Users = step.Users?.Select(u => new UserVM
                     {
                         Id = u.Id,
@@ -195,7 +195,7 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             {
                 FormTemplateId = FormTemplateId,
                 Name = _flowName,
-                Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                FlowSteps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
                 {
                     StepId = configuredStep.Id,
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),

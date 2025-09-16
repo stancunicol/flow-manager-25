@@ -12,9 +12,8 @@ namespace FlowManager.Application.Interfaces
         Task<PagedResponseDto<FlowResponseDto>> GetAllFlowsQueriedAsync(QueriedFlowRequestDto payload);
         Task<FlowResponseDto> GetFlowByIdAsync(Guid id);
         Task<FlowResponseDto> CreateFlowAsync(PostFlowRequestDto payload);
-        Task<FlowResponseDto> UpdateFlowAsync(Guid id, PatchFlowRequestDto payload);
         Task<FlowResponseDto> DeleteFlowAsync(Guid id);
-        Task<List<StepResponseDto>> GetStepsForFlowAsync(Guid flowId);
+        Task<List<FlowResponseDto>> GetStepsForFlowAsync(Guid flowId);
         Task<FlowResponseDto> GetFlowByIdIncludeStepsAsync(Guid flowId);
         Task<bool> GetFlowNameUnicityAsync(string flowName);
     }

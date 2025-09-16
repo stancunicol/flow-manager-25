@@ -42,8 +42,8 @@ namespace FlowManager.Application.Services
 
             return steps.Select(s => new StepResponseDto
             {
-                Id = s.Id,
-                Name = s.Name,
+                StepId = s.Id,
+                StepName = s.Name,
                 Users = s.Users.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
@@ -75,38 +75,34 @@ namespace FlowManager.Application.Services
 
             return new StepResponseDto
             {
-                Id = step.Id,
-                Name = step.Name,
-
+                StepId = step.Id,
+                StepName = step.Name,
                 Users = step.Users
-        .Where(u => u.Teams == null || !u.Teams.Any())
-        .Select(u => new UserResponseDto
-        {
-            Id = u.Id,
-            Name = u.Name,
-            Email = u.Email,
-        })
-        .ToList(),
+                    .Where(u => u.Teams == null || !u.Teams.Any())
+                    .Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email,
+                    })
+                    .ToList(),
 
                 Teams = step.Users
-        .SelectMany(u => u.Teams)
-        .Select(ut => ut.Team)
-        .Where(t => t != null)
-        .GroupBy(t => t!.Id)
-        .Select(g => new TeamResponseDto
-        {
-            Id = g.Key,
-            Name = g.First()!.Name,
-            Users = g.SelectMany(t => t!.Users.Select(ut => new UserResponseDto
-            {
-                Id = ut.User.Id,
-                Name = ut.User.Name,
-                Email = ut.User.Email
-            })).DistinctBy(u => u.Id).ToList()
-        })
-        .ToList(),
-
-                DeletedAt = step.DeletedAt
+                    .SelectMany(u => u.Teams)
+                    .Select(ut => ut.Team)
+                    .Where(t => t != null)
+                    .GroupBy(t => t!.Id)
+                    .Select(g => new TeamResponseDto
+                    {
+                        Id = g.Key,
+                        Name = g.First()!.Name,
+                        Users = g.SelectMany(t => t!.Users.Select(ut => new UserResponseDto
+                        {
+                            Id = ut.User.Id,
+                            Name = ut.User.Name,
+                            Email = ut.User.Email
+                        })).DistinctBy(u => u.Id).ToList()
+                    }).ToList()
             };
         }
 

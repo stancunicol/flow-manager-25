@@ -34,7 +34,6 @@ namespace FlowManager.Domain.IRepositories
         Task<bool> HasUserSubmittedResponseAsync(Guid userId, Guid formTemplateId, Guid stepId);
         Task<List<FormResponse>> GetStuckFormResponsesAsync(Guid stepId, int daysStuck = 7);
         Task<Step?> GetStepWithFlowInfoAsync(Guid stepId);
-        Task<bool> IsLastStepInFlowAsync(Guid stepId);
         Task<List<FormResponse>> GetFormResponsesByStatusAsync(string status);
         Task SaveChangesAsync();
         Task AddAsync(FormResponse formResponse);

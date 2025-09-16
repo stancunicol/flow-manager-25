@@ -1,5 +1,4 @@
-﻿// Infrastructure/Repositories/FormResponseRepository.cs
-using FlowManager.Domain.Dtos;
+﻿using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Context;
@@ -18,15 +17,15 @@ namespace FlowManager.Infrastructure.Repositories
         }
 
         public async Task<(List<FormResponse> Data, int TotalCount)> GetAllFormResponsesQueriedAsync(
-    Guid? formTemplateId,
-    Guid? stepId,
-    Guid? userId,
-    string? searchTerm,
-    DateTime? createdFrom,
-    DateTime? createdTo,
-    bool includeDeleted,
-    QueryParams? parameters,
-    List<string>? statusFilters = null)
+            Guid? formTemplateId,
+            Guid? stepId,
+            Guid? userId,
+            string? searchTerm,
+            DateTime? createdFrom,
+            DateTime? createdTo,
+            bool includeDeleted,
+            QueryParams? parameters,
+            List<string>? statusFilters = null)
         {
             IQueryable<FormResponse> query = _context.FormResponses
                 .Include(fr => fr.FormTemplate)
@@ -76,7 +75,6 @@ namespace FlowManager.Infrastructure.Repositories
                     (fr.RejectReason != null && fr.RejectReason.ToUpper().Contains(search)));
             }
 
-            // ADAUGĂ filtrarea după statusuri
             if (statusFilters != null && statusFilters.Any())
             {
                 query = query.Where(fr => statusFilters.Contains(fr.Status ?? "Pending"));
@@ -247,31 +245,10 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<Step?> GetStepWithFlowInfoAsync(Guid stepId)
         {
             return await _context.Steps
-                .Include(s => s.FlowSteps)
-                    .ThenInclude(fs => fs.Flow)
-                        .ThenInclude(f => f.Steps.Where(fs => fs.DeletedAt == null))
-                            .ThenInclude(fs => fs.Step)
+                .Include(s => s.FlowStepItems)
+                    .ThenInclude(flowStepItem => flowStepItem.FlowStep)
+                        .ThenInclude(fs => fs.Flow)
                 .FirstOrDefaultAsync(s => s.Id == stepId && s.DeletedAt == null);
-        }
-
-        public async Task<bool> IsLastStepInFlowAsync(Guid stepId)
-        {
-            var step = await _context.Steps
-                .Include(s => s.FlowSteps)
-                    .ThenInclude(fs => fs.Flow)
-                        .ThenInclude(f => f.Steps.Where(fs => fs.DeletedAt == null))
-                            .ThenInclude(fs => fs.Step)
-                .FirstOrDefaultAsync(s => s.Id == stepId && s.DeletedAt == null);
-
-            if (step?.FlowSteps?.FirstOrDefault()?.Flow?.Steps == null)
-                return false;
-
-            var orderedSteps = step.FlowSteps.First().Flow.Steps
-                .OrderBy(fs => fs.CreatedAt)
-                .Select(fs => fs.Step)
-                .ToList();
-
-            return orderedSteps.LastOrDefault()?.Id == stepId;
         }
 
         public async Task<List<FormResponse>> GetFormResponsesByStatusAsync(string status)

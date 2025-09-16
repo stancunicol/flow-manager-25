@@ -162,7 +162,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             PostFlowRequestDto payload = new PostFlowRequestDto
             {
                 Name = _flowName,
-                Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                FlowSteps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
                 {
                     StepId = configuredStep.Id,
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
@@ -233,7 +233,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 var apiResponse = await _flowService.PostFlowAsync(new PostFlowRequestDto
                 {
                     Name = _flowName,
-                    Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                    FlowSteps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
                     {
                         StepId = configuredStep.Id,
                         UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
@@ -266,7 +266,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             PostFlowRequestDto payload = new PostFlowRequestDto
             {
                 Name = _flowName,
-                Steps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
+                FlowSteps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
                 {
                     StepId = configuredStep.Id,
                     UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
