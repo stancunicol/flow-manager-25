@@ -1,27 +1,14 @@
 ﻿using FlowManager.API;
 using FlowManager.Application;
 using FlowManager.Application.Interfaces;
-using FlowManager.Application.IServices;
 using FlowManager.Application.Services;
-using FlowManager.Application.Utils;
-using FlowManager.Application.Utils;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure;
 using FlowManager.Infrastructure.Context;
-using FlowManager.Infrastructure.Context;
 using FlowManager.Infrastructure.Middleware;
 using FlowManager.Infrastructure.Repositories;
-using FlowManager.Infrastructure.Seed;
-using FlowManager.Infrastructure.Services;
-using FlowManager.Infrastructure.Utils;
-using FlowManager.Infrastructure.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
