@@ -1,0 +1,28 @@
+name: Bump Version
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump PATCH version
+        run: |
+          VERSION=$(grep '<Version>' Directory.Build.props | sed 's/[^0-9.]//g')
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          PATCH=$((PATCH+1))
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          sed -i "s/<Version>.*<\/Version>/<Version>$NEW_VERSION<\/Version>/" Directory.Build.props
+      - name: Commit version bump
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add Directory.Build.props
+          git commit -m "Bump version to $NEW_VERSION"
+          git push
