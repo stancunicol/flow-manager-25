@@ -6,12 +6,9 @@ using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
-using System.Linq;
 using FlowManager.Application.Utils;
 using FlowManager.Shared.DTOs.Responses.User;
 using FlowManager.Shared.DTOs.Responses.Team;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowManager.Application.Services
 {
@@ -225,7 +222,6 @@ namespace FlowManager.Application.Services
 
             await _stepRepository.SaveChangesAsync();
 
-            // Create user DTOs with their teams
             var userDtos = stepToPatch.Users.Select(u => new UserResponseDto
             {
                 Id = u.Id,

@@ -1,11 +1,6 @@
 ﻿using FlowManager.Shared.DTOs.Requests.FormTemplate;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FlowManager.Application.Interfaces
 {

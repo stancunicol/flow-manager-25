@@ -1,8 +1,6 @@
 using FlowManager.Application.Interfaces;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using FlowManager.Shared.DTOs.Responses.StepHistory;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
 using FlowManager.Shared.DTOs.Responses;

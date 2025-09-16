@@ -1,6 +1,3 @@
-using FlowManager.Domain.Entities;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using FlowManager.Shared.DTOs.Responses.StepHistory;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
 using FlowManager.Shared.DTOs.Responses;
