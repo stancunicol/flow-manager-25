@@ -31,6 +31,7 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
         private bool _showAssignToStepModal = false;
         private StepVM? _stepToAssign = null;
+        private int _stepToAssignIndex = 0;
 
         private string _onSubmitMessage = string.Empty;
         private bool _onSubmitSuccess;
@@ -267,16 +268,17 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             return string.IsNullOrWhiteSpace(_flowName) ? "invalid" : "valid";
         }
 
-        private void ShowAssingToStepModal(StepVM step)
+        private void ShowAssingToStepModal(StepVM step, int stepIndex)
         {
             _showAssignToStepModal = true;
             _stepToAssign = step;
+            _stepToAssignIndex = stepIndex; 
             StateHasChanged();
         }
 
         private void ConfigureStepsToFlow()
         {
-            StepVM step = _configuredSteps.First(s => s.Id == _stepToAssign!.Id);
+            StepVM step = _configuredSteps[_stepToAssignIndex];
 
             step.Users = _stepToAssign!.Users?.Select(u => new UserVM
             {

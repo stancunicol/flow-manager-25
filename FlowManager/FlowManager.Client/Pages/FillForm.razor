@@ -25,7 +25,7 @@
             Back to My Forms
         </button>
         <h1>@(formTemplate?.Name ?? "Loading...")</h1>
-        <button class="submit-btn" @onclick="SubmitForm" disabled="@(isSubmitting || firstStep == null)">
+        <button class="submit-btn" @onclick="SubmitForm" disabled="@(!IsSubmitValid())">
             @if (isSubmitting)
             {
                 <div class="spinner-small"></div>
