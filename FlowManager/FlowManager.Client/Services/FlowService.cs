@@ -108,19 +108,6 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<ApiResponse<FlowResponseDto?>> PatchFlowAsync(Guid flowId, PatchFlowRequestDto payload)
-        {
-            try
-            {
-                HttpResponseMessage response = await _httpClient.PatchAsJsonAsync($"api/flows/{flowId}", payload);
-                return await response.Content.ReadFromJsonAsync<ApiResponse<FlowResponseDto?>>() ?? new ApiResponse<FlowResponseDto?>();
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
-
         public async Task<ApiResponse<FlowResponseDto>> PostFlowAsync(PostFlowRequestDto payload)
         {
             try

@@ -4,19 +4,14 @@ namespace FlowManager.Client.ViewModels
 {
     public class FlowStepVM
     {
-        public Guid Id { get; set; } = Guid.Empty;
+        public Guid? Id { get; set; }
+
         public bool? IsApproved { get; set; }
+        public int? Order { get; set; }
 
-        // navigation properties
-        public List<FlowStepUserVM>? AssignedUsers { get; set; }
-        public List<FlowStepTeamVM>? AssignedTeams { get; set; }
+        public Flow? Flow { get; set; } = null!;
+        public Guid? FlowId { get; set; }
 
-        public FlowVM? Flow { get; set; }
-
-        public StepVM? Step { get; set; } 
-
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
-        public DateTime? DeletedAt { get; set; }
+        public List<FlowStepItemVM> FlowStepItems { get; set; } = new List<FlowStepItemVM>();
     }
 }

@@ -4,6 +4,7 @@ using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
 using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
@@ -35,7 +36,7 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
         private bool showViewFormModal = false;
         private bool isLoadingFormDetails = false;
         private bool isLoadingFlowSteps = false;
-        private List<StepResponseDto>? flowSteps;
+        private List<FlowStepResponseDto>? flowSteps;
         private FormResponseResponseDto? selectedFormResponse;
         private FormTemplateResponseDto? selectedFormTemplate;
         private List<ComponentResponseDto>? formComponents;
@@ -252,7 +253,7 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
         {
             if (selectedFormResponse == null)
             {
-                flowSteps = new List<StepResponseDto>();
+                flowSteps = new List<FlowStepResponseDto>();
                 return;
             }
 
@@ -273,8 +274,12 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
                             var flowStepsResponse = await Http.GetAsync($"api/flows/{selectedFormTemplate.FlowId}/steps");
                             if (flowStepsResponse.IsSuccessStatusCode)
                             {
-                                var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<StepResponseDto>>>();
-                                flowSteps = flowStepsApiResponse?.Result ?? new List<StepResponseDto>();
+                                var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
+                                flowSteps = flowStepsApiResponse?.Result.Select(flow => new FlowStepResponseDto
+                                {
+                                    FlowId = flow.FlowId,
+                                    FlowStepItems = flow.FlowStepItems,
+                                }).ToList() ?? new List<FlowStepResponseDto>();
                                 return;
                             }
                         }
@@ -287,23 +292,19 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
 
                             if (flows?.Any() == true)
                             {
-                                var matchingFlow = flows.FirstOrDefault(f => f.Steps?.Any(s => s.Id == selectedFormResponse.StepId) == true);
+                                var matchingFlow = flows.FirstOrDefault(f => f.FlowSteps?.Any(s => s.Id == selectedFormResponse.StepId) == true);
                                 if (matchingFlow != null)
                                 {
                                     var flowStepsResponse = await Http.GetAsync($"api/flows/{matchingFlow.Id}/steps");
                                     if (flowStepsResponse.IsSuccessStatusCode)
                                     {
-                                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<StepResponseDto>>>();
-                                        flowSteps = flowStepsApiResponse?.Result ?? new List<StepResponseDto>();
+                                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
+                                        flowSteps = flowStepsApiResponse?.Result ?? new List<FlowStepResponseDto>();
                                     }
                                     else
                                     {
-                                        flowSteps = matchingFlow.Steps ?? new List<StepResponseDto>();
+                                        flowSteps = matchingFlow.FlowSteps ?? new List<FlowStepResponseDto>();
                                     }
-                                }
-                                else
-                                {
-                                    flowSteps = new List<StepResponseDto> { step };
                                 }
                             }
                         }
@@ -311,13 +312,13 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
                 }
                 else
                 {
-                    flowSteps = new List<StepResponseDto>();
+                    flowSteps = new List<FlowStepResponseDto>();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading flow steps: {ex.Message}");
-                flowSteps = new List<StepResponseDto>();
+                flowSteps = new List<FlowStepResponseDto>();
             }
             finally
             {

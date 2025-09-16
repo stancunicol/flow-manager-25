@@ -52,7 +52,7 @@ namespace FlowManager.Infrastructure.Services
                 {
                     Id = flow.Id,
                     Name = flow.Name,
-                    FlowSteps = flow.Steps
+                    FlowSteps = flow.FlowSteps
                         .OrderBy(flowStep => flowStep.Order)
                         .Select(flowStep => new FlowStepResponseDto
                         {
@@ -97,7 +97,7 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flow.Id,
                 Name = flow.Name,
-                FlowSteps = flow.Steps
+                FlowSteps = flow.FlowSteps
                     .OrderBy(step => step.Order) // Order by Order field
                     .Select(flowStep => new FlowStepResponseDto
                     {
@@ -235,7 +235,7 @@ namespace FlowManager.Infrastructure.Services
 
                     flowStep.FlowStepItems = flowStepItems;
 
-                    flowToPost.Steps.Add(flowStep);
+                    flowToPost.FlowSteps.Add(flowStep);
                 }
             }
 
@@ -245,7 +245,7 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
-                FlowSteps = flowToPost.Steps
+                FlowSteps = flowToPost.FlowSteps
                     .OrderBy(s => s.Order) // Order by Order field
                     .Select(flowStep => new FlowStepResponseDto
                     {
@@ -294,7 +294,7 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowToDelete.Id,
                 Name = flowToDelete.Name,
-                FlowSteps = flowToDelete.Steps
+                FlowSteps = flowToDelete.FlowSteps
                     .OrderBy(s => s.Order) // Order by Order field
                      .Select(flowStep => new FlowStepResponseDto
                      {
@@ -331,13 +331,13 @@ namespace FlowManager.Infrastructure.Services
             }
 
             return new List<FlowResponseDto>(
-                flow.Steps
+                flow.FlowSteps
                     .OrderBy(fs => fs.Order)
                      .Select(flowStep => new FlowResponseDto
                      {
                          Id = flow.Id,
                          Name = flow.Name,
-                         FlowSteps = flow.Steps
+                         FlowSteps = flow.FlowSteps
                                             .OrderBy(flowStep => flowStep.Order)
                                             .Select(flowStep => new FlowStepResponseDto
                                             {
@@ -374,13 +374,13 @@ namespace FlowManager.Infrastructure.Services
                 throw new EntryNotFoundException($"Flow with id {flowId} was not found.");
             }
 
-            flow.Steps = flow.Steps.OrderBy(fs => fs.Order).ToList();
+            flow.FlowSteps = flow.FlowSteps.OrderBy(fs => fs.Order).ToList();
 
             FlowResponseDto response = new FlowResponseDto
             {
                 Id = flowId,
                 Name = flow.Name,
-                FlowSteps = flow.Steps.Select(flowStep => new FlowStepResponseDto
+                FlowSteps = flow.FlowSteps.Select(flowStep => new FlowStepResponseDto
                 {
                     Id = flowStep.Id,
                     FlowId = flowStep.FlowId,
@@ -414,9 +414,9 @@ namespace FlowManager.Infrastructure.Services
                 }).ToList()
             };
 
-            for (int i = 0; i < flow.Steps.Count; i++)
+            for (int i = 0; i < flow.FlowSteps.Count; i++)
             {
-                var flowStep = flow.Steps.ElementAt(i);
+                var flowStep = flow.FlowSteps.ElementAt(i);
 
                 for (int j = 0; j < flowStep.FlowStepItems.Count; j++)
                 {
@@ -529,7 +529,7 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = activeFlowForFormTemplate.Id,
                 Name = activeFlowForFormTemplate.Name,
-                FlowSteps = activeFlowForFormTemplate.Steps
+                FlowSteps = activeFlowForFormTemplate.FlowSteps
                     .OrderBy(s => s.Order)
                      .Select(flowStep => new FlowStepResponseDto
                      {

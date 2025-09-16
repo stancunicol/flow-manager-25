@@ -100,19 +100,10 @@ namespace FlowManager.Client.Pages
                     {
                         associatedFlow = flows.FirstOrDefault(f => f.FormTemplateId == formTemplate.Id);
                         
-                        if (associatedFlow?.Steps?.Any() == true)
+                        if (associatedFlow?.FlowSteps?.Any() == true)
                         {
-                            firstStep = associatedFlow.Steps.First();
-                            Console.WriteLine($"[DEBUG] Found flow '{associatedFlow.Name}' with first step: '{firstStep.Name}'");
+                            firstStep = associatedFlow.FlowSteps.First().FlowStepItems.FirstOrDefault()?.Step;
                         }
-                        else
-                        {
-                            Console.WriteLine($"[WARNING] Flow found but has no steps configured");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[WARNING] No flow found for form template: {formTemplate.Name}");
                     }
                 }
             }
@@ -210,19 +201,19 @@ namespace FlowManager.Client.Pages
                 var formResponseData = new PostFormResponseRequestDto
                 {
                     FormTemplateId = TemplateId,
-                    StepId = firstStep.Id,
+                    StepId = firstStep.StepId,
                     UserId = currentUserId,
                     ResponseFields = responses
                 };
 
-                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, FirstStep={firstStep.Id} ({firstStep.Name}), User={currentUserId}");
+                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, FirstStep={firstStep.StepId} ({firstStep.StepName}), User={currentUserId}");
                 Console.WriteLine($"[DEBUG] Response fields count: {responses.Count}");
 
                 var response = await Http.PostAsJsonAsync("api/formresponses", formResponseData);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully! It will start processing from step: {firstStep.Name}");
+                    await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully! It will start processing from step: {firstStep.StepName}");
                     Navigation.NavigateTo("/basic-user");
                 }
                 else

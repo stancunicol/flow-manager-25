@@ -103,24 +103,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        [HttpPatch("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchFlowAsync(Guid id, [FromBody] PatchFlowRequestDto payload)
-        {
-            var result = await _flowService.UpdateFlowAsync(id, payload);
-
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "Flow updated succesfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
         //[Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

@@ -145,7 +145,7 @@ namespace FlowManager.Client.Pages
             {
                 Id = flowResponse.Result.Id,
                 Name = flowResponse.Result.Name,
-                Steps = flowResponse.Result.FlowSteps.Select(fs => new FlowStepVM
+                FlowSteps = flowResponse.Result.FlowSteps.Select(fs => new FlowStepVM
                 {
                     Id = fs.Id,
                     Step = new StepVM
@@ -156,9 +156,9 @@ namespace FlowManager.Client.Pages
                 }).ToList()
             };
 
-            if(_associatedFlow.Steps.Count > 0) 
+            if(_associatedFlow.FlowSteps.Count > 0) 
             {
-                _firstStep = _associatedFlow.Steps.First().Step;
+                _firstStep = _associatedFlow.FlowSteps.First().Step;
             }
             else
             {

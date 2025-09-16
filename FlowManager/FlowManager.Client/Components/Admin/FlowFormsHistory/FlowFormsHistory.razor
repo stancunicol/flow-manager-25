@@ -72,7 +72,7 @@
                         </div>
                         <div class="flow-info">
                             <h4>@flow.Name</h4>
-                            <p class="flow-meta">@(flow.FormTemplates?.Count ?? 0) template(s) • @(flow.Steps?.Count ?? 0) step(s)</p>
+                            <p class="flow-meta">@(flow.FormTemplates?.Count ?? 0) template(s) • @(flow.FlowSteps?.Count ?? 0) step(s)</p>
                         </div>
                     </div>
 
@@ -184,7 +184,7 @@
                             <strong>Total Templates:</strong> @(selectedFlow.FormTemplates?.Count ?? 0)
                         </span>
                         <span class="metadata-item">
-                            <strong>Steps:</strong> @(selectedFlow.Steps?.Count ?? 0)
+                            <strong>Steps:</strong> @(selectedFlow.FlowSteps?.Count ?? 0)
                         </span>
                     </div>
                 </div>

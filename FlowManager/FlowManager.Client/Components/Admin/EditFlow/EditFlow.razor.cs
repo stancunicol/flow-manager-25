@@ -2,10 +2,14 @@
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Client.ViewModels.Team;
+using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Requests.FlowStep;
+using FlowManager.Shared.DTOs.Requests.FlowStepItem;
+using FlowManager.Shared.DTOs.Requests.FlowStepItemTeam;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FlowStepItemUser;
 using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -23,15 +27,16 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         [Parameter] public EventCallback OnFlowSaved { get; set; }
 
         private List<StepVM> _availableSteps = new List<StepVM>();
-        private List<StepVM> _configuredSteps = new List<StepVM>();
+        private List<FlowStepVM> _configuredSteps = new List<FlowStepVM>();
         private StepVM? _draggedStep = null;
         private bool _isDragOver = false;
         private string _flowName = string.Empty;
         private string _initialFlowName = string.Empty;
 
         private bool _showAssignToStepModal = false;
-        private StepVM? _stepToAssign = null;
-        private int _stepToAssignIndex = 0;
+        private FlowStepItemVM? _flowStepToAssign = null;
+        private int _flowStepToAssignIndex = 0;
+        private int _flowStepItemToAssignIndex = 0;
 
         private string _onSubmitMessage = string.Empty;
         private bool _onSubmitSuccess;
@@ -55,30 +60,29 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
             _flowName = response.Result.Name ?? string.Empty;
             _initialFlowName = response.Result.Name ?? string.Empty;
-            _configuredSteps = response.Result.FlowSteps?.Select(fs => new StepVM
+            _configuredSteps = response.Result.FlowSteps?.Select(fs => new FlowStepVM
             {
-                Id = fs.StepId ?? Guid.Empty,
-                Name = fs.StepName ?? string.Empty,
-                FlowStepId = fs.Id,
-                Users = fs.Users?.Where(u => u.User?.Teams?.Count == 0 || u.User?.Teams == null)
-                                .Select(u => new UserVM
-                                {
-                                    Id = u.User?.Id ?? Guid.Empty,
-                                    Name = u.User?.Name ?? string.Empty,
-                                    Email = u.User?.Email ?? string.Empty,
-                                }).ToList() ?? new List<UserVM>(),
-                Teams = fs.Teams?.Select(t => new TeamVM
+                FlowStepItems = fs.FlowStepItems.Select(flowStepItem => new FlowStepItemVM
                 {
-                    Id = t.Team?.Id ?? Guid.Empty,
-                    Name = t.Team?.Name ?? string.Empty,
-                    Users = t.Team?.Users?.Select(u => new UserVM
+                    FlowStepId = flowStepItem.FlowStepId,
+                    StepId = flowStepItem.StepId,
+                    Step = new StepVM
                     {
-                        Id = u.Id,
-                        Name = u.Name ?? string.Empty,
-                        Email = u.Email ?? string.Empty,
-                    }).ToList() ?? new List<UserVM>()
-                }).ToList() ?? new List<TeamVM>(),
-            }).ToList() ?? new List<StepVM>();
+                        Id = flowStepItem.Step?.StepId,
+                        Name = flowStepItem.Step?.StepName,
+                    },
+                    AssignedUsers = flowStepItem.AssignedUsers?.Select(au => new FlowStepItemUserVM
+                    {
+                        UserId = au.UserId ?? Guid.Empty,
+                        User = new UserVM
+                        {
+                            Id = au.User?.Id ?? Guid.Empty,
+                            Name = au.User?.Name,
+                            Email = au.User?.Email,
+                        },
+                    }).ToList() ?? new List<FlowStepItemUserVM>(),
+                }).ToList(),
+            }).ToList() ?? new List<FlowStepVM>();
         }
 
         private async Task LoadStepsAsync()
@@ -94,23 +98,6 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 {
                     Id = step.StepId,
                     Name = step.StepName,
-                    Users = step.Users?.Select(u => new UserVM
-                    {
-                        Id = u.Id,
-                        Name = u.Name,
-                        Email = u.Email,
-                    }).ToList() ?? new List<UserVM>(),
-                    Teams = step.Teams?.Select(t => new TeamVM
-                    {
-                        Id = t.Id,
-                        Name = t.Name,
-                        Users = t.Users?.Select(user => new UserVM
-                        {
-                            Id = user.Id,
-                            Name = user.Name,
-                            Email = user.Email,
-                        }).ToList() ?? new List<UserVM>(),
-                    }).ToList() ?? new List<TeamVM>(),
                 }).ToList();
         }
 
@@ -153,12 +140,9 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             _isDragOver = false;
             if (_draggedStep != null)
             {
-                var stepForWorkflow = new StepVM
+                var stepForWorkflow = new FlowStepVM
                 {
                     Id = _draggedStep.Id,
-                    Name = _draggedStep.Name,
-                    Users = new List<UserVM>(),
-                    Teams = new List<TeamVM>()
                 };
                 _configuredSteps.Add(stepForWorkflow);
             }
@@ -172,14 +156,14 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             StateHasChanged();
         }
 
-        public List<StepVM> GetConfiguredWorkflow()
+        public List<FlowStepVM> GetConfiguredWorkflow()
         {
             return _configuredSteps.ToList();
         }
 
         public List<Guid> GetConfiguredStepIds()
         {
-            return _configuredSteps.Select(s => s.Id).ToList();
+            return _configuredSteps.Select(s => s.Id ?? Guid.Empty).ToList();
         }
 
         public void ClearConfiguration()
@@ -197,14 +181,18 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 Name = _flowName,
                 FlowSteps = _configuredSteps.Select(configuredStep => new PostFlowStepRequestDto
                 {
-                    StepId = configuredStep.Id,
-                    UserIds = configuredStep.Users!.Select(u => u.Id).ToList(),
-                    Teams = configuredStep.Teams!.Select(t => new PostFlowTeamRequestDto
+                    FlowStepItems = configuredStep.FlowStepItems.Select(fsi => new PostFlowStepItemRequestDto
                     {
-                        TeamId = t.Id,
-                        UserIds = t.Users.Select(u => u.Id).ToList(),
+                        StepId = fsi.StepId ?? Guid.Empty,
+                        FlowStepId = fsi.FlowStepId ?? Guid.Empty,
+                        AssignedUsersIds = fsi.AssignedUsers?.Select(au => au.UserId ?? Guid.Empty).ToList() ?? new List<Guid>(),
+                        AssignedTeams = fsi.AssignedTeams?.Select(at => new PostFlowTeamRequestDto
+                        {
+                            TeamId = at.TeamId ?? Guid.Empty,
+                            UserIds = at.Team.Users?.Select(au => au.Id).ToList() ?? new List<Guid>(),
+                        }).ToList() ?? new List<PostFlowTeamRequestDto>(),
                     }).ToList(),
-                }).ToList()
+                }).ToList(),
             };
 
             ApiResponse<FlowResponseDto> response = await _flowService.PostFlowAsync(payload);
@@ -247,17 +235,16 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         public int GetTotalUsersInWorkflow()
         {
             return _configuredSteps.Sum(step =>
-                (step.Users?.Count ?? 0) +
-                (step.Teams?.Count ?? 0));
+                step.FlowStepItems.SelectMany(flowStepItem => flowStepItem.AssignedUsers).Count() + step.FlowStepItems.SelectMany(flowStepItem => flowStepItem.AssignedTeams).Count());
         }
 
         public bool IsWorkflowValid()
         {
             return !string.IsNullOrWhiteSpace(_flowName) &&
-                   _flowName.ToUpper() != _initialFlowName.ToUpper() && 
+                   _flowName.ToUpper() != _initialFlowName.ToUpper() &&
                    _configuredSteps.Any() &&
-                   _configuredSteps.All(s => !string.IsNullOrEmpty(s.Name) &&
-                       ((s.Users != null && s.Users.Count > 0) || (s.Teams != null && s.Teams.Count > 0)));
+                   _configuredSteps.All(fs => fs.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedTeams.Count > 0 || 
+                        fs.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedUsers.Count > 0)));
         }
 
         public string GetFlowNameValidationClass()
@@ -268,36 +255,22 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             return string.IsNullOrWhiteSpace(_flowName) ? "invalid" : "valid";
         }
 
-        private void ShowAssingToStepModal(StepVM step, int stepIndex)
+        private void ShowAssingToStepModal(FlowStepItemVM flowStepItem, int flowStepIndex, int flowStepItemIndex)
         {
             _showAssignToStepModal = true;
-            _stepToAssign = step;
-            _stepToAssignIndex = stepIndex; 
+            _flowStepToAssign = flowStepItem;
+            _flowStepToAssignIndex = flowStepIndex;
+            _flowStepItemToAssignIndex = flowStepItemIndex;
             StateHasChanged();
         }
 
         private void ConfigureStepsToFlow()
         {
-            StepVM step = _configuredSteps[_stepToAssignIndex];
+            FlowStepItemVM flowStepItem = _configuredSteps[_flowStepToAssignIndex].FlowStepItems[_flowStepItemToAssignIndex];
 
-            step.Users = _stepToAssign!.Users?.Select(u => new UserVM
-            {
-                Id = u.Id,
-                Name = u.Name,
-                Email = u.Email
-            }).ToList() ?? new List<UserVM>();
+            flowStepItem.AssignedUsers = _flowStepToAssign!.AssignedUsers;
 
-            step.Teams = _stepToAssign!.Teams?.Select(t => new TeamVM
-            {
-                Id = t.Id,
-                Name = t.Name,
-                Users = t.Users?.Select(u => new UserVM
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Email = u.Email
-                }).ToList() ?? new List<UserVM>()
-            }).ToList() ?? new List<TeamVM>();
+            flowStepItem.AssignedTeams = _flowStepToAssign!.AssignedTeams;
 
             StateHasChanged();
         }

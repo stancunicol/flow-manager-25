@@ -20,5 +20,9 @@ namespace FlowManager.Domain.Entities
         public virtual List<FlowStepItemTeam> AssignedTeams { get; set; } = new List<FlowStepItemTeam>();
 
         public int Order { get; set; } = 0;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

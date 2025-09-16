@@ -80,11 +80,13 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FlowSteps
                 .Where(fs => fs.FlowId == flowId)
-                .Include(fs => fs.AssignedUsers)
-                    .ThenInclude(fsu => fsu.User)
-                .Include(fs => fs.AssignedTeams)
-                    .ThenInclude(fst => fst.Team)
-                        .ThenInclude(t => t.Users)
+                .Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedUsers)
+                        .ThenInclude(fsu => fsu.User)
+                .Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedTeams)
+                        .ThenInclude(fst => fst.Team)
+                            .ThenInclude(t => t.Users)
                 .SelectMany(fs => fs.FlowStepItems.Select(flowStepItem => flowStepItem.Step))
                 .ToListAsync();
         }

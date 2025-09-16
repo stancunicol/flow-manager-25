@@ -61,25 +61,29 @@ namespace FlowManager.Infrastructure.Repositories
 
             if (includeDeletedFlowStepUsers)
             {
-                query = query.Include(fs => fs.AssignedUsers)
-                            .ThenInclude(fsu => fsu.User);
+                query = query.Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedUsers)
+                        .ThenInclude(fsu => fsu.User);
             }
             else
             {
-                query = query.Include(fs => fs.AssignedUsers.Where(fsu => fsu.DeletedAt == null))
-                            .ThenInclude(fsu => fsu.User);
+                query = query.Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedUsers.Where(fsu => fsu.DeletedAt == null))
+                        .ThenInclude(fsu => fsu.User);
             }
 
             if (includeDeletedFlowStepTeams)
             {
-                query = query.Include(fs => fs.AssignedTeams)
-                            .ThenInclude(fst => fst.Team)
-                                .ThenInclude(t => t.Users.Where(tu => tu.DeletedAt == null))
-                                    .ThenInclude(tu => tu.User);
+                query = query.Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedTeams)
+                        .ThenInclude(fst => fst.Team)
+                            .ThenInclude(t => t.Users.Where(tu => tu.DeletedAt == null))
+                                .ThenInclude(tu => tu.User);
             }
             else
             {
-                query = query.Include(fs => fs.AssignedTeams.Where(fst => fst.DeletedAt == null))
+                query = query.Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedTeams.Where(fst => fst.DeletedAt == null))
                             .ThenInclude(fst => fst.Team)
                                 .ThenInclude(t => t.Users.Where(tu => tu.DeletedAt == null))
                                     .ThenInclude(tu => tu.User);
@@ -121,82 +125,6 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(fs => fs.FlowStepItems.Where(flowStepItem => flowStepItem.StepId == stepId))
                     .ThenInclude(flowStepItem => flowStepItem.Step)
                 .FirstOrDefaultAsync(fs => fs.FlowId == flowId);
-        }
-
-        public async Task UpdateFlowStepUsersAsync(Guid flowStepId, List<Guid> userIds)
-        {
-            var existingUsers = await _context.FlowStepUsers
-                .Where(fsu => fsu.FlowStepId == flowStepId && fsu.DeletedAt == null)
-                .ToListAsync();
-
-            foreach (var flowStepUser in existingUsers)
-            {
-                flowStepUser.DeletedAt = DateTime.UtcNow;
-                flowStepUser.UpdatedAt = DateTime.UtcNow;
-                _context.Entry(flowStepUser).State = EntityState.Modified;
-            }
-
-            foreach (var userId in userIds)
-            {
-                var existing = await _context.FlowStepUsers
-                    .FirstOrDefaultAsync(fsu => fsu.FlowStepId == flowStepId && fsu.UserId == userId);
-
-                if (existing != null)
-                {
-                    existing.DeletedAt = null;
-                    existing.UpdatedAt = DateTime.UtcNow;
-                    _context.Entry(existing).State = EntityState.Modified;
-                }
-                else
-                {
-                    var newFlowStepUser = new FlowStepItemUser
-                    {
-                        UserId = userId,
-                        FlowStepId = flowStepId,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    await _context.FlowStepUsers.AddAsync(newFlowStepUser);
-                }
-            }
-        }
-
-        public async Task UpdateFlowStepTeamsAsync(Guid flowStepId, List<Guid> teamIds)
-        {
-            var existingTeams = await _context.FlowStepTeams
-                .Where(fst => fst.FlowStepId == flowStepId && fst.DeletedAt == null)
-                .ToListAsync();
-
-            foreach (var flowStepTeam in existingTeams)
-            {
-                flowStepTeam.DeletedAt = DateTime.UtcNow;
-                flowStepTeam.UpdatedAt = DateTime.UtcNow;
-                _context.Entry(flowStepTeam).State = EntityState.Modified;
-            }
-
-            foreach (var teamId in teamIds)
-            {
-                var existing = await _context.FlowStepTeams
-                    .FirstOrDefaultAsync(fst => fst.FlowStepId == flowStepId && fst.TeamId == teamId);
-
-                if (existing != null)
-                {
-                    existing.DeletedAt = null;
-                    existing.UpdatedAt = DateTime.UtcNow;
-                    _context.Entry(existing).State = EntityState.Modified;
-                }
-                else
-                {
-                    var newFlowStepTeam = new FlowStepItemTeam
-                    {
-                        TeamId = teamId,
-                        FlowStepId = flowStepId,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    await _context.FlowStepTeams.AddAsync(newFlowStepTeam);
-                }
-            }
         }
     }
 }

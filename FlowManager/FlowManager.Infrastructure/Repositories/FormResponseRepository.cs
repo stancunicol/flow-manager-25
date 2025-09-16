@@ -179,22 +179,24 @@ namespace FlowManager.Infrastructure.Repositories
                 .Include(formResponse => formResponse.FormTemplate)
                     .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
                         .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
-                            .ThenInclude(flow => flow.Steps)
-                                .ThenInclude(flowStep => flowStep.AssignedUsers)
+                            .ThenInclude(flow => flow.FlowSteps)
+                                .ThenInclude(flowStep => flowStep.FlowStepItems)
+                                    .ThenInclude(flowStepItem => flowStepItem.AssignedUsers)
                 .Include(fr => fr.FormTemplate)
                     .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
                         .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
-                            .ThenInclude(flow => flow.Steps)
-                                .ThenInclude(flowStep => flowStep.AssignedTeams)
-                                    .ThenInclude(flowStepTeam => flowStepTeam.Team)
-                                        .ThenInclude(flowStepTeam => flowStepTeam.Users)
+                            .ThenInclude(flow => flow.FlowSteps)
+                                .ThenInclude(flowStep => flowStep.FlowStepItems)
+                                    .ThenInclude(flowStepItem => flowStepItem.AssignedTeams)
+                                        .ThenInclude(flowStepTeam => flowStepTeam.Team)
+                                            .ThenInclude(flowStepTeam => flowStepTeam.Users)
                 .ToListAsync();
 
             responses = responses.Where(formResponse =>
                 (formResponse.Status == null || formResponse.Status == "Pending") &&
-                (formResponse.FormTemplate.ActiveFlow?.Steps.Any(flowStep =>
-                    flowStep.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId) ||
-                    flowStep.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId))
+                (formResponse.FormTemplate.ActiveFlow?.FlowSteps.Any(flowStep =>
+                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId)) ||
+                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId)))
                 ) ?? false)
             ).ToList();
 
@@ -245,9 +247,10 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<Step?> GetStepWithFlowInfoAsync(Guid stepId)
         {
             return await _context.Steps
-                .Include(s => s.FlowStepItems)
-                    .ThenInclude(flowStepItem => flowStepItem.FlowStep)
-                        .ThenInclude(fs => fs.Flow)
+                .Include(s => s.FlowSteps)
+                    .ThenInclude(s => s.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.FlowStep)
+                            .ThenInclude(fs => fs.Flow)
                 .FirstOrDefaultAsync(s => s.Id == stepId && s.DeletedAt == null);
         }
 

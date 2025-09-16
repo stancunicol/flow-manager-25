@@ -14,6 +14,7 @@ namespace FlowManager.Shared.DTOs.Responses.Flow
         public Guid Id { get; set; }
         public string? Name { get; set; }
         public Guid? FormTemplateId { get; set; }
+        public List<StepResponseDto>? Steps { get; set; }
         public List<FlowStepResponseDto>? FlowSteps { get; set; }    
         public List<FormTemplateResponseDto>? FormTemplates { get; set; }
         public FormTemplateResponseDto? ActiveFormTemplate { get; set; }

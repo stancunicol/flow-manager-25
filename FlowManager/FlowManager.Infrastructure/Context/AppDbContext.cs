@@ -24,15 +24,13 @@ namespace FlowManager.Infrastructure.Context
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
         public DbSet<Team> Teams => Set<Team>();
-        public DbSet<FlowStepItemUser> FlowStepUsers => Set<FlowStepItemUser>();
-        public DbSet<FlowStepItemTeam> FlowStepTeams => Set<FlowStepItemTeam>();
+        public DbSet<FlowStepItemUser> FlowStepItemUsers => Set<FlowStepItemUser>();
+        public DbSet<FlowStepItemTeam> FlowStepItemTeams => Set<FlowStepItemTeam>();
         public DbSet<UserTeam> UserTeams => Set<UserTeam>();
         public DbSet<FormTemplateFlow> FormTemplateFlows => Set<FormTemplateFlow>();
         public DbSet<FormReview> FormReviews => Set<FormReview>();
         public DbSet<StepHistory> StepHistory => Set<StepHistory>();
         public DbSet<FlowStepItem> FlowStepItems => Set<FlowStepItem>();    
-        public DbSet<FlowStepItemUser> FlowStepItemUsers => Set<FlowStepItemUser>();    
-        public DbSet<FlowStepItemTeam> FlowStepItemsTeams => Set<FlowStepItemTeam>();   
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -47,6 +45,9 @@ namespace FlowManager.Infrastructure.Context
             FormTemplateFlowsRelationshipConfiguration(builder);
             UserTeamRelationshipConfiguration(builder);
             CompleteOnBehalfUserFormResponseConfiguration(builder);
+
+            FlowStepItemTeamConfiguration(builder);
+            FlowStepItemUserConfiguration(builder);
 
             FormReviewRelationshipConfiguration(builder);
 
@@ -63,6 +64,42 @@ namespace FlowManager.Infrastructure.Context
                     .WithMany()
                     .HasForeignKey(e => e.StepId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        private void FlowStepItemTeamConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FlowStepItemTeam>(entity =>
+            {
+                entity.HasKey(e => new { e.FlowStepItemId, e.TeamId });
+
+                entity.HasOne(e => e.FlowStepItem)
+                    .WithMany(fsi => fsi.AssignedTeams)
+                    .HasForeignKey(e => e.FlowStepItemId)
+                    .IsRequired();
+
+                entity.HasOne(e => e.Team)
+                    .WithMany(t => t.FlowStepTeams)
+                    .HasForeignKey(e => e.TeamId)
+                    .IsRequired();
+            });
+        }
+
+        private void FlowStepItemUserConfiguration(ModelBuilder builder)
+        {
+            builder.Entity<FlowStepItemUser>(entity =>
+            {
+                entity.HasKey(e => new { e.FlowStepItemId, e.UserId });
+
+                entity.HasOne(e => e.FlowStepItem)
+                    .WithMany(fsi => fsi.AssignedUsers)
+                    .HasForeignKey(e => e.FlowStepItemId)
+                    .IsRequired();
+
+                entity.HasOne(e => e.User)
+                    .WithMany(u => u.FlowStepUsers)
+                    .HasForeignKey(e => e.UserId)
+                    .IsRequired();
             });
         }
 

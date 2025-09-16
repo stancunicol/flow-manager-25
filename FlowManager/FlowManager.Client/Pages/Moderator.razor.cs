@@ -512,16 +512,12 @@ namespace FlowManager.Client.Pages
                     {
                         var associatedFlow = flows.FirstOrDefault(f => f.FormTemplateId == selectedFormTemplate.Id);
                         Console.WriteLine($"[DEBUG STEPS] Associated flow: {associatedFlow?.Name ?? "NOT FOUND"}");
-                        Console.WriteLine($"[DEBUG STEPS] Flow has {associatedFlow?.Steps?.Count() ?? 0} steps");
+                        Console.WriteLine($"[DEBUG STEPS] Flow has {associatedFlow?.FlowSteps?.Count() ?? 0} steps");
 
-                        if (associatedFlow?.Steps?.Any() == true)
+                        if (associatedFlow?.FlowSteps?.Any() == true)
                         {
-                            var orderedSteps = associatedFlow.Steps.ToList();
+                            var orderedSteps = associatedFlow.FlowSteps.ToList();
                             Console.WriteLine($"[DEBUG STEPS] Steps in order:");
-                            for (int i = 0; i < orderedSteps.Count; i++)
-                            {
-                                Console.WriteLine($"[DEBUG STEPS]   Step {i}: {orderedSteps[i].Name} (ID: {orderedSteps[i].Id})");
-                            }
 
                             var currentStepIndex = orderedSteps.FindIndex(s => s.Id == selectedFormResponse.StepId);
                             Console.WriteLine($"[DEBUG STEPS] Current step index: {currentStepIndex}");
@@ -531,16 +527,12 @@ namespace FlowManager.Client.Pages
                                 var hasNextStep = currentStepIndex < orderedSteps.Count - 1;
                                 Console.WriteLine($"[DEBUG STEPS] Has next step: {hasNextStep}");
 
-                                if (hasNextStep)
-                                {
-                                    Console.WriteLine($"[DEBUG STEPS] Next step: {orderedSteps[currentStepIndex + 1].Name} (ID: {orderedSteps[currentStepIndex + 1].Id})");
-                                }
 
                                 nextStepInfo = new NextStepInfo
                                 {
                                     HasNextStep = hasNextStep,
-                                    NextStepName = hasNextStep ? orderedSteps[currentStepIndex + 1].Name : null,
-                                    NextStepId = hasNextStep ? orderedSteps[currentStepIndex + 1].Id : null
+                                    NextStepName = hasNextStep ? orderedSteps[currentStepIndex + 1].FlowStepItems.First().Step.StepName : null,
+                                    NextStepId = hasNextStep ? orderedSteps[currentStepIndex + 1].FlowStepItems.First().Step.StepId : null
                                 };
 
                                 Console.WriteLine($"[DEBUG STEPS] NextStepInfo created: HasNext={nextStepInfo.HasNextStep}, NextName={nextStepInfo.NextStepName}, NextId={nextStepInfo.NextStepId}");

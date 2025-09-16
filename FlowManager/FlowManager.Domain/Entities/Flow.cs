@@ -15,7 +15,7 @@ namespace FlowManager.Domain.Entities
         public string Name { get; set; }
 
         // navigation properties
-        public virtual ICollection<FlowStep> Steps { get; set; } = new List<FlowStep>();
+        public virtual ICollection<FlowStep> FlowSteps { get; set; } = new List<FlowStep>();
         public virtual ICollection<FormTemplateFlow> FormTemplateFlows { get; set; } = new List<FormTemplateFlow>();
         public FormTemplate? ActiveFormTemplate => FormTemplateFlows
             .Where(ft => ft.DeletedAt == null && ft.FormTemplate.DeletedAt == null)

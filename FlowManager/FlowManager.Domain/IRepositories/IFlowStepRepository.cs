@@ -19,7 +19,5 @@ namespace FlowManager.Domain.IRepositories
         Task SaveChangesAsync();
         Task<FlowStep?> GetFlowStepByIdAsync(Guid id, bool includeDeletedFlowStepUsers = false, bool includeDeletedFlowStepTeams = false);
         Task<FlowStep?> GetFlowStepByFlowIdAndStepIdAsync(Guid flowId, Guid stepId);
-        Task UpdateFlowStepUsersAsync(Guid flowStepId, List<Guid> userIds);
-        Task UpdateFlowStepTeamsAsync(Guid flowStepId, List<Guid> teamIds);
     }
 }

@@ -15,6 +15,7 @@ namespace FlowManager.Shared.DTOs.Responses.FlowStep
         public Guid? FlowId { get; set; }
         public List<FlowStepItemResponseDto> FlowStepItems { get; set; } = new List<FlowStepItemResponseDto>();
         public bool? IsApproved { get; set; }
+
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
