@@ -1,16 +1,24 @@
+permissions:
+  contents: write
+
 name: Bump Version
 
 on:
   push:
     branches:
-      - main
+      - DEV
 
 jobs:
   bump-version:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: DEV
+
       - name: Bump PATCH version
+        id: bump
         run: |
           VERSION=$(grep '<Version>' Directory.Build.props | sed 's/[^0-9.]//g')
           MAJOR=$(echo $VERSION | cut -d. -f1)
@@ -19,10 +27,12 @@ jobs:
           PATCH=$((PATCH+1))
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           sed -i "s/<Version>.*<\/Version>/<Version>$NEW_VERSION<\/Version>/" Directory.Build.props
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
       - name: Commit version bump
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git add Directory.Build.props
-          git commit -m "Bump version to $NEW_VERSION"
+          git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}" || echo "No changes to commit"
           git push

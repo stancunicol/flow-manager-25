@@ -51,7 +51,6 @@ namespace FlowManager.Client.Components.Admin.Steps
         private List<UserResponseDto> allUsers = new();
         private List<TeamResponseDto> allTeams = new();
         private Dictionary<Guid, string> departmentColors = new();
-        private Guid draggedUserId = Guid.Empty;
         private List<TeamResponseDto> selectedTeams = new();
         private bool isEditTypeModalOpen = false;
         private enum EditType { None, ChangeName, MoveUsers }
