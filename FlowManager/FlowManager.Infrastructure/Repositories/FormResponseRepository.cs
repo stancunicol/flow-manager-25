@@ -194,9 +194,11 @@ namespace FlowManager.Infrastructure.Repositories
 
             responses = responses.Where(formResponse =>
                 (formResponse.Status == null || formResponse.Status == "Pending") &&
+                
                 (formResponse.FormTemplate.ActiveFlow?.Steps.Any(flowStep =>
-                    flowStep.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId) ||
-                    flowStep.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId))
+                    flowStep.StepId == formResponse.StepId &&
+                    (flowStep.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId) ||
+                    flowStep.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId)))
                 ) ?? false)
             ).ToList();
 
