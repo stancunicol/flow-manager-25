@@ -53,7 +53,7 @@ namespace FlowManager.Client.Pages
         private System.Threading.Timer? _debounceTimer;
 
         private FlowVM? _associatedFlow;
-        private StepVM? _firstStep;
+        private FlowStepVM? _firstStep;
         private bool _isLoadingFlow = false;
 
         protected override async Task OnInitializedAsync()
@@ -148,17 +148,13 @@ namespace FlowManager.Client.Pages
                 FlowSteps = flowResponse.Result.FlowSteps.Select(fs => new FlowStepVM
                 {
                     Id = fs.Id,
-                    Step = new StepVM
-                    {
-                        Id = fs.StepId ?? Guid.Empty,
-                        Name = fs.StepName,
-                    }
                 }).ToList()
             };
 
             if(_associatedFlow.FlowSteps.Count > 0) 
             {
-                _firstStep = _associatedFlow.FlowSteps.First().Step;
+                _firstStep = new FlowStepVM();
+                _firstStep.FlowStepItems = new List<FlowStepItemVM>(_associatedFlow.FlowSteps.First().FlowStepItems);
             }
             else
             {
@@ -214,8 +210,8 @@ namespace FlowManager.Client.Pages
                         PhoneNumber = u.PhoneNumber,
                         Step = u.Step != null ? new StepVM
                         {
-                            Id = u.Step.Id,
-                            Name = u.Step.Name
+                            Id = u.Step.StepId,
+                            Name = u.Step.StepName
                         } : null,
                     }).ToList();
 
@@ -291,7 +287,7 @@ namespace FlowManager.Client.Pages
                 var formResponseData = new PostFormResponseRequestDto
                 {
                     FormTemplateId = TemplateId,
-                    StepId = _firstStep.Id,
+                    StepsIds = _firstStep!.FlowStepItems.Select(flowStepItem => flowStepItem?.StepId ?? Guid.Empty).ToList(),
                     UserId = _selectedUserToComplete.Id,
                     CompletedByOtherUserId = (await _authService.GetCurrentUserAsync())!.Id,
                     ResponseFields = _responses

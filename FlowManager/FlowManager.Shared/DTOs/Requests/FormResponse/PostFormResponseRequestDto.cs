@@ -13,7 +13,7 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
         public Guid FormTemplateId { get; set; }
 
         [Required(ErrorMessage = "StepId is required")]
-        public Guid StepId { get; set; }
+        public List<Guid> StepsIds { get; set; } = new List<Guid>();
 
         [Required(ErrorMessage = "UserId is required")]
         public Guid UserId { get; set; }

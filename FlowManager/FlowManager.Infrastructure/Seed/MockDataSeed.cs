@@ -31,11 +31,6 @@ namespace FlowManager.Infrastructure.Seed
             // Create components
             var components = CreateComponents(dbContext);
 
-            // Create form templates
-            var formTemplates = CreateFormTemplates(dbContext);
-
-            // Create sample form responses
-            CreateSampleFormResponses(dbContext, users, formTemplates, steps, components);
 
             dbContext.SaveChanges();
         }
@@ -570,11 +565,11 @@ namespace FlowManager.Infrastructure.Seed
                 {
                     Id = Guid.NewGuid(),
                     FormTemplateId = template.Id,
-                    StepId = step.Id,
+                    FlowStepId = template.ActiveFlow.FlowSteps.First().Id,   
                     UserId = user.Id,
                     ResponseFields = responseFields,
-                    RejectReason = random.Next(10) == 0 ? "Sample rejection reason" : null, // 10% chance of rejection
-                    CreatedAt = DateTime.UtcNow.AddDays(-random.Next(30)), // Random date within last 30 days
+                    RejectReason = random.Next(10) == 0 ? "Sample rejection reason" : null,
+                    CreatedAt = DateTime.UtcNow.AddDays(-random.Next(30)),
                     UpdatedAt = random.Next(5) == 0 ? DateTime.UtcNow.AddDays(-random.Next(10)) : null
                 };
 

@@ -261,53 +261,18 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
             {
                 isLoadingFlowSteps = true;
 
-                var stepResponse = await Http.GetAsync($"api/steps/{selectedFormResponse.StepId}");
-                if (stepResponse.IsSuccessStatusCode)
+                if (selectedFormTemplate?.FlowId != null)
                 {
-                    var stepApiResponse = await stepResponse.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
-                    var step = stepApiResponse?.Result;
-
-                    if (step != null)
+                    var flowStepsResponse = await Http.GetAsync($"api/flows/{selectedFormTemplate.FlowId}/steps");
+                    if (flowStepsResponse.IsSuccessStatusCode)
                     {
-                        if (selectedFormTemplate?.FlowId != null)
+                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
+                        flowSteps = flowStepsApiResponse?.Result.Select(flow => new FlowStepResponseDto
                         {
-                            var flowStepsResponse = await Http.GetAsync($"api/flows/{selectedFormTemplate.FlowId}/steps");
-                            if (flowStepsResponse.IsSuccessStatusCode)
-                            {
-                                var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
-                                flowSteps = flowStepsApiResponse?.Result.Select(flow => new FlowStepResponseDto
-                                {
-                                    FlowId = flow.FlowId,
-                                    FlowStepItems = flow.FlowStepItems,
-                                }).ToList() ?? new List<FlowStepResponseDto>();
-                                return;
-                            }
-                        }
-
-                        var flowsResponse = await Http.GetAsync("api/flows/queried?QueryParams.PageSize=100");
-                        if (flowsResponse.IsSuccessStatusCode)
-                        {
-                            var flowsApiResponse = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
-                            var flows = flowsApiResponse?.Result?.Data;
-
-                            if (flows?.Any() == true)
-                            {
-                                var matchingFlow = flows.FirstOrDefault(f => f.FlowSteps?.Any(s => s.Id == selectedFormResponse.StepId) == true);
-                                if (matchingFlow != null)
-                                {
-                                    var flowStepsResponse = await Http.GetAsync($"api/flows/{matchingFlow.Id}/steps");
-                                    if (flowStepsResponse.IsSuccessStatusCode)
-                                    {
-                                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
-                                        flowSteps = flowStepsApiResponse?.Result ?? new List<FlowStepResponseDto>();
-                                    }
-                                    else
-                                    {
-                                        flowSteps = matchingFlow.FlowSteps ?? new List<FlowStepResponseDto>();
-                                    }
-                                }
-                            }
-                        }
+                            FlowId = flow.FlowId,
+                            FlowStepItems = flow.FlowStepItems,
+                        }).ToList() ?? new List<FlowStepResponseDto>();
+                        return;
                     }
                 }
                 else
@@ -326,6 +291,7 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
                 StateHasChanged();
             }
         }
+
 
         private string GetFormStatus(FormResponseResponseDto form)
         {

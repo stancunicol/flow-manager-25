@@ -225,7 +225,7 @@
                     <h3>@(selectedFormTemplate?.Name ?? "Form Response")</h3>
                     <div class="form-metadata">
                         <span class="metadata-item">
-                            <strong>Step:</strong> @(selectedFormResponse.StepName ?? "Unknown")
+                            <strong>Step:</strong> @(string.Join(", ", selectedFormResponse.FlowStep.FlowStepItems.Select(item => item.Step!.StepName)) ?? "Unknown")
                         </span>
                         <span class="metadata-item">
                             <strong>Submitted:</strong> @selectedFormResponse.CreatedAt.ToString("dd/MM/yyyy HH:mm")

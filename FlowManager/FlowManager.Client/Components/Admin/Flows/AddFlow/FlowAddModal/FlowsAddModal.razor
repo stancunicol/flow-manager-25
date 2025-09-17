@@ -6,7 +6,7 @@
     @if (_showAssignToStepModal)
     {
         <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
-                           @bind-StepToAssign="@_stepToAssign"
+                           @bind-FlowStepToAssign="@_flowStepToAssign"
                            OnStepAssigned="ConfigureStepsToFlow" />
     }
 
@@ -27,7 +27,7 @@
                        placeholder="*Enter workflow name..."
                        @bind="_flowName"
                        @bind:event="oninput"
-                       maxlength="100"/>
+                       maxlength="100" />
             </div>
             @if (!string.IsNullOrEmpty(SavedFormTemplateName))
             {
@@ -40,7 +40,7 @@
         </div>
 
         <div class="dropped-steps">
-            @if (!_configuredSteps.Any())
+            @if (!_configuredFlowSteps.Any())
             {
                 <div class="empty-state">
                     Drag steps here to build your workflow
@@ -48,41 +48,111 @@
             }
             else
             {
-                @for (int i = 0; i < _configuredSteps.Count; i++)
+                @for (int i = 0; i < _configuredFlowSteps.Count; i++)
                 {
-                    var step = _configuredSteps[i];
-                    var stepIndex = i;
+                    var flowStep = _configuredFlowSteps[i];
+                    var flowStepIndex = i;
 
-                    <div class="dropped-step" key="@step.Id" @onclick="() => ShowAssingToStepModal(step, stepIndex)">
-                        <!-- Step order indicator -->
-                        <div class="step-order">@(stepIndex + 1)</div>
+                    <!-- FlowStep container -->
+                    <div class="dropped-step" key="@flowStep.Id">
 
-                        <!-- Remove button -->
-                        <button class="remove-step" @onclick="() => RemoveConfiguredStep(stepIndex)" @onclick:stopPropagation="true">×</button>
+                        <!-- FlowStep header -->
+                        <div class="flowstep-header">
+                            <!-- FlowStep order indicator -->
+                            <div class="step-order flowstep-order">@(flowStepIndex + 1)</div>
 
-                        <!-- Reorder buttons -->
-                        <div class="reorder-buttons">
-                            @if (stepIndex > 0)
-                            {
-                                <button class="reorder-btn up" @onclick="() => MoveStepUp(stepIndex)" title="Move up" @onclick:stopPropagation="true">↑</button>
-                            }
-                            @if (stepIndex < _configuredSteps.Count - 1)
-                            {
-                                <button class="reorder-btn down" @onclick="() => MoveStepDown(stepIndex)" title="Move down" @onclick:stopPropagation="true">↓</button>
-                            }
+                            <!-- FlowStep title -->
+                            <div class="flowstep-title">Flow Step @(flowStepIndex + 1)</div>
+
+                            <!-- FlowStep controls -->
+                            <div class="flowstep-controls">
+                                <!-- FlowStep reorder buttons -->
+                                <div class="reorder-buttons flowstep-reorder">
+                                    @if (flowStepIndex > 0)
+                                    {
+                                        <button class="reorder-btn up" @onclick="() => MoveStepUp(flowStepIndex)" title="Move flow step up" @onclick:stopPropagation="true">↑</button>
+                                    }
+                                    @if (flowStepIndex < _configuredFlowSteps.Count - 1)
+                                    {
+                                        <button class="reorder-btn down" @onclick="() => MoveStepDown(flowStepIndex)" title="Move flow step down" @onclick:stopPropagation="true">↓</button>
+                                    }
+                                </div>
+
+                                <!-- Remove FlowStep button -->
+                                <button class="remove-step flowstep-remove" @onclick="() => RemoveConfiguredStep(flowStepIndex)" @onclick:stopPropagation="true">×</button>
+                            </div>
                         </div>
 
-                        <!-- Step content -->
-                        <div class="step-info">
-                            <div class="step-avatar">
-                                @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
-                            </div>
-                            <div class="step-details">
-                                <div class="step-name">@step.Name</div>
-                                <div class="step-users-count">
-                                    @((step.Users?.Count ?? 0) + (step.Teams?.Count ?? 0)) assignments
+                        <!-- FlowStepItems container -->
+                        <div class="flowstep-items-container">
+                            @if (!flowStep.FlowStepItems.Any())
+                            {
+                                <div class="flowstep-items-empty">
+                                    <span class="empty-text">No steps assigned yet</span>
+                                    <button class="btn-add-step" @onclick="() => AddFlowStepItem(flowStepIndex)" @onclick:stopPropagation="true">
+                                        + Add Step
+                                    </button>
                                 </div>
-                            </div>
+                            }
+                            else
+                            {
+                                @for (int j = 0; j < flowStep.FlowStepItems.Count; j++)
+                                {
+                                    var flowStepItem = flowStep.FlowStepItems[j];
+                                    var flowStepItemIndex = j;
+
+                                    <!-- FlowStepItem -->
+                                    <div class="flowstep-item" @onclick="() => ShowAssingToStepModal(flowStepItem, flowStepIndex, flowStepItemIndex)">
+                                        <!-- FlowStepItem order -->
+                                        <div class="flowstepitem-order">@(flowStepItemIndex + 1)</div>
+
+                                        <!-- FlowStepItem content -->
+                                        <div class="flowstepitem-info">
+                                            <div class="step-avatar flowstepitem-avatar">
+                                                @if (flowStepItem.Step?.Name != null)
+                                                {
+                                                    @flowStepItem.Step.Name.Substring(0, Math.Min(2, flowStepItem.Step.Name.Length)).ToUpper()
+                                                }
+                                                else
+                                                {
+                                                    <text>?</text>
+                                                }
+                                            </div>
+                                            <div class="step-details flowstepitem-details">
+                                                <div class="step-name">@(flowStepItem.Step?.Name ?? "Unassigned Step")</div>
+                                                <div class="step-users-count">
+                                                    @((flowStepItem.AssignedUsers?.Count ?? 0) + (flowStepItem.AssignedTeams?.Count ?? 0)) assignments
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- FlowStepItem controls -->
+                                        <div class="flowstepitem-controls">
+                                            <!-- FlowStepItem reorder buttons -->
+                                            <div class="reorder-buttons flowstepitem-reorder">
+                                                @if (flowStepItemIndex > 0)
+                                                {
+                                                    <button class="reorder-btn up small" @onclick="(e) => MoveFlowStepItemUp(flowStepIndex, flowStepItemIndex, e)" title="Move step up" @onclick:stopPropagation="true">↑</button>
+                                                }
+                                                @if (flowStepItemIndex < flowStep.FlowStepItems.Count - 1)
+                                                {
+                                                    <button class="reorder-btn down small" @onclick="(e) => MoveFlowStepItemDown(flowStepIndex, flowStepItemIndex, e)" title="Move step down" @onclick:stopPropagation="true">↓</button>
+                                                }
+                                            </div>
+
+                                            <!-- Remove FlowStepItem button -->
+                                            <button class="remove-step flowstepitem-remove" @onclick="(e) => RemoveFlowStepItem(flowStepIndex, flowStepItemIndex, e)" @onclick:stopPropagation="true">×</button>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Add FlowStepItem button -->
+                                <div class="add-flowstepitem-container">
+                                    <button class="btn-add-step" @onclick="() => AddFlowStepItem(flowStepIndex)" @onclick:stopPropagation="true">
+                                        + Add Step to this Flow Step
+                                    </button>
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -90,10 +160,9 @@
                 <!-- Action buttons -->
                 <div class="workflow-actions">
                     <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
-                    <button class="btn-save" @onclick="@(() => string.IsNullOrEmpty(SavedFormTemplateName) ?
-                           SaveWorkflow() : SaveWorkflowInvokeAsync())"
-                        disabled="@(_isSaving || !IsWorkflowValid())">
-                        @if(_isSaving)
+                    <button class="btn-save" @onclick="@(() => SaveWorkflowInvokeAsync())"
+                            disabled="@(_isSaving || !IsWorkflowValid())">
+                        @if (_isSaving)
                         {
                             <text>Saving...</text>
                         }

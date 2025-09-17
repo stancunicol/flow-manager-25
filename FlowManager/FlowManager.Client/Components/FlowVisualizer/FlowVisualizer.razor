@@ -1,5 +1,6 @@
 ﻿@using FlowManager.Shared.DTOs.Responses.Step
 @using FlowManager.Shared.DTOs.Requests.FormResponse
+@using FlowManager.Shared.DTOs.Responses.FlowStep
 
 <div class="flow-visualizer">
     <div class="flow-header">
@@ -18,20 +19,20 @@
         <div class="flow-container">
             @for (int i = 0; i < FlowSteps.Count; i++)
             {
-                var step = FlowSteps[i];
-                var stepStatus = GetStepStatus(step, i);
+                var currentFlowStep = FlowSteps[i];
+                var stepStatus = GetStepStatus(currentFlowStep, i);
                 var isLastStep = i == FlowSteps.Count - 1;
 
                 <div class="step-wrapper">
                     <!-- Step Circle -->
                     <div class="step-circle @GetStepStatusClass(stepStatus)"
-                         title="@step.Name - @GetStepStatusText(stepStatus)">
-                        <span class="step-initials">@GetStepInitials(step.Name)</span>
+                         title="@currentFlowStep.FlowStepItems[0].Step.StepName - @GetStepStatusText(stepStatus)"> <!-- DE SCHIMBAT-->
+                        <span class="step-initials">@GetStepInitials(currentFlowStep.FlowStepItems[0].Step.StepName)</span>
                     </div>
 
                     <!-- Step Label -->
                     <div class="step-label">
-                        <span class="step-name">@step.Name</span>
+                        <span class="step-name">@currentFlowStep.FlowStepItems[0].Step.StepName</span>
                         <span class="step-status">@GetStepStatusText(stepStatus)</span>
                     </div>
 
@@ -73,7 +74,7 @@
 </div>
 
 @code {
-    [Parameter] public List<StepResponseDto>? FlowSteps { get; set; }
+    [Parameter] public List<FlowStepResponseDto>? FlowSteps { get; set; }
     [Parameter] public FormResponseResponseDto? FormResponse { get; set; }
     [Parameter] public bool IsLoading { get; set; } = false;
 
@@ -85,17 +86,17 @@
         Rejected     // Roșu - step-ul a fost respins
     }
 
-    private StepStatus GetStepStatus(StepResponseDto step, int stepIndex)
+    private StepStatus GetStepStatus(FlowStepResponseDto flowStep, int flowStepIndex)
     {
         if (FormResponse == null || FlowSteps == null) return StepStatus.Inactive;
 
         // Găsește indexul step-ului curent al formularului
-        var currentStepIndex = FlowSteps.FindIndex(s => s.Id == FormResponse.StepId);
+        var currentStepIndex = FlowSteps.FindIndex(fs => fs.Id == flowStep.Id);
 
         if (currentStepIndex == -1) return StepStatus.Inactive;
 
         // Verifică dacă formularul a fost respins la acest step
-        if (stepIndex == currentStepIndex && !string.IsNullOrEmpty(FormResponse.RejectReason))
+        if (flowStepIndex == currentStepIndex && !string.IsNullOrEmpty(FormResponse.RejectReason))
         {
             return StepStatus.Rejected;
         }
@@ -110,21 +111,21 @@
         if (FormResponse.Status == "Rejected")
         {
             // Step-ul curent e rejected, restul inactive
-            if (stepIndex == currentStepIndex)
+            if (flowStepIndex == currentStepIndex)
                 return StepStatus.Rejected;
-            else if (stepIndex < currentStepIndex)
+            else if (flowStepIndex < currentStepIndex)
                 return StepStatus.Completed;
             else
                 return StepStatus.Inactive;
         }
 
         // Pentru formulare în progres (Pending)
-        if (stepIndex < currentStepIndex)
+        if (flowStepIndex < currentStepIndex)
         {
             // Step-urile anterioare sunt completate
             return StepStatus.Completed;
         }
-        else if (stepIndex == currentStepIndex)
+        else if (flowStepIndex == currentStepIndex)
         {
             // Step-ul curent e în așteptare
             return StepStatus.Pending;

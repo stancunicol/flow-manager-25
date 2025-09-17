@@ -285,71 +285,19 @@ namespace FlowManager.Client.Pages
             try
             {
                 isLoadingFlowSteps = true;
-                Console.WriteLine($"[FlowVisualizer] Loading steps for form response step: {selectedFormResponse.StepId}");
 
-                // First, get the step to find its flow
-                var stepResponse = await Http.GetAsync($"api/steps/{selectedFormResponse.StepId}");
-
-                if (stepResponse.IsSuccessStatusCode)
+                if (selectedFormTemplate?.FlowId != null)
                 {
-                    var stepApiResponse = await stepResponse.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
-                    var step = stepApiResponse?.Result;
-
-                    if (step != null)
+                    var flowStepsResponse = await Http.GetAsync($"api/flows/{selectedFormTemplate.FlowId}/steps");
+                    if (flowStepsResponse.IsSuccessStatusCode)
                     {
-                        Console.WriteLine($"[FlowVisualizer] Found step: {step.StepName}");
-
-                        // If we have a FormTemplate with FlowId, use it directly
-                        if (selectedFormTemplate?.FlowId != null)
-                        {
-                            var flowStepsResponse = await Http.GetAsync($"api/flows/{selectedFormTemplate.FlowId}/steps");
-                            if (flowStepsResponse.IsSuccessStatusCode)
-                            {
-                                var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
-                                flowSteps = flowStepsApiResponse?.Result ?? new List<FlowStepResponseDto>();
-                                Console.WriteLine($"[FlowVisualizer] Loaded {flowSteps.Count} steps from flow using FormTemplate.FlowId");
-                                return;
-                            }
-                        }
-
-                        // Fallback: search through all flows to find the one containing this step
-                        var flowsResponse = await Http.GetAsync("api/flows/queried?QueryParams.PageSize=100");
-                        if (flowsResponse.IsSuccessStatusCode)
-                        {
-                            var flowsApiResponse = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
-                            var flows = flowsApiResponse?.Result?.Data;
-
-                            if (flows?.Any() == true)
-                            {
-                                var matchingFlow = flows.FirstOrDefault(f => f.FlowSteps?.Any(s => s.Id == selectedFormResponse.StepId) == true);
-
-                                if (matchingFlow != null)
-                                {
-                                    // Get the properly ordered steps from the flow
-                                    var flowStepsResponse = await Http.GetAsync($"api/flows/{matchingFlow.Id}/steps");
-                                    if (flowStepsResponse.IsSuccessStatusCode)
-                                    {
-                                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
-                                        flowSteps = flowStepsApiResponse?.Result ?? new List<FlowStepResponseDto>();
-                                        Console.WriteLine($"[FlowVisualizer] Loaded {flowSteps.Count} steps from flow: {matchingFlow.Name}");
-                                    }
-                                    else
-                                    {
-                                        // Final fallback
-                                        flowSteps = matchingFlow.FlowSteps ?? new List<FlowStepResponseDto>();
-                                    }
-                                }
-                                else
-                                {
-                                    flowSteps = new List<FlowStepResponseDto> { };
-                                }
-                            }
-                        }
+                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
+                        flowSteps = flowStepsApiResponse?.Result ?? new List<FlowStepResponseDto>();
+                        return;
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"[FlowVisualizer] Failed to load step info: {stepResponse.StatusCode}");
                     flowSteps = new List<FlowStepResponseDto>();
                 }
             }

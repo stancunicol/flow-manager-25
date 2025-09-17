@@ -48,7 +48,7 @@
 .dropped-steps {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     min-height: 200px;
 }
 
@@ -169,44 +169,115 @@
 .dropped-step {
     border-radius: 12px;
     background: white;
-    border: 2px solid #20B486;
-    padding: 20px;
+    border: 3px solid #20B486;
+    padding: 0;
     position: relative;
-    box-shadow: 0 4px 16px rgba(32, 180, 134, 0.2);
+    box-shadow: 0 6px 20px rgba(32, 180, 134, 0.25);
     animation: slideIn 0.4s ease-out;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
     .dropped-step:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 24px rgba(32, 180, 134, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(32, 180, 134, 0.35);
     }
 
-.dropped-step .step-info {
-    margin: 0;
-    background: transparent;
-    cursor: default;
-    padding: 0;
-    border: none;
+.flowstep-header {
+    background: linear-gradient(135deg, #20B486, #1a9872);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
 }
 
-    .dropped-step .step-info:hover {
-        background: transparent;
-        transform: none;
-        box-shadow: none;
-        border: none;
+.flowstep-title {
+    font-size: 16px;
+    font-weight: 600;
+    flex: 1;
+    margin-left: 15px;
+}
+
+.flowstep-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.step-order.flowstep-order {
+    position: static;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.flowstep-remove {
+    background: rgba(220, 53, 69, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+    .flowstep-remove:hover {
+        background: #dc3545;
     }
 
-.dropped-step .step-avatar {
-    background-color: #28a745;
-    margin-top: 0;
-    margin-left: 0;
+.reorder-buttons.flowstep-reorder {
+    position: static;
 }
 
-.step-order {
-    position: absolute;
-    top: -8px;
-    left: -8px;
+.flowstep-items-container {
+    padding: 20px;
+    background: #f8f9fa;
+    min-height: 80px;
+}
+
+.flowstep-items-empty {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    background: white;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.empty-text {
+    font-style: italic;
+    font-size: 14px;
+}
+
+.flowstep-item {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+    .flowstep-item:hover {
+        border-color: #007bff;
+        transform: translateX(5px);
+        box-shadow: 0 3px 12px rgba(0, 123, 255, 0.15);
+    }
+
+    .flowstep-item:last-child {
+        margin-bottom: 0;
+    }
+
+.flowstepitem-order {
     background: #007bff;
     color: white;
     border-radius: 50%;
@@ -217,63 +288,90 @@
     justify-content: center;
     font-size: 12px;
     font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    margin-right: 12px;
+    flex-shrink: 0;
 }
 
-.remove-step {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 1.5em;
-    height: 1.5rem;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
+.flowstepitem-info {
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    z-index: 10;
+    flex: 1;
 }
 
-    .remove-step:hover {
+.flowstepitem-avatar {
+    background-color: #6f42c1;
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    margin-right: 12px;
+    margin-top: 0;
+    margin-left: 0;
+}
+
+.flowstepitem-details {
+    font-size: 13px;
+}
+
+    .flowstepitem-details .step-name {
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .flowstepitem-details .step-users-count {
+        font-size: 11px;
+    }
+
+.flowstepitem-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reorder-buttons.flowstepitem-reorder {
+    position: static;
+    flex-direction: row;
+    gap: 4px;
+}
+
+.reorder-btn.small {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    background: #6c757d;
+}
+
+.flowstepitem-remove {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    background: #dc3545;
+}
+
+    .flowstepitem-remove:hover {
         background: #c82333;
         transform: scale(1.1);
     }
 
-.reorder-buttons {
-    position: absolute;
-    top: 8px;
-    right: 45px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.add-flowstepitem-container {
+    margin-top: 15px;
+    text-align: center;
 }
 
-.reorder-btn {
-    width: 1.7rem;
-    height: 1.7rem;
-    background: #6c757d;
+.btn-add-step {
+    background: #28a745;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
-    font-size: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     transition: all 0.2s ease;
-    z-index: 10;
 }
 
-    .reorder-btn:hover {
-        background: #5a6268;
-        transform: scale(1.1);
+    .btn-add-step:hover {
+        background: #218838;
+        transform: translateY(-1px);
     }
 
 .empty-state {
@@ -360,30 +458,30 @@
     outline: none;
 }
 
-.flow-name-input:focus {
-    border-color: #20B486;
-    box-shadow: 0 0 0 3px rgba(32, 180, 134, 0.1);
-    transform: translateY(-1px);
-}
+    .flow-name-input:focus {
+        border-color: #20B486;
+        box-shadow: 0 0 0 3px rgba(32, 180, 134, 0.1);
+        transform: translateY(-1px);
+    }
 
-.flow-name-input:hover {
-    border-color: #20B486;
-}
+    .flow-name-input:hover {
+        border-color: #20B486;
+    }
 
-.flow-name-input.valid {
-    border-color: #28a745;
-    background: rgba(40, 167, 69, 0.05);
-}
+    .flow-name-input.valid {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
 
-.flow-name-input.invalid {
-    border-color: #dc3545;
-    background: rgba(220, 53, 69, 0.05);
-}
+    .flow-name-input.invalid {
+        border-color: #dc3545;
+        background: rgba(220, 53, 69, 0.05);
+    }
 
-.flow-name-input::placeholder {
-    color: #999;
-    font-weight: 400;
-}
+    .flow-name-input::placeholder {
+        color: #999;
+        font-weight: 400;
+    }
 
 .workflow-header-title {
     font-size: 18px;
@@ -415,3 +513,71 @@
         color: #991b1b;
         border: 1px solid #fca5a5;
     }
+
+.reorder-buttons {
+    position: absolute;
+    top: 8px;
+    right: 45px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.reorder-btn {
+    width: 1.7rem;
+    height: 1.7rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+    .reorder-btn:hover {
+        background: #5a6268;
+        transform: scale(1.1);
+    }
+
+.remove-step {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 1.5em;
+    height: 1.5rem;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+    .remove-step:hover {
+        background: #c82333;
+        transform: scale(1.1);
+    }
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

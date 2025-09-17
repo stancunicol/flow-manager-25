@@ -272,7 +272,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 }
 
                 ApiResponse<PagedResponseDto<TeamResponseDto>> response =
-                    await _teamService.GetAllModeratorTeamsByStepIdAsync(StepToAssign.Id, payload);
+                    await _teamService.GetAllModeratorTeamsByStepIdAsync(StepToAssign.Id ?? Guid.Empty, payload);
 
                 if (!response.Success)
                 {
@@ -329,7 +329,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 }
 
                 ApiResponse<PagedResponseDto<UserResponseDto>> response =
-                    await _userService.GetUnassignedModeratorsByStepIdQueriedAsync(StepToAssign.Id, payload);
+                    await _userService.GetUnassignedModeratorsByStepIdQueriedAsync(StepToAssign.Id ?? Guid.Empty, payload);
 
                 if (!response.Success)
                 {

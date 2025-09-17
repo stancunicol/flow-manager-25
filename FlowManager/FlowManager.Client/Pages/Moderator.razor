@@ -156,7 +156,9 @@
                                     </div>
                                     <div class="form-info">
                                         <h4>@form.FormTemplateName</h4>
-                                        <p class="form-meta">@form.StepName</p>
+                                        <p class="form-meta">
+                                            @string.Join(", ", form.FlowStep.FlowStepItems.Select(item => item.Step!.StepName))
+                                        </p>
                                     </div>
                                 </div>
 
@@ -582,7 +584,8 @@
                             <strong>User:</strong> @selectedFormResponse.UserName (@selectedFormResponse.UserEmail)
                         </span>
                         <span class="metadata-item">
-                            <strong>Step:</strong> @selectedFormResponse.StepName
+                            <strong>Step:</strong> @string.Join(", ", selectedFormResponse.FlowStep.FlowStepItems.Select(item => item.Step!.StepName))
+
                         </span>
                         <span class="metadata-item">
                             <strong>Submitted:</strong> @selectedFormResponse.CreatedAt.ToString("dd/MM/yyyy HH:mm")

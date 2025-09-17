@@ -496,9 +496,6 @@ namespace FlowManager.Client.Pages
 
             try
             {
-                Console.WriteLine($"[DEBUG STEPS] Loading step info for form: {selectedFormTemplate.Name}");
-                Console.WriteLine($"[DEBUG STEPS] Current step ID: {selectedFormResponse.StepId}");
-
                 // Găsește flow-ul pentru acest form template
                 var flowsResponse = await Http.GetAsync($"api/flows/queried?QueryParams.PageSize=100");
                 if (flowsResponse.IsSuccessStatusCode)
@@ -519,7 +516,7 @@ namespace FlowManager.Client.Pages
                             var orderedSteps = associatedFlow.FlowSteps.ToList();
                             Console.WriteLine($"[DEBUG STEPS] Steps in order:");
 
-                            var currentStepIndex = orderedSteps.FindIndex(s => s.Id == selectedFormResponse.StepId);
+                            var currentStepIndex = orderedSteps.FindIndex(fs => fs.Id == selectedFormResponse.Id);
                             Console.WriteLine($"[DEBUG STEPS] Current step index: {currentStepIndex}");
 
                             if (currentStepIndex >= 0)
@@ -660,7 +657,6 @@ namespace FlowManager.Client.Pages
                     ReviewerId = currentModeratorId
                 };
 
-                Console.WriteLine($"[DEBUG APPROVE] Current step: {selectedFormResponse.StepId}");
                 Console.WriteLine($"[DEBUG APPROVE] Form template: {selectedFormResponse.FormTemplateName}");
                 Console.WriteLine($"[DEBUG APPROVE] Next step exists: {nextStepInfo?.HasNextStep}");
                 Console.WriteLine($"[DEBUG APPROVE] Next step ID: {nextStepInfo?.NextStepId}");
@@ -668,9 +664,7 @@ namespace FlowManager.Client.Pages
 
                 if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId != Guid.Empty)
                 {
-                    payload.StepId = nextStepInfo.NextStepId.Value;
                     Console.WriteLine($"[DEBUG APPROVE] MOVING TO NEXT STEP: {nextStepInfo.NextStepId.Value}");
-                    Console.WriteLine($"[DEBUG APPROVE] Payload: StepId={payload.StepId}, Status={payload.Status ?? "NULL"}, ReviewerId={payload.ReviewerId}");
 
                     var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 
@@ -697,7 +691,6 @@ namespace FlowManager.Client.Pages
                 {
                     payload.Status = "Approved";
                     Console.WriteLine($"[DEBUG APPROVE] FINAL APPROVAL - setting Status to Approved");
-                    Console.WriteLine($"[DEBUG APPROVE] Payload: StepId={payload.StepId?.ToString() ?? "NULL"}, Status={payload.Status}, ReviewerId={payload.ReviewerId}");
 
                     var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 

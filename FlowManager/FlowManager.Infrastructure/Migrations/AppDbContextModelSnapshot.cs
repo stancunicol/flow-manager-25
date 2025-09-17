@@ -219,6 +219,9 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("FlowStepId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("FormTemplateId")
                         .HasColumnType("TEXT");
 
@@ -233,9 +236,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("StepId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -246,9 +246,9 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("CompletedByOtherUserId");
 
-                    b.HasIndex("FormTemplateId");
+                    b.HasIndex("FlowStepId");
 
-                    b.HasIndex("StepId");
+                    b.HasIndex("FormTemplateId");
 
                     b.HasIndex("UserId");
 
@@ -821,15 +821,15 @@ namespace FlowManager.Infrastructure.Migrations
                         .WithMany("FormResponseCompletedOnBehalf")
                         .HasForeignKey("CompletedByOtherUserId");
 
-                    b.HasOne("FlowManager.Domain.Entities.FormTemplate", "FormTemplate")
+                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
                         .WithMany()
-                        .HasForeignKey("FormTemplateId")
+                        .HasForeignKey("FlowStepId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.Step", "Step")
+                    b.HasOne("FlowManager.Domain.Entities.FormTemplate", "FormTemplate")
                         .WithMany()
-                        .HasForeignKey("StepId")
+                        .HasForeignKey("FormTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -841,9 +841,9 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.Navigation("CompletedByOtherUser");
 
-                    b.Navigation("FormTemplate");
+                    b.Navigation("FlowStep");
 
-                    b.Navigation("Step");
+                    b.Navigation("FormTemplate");
 
                     b.Navigation("User");
                 });

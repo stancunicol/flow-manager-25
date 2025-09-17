@@ -12,6 +12,7 @@ namespace FlowManager.Shared.DTOs.Responses.FlowStepItem
 {
     public class FlowStepItemResponseDto
     {
+        public Guid Id { get; set; }
         public virtual FlowStepResponseDto? FlowStep { get; set; }
         public Guid? FlowStepId { get; set; } 
 

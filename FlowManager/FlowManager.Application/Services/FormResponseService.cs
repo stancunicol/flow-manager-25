@@ -9,6 +9,7 @@ using FlowManager.Application.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using FlowManager.Shared.DTOs.Responses.FlowStepItem;
 
 namespace FlowManager.Application.Services
 {
@@ -20,22 +21,30 @@ namespace FlowManager.Application.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserService _userService;
         private readonly IFormReviewRepository _formReviewRepository;
+        private readonly IFlowRepository _flowRepository;
+        private readonly IRoleRepository _roleRepository;
+        private readonly IFormTemplateRepository _formTemplateRepository;
+
         public FormResponseService(
             IFormResponseRepository formResponseRepository,
             IFormReviewRepository formReviewRepository,
+            IFlowRepository flowRepository,
+            IRoleRepository roleRepository,
+            IFormTemplateRepository formTemplateRepository,
             ILogger<FormResponseService> logger,
             IEmailService emailService,
             IHttpContextAccessor httpContextAccessor,
             IUserService userService)
-
-
         {
             _formResponseRepository = formResponseRepository ?? throw new ArgumentNullException(nameof(formResponseRepository));
             _formReviewRepository = formReviewRepository ?? throw new ArgumentNullException(nameof(formReviewRepository));
+            _flowRepository = flowRepository ?? throw new ArgumentNullException(nameof(flowRepository));
+            _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _formTemplateRepository = formTemplateRepository ?? throw new ArgumentNullException(nameof(formTemplateRepository));
         }
 
         public async Task<PagedResponseDto<FormResponseResponseDto>> GetAllFormResponsesQueriedAsync(QueriedFormResponseRequestDto payload)
@@ -63,8 +72,22 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
-                StepId = fr.StepId,
-                StepName = fr.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = fr.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = fr.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
@@ -106,8 +129,22 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
-                StepId = fr.StepId,
-                StepName = fr.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                { 
+                    Id = fr.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = fr.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
@@ -137,14 +174,27 @@ namespace FlowManager.Application.Services
                 ResponseFields = formResponse.ResponseFields,
                 FormTemplateId = formResponse.FormTemplateId,
                 FormTemplateName = formResponse.FormTemplate?.Name,
-                StepId = formResponse.StepId,
-                StepName = formResponse.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = formResponse.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = formResponse.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = formResponse.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = formResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = formResponse.UserId,
                 UserName = formResponse.User?.Name,
                 UserEmail = formResponse.User?.Email,
                 CompletedByAdmin = formResponse.CompletedByAdmin,
                 CompletedByAdminName = formResponse.CompletedByAdminName,
-                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = formResponse.CreatedAt,
                 UpdatedAt = formResponse.UpdatedAt,
                 DeletedAt = formResponse.DeletedAt
@@ -173,8 +223,22 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
-                StepId = fr.StepId,
-                StepName = fr.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = fr.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = fr.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
@@ -213,7 +277,6 @@ namespace FlowManager.Application.Services
             var formResponse = new FormResponse
             {
                 FormTemplateId = payload.FormTemplateId,
-                StepId = payload.StepId,
                 UserId = payload.UserId,
                 ResponseFields = payload.ResponseFields,
                 Status = "Pending", // Toate formularele noi încep cu Pending
@@ -222,7 +285,10 @@ namespace FlowManager.Application.Services
                 CompletedByAdminName = isAdminCompletingForUser ? adminName : null
             };
 
-            if(payload.CompletedByOtherUserId != null && payload.CompletedByOtherUserId != Guid.Empty)
+            // starting a flow from first flowStep
+            formResponse.FlowStep = (await _flowRepository.GetFlowByIdAsync((Guid)(await _formTemplateRepository.GetFormTemplateByIdAsync(payload.FormTemplateId))!.ActiveFlowId!))!.FlowSteps.First();
+
+            if (payload.CompletedByOtherUserId != null && payload.CompletedByOtherUserId != Guid.Empty)
             {
                 formResponse.CompletedByOtherUserId = payload.CompletedByOtherUserId;
             }
@@ -264,8 +330,22 @@ namespace FlowManager.Application.Services
                 ResponseFields = createdFormResponse.ResponseFields,
                 FormTemplateId = createdFormResponse.FormTemplateId,
                 FormTemplateName = createdFormResponse.FormTemplate?.Name,
-                StepId = createdFormResponse.StepId,
-                StepName = createdFormResponse.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = createdFormResponse.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = createdFormResponse.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = createdFormResponse.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = createdFormResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = createdFormResponse.UserId,
                 UserName = createdFormResponse.User?.Name,
                 UserEmail = createdFormResponse.User?.Email,
@@ -290,7 +370,6 @@ namespace FlowManager.Application.Services
 
             // Salvează statusul anterior pentru logging
             var previousStatus = formResponse.Status;
-            var previousStepId = formResponse.StepId;
 
             // Actualizează ResponseFields dacă sunt furnizate
             if (payload.ResponseFields != null)
@@ -308,13 +387,13 @@ namespace FlowManager.Application.Services
                 formResponse.Status = "Rejected";
 
                 // Înregistrează reject-ul în istoric
-                if (payload.ReviewerId.HasValue)
+                if (payload.ReviewerId.HasValue && payload.ReviewerStepId.HasValue)
                 {
                     reviewToRecord = new FormReview
                     {
                         FormResponseId = payload.Id,
                         ReviewerId = payload.ReviewerId.Value,
-                        StepId = formResponse.StepId,
+                        StepId = payload.ReviewerStepId.Value,
                         Action = "Rejected",
                         RejectReason = payload.RejectReason,
                         ReviewedAt = DateTime.UtcNow
@@ -333,22 +412,29 @@ namespace FlowManager.Application.Services
             }
 
             // LOGICA PENTRU SCHIMBAREA STEP-ULUI (approve și move to next step)
-            if (payload.StepId.HasValue && payload.StepId != Guid.Empty && payload.StepId.Value != formResponse.StepId)
+            Guid ModeratorRoleId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
+            List<FlowStep> flowStepsForCurrentForm = (await _flowRepository.GetFlowByIdIncludeStepsAsync((Guid)formResponse.FormTemplate.ActiveFlowId!, ModeratorRoleId))!.FlowSteps.ToList();
+
+            FlowStep? nextFlowStep = flowStepsForCurrentForm.FindIndex(flowStep => flowStep.Id == formResponse.FlowStepId) is int currentIndex && currentIndex >= 0 && currentIndex < flowStepsForCurrentForm.Count - 1
+                ? flowStepsForCurrentForm[currentIndex + 1]
+                : null;
+
+            if (nextFlowStep != null) // aici de scos stepsids 
             {
                 // Înregistrează approve-ul pentru step-ul curent ÎNAINTE de mutare
-                if (payload.ReviewerId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
+                if (payload.ReviewerId.HasValue && payload.ReviewerStepId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
                 {
                     reviewToRecord = new FormReview
                     {
                         FormResponseId = payload.Id,
                         ReviewerId = payload.ReviewerId.Value,
-                        StepId = formResponse.StepId, // Step-ul curent (nu cel nou)
+                        StepId = payload.ReviewerStepId.Value, // Step-ul curent (nu cel nou)
                         Action = "Approved",
                         ReviewedAt = DateTime.UtcNow
                     };
                 }
 
-                formResponse.StepId = payload.StepId.Value;
+                formResponse.FlowStep = nextFlowStep;
 
                 // MODIFICAT: Setez statusul să rămână "Pending" pentru toate step-urile
                 // Moderatorul trebuie să dea manual approve/reject, chiar și la ultimul step
@@ -356,9 +442,6 @@ namespace FlowManager.Application.Services
                 {
                     formResponse.Status = "Pending"; // Așteaptă review la noul step
                 }
-
-                _logger.LogInformation("Form response {Id} moved from step {PreviousStepId} to step {NewStepId}, status: {Status}",
-                    payload.Id, previousStepId, payload.StepId.Value, formResponse.Status);
             }
 
             // OVERRIDE EXPLICIT PENTRU STATUS (dacă e specificat explicit în payload)
@@ -373,7 +456,7 @@ namespace FlowManager.Application.Services
                     {
                         FormResponseId = payload.Id,
                         ReviewerId = payload.ReviewerId.Value,
-                        StepId = formResponse.StepId,
+                        StepId = payload.ReviewerStepId.Value,
                         Action = "Approved",
                         ReviewedAt = DateTime.UtcNow
                     };
@@ -533,8 +616,22 @@ namespace FlowManager.Application.Services
                 ResponseFields = updatedFormResponse.ResponseFields,
                 FormTemplateId = updatedFormResponse.FormTemplateId,
                 FormTemplateName = updatedFormResponse.FormTemplate?.Name,
-                StepId = updatedFormResponse.StepId,
-                StepName = updatedFormResponse.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = updatedFormResponse.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = updatedFormResponse.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = updatedFormResponse.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = updatedFormResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = updatedFormResponse.UserId,
                 UserName = updatedFormResponse.User?.Name,
                 UserEmail = updatedFormResponse.User?.Email,
@@ -570,8 +667,22 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
-                StepId = fr.StepId,
-                StepName = fr.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = fr.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = fr.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
@@ -604,8 +715,22 @@ namespace FlowManager.Application.Services
                 ResponseFields = formResponse.ResponseFields,
                 FormTemplateId = formResponse.FormTemplateId,
                 FormTemplateName = formResponse.FormTemplate?.Name,
-                StepId = formResponse.StepId,
-                StepName = formResponse.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = formResponse.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = formResponse.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = formResponse.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = formResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = formResponse.UserId,
                 UserName = formResponse.User?.Name,
                 UserEmail = formResponse.User?.Email,
@@ -632,14 +757,27 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
-                StepId = fr.StepId,
-                StepName = fr.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = fr.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = fr.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -650,7 +788,7 @@ namespace FlowManager.Application.Services
         {
             _logger.LogInformation("Getting form responses for step: {StepId}", stepId);
 
-            var data = await _formResponseRepository.GetFormResponsesByStepAsync(stepId);
+            var data = await _formResponseRepository.GetFormResponsesByFlowStepAsync(stepId);
 
             return data.Select(fr => new FormResponseResponseDto
             {
@@ -659,14 +797,27 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
-                StepId = fr.StepId,
-                StepName = fr.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = fr.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = fr.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt
@@ -686,14 +837,27 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
-                StepId = fr.StepId,
-                StepName = fr.Step?.Name,
+                FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
+                {
+                    Id = fr.FlowStep?.Id ?? Guid.Empty,
+                    FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
+                    IsApproved = fr.FlowStep?.IsApproved ?? false,
+                    FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
+                    {
+                        Id = fsi.Id,
+                        StepId = fsi.StepId,
+                        Step = new Shared.DTOs.Responses.Step.StepResponseDto
+                        {
+                            StepId = fsi.Step?.Id ?? Guid.Empty,
+                            StepName = fsi.Step?.Name
+                        },
+                    }).ToList() ?? new List<FlowStepItemResponseDto>()
+                },
                 UserId = fr.UserId,
                 UserName = fr.User?.Name,
                 UserEmail = fr.User?.Email,
                 CompletedByAdmin = fr.CompletedByAdmin,
                 CompletedByAdminName = fr.CompletedByAdminName,
-                // Removed ApprovedByAdmin - use FormReview for approval tracking
                 CreatedAt = fr.CreatedAt,
                 UpdatedAt = fr.UpdatedAt,
                 DeletedAt = fr.DeletedAt

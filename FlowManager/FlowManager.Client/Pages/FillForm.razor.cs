@@ -201,7 +201,6 @@ namespace FlowManager.Client.Pages
                 var formResponseData = new PostFormResponseRequestDto
                 {
                     FormTemplateId = TemplateId,
-                    StepId = firstStep.StepId,
                     UserId = currentUserId,
                     ResponseFields = responses
                 };

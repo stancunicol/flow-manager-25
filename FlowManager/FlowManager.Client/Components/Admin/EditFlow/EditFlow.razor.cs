@@ -60,10 +60,15 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
             _flowName = response.Result.Name ?? string.Empty;
             _initialFlowName = response.Result.Name ?? string.Empty;
+
+            // Convert the loaded flow to the new FlowStep/FlowStepItem structure
             _configuredSteps = response.Result.FlowSteps?.Select(fs => new FlowStepVM
             {
+                Id = fs.Id,
+                FlowId = fs.FlowId,
                 FlowStepItems = fs.FlowStepItems.Select(flowStepItem => new FlowStepItemVM
                 {
+                    Id = flowStepItem.Id,
                     FlowStepId = flowStepItem.FlowStepId,
                     StepId = flowStepItem.StepId,
                     Step = new StepVM
@@ -73,6 +78,7 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                     },
                     AssignedUsers = flowStepItem.AssignedUsers?.Select(au => new FlowStepItemUserVM
                     {
+                        FlowStepItemId = au.FlowStepItemId,
                         UserId = au.UserId ?? Guid.Empty,
                         User = new UserVM
                         {
@@ -81,6 +87,22 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                             Email = au.User?.Email,
                         },
                     }).ToList() ?? new List<FlowStepItemUserVM>(),
+                    AssignedTeams = flowStepItem.AssignedTeams?.Select(at => new FlowStepItemTeamVM
+                    {
+                        FlowStepItemId = at.FlowStepItemId,
+                        TeamId = at.TeamId,
+                        Team = new TeamVM
+                        {
+                            Id = at.Team?.Id ?? Guid.Empty,
+                            Name = at.Team?.Name,
+                            Users = at.Team?.Users?.Select(user => new UserVM
+                            {
+                                Id = user.Id,
+                                Name = user.Name,
+                                Email = user.Email,
+                            }).ToList() ?? new List<UserVM>(),
+                        },
+                    }).ToList() ?? new List<FlowStepItemTeamVM>(),
                 }).ToList(),
             }).ToList() ?? new List<FlowStepVM>();
         }
@@ -98,6 +120,23 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 {
                     Id = step.StepId,
                     Name = step.StepName,
+                    Users = step.Users?.Select(u => new UserVM
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email,
+                    }).ToList() ?? new List<UserVM>(),
+                    Teams = step.Teams?.Select(t => new TeamVM
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        Users = t.Users?.Select(user => new UserVM
+                        {
+                            Id = user.Id,
+                            Name = user.Name,
+                            Email = user.Email,
+                        }).ToList() ?? new List<UserVM>(),
+                    }).ToList() ?? new List<TeamVM>(),
                 }).ToList();
         }
 
@@ -140,9 +179,11 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             _isDragOver = false;
             if (_draggedStep != null)
             {
+                // Create a new FlowStep with an empty FlowStepItem
                 var stepForWorkflow = new FlowStepVM
                 {
-                    Id = _draggedStep.Id,
+                    Id = Guid.NewGuid(),
+                    FlowStepItems = new List<FlowStepItemVM>()
                 };
                 _configuredSteps.Add(stepForWorkflow);
             }
@@ -150,9 +191,84 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             StateHasChanged();
         }
 
+        private void AddFlowStepItem(int flowStepIndex)
+        {
+            if (flowStepIndex >= 0 && flowStepIndex < _configuredSteps.Count)
+            {
+                var flowStep = _configuredSteps[flowStepIndex];
+
+                // Create a new FlowStepItem with no assigned step initially
+                var newFlowStepItem = new FlowStepItemVM
+                {
+                    Id = Guid.NewGuid(),
+                    FlowStepId = flowStep.Id,
+                    FlowStep = flowStep,
+                    AssignedUsers = new List<FlowStepItemUserVM>(),
+                    AssignedTeams = new List<FlowStepItemTeamVM>()
+                };
+
+                flowStep.FlowStepItems.Add(newFlowStepItem);
+
+                // Open the assignment modal immediately
+                ShowAssingToStepModal(newFlowStepItem, flowStepIndex, flowStep.FlowStepItems.Count - 1);
+
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveFlowStepItem(int flowStepIndex, int flowStepItemIndex, MouseEventArgs e)
+        {
+            if (flowStepIndex >= 0 && flowStepIndex < _configuredSteps.Count)
+            {
+                var flowStep = _configuredSteps[flowStepIndex];
+                if (flowStepItemIndex >= 0 && flowStepItemIndex < flowStep.FlowStepItems.Count)
+                {
+                    flowStep.FlowStepItems.RemoveAt(flowStepItemIndex);
+                    StateHasChanged();
+                }
+            }
+        }
+
+        private void MoveFlowStepItemUp(int flowStepIndex, int flowStepItemIndex, MouseEventArgs e)
+        {
+            if (flowStepIndex >= 0 && flowStepIndex < _configuredSteps.Count)
+            {
+                var flowStep = _configuredSteps[flowStepIndex];
+                if (flowStepItemIndex > 0 && flowStepItemIndex < flowStep.FlowStepItems.Count)
+                {
+                    var item = flowStep.FlowStepItems[flowStepItemIndex];
+                    flowStep.FlowStepItems.RemoveAt(flowStepItemIndex);
+                    flowStep.FlowStepItems.Insert(flowStepItemIndex - 1, item);
+                    StateHasChanged();
+                }
+            }
+        }
+
+        private void MoveFlowStepItemDown(int flowStepIndex, int flowStepItemIndex, MouseEventArgs e)
+        {
+            if (flowStepIndex >= 0 && flowStepIndex < _configuredSteps.Count)
+            {
+                var flowStep = _configuredSteps[flowStepIndex];
+                if (flowStepItemIndex >= 0 && flowStepItemIndex < flowStep.FlowStepItems.Count - 1)
+                {
+                    var item = flowStep.FlowStepItems[flowStepItemIndex];
+                    flowStep.FlowStepItems.RemoveAt(flowStepItemIndex);
+                    flowStep.FlowStepItems.Insert(flowStepItemIndex + 1, item);
+                    StateHasChanged();
+                }
+            }
+        }
+
         private void RemoveConfiguredStep(int index)
         {
             _configuredSteps.RemoveAt(index);
+
+            // Reorder remaining FlowSteps
+            for (int i = 0; i < _configuredSteps.Count; i++)
+            {
+                _configuredSteps[i].Order = i + 1;
+            }
+
             StateHasChanged();
         }
 
@@ -163,7 +279,11 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
         public List<Guid> GetConfiguredStepIds()
         {
-            return _configuredSteps.Select(s => s.Id ?? Guid.Empty).ToList();
+            return _configuredSteps
+                .SelectMany(fs => fs.FlowStepItems)
+                .Where(fsi => fsi.StepId.HasValue)
+                .Select(fsi => fsi.StepId.Value)
+                .ToList();
         }
 
         public void ClearConfiguration()
@@ -189,7 +309,7 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                         AssignedTeams = fsi.AssignedTeams?.Select(at => new PostFlowTeamRequestDto
                         {
                             TeamId = at.TeamId ?? Guid.Empty,
-                            UserIds = at.Team.Users?.Select(au => au.Id).ToList() ?? new List<Guid>(),
+                            UserIds = at.Team?.Users?.Select(au => au.Id).ToList() ?? new List<Guid>(),
                         }).ToList() ?? new List<PostFlowTeamRequestDto>(),
                     }).ToList(),
                 }).ToList(),
@@ -202,7 +322,7 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
             StateHasChanged();
 
-            if(response.Success)
+            if (response.Success)
             {
                 await Task.Delay(3000);
                 _onSubmitMessage = string.Empty;
@@ -217,6 +337,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 var step = _configuredSteps[index];
                 _configuredSteps.RemoveAt(index);
                 _configuredSteps.Insert(index - 1, step);
+
+                // Update order numbers
+                for (int i = 0; i < _configuredSteps.Count; i++)
+                {
+                    _configuredSteps[i].Order = i + 1;
+                }
+
                 StateHasChanged();
             }
         }
@@ -228,6 +355,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 var step = _configuredSteps[index];
                 _configuredSteps.RemoveAt(index);
                 _configuredSteps.Insert(index + 1, step);
+
+                // Update order numbers
+                for (int i = 0; i < _configuredSteps.Count; i++)
+                {
+                    _configuredSteps[i].Order = i + 1;
+                }
+
                 StateHasChanged();
             }
         }
@@ -235,7 +369,10 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         public int GetTotalUsersInWorkflow()
         {
             return _configuredSteps.Sum(step =>
-                step.FlowStepItems.SelectMany(flowStepItem => flowStepItem.AssignedUsers).Count() + step.FlowStepItems.SelectMany(flowStepItem => flowStepItem.AssignedTeams).Count());
+                step.FlowStepItems.Sum(flowStepItem =>
+                    (flowStepItem.AssignedUsers?.Count ?? 0) +
+                    (flowStepItem.AssignedTeams?.Count ?? 0)
+                ));
         }
 
         public bool IsWorkflowValid()
@@ -243,8 +380,11 @@ namespace FlowManager.Client.Components.Admin.EditFlow
             return !string.IsNullOrWhiteSpace(_flowName) &&
                    _flowName.ToUpper() != _initialFlowName.ToUpper() &&
                    _configuredSteps.Any() &&
-                   _configuredSteps.All(fs => fs.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedTeams.Count > 0 || 
-                        fs.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedUsers.Count > 0)));
+                   _configuredSteps.All(fs => fs.FlowStepItems.Any() &&
+                        fs.FlowStepItems.All(fsi =>
+                            (fsi.AssignedUsers?.Any() ?? false) ||
+                            (fsi.AssignedTeams?.Any() ?? false)
+                        ));
         }
 
         public string GetFlowNameValidationClass()
@@ -266,13 +406,21 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
         private void ConfigureStepsToFlow()
         {
-            FlowStepItemVM flowStepItem = _configuredSteps[_flowStepToAssignIndex].FlowStepItems[_flowStepItemToAssignIndex];
+            if (_flowStepToAssignIndex >= 0 && _flowStepToAssignIndex < _configuredSteps.Count &&
+                _flowStepItemToAssignIndex >= 0 && _flowStepItemToAssignIndex < _configuredSteps[_flowStepToAssignIndex].FlowStepItems.Count)
+            {
+                FlowStepItemVM flowStepItem = _configuredSteps[_flowStepToAssignIndex].FlowStepItems[_flowStepItemToAssignIndex];
 
-            flowStepItem.AssignedUsers = _flowStepToAssign!.AssignedUsers;
+                if (_flowStepToAssign != null)
+                {
+                    flowStepItem.AssignedUsers = _flowStepToAssign.AssignedUsers ?? new List<FlowStepItemUserVM>();
+                    flowStepItem.AssignedTeams = _flowStepToAssign.AssignedTeams ?? new List<FlowStepItemTeamVM>();
+                    flowStepItem.Step = _flowStepToAssign.Step;
+                    flowStepItem.StepId = _flowStepToAssign.StepId;
+                }
 
-            flowStepItem.AssignedTeams = _flowStepToAssign!.AssignedTeams;
-
-            StateHasChanged();
+                StateHasChanged();
+            }
         }
     }
 }

@@ -181,8 +181,6 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PatchFormResponseAsync(Guid id, [FromBody] PatchFormResponseRequestDto payload)
         {
-            payload.Id = id;
-
             var result = await _formResponseService.PatchFormResponseAsync(payload);
 
             return Ok(new

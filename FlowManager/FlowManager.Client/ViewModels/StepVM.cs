@@ -10,6 +10,7 @@ namespace FlowManager.Client.ViewModels
         public string? Name { get; set; } = string.Empty;
 
         public List<UserVM>? Users { get; set; }
+        public List<TeamVM>? Teams { get; set; }
 
         public List<FlowStepVM>? FlowSteps { get; set; }
 
