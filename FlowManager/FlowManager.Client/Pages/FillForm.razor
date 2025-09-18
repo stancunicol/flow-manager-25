@@ -21,7 +21,9 @@
     <div class="fill-form-header">
         <button class="back-btn" @onclick="GoBack">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 11H20a.75.75 0 010 1.5H9.31l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" />
+                <path fill-rule="evenodd"
+                    d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 11H20a.75.75 0 010 1.5H9.31l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z"
+                    clip-rule="evenodd" />
             </svg>
             Back to My Forms
         </button>
@@ -35,7 +37,9 @@
             else
             {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd"
+                        d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z"
+                        clip-rule="evenodd" />
                 </svg>
                 <span>Submit Form</span>
             }
@@ -66,7 +70,8 @@
                 <div class="workflow-info success">
                     <div class="workflow-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32L12 13.688 1.894 8.16a.75.75 0 010-1.32l9.75-5.25zM3.265 10.206L12 14.688l8.735-4.482a.75.75 0 11.73 1.312L12 16.738l-9.465-5.22a.75.75 0 01.73-1.312zm0 4.5L12 19.188l8.735-4.482a.75.75 0 11.73 1.312L12 21.238l-9.465-5.22a.75.75 0 01.73-1.312z" />
+                            <path
+                                d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32L12 13.688 1.894 8.16a.75.75 0 010-1.32l9.75-5.25zM3.265 10.206L12 14.688l8.735-4.482a.75.75 0 11.73 1.312L12 16.738l-9.465-5.22a.75.75 0 01.73-1.312zm0 4.5L12 19.188l8.735-4.482a.75.75 0 11.73 1.312L12 21.238l-9.465-5.22a.75.75 0 01.73-1.312z" />
                         </svg>
                     </div>
                     <div class="workflow-details">
@@ -84,12 +89,15 @@
                 <div class="workflow-info warning">
                     <div class="workflow-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                            <path fill-rule="evenodd"
+                                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                                clip-rule="evenodd" />
                         </svg>
                     </div>
                     <div class="workflow-details">
                         <h4>Warning: No Workflow Configured</h4>
-                        <p>This form template is not associated with any workflow. Please contact an administrator to configure the approval process.</p>
+                        <p>This form template is not associated with any workflow. Please contact an administrator to configure
+                            the approval process.</p>
                     </div>
                 </div>
             }
@@ -98,13 +106,17 @@
             <div class="auto-fill-controls">
                 <button class="auto-fill-btn primary" @onclick="StartAutoFillForCurrentUser">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd"
+                            d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
+                            clip-rule="evenodd" />
                     </svg>
                     Complete Your Data?
                 </button>
                 <button class="auto-fill-btn secondary" @onclick="StartAutoFillForOtherUser">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8.25 6.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0zM15.75 9.75a3 3 0 116 0 3 3 0 01-6 0zM2.25 9.75a3 3 0 116 0 3 3 0 01-6 0zM6.31 15.117A6.745 6.745 0 0112 12a6.745 6.745 0 016.709 7.498.75.75 0 01-.372.568A12.696 12.696 0 0112 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 01-.372-.568 6.787 6.787 0 011.019-1.381z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd"
+                            d="M8.25 6.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0zM15.75 9.75a3 3 0 116 0 3 3 0 01-6 0zM2.25 9.75a3 3 0 116 0 3 3 0 01-6 0zM6.31 15.117A6.745 6.745 0 0112 12a6.745 6.745 0 016.709 7.498.75.75 0 01-.372.568A12.696 12.696 0 0112 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 01-.372-.568 6.787 6.787 0 011.019-1.381z"
+                            clip-rule="evenodd" />
                     </svg>
                     Complete for Other User?
                 </button>
@@ -113,7 +125,8 @@
             <div class="form-canvas">
                 @foreach (var element in formElements.OrderBy(e => e.ZIndex))
                 {
-                    <div class="form-element" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
+                    <div class="form-element"
+                        style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
                         @if (element.IsTextElement)
                         {
                             <div class="static-text">
@@ -125,47 +138,45 @@
                             var component = components?.FirstOrDefault(c => c.Id == element.ComponentId);
                             if (component != null)
                             {
-                                <div class="form-field">
-                                    <label class="field-label">
-                                        @component.Label
+                                var elementId = Guid.Parse(element.Id); 
+                                                                        <div class="form-field">
+                                                                            <label class="field-label">
+                                                                                @component.Label
                                         @if (component.Required == true)
                                         {
                                             <span class="required-mark">*</span>
                                         }
-                                        @if (IsFieldAutoFilled(component.Id))
+                                        @if (IsFieldAutoFilled(elementId))
                                         {
                                             <span class="auto-filled-indicator" title="Auto-filled">✓</span>
                                         }
                                     </label>
-                                    @switch (component.Type.ToLower())
+                                    @switch (component.Type?.ToLower())
                                     {
                                         case "textinput":
-                                            <input type="text"
-                                                   class="field-input @(IsFieldAutoFilled(component.Id) ? "auto-filled" : "")"
-                                                   value="@GetFieldValue(component.Id)"
-                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="text" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
+                                                value="@GetFieldValue(elementId)"
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "text"))" />
                                             break;
                                         case "number":
-                                            <input type="number"
-                                                   class="field-input @(IsFieldAutoFilled(component.Id) ? "auto-filled" : "")"
-                                                   value="@GetFieldValue(component.Id)"
-                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="number" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
+                                                value="@GetFieldValue(elementId)"
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "number"))" />
                                             break;
                                         case "date":
-                                            <input type="date"
-                                                   class="field-input @(IsFieldAutoFilled(component.Id) ? "auto-filled" : "")"
-                                                   value="@GetFieldValue(component.Id)"
-                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="date" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
+                                                value="@GetFieldValue(elementId)"
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "date"))" />
                                             break;
                                         case "textarea":
-                                            <textarea class="textarea-input @(IsFieldAutoFilled(component.Id) ? "auto-filled" : "")"
-                                                      @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))">@GetFieldValue(component.Id)</textarea>
+                                            <textarea class="textarea-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "textarea"))">@GetFieldValue(elementId)</textarea>
                                             break;
                                         case "checkbox":
                                             <div class="checkbox-field">
                                                 <input type="checkbox"
-                                                       checked="@(bool.TryParse(GetFieldValue(component.Id), out bool isChecked) && isChecked)"
-                                                       @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                                    checked="@(bool.TryParse(GetFieldValue(elementId), out bool isChecked) && isChecked)"
+                                                    @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "checkbox"))" />
                                                 <span class="checkbox-label">@component.Label</span>
                                             </div>
                                             break;
@@ -176,20 +187,17 @@
                                                 @foreach (var option in radioOptions)
                                                 {
                                                     <label class="radio-option">
-                                                        <input type="radio"
-                                                               name="radio_@component.Id"
-                                                               value="@option"
-                                                               @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                                        <input type="radio" name="radio_@elementId" value="@option"
+                                                            @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "radio"))" />
                                                         <span class="radio-option-text">@option</span>
                                                     </label>
                                                 }
                                             </div>
                                             break;
                                         default:
-                                            <input type="text"
-                                                   class="field-input @(IsFieldAutoFilled(component.Id) ? "auto-filled" : "")"
-                                                   value="@GetFieldValue(component.Id)"
-                                                   @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
+                                            <input type="text" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
+                                                value="@GetFieldValue(elementId)"
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "text"))" />
                                             break;
                                     }
                                 </div>
@@ -209,7 +217,7 @@
     </div>
 </div>
 
-<!-- User Selector Modal - se afișează primul când apasă pe "Complete for Other User" -->
+<!-- User Selector Modal -->
 @if (_showUserSelector)
 {
     <div class="user-selection-overlay">
@@ -218,31 +226,16 @@
             <p style="font-size: 12px; color: #6b7280; margin-bottom: 1rem;">
                 Search and select a user whose data will be used to auto-fill the form components.
             </p>
-            <UserAutoFillSelector OnUserSelected="OnUserSelectedForAutoFill"
-                                  PlaceholderText="Search for user..." />
+            <UserAutoFillSelector OnUserSelected="OnUserSelectedForAutoFill" PlaceholderText="Search for user..." />
             <button class="cancel-user-selection" @onclick="CloseUserSelector">Cancel</button>
         </div>
     </div>
 }
 
-<!-- Component Selector Modal - se afișează după ce a fost selectat un utilizator -->
+<!-- Component Selector Modal -->
 @if (_showComponentSelector)
 {
-    <ComponentAutoFillSelector IsVisible="_showComponentSelector"
-                               SelectedUser="_selectedUserForAutoFill"
-                               AvailableComponents="componentVMs"
-                               OnComponentsSelected="OnComponentsSelectedForAutoFill"
-                               OnClose="CloseComponentSelector" />
-}
-
-<!-- Debug information (remove in production) -->
-@if (true) // Set to false in production
-{
-    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 10000;">
-        <div>Show User Modal: @_showUserSelector</div>
-        <div>Show Component Modal: @_showComponentSelector</div>
-        <div>Selected User: @(_selectedUserForAutoFill?.Name ?? "None")</div>
-        <div>Components: @(componentVMs?.Count ?? 0)</div>
-        <div>Current User: @(currentUser?.Name ?? "None")</div>
-    </div>
+    <ComponentAutoFillSelector IsVisible="_showComponentSelector" SelectedUser="_selectedUserForAutoFill"
+        AvailableComponents="componentVMs" OnComponentsSelected="OnComponentsSelectedForAutoFill"
+        OnClose="CloseComponentSelector" />
 }

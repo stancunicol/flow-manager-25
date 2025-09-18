@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;
-using FlowManager.Client.Deserialization;
 
 namespace FlowManager.Client.Pages
 {
@@ -183,14 +182,25 @@ namespace FlowManager.Client.Pages
                 var componentResults = await Task.WhenAll(componentTasks);
                 components = componentResults.Where(c => c != null).ToList()!;
 
-                componentVMs = components.Select(c => new ComponentVM
+                componentVMs = new List<ComponentVM>();
+                if (formElements != null)
                 {
-                    Id = c.Id,
-                    Type = c.Type,
-                    Label = c.Label,
-                    Required = c.Required,
-                    Properties = c.Properties
-                }).ToList();
+                    foreach (var element in formElements.Where(e => !e.IsTextElement && e.ComponentId.HasValue))
+                    {
+                        var component = components.FirstOrDefault(c => c.Id == element.ComponentId);
+                        if (component != null)
+                        {
+                            componentVMs.Add(new ComponentVM
+                            {
+                                Id = Guid.Parse(element.Id), 
+                                Type = component.Type,
+                                Label = component.Label,
+                                Required = component.Required,
+                                Properties = component.Properties
+                            });
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -208,8 +218,8 @@ namespace FlowManager.Client.Pages
             Console.WriteLine($"[DEBUG] ComponentVMs count: {componentVMs?.Count ?? 0}");
 
             _selectedUserForAutoFill = currentUser;
-            _showUserSelector = false; // Nu afișăm selectorul de utilizatori
-            _showComponentSelector = true; // Afișăm direct selectorul de componente
+            _showUserSelector = false; 
+            _showComponentSelector = true; 
 
             Console.WriteLine($"[DEBUG] ShowComponentSelector: {_showComponentSelector}, SelectedUser: {_selectedUserForAutoFill?.Name}");
             StateHasChanged();
@@ -221,8 +231,8 @@ namespace FlowManager.Client.Pages
             Console.WriteLine($"[DEBUG] ComponentVMs count: {componentVMs?.Count ?? 0}");
 
             _selectedUserForAutoFill = null;
-            _showUserSelector = true; // Afișăm selectorul de utilizatori
-            _showComponentSelector = false; // NU afișăm selectorul de componente încă
+            _showUserSelector = true; 
+            _showComponentSelector = false; 
 
             Console.WriteLine($"[DEBUG] ShowUserSelector: {_showUserSelector}, ShowComponentSelector: {_showComponentSelector}");
             StateHasChanged();
@@ -233,8 +243,8 @@ namespace FlowManager.Client.Pages
             Console.WriteLine($"[DEBUG] OnUserSelectedForAutoFill called with: {user?.Name ?? "NULL"}");
 
             _selectedUserForAutoFill = user;
-            _showUserSelector = false; // Închidem modalul de selectare utilizatori
-            _showComponentSelector = true; // Deschidem modalul de selectare componente
+            _showUserSelector = false; 
+            _showComponentSelector = true; 
 
             Console.WriteLine($"[DEBUG] User selected, now showing component selector");
             StateHasChanged();
@@ -252,15 +262,19 @@ namespace FlowManager.Client.Pages
 
             foreach (var componentId in componentIds)
             {
-                var component = componentVMs?.FirstOrDefault(c => c.Id == componentId);
-                if (component != null)
+                var formElement = formElements?.FirstOrDefault(e => e.Id == componentId.ToString());
+                if (formElement != null && formElement.ComponentId.HasValue)
                 {
-                    var fieldValue = GetUserDataMapping(component, _selectedUserForAutoFill);
-                    if (fieldValue != null)
+                    var component = components?.FirstOrDefault(c => c.Id == formElement.ComponentId.Value);
+                    if (component != null)
                     {
-                        responses[componentId] = fieldValue;
-                        _autoFilledFields[componentId] = true;
-                        Console.WriteLine($"[DEBUG] Auto-filled component {component.Label} with value: {fieldValue}");
+                        var fieldValue = GetUserDataMapping(component, _selectedUserForAutoFill);
+                        if (fieldValue != null)
+                        {
+                            responses[componentId] = fieldValue; 
+                            _autoFilledFields[componentId] = true; 
+                            Console.WriteLine($"[DEBUG] Auto-filled component {component.Label} with value: {fieldValue}");
+                        }
                     }
                 }
             }
@@ -284,7 +298,7 @@ namespace FlowManager.Client.Pages
             StateHasChanged();
         }
 
-        private object? GetUserDataMapping(ComponentVM component, UserVM user)
+        private object? GetUserDataMapping(ComponentResponseDto component, UserVM user)
         {
             string label = component.Label?.ToLower() ?? "";
 
@@ -338,10 +352,18 @@ namespace FlowManager.Client.Pages
 
         private bool IsSubmitValid()
         {
-            var requiredComponents = components?.Where(c => c.Required == true) ?? new List<ComponentResponseDto>();
-            var missingRequiredFields = requiredComponents.Where(c => !responses.ContainsKey(c.Id)).ToList();
+            if (isSubmitting || currentUserId == Guid.Empty || firstStep == null || formElements == null)
+                return false;
 
-            return isSubmitting == false && currentUserId != Guid.Empty && firstStep != null && !missingRequiredFields.Any();
+            var requiredElementIds = formElements
+                .Where(e => !e.IsTextElement && e.ComponentId.HasValue)
+                .Where(e => components?.FirstOrDefault(c => c.Id == e.ComponentId)?.Required == true)
+                .Select(e => Guid.Parse(e.Id))
+                .ToList();
+
+            var missingRequiredFields = requiredElementIds.Where(id => !responses.ContainsKey(id)).ToList();
+
+            return !missingRequiredFields.Any();
         }
 
         private async Task SubmitForm()
@@ -351,22 +373,35 @@ namespace FlowManager.Client.Pages
 
             try
             {
+                var componentResponses = new Dictionary<Guid, object>();
+
+                foreach (var responseEntry in responses)
+                {
+                    var formElementId = responseEntry.Key.ToString();
+                    var formElement = formElements?.FirstOrDefault(e => e.Id == formElementId);
+
+                    if (formElement?.ComponentId.HasValue == true)
+                    {
+                        componentResponses[formElement.ComponentId.Value] = responseEntry.Value;
+                    }
+                }
+
                 var formResponseData = new PostFormResponseRequestDto
                 {
                     FormTemplateId = TemplateId,
-                    StepId = firstStep.Id,
+                    StepId = firstStep?.Id ?? Guid.Empty,
                     UserId = currentUserId,
-                    ResponseFields = responses
+                    ResponseFields = componentResponses 
                 };
 
-                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, FirstStep={firstStep.Id} ({firstStep.Name}), User={currentUserId}");
+                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, FirstStep={firstStep?.Id} ({firstStep?.Name}), User={currentUserId}");
                 Console.WriteLine($"[DEBUG] Response fields count: {responses.Count}");
 
                 var response = await Http.PostAsJsonAsync("api/formresponses", formResponseData);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully! It will start processing from step: {firstStep.Name}");
+                    await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully! It will start processing from step: {firstStep?.Name ?? "Unknown"}");
                     Navigation.NavigateTo("/basic-user");
                 }
                 else
