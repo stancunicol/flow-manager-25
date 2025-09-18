@@ -1,0 +1,176 @@
+﻿@using FlowManager.Client.ViewModels
+@using FlowManager.Client.DTOs
+@using FlowManager.Client.Services
+@using FlowManager.Shared.DTOs.Requests.User
+@using FlowManager.Shared.DTOs.Responses
+@using FlowManager.Shared.DTOs.Responses.User
+@inject UserService UserService
+
+<div class="user-selector-dropdown">
+    <input type="text"
+           class="user-selector-input"
+           placeholder="@PlaceholderText"
+           value="@_searchTerm"
+           @oninput="OnSearchTermChanged" />
+    <button type="button" class="dropdown-arrow" @onclick="ToggleDropdown">▼</button>
+
+    @if (_isDropdownOpen)
+    {
+        <div class="user-selector-options">
+            @if (_isLoading)
+            {
+                <div class="loading-indicator">Loading users...</div>
+            }
+            else if (_users.Any())
+            {
+                @foreach (var user in _users)
+                {
+                    <div class="user-selector-option" @onclick="() => SelectUser(user)">
+                        <div class="user-name">@user.Name</div>
+                        <div class="user-email">@user.Email</div>
+                    </div>
+                }
+
+                @if (_hasMore && !_isLoading)
+                {
+                    <button class="load-more-btn" @onclick="LoadMoreUsers">
+                        Load more
+                    </button>
+                }
+            }
+            else
+            {
+                <div class="no-users">
+                    @if (string.IsNullOrEmpty(_searchTerm))
+                    {
+                        <span>Click to load users</span>
+                    }
+                    else
+                    {
+                        <span>No users found for "@_searchTerm"</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<UserVM> OnUserSelected { get; set; }
+    [Parameter] public string PlaceholderText { get; set; } = "Search users...";
+
+    private List<UserVM> _users = new();
+    private string _searchTerm = string.Empty;
+    private bool _isDropdownOpen = false;
+    private bool _isLoading = false;
+    private bool _hasMore = true;
+    private int _pageSize = 10;
+    private System.Threading.Timer? _debounceTimer;
+
+    private async Task OnSearchTermChanged(ChangeEventArgs e)
+    {
+        _searchTerm = e.Value?.ToString() ?? string.Empty;
+        Console.WriteLine($"[UserAutoFillSelector] Search term changed: '{_searchTerm}'");
+
+        _debounceTimer?.Dispose();
+        _debounceTimer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadUsers();
+                StateHasChanged();
+            });
+            _debounceTimer?.Dispose();
+            _debounceTimer = null;
+        }, null, 300, Timeout.Infinite);
+    }
+
+    private async Task LoadUsers()
+    {
+        _isLoading = true;
+        Console.WriteLine($"[UserAutoFillSelector] Loading users with term: '{_searchTerm}'");
+
+        try
+        {
+            var payload = new QueriedUserRequestDto
+            {
+                GlobalSearchTerm = string.IsNullOrEmpty(_searchTerm) ? null : _searchTerm,
+                QueryParams = new Shared.DTOs.Requests.QueryParamsDto
+                {
+                    Page = 1,
+                    PageSize = _pageSize
+                }
+            };
+
+            var response = await UserService.GetAllUsersQueriedAsync(payload);
+            Console.WriteLine($"[UserAutoFillSelector] API Response - Success: {response.Success}");
+
+            if (response.Success && response.Result?.Data?.Any() == true)
+            {
+                _users = response.Result.Data.Select(u => new UserVM
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    Step = u.Step != null ? new StepVM
+                    {
+                        Id = u.Step.Id,
+                        Name = u.Step.Name
+                    } : null,
+                }).ToList();
+
+                _hasMore = response.Result.HasNextPage;
+                Console.WriteLine($"[UserAutoFillSelector] Loaded {_users.Count} users, HasMore: {_hasMore}");
+            }
+            else
+            {
+                _users = new List<UserVM>();
+                _hasMore = false;
+                Console.WriteLine($"[UserAutoFillSelector] No users loaded");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[UserAutoFillSelector] Error loading users: {ex.Message}");
+            _users = new List<UserVM>();
+            _hasMore = false;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadMoreUsers()
+    {
+        if (_isLoading || !_hasMore) return;
+
+        _pageSize += 10;
+        await LoadUsers();
+    }
+
+    private async Task ToggleDropdown()
+    {
+        _isDropdownOpen = !_isDropdownOpen;
+        Console.WriteLine($"[UserAutoFillSelector] Dropdown toggled: {_isDropdownOpen}");
+
+        if (_isDropdownOpen && !_users.Any() && !_isLoading)
+        {
+            await LoadUsers();
+        }
+    }
+
+    private async Task SelectUser(UserVM user)
+    {
+        Console.WriteLine($"[UserAutoFillSelector] User selected: {user.Name}");
+        _isDropdownOpen = false;
+        _searchTerm = user.Name;
+        await OnUserSelected.InvokeAsync(user);
+    }
+
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
+    }
+}
