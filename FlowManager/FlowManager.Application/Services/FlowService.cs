@@ -393,6 +393,17 @@ namespace FlowManager.Infrastructure.Services
                             StepId = flowStepItem.StepId,
                             StepName = flowStepItem.Step.Name,
                         },
+                        AssignedUsers = flowStepItem.AssignedUsers?.Select(assignedUser => new FlowStepItemUserResponseDto
+                        {
+                            FlowStepItemId = flowStepItem.Id,
+                            UserId = assignedUser.UserId,
+                            User = new Shared.DTOs.Responses.User.UserResponseDto
+                            {
+                                Id = assignedUser.UserId,
+                                Name = assignedUser.User.Name,
+                                Email = assignedUser.User.Email,
+                            }
+                        }).ToList(),
                         AssignedTeams = flowStepItem.AssignedTeams?.Select(assignedTeam => new FlowStepItemTeamResponseDto
                         {
                             FlowStepItemId = flowStepItem.Id,

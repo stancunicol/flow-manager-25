@@ -3,7 +3,7 @@
     <div class="popup-backdrop" @onclick="CancelForm">
         <div class="popup-container" @onclick:stopPropagation="true">
             <div class="popup-header">
-                <h3>Assign to Step: @StepToAssign?.Name</h3>
+                <h3>Assign to Step: @FlowStepItemToAssign?.Step.Name</h3>
                 <button type="button" @onclick="CancelForm" class="close-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>

@@ -30,10 +30,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         private List<FlowStepVM> _configuredFlowSteps = new List<FlowStepVM>();
         private StepVM? _draggedStep = null;
         private bool _isDragOver = false;
+        private int _isDragOverFlowStep = -1; // -1 means no flow step is being dragged over
         private string _flowName = string.Empty;
 
         private bool _showAssignToStepModal = false;
-        private FlowStepItemVM? _flowStepToAssign = null;
+        private FlowStepItemVM? _flowStepItemToAssign = null;
         private int _flowStepToAssignIndex = 0;
         private int _flowStepItemToAssignIndex = 0;
 
@@ -79,6 +80,17 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 }).ToList();
         }
 
+        private void AddFlowStep()
+        {
+            var newFlowStep = new FlowStepVM
+            {
+                Id = Guid.NewGuid(),
+                FlowStepItems = new List<FlowStepItemVM>()
+            };
+            _configuredFlowSteps.Add(newFlowStep);
+            StateHasChanged();
+        }
+
         private void HandleDragStart(DragEventArgs e, StepVM step)
         {
             _draggedStep = step;
@@ -90,6 +102,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         {
             _draggedStep = null;
             _isDragOver = false;
+            _isDragOverFlowStep = -1;
             StateHasChanged();
         }
 
@@ -116,43 +129,65 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         private void HandleDrop(DragEventArgs e)
         {
             _isDragOver = false;
-            if (_draggedStep != null)
-            {
-                // Create a new FlowStep with an empty FlowStepItem
-                var stepForWorkflow = new FlowStepVM
-                {
-                    Id = Guid.NewGuid(),
-                    FlowStepItems = new List<FlowStepItemVM>()
-                };
-                _configuredFlowSteps.Add(stepForWorkflow);
-            }
+            _isDragOverFlowStep = -1;
+
             _draggedStep = null;
             StateHasChanged();
         }
 
-        private void AddFlowStepItem(int flowStepIndex)
+        private void HandleDragEnterFlowStep(DragEventArgs e, int flowStepIndex)
         {
-            if (flowStepIndex >= 0 && flowStepIndex < _configuredFlowSteps.Count)
+            if (_draggedStep != null)
+            {
+                _isDragOverFlowStep = flowStepIndex;
+                StateHasChanged();
+            }
+        }
+
+        private void HandleDragLeaveFlowStep(DragEventArgs e, int flowStepIndex)
+        {
+            _isDragOverFlowStep = -1;
+            StateHasChanged();
+        }
+
+        private void HandleDragOverFlowStep(DragEventArgs e, int flowStepIndex)
+        {
+            e.DataTransfer.DropEffect = "copy";
+        }
+
+        private void HandleDropOnFlowStep(DragEventArgs e, int flowStepIndex)
+        {
+            _isDragOver = false;
+            _isDragOverFlowStep = -1;
+
+            if (_draggedStep != null && flowStepIndex >= 0 && flowStepIndex < _configuredFlowSteps.Count)
             {
                 var flowStep = _configuredFlowSteps[flowStepIndex];
 
-                // Create a new FlowStepItem with no assigned step initially
+                if (flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.StepId == _draggedStep.Id))
+                {
+                    _draggedStep = null;
+                    return;
+                }
+
                 var newFlowStepItem = new FlowStepItemVM
                 {
                     Id = Guid.NewGuid(),
                     FlowStepId = flowStep.Id,
                     FlowStep = flowStep,
+                    StepId = _draggedStep.Id,
+                    Step = _draggedStep,
                     AssignedUsers = new List<FlowStepItemUserVM>(),
                     AssignedTeams = new List<FlowStepItemTeamVM>()
                 };
 
                 flowStep.FlowStepItems.Add(newFlowStepItem);
 
-                // Open the assignment modal immediately
                 ShowAssingToStepModal(newFlowStepItem, flowStepIndex, flowStep.FlowStepItems.Count - 1);
-
-                StateHasChanged();
             }
+
+            _draggedStep = null;
+            StateHasChanged();
         }
 
         private void RemoveFlowStepItem(int flowStepIndex, int flowStepItemIndex, MouseEventArgs e)
@@ -163,36 +198,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 if (flowStepItemIndex >= 0 && flowStepItemIndex < flowStep.FlowStepItems.Count)
                 {
                     flowStep.FlowStepItems.RemoveAt(flowStepItemIndex);
-                    StateHasChanged();
-                }
-            }
-        }
-
-        private void MoveFlowStepItemUp(int flowStepIndex, int flowStepItemIndex, MouseEventArgs e)
-        {
-            if (flowStepIndex >= 0 && flowStepIndex < _configuredFlowSteps.Count)
-            {
-                var flowStep = _configuredFlowSteps[flowStepIndex];
-                if (flowStepItemIndex > 0 && flowStepItemIndex < flowStep.FlowStepItems.Count)
-                {
-                    var item = flowStep.FlowStepItems[flowStepItemIndex];
-                    flowStep.FlowStepItems.RemoveAt(flowStepItemIndex);
-                    flowStep.FlowStepItems.Insert(flowStepItemIndex - 1, item);
-                    StateHasChanged();
-                }
-            }
-        }
-
-        private void MoveFlowStepItemDown(int flowStepIndex, int flowStepItemIndex, MouseEventArgs e)
-        {
-            if (flowStepIndex >= 0 && flowStepIndex < _configuredFlowSteps.Count)
-            {
-                var flowStep = _configuredFlowSteps[flowStepIndex];
-                if (flowStepItemIndex >= 0 && flowStepItemIndex < flowStep.FlowStepItems.Count - 1)
-                {
-                    var item = flowStep.FlowStepItems[flowStepItemIndex];
-                    flowStep.FlowStepItems.RemoveAt(flowStepItemIndex);
-                    flowStep.FlowStepItems.Insert(flowStepItemIndex + 1, item);
                     StateHasChanged();
                 }
             }
@@ -225,12 +230,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             StateHasChanged();
         }
 
-        private bool IsStepConfigured(Guid stepId)
-        {
-            return _configuredFlowSteps
-                .SelectMany(fs => fs.FlowStepItems)
-                .Any(fsi => fsi.StepId == stepId);
-        }
 
         public async Task SaveWorkflowInvokeAsync()
         {
@@ -341,7 +340,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
         private void ShowAssingToStepModal(FlowStepItemVM flowStepItem, int flowStepIndex, int flowStepItemIndex)
         {
             _showAssignToStepModal = true;
-            _flowStepToAssign = flowStepItem;
+            _flowStepItemToAssign = flowStepItem;
             _flowStepToAssignIndex = flowStepIndex;
             _flowStepItemToAssignIndex = flowStepItemIndex;
             StateHasChanged();
@@ -354,12 +353,12 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             {
                 FlowStepItemVM flowStepItem = _configuredFlowSteps[_flowStepToAssignIndex].FlowStepItems[_flowStepItemToAssignIndex];
 
-                if (_flowStepToAssign != null)
+                if (_flowStepItemToAssign != null)
                 {
-                    flowStepItem.AssignedUsers = _flowStepToAssign.AssignedUsers ?? new List<FlowStepItemUserVM>();
-                    flowStepItem.AssignedTeams = _flowStepToAssign.AssignedTeams ?? new List<FlowStepItemTeamVM>();
-                    flowStepItem.Step = _flowStepToAssign.Step;
-                    flowStepItem.StepId = _flowStepToAssign.StepId;
+                    flowStepItem.AssignedUsers = _flowStepItemToAssign.AssignedUsers ?? new List<FlowStepItemUserVM>();
+                    flowStepItem.AssignedTeams = _flowStepItemToAssign.AssignedTeams ?? new List<FlowStepItemTeamVM>();
+                    flowStepItem.Step = _flowStepItemToAssign.Step;
+                    flowStepItem.StepId = _flowStepItemToAssign.StepId;
                 }
 
                 StateHasChanged();

@@ -16,9 +16,9 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
     {
         [Parameter] public bool ShowAssignToStepModal { get; set; }
         [Parameter] public EventCallback<bool> ShowAssignToStepModalChanged { get; set; }
-        [Parameter] public StepVM StepToAssign { get; set; }
-        [Parameter] public EventCallback<StepVM> StepToAssignChanged { get; set; }
-        [Parameter] public EventCallback OnStepAssigned { get; set; }
+        [Parameter] public FlowStepItemVM FlowStepItemToAssign { get; set; } 
+        [Parameter] public EventCallback<FlowStepItemVM> FlowStepItemToAssignChanged { get; set; }
+        [Parameter] public EventCallback OnFlowStepItemAssigned { get; set; }
 
         [Inject] private TeamService _teamService { get; set; } = default!;
         [Inject] private UserService _userService { get; set; } = default!;
@@ -61,23 +61,24 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
         private void AssignTeamsFromExistingStep()
         {
-            if (StepToAssign.Teams == null || StepToAssign.Teams.Count == 0)
+            if (FlowStepItemToAssign.AssignedTeams == null || FlowStepItemToAssign.AssignedTeams.Count == 0)
                 return;
 
-            foreach(var team in StepToAssign.Teams)
+            foreach(var team in FlowStepItemToAssign.AssignedTeams)
             {
-                _assignedTeams.Add(team);
+                Console.WriteLine($"team name: {team.Team.Name}");
+                _assignedTeams.Add(team.Team);
             }
         }
 
         private void AssignUsersFromExistingStep()
         {
-            if (StepToAssign.Users == null || StepToAssign.Users.Count == 0)
+            if (FlowStepItemToAssign.AssignedUsers == null || FlowStepItemToAssign.AssignedUsers.Count == 0)
                 return;
 
-            foreach (var user in StepToAssign.Users)
+            foreach (var user in FlowStepItemToAssign.AssignedUsers)
             {
-                _assignedModerators.Add(_availableModerators.First(u => u.Id == user.Id));
+                _assignedModerators.Add(_availableModerators.First(u => u.Id == user.User.Id));
             }
         }
 
@@ -272,7 +273,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 }
 
                 ApiResponse<PagedResponseDto<TeamResponseDto>> response =
-                    await _teamService.GetAllModeratorTeamsByStepIdAsync(StepToAssign.Id ?? Guid.Empty, payload);
+                    await _teamService.GetAllModeratorTeamsByStepIdAsync(FlowStepItemToAssign.StepId ?? Guid.Empty, payload);
 
                 if (!response.Success)
                 {
@@ -297,6 +298,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     },
                     IsSelected = false
                 }).ToList();
+
+                foreach(var team in _availableTeams)
+                {
+                    Console.WriteLine($"Team name: {team.Team.Name}");
+                }
 
                 _teamsTotalCount = response.Result.TotalCount;
                 _teamsTotalPages = response.Result.TotalPages;
@@ -329,7 +335,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 }
 
                 ApiResponse<PagedResponseDto<UserResponseDto>> response =
-                    await _userService.GetUnassignedModeratorsByStepIdQueriedAsync(StepToAssign.Id ?? Guid.Empty, payload);
+                    await _userService.GetUnassignedModeratorsByStepIdQueriedAsync(FlowStepItemToAssign.StepId ?? Guid.Empty, payload);
 
                 if (!response.Success)
                 {
@@ -348,8 +354,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
                 _usersTotalCount = response.Result.TotalCount;
                 _usersTotalPages = response.Result.TotalPages;
-
-                Console.WriteLine();
             }
             catch (Exception ex)
             {
@@ -407,8 +411,7 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
                 var updatedStep = new StepVM
                 {
-                    Id = StepToAssign.Id,
-                    Name = StepToAssign.Name,
+                    Id = FlowStepItemToAssign.Id,
                     Teams = new List<TeamVM>(),
                     Users = new List<UserVM>(),
                 };
@@ -423,14 +426,33 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                     updatedStep.Users.Add(user);
                 }
 
-                await StepToAssignChanged.InvokeAsync(updatedStep);
+                await FlowStepItemToAssignChanged.InvokeAsync(new FlowStepItemVM
+                {
+                    Id = FlowStepItemToAssign.Id,
+                    StepId = FlowStepItemToAssign.StepId,
+                    Step = new StepVM
+                    {
+                        Id = FlowStepItemToAssign.StepId,
+                        Name = FlowStepItemToAssign.Step?.Name ?? string.Empty
+                    },
+                    AssignedUsers = updatedStep.Users.Select(user => new FlowStepItemUserVM
+                    {
+                        User = user,
+                        UserId = user.Id,
+                    }).ToList(),
+                    AssignedTeams = updatedStep.Teams.Select(team => new FlowStepItemTeamVM
+                    {
+                        Team = team,
+                        TeamId = team.Id,
+                    }).ToList()
+                });
 
                 _onSubmitMessage = "Assignment completed successfully!";
                 _onSubmitSuccess = true;
 
                 await CancelForm();
 
-                await OnStepAssigned.InvokeAsync();
+                await OnFlowStepItemAssigned.InvokeAsync();
             }
             catch (Exception ex)
             {

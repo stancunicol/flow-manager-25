@@ -2,12 +2,12 @@
 @using FlowManager.Client.ViewModels;
 @using Microsoft.AspNetCore.Components.Web;
 
-<div class="edit-flow-container">
+<div class="add-flow-container">
     @if (_showAssignToStepModal)
     {
         <AssignToStepModal @bind-ShowAssignToStepModal="@_showAssignToStepModal"
-                           @bind-FlowStepToAssign="@_flowStepToAssign"
-                           OnStepAssigned="ConfigureStepsToFlow" />
+                           @bind-FlowStepItemToAssign="@_flowStepItemToAssign"
+                           OnFlowStepItemAssigned="ConfigureStepsToFlow"/>
     }
 
     <!-- Step configuration area -->
@@ -20,13 +20,21 @@
 
         <div class="step-configuration-header">
             <div class="flow-name-section">
-                <label for="flowName" class="flow-name-label">*Flow Name (must be different from @_initialFlowName):</label>
-                <input type="text"
-                       id="flowName"
-                       class="flow-name-input @GetFlowNameValidationClass()"
-                       @bind="_flowName"
-                       @bind:event="oninput"
-                       maxlength="100" />
+                <div class="flow-name-row">
+                    <div class="flow-name-input-group">
+                        <label for="flowName" class="flow-name-label">Flow Name (must be different from @_initialFlowName):</label>
+                        <input type="text"
+                               id="flowName"
+                               class="flow-name-input @GetFlowNameValidationClass()"
+                               placeholder="*Enter workflow name..."
+                               @bind="_flowName"
+                               @bind:event="oninput"
+                               maxlength="100" />
+                    </div>
+                    <button class="btn-add-flowstep" @onclick="AddFlowStep">
+                        + Add Flow Step
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -34,7 +42,7 @@
             @if (!_configuredSteps.Any())
             {
                 <div class="empty-state">
-                    Drag steps here to edit your workflow
+                    Click "Add Flow Step" to create workflow steps, then drag available steps to assign them
                 </div>
             }
             else
@@ -45,12 +53,16 @@
                     var flowStepIndex = i;
 
                     <!-- FlowStep container -->
-                    <div class="dropped-step" key="@flowStep.Id">
+                    <div class="dropped-step flowstep-droppable @(_isDragOverFlowStep == flowStepIndex ? "drag-over-flowstep" : "")"
+                         key="@flowStep.Id"
+                         @ondrop="(e) => HandleDropOnFlowStep(e, flowStepIndex)"
+                         @ondragover="(e) => HandleDragOverFlowStep(e, flowStepIndex)"
+                         @ondragover:preventDefault="true"
+                         @ondragenter="(e) => HandleDragEnterFlowStep(e, flowStepIndex)"
+                         @ondragleave="(e) => HandleDragLeaveFlowStep(e, flowStepIndex)">
 
                         <!-- FlowStep header -->
                         <div class="flowstep-header">
-                            <!-- FlowStep order indicator -->
-                            <div class="step-order flowstep-order">@(flowStepIndex + 1)</div>
 
                             <!-- FlowStep title -->
                             <div class="flowstep-title">Flow Step @(flowStepIndex + 1)</div>
@@ -79,10 +91,7 @@
                             @if (!flowStep.FlowStepItems.Any())
                             {
                                 <div class="flowstep-items-empty">
-                                    <span class="empty-text">No steps assigned yet</span>
-                                    <button class="btn-add-step" @onclick="() => AddFlowStepItem(flowStepIndex)" @onclick:stopPropagation="true">
-                                        + Add Step
-                                    </button>
+                                    <span class="empty-text">Drag steps here to assign them to this flow step</span>
                                 </div>
                             }
                             else
@@ -94,8 +103,6 @@
 
                                     <!-- FlowStepItem -->
                                     <div class="flowstep-item" @onclick="() => ShowAssingToStepModal(flowStepItem, flowStepIndex, flowStepItemIndex)">
-                                        <!-- FlowStepItem order -->
-                                        <div class="flowstepitem-order">@(flowStepItemIndex + 1)</div>
 
                                         <!-- FlowStepItem content -->
                                         <div class="flowstepitem-info">
@@ -119,34 +126,24 @@
 
                                         <!-- FlowStepItem controls -->
                                         <div class="flowstepitem-controls">
-                                            <!-- FlowStepItem reorder buttons -->
-                                            <div class="reorder-buttons flowstepitem-reorder">
-                                                @if (flowStepItemIndex > 0)
-                                                {
-                                                    <button class="reorder-btn up small" @onclick="(e) => MoveFlowStepItemUp(flowStepIndex, flowStepItemIndex, e)" title="Move step up" @onclick:stopPropagation="true">↑</button>
-                                                }
-                                                @if (flowStepItemIndex < flowStep.FlowStepItems.Count - 1)
-                                                {
-                                                    <button class="reorder-btn down small" @onclick="(e) => MoveFlowStepItemDown(flowStepIndex, flowStepItemIndex, e)" title="Move step down" @onclick:stopPropagation="true">↓</button>
-                                                }
-                                            </div>
-
                                             <!-- Remove FlowStepItem button -->
                                             <button class="remove-step flowstepitem-remove" @onclick="(e) => RemoveFlowStepItem(flowStepIndex, flowStepItemIndex, e)" @onclick:stopPropagation="true">×</button>
                                         </div>
                                     </div>
                                 }
-
-                                <!-- Add FlowStepItem button -->
-                                <div class="add-flowstepitem-container">
-                                    <button class="btn-add-step" @onclick="() => AddFlowStepItem(flowStepIndex)" @onclick:stopPropagation="true">
-                                        + Add Step to this Flow Step
-                                    </button>
-                                </div>
                             }
                         </div>
                     </div>
                 }
+
+                <!-- Action buttons -->
+                <div class="workflow-actions">
+                    <button class="btn-clear" @onclick="ClearConfiguration">Clear All</button>
+                    <button class="btn-save" @onclick="@(() => SaveCurrentWorkflowAsync())"
+                            disabled="@(!IsWorkflowValid())">
+                        Save "@(!string.IsNullOrWhiteSpace(_flowName) ? _flowName : "Untitled")" Changes
+                    </button>
+                </div>
 
                 @if (!string.IsNullOrEmpty(_onSubmitMessage))
                 {
@@ -158,38 +155,28 @@
         </div>
     </div>
 
-    <!-- Sidebar container care include navbar și butoanele -->
-    <div class="sidebar-container">
-        <!-- Steps navbar -->
-        <div class="steps-navbar">
-            <div class="navbar-header">Available Steps</div>
-            @foreach (StepVM step in _availableSteps)
-            {
-                <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : "")"
-                     draggable="true"
-                     @ondragstart="(e) => HandleDragStart(e, step)"
-                     @ondragend="HandleDragEnd">
+    <!-- Steps navbar -->
+    <div class="steps-navbar">
+        <div class="navbar-header">Available Steps</div>
 
-                    <!-- Step description -->
-                    <div class="step-avatar">
-                        @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
-                    </div>
-                    <div class="step-details">
-                        <div class="step-name">@step.Name</div>
-                        <div class="step-users-count">
-                            @(step.Users?.Count() ?? 0) moderators
-                        </div>
+        @foreach (StepVM step in _availableSteps)
+        {
+            <div class="step-info @(_draggedStep?.Id == step.Id ? "dragging" : ""))"
+                 draggable="true"
+                 @ondragstart="(e) => HandleDragStart(e, step)"
+                 @ondragend="HandleDragEnd">
+
+                <!-- Step description -->
+                <div class="step-avatar">
+                    @step.Name!.Substring(0, Math.Min(2, step.Name!.Length)).ToUpper()
+                </div>
+                <div class="step-details">
+                    <div class="step-name">@step.Name</div>
+                    <div class="step-users-count">
+                        @(step.Users!.Count()) moderators
                     </div>
                 </div>
-            }
-        </div>
-
-        <!-- Modal Footer - acum sub navbar -->
-        <div class="modal-footer">
-            <button class="btn-clear" @onclick="ClearConfiguration">Cancel</button>
-            <button class="btn-primary" @onclick="SaveCurrentWorkflowAsync" disabled="@(!IsWorkflowValid())">
-                Save Changes
-            </button>
-        </div>
+            </div>
+        }
     </div>
 </div>
