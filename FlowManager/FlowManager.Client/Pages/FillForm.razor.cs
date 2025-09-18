@@ -401,7 +401,6 @@ namespace FlowManager.Client.Pages
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully! It will start processing from step: {firstStep?.Name ?? "Unknown"}");
                     Navigation.NavigateTo("/basic-user");
                 }
                 else

@@ -100,7 +100,7 @@
 
             if (result.Success)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Impersonation ended successfully. Returning to admin dashboard.");
+                Console.WriteLine("[ImpersonationIndicator] Successfully ended impersonation.");
                 Navigation.NavigateTo("/admin", forceLoad: true);
             }
             else
@@ -111,7 +111,6 @@
         catch (Exception ex)
         {
             Console.WriteLine($"[ImpersonationIndicator] Error ending impersonation: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while ending impersonation. Please try again.");
         }
         finally
         {

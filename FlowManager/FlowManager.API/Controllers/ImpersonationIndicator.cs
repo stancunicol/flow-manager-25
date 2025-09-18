@@ -89,8 +89,8 @@ namespace FlowManager.Server.Controllers
                 // Create impersonation session
                 var sessionId = Guid.NewGuid();
 
-                _logger.LogInformation("Admin {AdminId} ({AdminName}) started impersonating user {UserId} ({UserName}). Reason: {Reason}",
-                    adminUser.Id, adminUser.Name, targetUser.Id, targetUser.Name, request.Reason ?? "No reason provided");
+                //_logger.LogInformation("Admin {AdminId} ({AdminName}) started impersonating user {UserId} ({UserName}). Reason: {Reason}",
+                //    adminUser.Id, adminUser.Name, targetUser.Id, targetUser.Name, request.Reason ?? "No reason provided");
 
                 // Sign out the current admin user
                 await _signInManager.SignOutAsync();
@@ -145,7 +145,7 @@ namespace FlowManager.Server.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error starting impersonation for user {UserId}", request.UserId);
+                //_logger.LogError(ex, "Error starting impersonation for user {UserId}", request.UserId);
                 return StatusCode(500, new ApiResponseDto<ImpersonationResponseDto>
                 {
                     Success = false,
@@ -161,14 +161,14 @@ namespace FlowManager.Server.Controllers
             try
             {
                 // Debug: Log all claims to understand the authentication context
-                _logger.LogInformation("EndImpersonation called. User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
-                _logger.LogInformation("Claims in context: {Claims}", 
-                    string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}")));
+                //_logger.LogInformation("EndImpersonation called. User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
+                //_logger.LogInformation("Claims in context: {Claims}", 
+                //    string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}")));
 
                 // Check if user is authenticated
                 if (!User.Identity?.IsAuthenticated ?? true)
                 {
-                    _logger.LogWarning("User not authenticated when trying to end impersonation");
+                    //_logger.LogWarning("User not authenticated when trying to end impersonation");
                     return Unauthorized(new ApiResponseDto<bool>
                     {
                         Success = false,
@@ -178,7 +178,7 @@ namespace FlowManager.Server.Controllers
 
                 // Check if this is actually an impersonation session
                 var isImpersonating = User.FindFirstValue("IsImpersonating") == "true";
-                _logger.LogInformation("IsImpersonating claim value: {IsImpersonating}", isImpersonating);
+                //_logger.LogInformation("IsImpersonating claim value: {IsImpersonating}", isImpersonating);
                 
                 if (!isImpersonating)
                 {
@@ -215,8 +215,8 @@ namespace FlowManager.Server.Controllers
                     });
                 }
 
-                _logger.LogInformation("Admin {AdminId} ({AdminName}) ended impersonation of user {UserId} ({UserName})",
-                    originalAdminId, originalAdminName ?? "Unknown", impersonatedUserId ?? "Unknown", impersonatedUserName ?? "Unknown");
+                //_logger.LogInformation("Admin {AdminId} ({AdminName}) ended impersonation of user {UserId} ({UserName})",
+                //    originalAdminId, originalAdminName ?? "Unknown", impersonatedUserId ?? "Unknown", impersonatedUserName ?? "Unknown");
 
                 // Sign out the impersonated user
                 await _signInManager.SignOutAsync();
@@ -276,7 +276,7 @@ namespace FlowManager.Server.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting impersonation status");
+                //_logger.LogError(ex, "Error getting impersonation status");
                 return StatusCode(500, new ApiResponseDto<bool>
                 {
                     Success = false,
