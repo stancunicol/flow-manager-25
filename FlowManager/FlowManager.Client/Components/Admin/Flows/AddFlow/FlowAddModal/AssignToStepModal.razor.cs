@@ -78,7 +78,22 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
             foreach (var user in FlowStepItemToAssign.AssignedUsers)
             {
-                _assignedModerators.Add(_availableModerators.First(u => u.Id == user.User.Id));
+                var availableModerator = _availableModerators.FirstOrDefault(um => um.Id == user.User.Id);
+
+                if(availableModerator != null)
+                {
+                    ToggleUserSelection(availableModerator, true);
+                    continue;
+                }
+
+                foreach(var team in _availableTeams)
+                {
+                    var userAssignedToTeam = team.Team.Users.FirstOrDefault(u => u.Id == user.User.Id);
+                    if (userAssignedToTeam != null)
+                    {
+                        ToggleUserSelectionFromTeam(team.Team, userAssignedToTeam, true);
+                    }
+                }
             }
         }
 

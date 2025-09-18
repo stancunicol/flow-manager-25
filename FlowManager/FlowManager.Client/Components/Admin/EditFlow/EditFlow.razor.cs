@@ -391,13 +391,6 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
         private void ShowAssingToStepModal(FlowStepItemVM flowStepItem, int flowStepIndex, int flowStepItemIndex)
         {
-            foreach(var user in flowStepItem.AssignedUsers)
-            {
-
-            }
-
-
-
             _showAssignToStepModal = true;
             _flowStepItemToAssign = flowStepItem;
             _flowStepToAssignIndex = flowStepIndex;

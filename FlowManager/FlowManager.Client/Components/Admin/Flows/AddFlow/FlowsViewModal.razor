@@ -66,18 +66,20 @@
                                 <div class="flow-steps">
                                     <div class="steps-label">Steps:</div>
                                     <div class="steps-list">
-                                        @foreach (var flowStep in flow.FlowSteps.Take(3))
+
+                                        @for (int i = 0; i < flow.FlowSteps.Take(3).Count(); i++)
                                         {
-                                            foreach(var flowStepItem in flowStep.FlowStepItems)
-                                            {
-                                                <div class="step-item">
-                                                    <div class="step-avatar">
-                                                        @flowStepItem.Step.StepName!.Substring(0, Math.Min(2, flowStepItem.Step.StepName.Length)).ToUpper()
-                                                    </div>
-                                                    <span class="step-name">@flowStepItem.Step.StepName</span>
+                                            var flowStep = flow.FlowSteps[i];
+                                            int index = i;
+
+                                            <div class="step-item">
+                                                <div class="step-avatar">
+                                                    @(index + 1)
                                                 </div>
-                                            }
-                                            
+                                                <span class="step-name">
+                                                    @string.Join("/", flowStep.FlowStepItems.Select(item => item.Step!.StepName))
+                                                </span>
+                                            </div>
                                         }
                                         @if (flow.FlowSteps.Count > 3)
                                         {

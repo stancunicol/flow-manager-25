@@ -1,4 +1,4 @@
-using FlowManager.Application.Interfaces;
+﻿using FlowManager.Application.Interfaces;
 using FlowManager.Application.Utils;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
@@ -17,6 +17,7 @@ using FlowManager.Shared.DTOs.Responses.FormTemplateComponent;
 using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.Team;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -134,6 +135,10 @@ namespace FlowManager.Infrastructure.Services
 
         public async Task<FlowResponseDto> CreateFlowAsync(PostFlowRequestDto payload)
         {
+            Console.WriteLine($"=== CREATE FLOW DEBUG START ===");
+            Console.WriteLine($"Flow Name: {payload.Name}");
+            Console.WriteLine($"FlowSteps Count: {payload.FlowSteps?.Count ?? 0}");
+
             Flow? existingFlow = await _flowRepository.GetFlowByNameAsync(payload.Name);
             if (existingFlow != null)
             {
@@ -152,101 +157,14 @@ namespace FlowManager.Infrastructure.Services
                 Name = payload.Name,
             };
 
-            if (payload.FormTemplateId != null && payload.FormTemplateId != Guid.Empty)
-            {
-                FormTemplate? ft = await _formTemplateRepository.GetFormTemplateByIdAsync((Guid)payload.FormTemplateId);
-                if (ft == null)
-                {
-                    throw new EntryNotFoundException($"Form template with id {payload.FormTemplateId} not found.");
-                }
-
-                flowToPost.FormTemplateFlows.Add(new FormTemplateFlow
-                {
-                    FormTemplateId = ft.Id,
-                    FlowId = flowToPost.Id,
-                });
-            }
-
-            if (payload.FlowSteps != null && payload.FlowSteps.Count > 0)
-            {
-                for (int i = 0; i < payload.FlowSteps.Count; i++)
-                {
-                    var stepPayload = payload.FlowSteps[i];
-
-                    foreach (var step in stepPayload.FlowStepItems)
-                    { 
-                        if ((await _stepRepository.GetStepByIdAsync(step.StepId)) == null)
-                        {
-                            throw new EntryNotFoundException($"Step with id {step.StepId} not found.");
-                        } 
-                    }
-
-                    var flowStep = new FlowStep
-                    {
-                        FlowId = flowToPost.Id,
-                        Order = i + 1,
-                    };
-
-                    var flowStepItems = new List<FlowStepItem>();
-
-                    for (int index = 0; index < stepPayload.FlowStepItems.Count; index++)
-                    {
-                        var flowStepItem = stepPayload.FlowStepItems[index];
-
-                        var newFlowStepItem = new FlowStepItem
-                        {
-                            FlowStepId = flowStepItem.FlowStepId,
-                            StepId = flowStepItem.StepId,
-                            Order = index + 1,
-                        };
-
-                        newFlowStepItem.AssignedUsers = flowStepItem.AssignedUsersIds.Select(uId => new FlowStepItemUser
-                        {
-                            FlowStepItemId = newFlowStepItem.Id,
-                            UserId = uId,
-                        }).ToList();
-
-                        foreach (var teamPayload in flowStepItem.AssignedTeams)
-                        {
-                            var fullTeam = await _teamRepository.GetTeamWithModeratorsAsync(teamPayload.TeamId, (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id);
-                            if (fullTeam?.Users.Count == (teamPayload.UserIds?.Count ?? 0))
-                            {
-                                newFlowStepItem.AssignedTeams.Add(new FlowStepItemTeam
-                                {
-                                    FlowStepItemId = newFlowStepItem.Id,
-                                    TeamId = teamPayload.TeamId,
-                                });
-                            }
-                            else
-                            {
-                                foreach (var userId in teamPayload.UserIds ?? new List<Guid>())
-                                {
-                                    newFlowStepItem.AssignedUsers.Add(new FlowStepItemUser
-                                    {
-                                        FlowStepItemId = newFlowStepItem.Id,
-                                        UserId = userId,
-                                    });
-                                }
-                            }
-                        }
-
-                        flowStepItems.Add(newFlowStepItem);
-                    }
-
-                    flowStep.FlowStepItems = flowStepItems;
-
-                    flowToPost.FlowSteps.Add(flowStep);
-                }
-            }
-
             await _flowRepository.CreateFlowAsync(flowToPost);
 
-            return new FlowResponseDto
+            var response = new FlowResponseDto
             {
                 Id = flowToPost.Id,
                 Name = flowToPost.Name,
                 FlowSteps = flowToPost.FlowSteps
-                    .OrderBy(s => s.Order) // Order by Order field
+                    .OrderBy(s => s.Order)
                     .Select(flowStep => new FlowStepResponseDto
                     {
                         Id = flowStep.Id,
@@ -258,7 +176,7 @@ namespace FlowManager.Infrastructure.Services
                             Step = new StepResponseDto
                             {
                                 StepId = flowStepItem.StepId,
-                                StepName = flowStepItem.Step.Name,
+                                StepName = flowStepItem.Step?.Name,
                                 Users = flowStepItem.AssignedUsers?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
                                 {
                                     Id = u.UserId,
@@ -278,6 +196,9 @@ namespace FlowManager.Infrastructure.Services
                 UpdatedAt = flowToPost.UpdatedAt,
                 DeletedAt = flowToPost.DeletedAt
             };
+
+
+            return response;
         }
 
         public async Task<FlowResponseDto> DeleteFlowAsync(Guid id)
@@ -395,15 +316,20 @@ namespace FlowManager.Infrastructure.Services
                         },
                         AssignedUsers = flowStepItem.AssignedUsers?.Select(assignedUser => new FlowStepItemUserResponseDto
                         {
-                            FlowStepItemId = flowStepItem.Id,
+                            FlowStepItemId = assignedUser.FlowStepItemId,
                             UserId = assignedUser.UserId,
                             User = new Shared.DTOs.Responses.User.UserResponseDto
                             {
                                 Id = assignedUser.UserId,
                                 Name = assignedUser.User.Name,
                                 Email = assignedUser.User.Email,
+                                Teams = assignedUser.User.Teams?.Select(ut => new TeamResponseDto()
+                                {
+                                    Id = ut.TeamId,
+                                    Name = ut.Team.Name
+                                }).ToList() ?? new List<TeamResponseDto>(),
                             }
-                        }).ToList(),
+                        }).ToList() ?? new List<FlowStepItemUserResponseDto>(),
                         AssignedTeams = flowStepItem.AssignedTeams?.Select(assignedTeam => new FlowStepItemTeamResponseDto
                         {
                             FlowStepItemId = flowStepItem.Id,
@@ -412,99 +338,18 @@ namespace FlowManager.Infrastructure.Services
                             {
                                 Id = assignedTeam.TeamId,
                                 Name = assignedTeam.Team.Name,
-                                Users = assignedTeam.Team.Users.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
+                                Users = assignedTeam.Team.Users?.Select(u => new Shared.DTOs.Responses.User.UserResponseDto
                                 {
                                     Id = u.UserId,
                                     Name = u.User.Name,
                                     Email = u.User.Email,
-                                }).ToList()
+                                }).ToList() ?? new List<Shared.DTOs.Responses.User.UserResponseDto>()
                             }
-                        }).ToList(),
+                        }).ToList() ?? new List<FlowStepItemTeamResponseDto>(),
                         Order = flowStepItem.Order
                     }).OrderBy(flowStepItem => flowStepItem.Order).ToList(),
                 }).ToList()
             };
-
-            for (int i = 0; i < flow.FlowSteps.Count; i++)
-            {
-                var flowStep = flow.FlowSteps.ElementAt(i);
-
-                for (int j = 0; j < flowStep.FlowStepItems.Count; j++)
-                {
-                    var usersWithoutTeams = flowStep.FlowStepItems[j].AssignedUsers
-                        .Where(assignedUser => assignedUser.User.Teams.Count == 0)
-                        .ToList();
-
-                    response.FlowSteps[i].FlowStepItems[j].AssignedUsers = usersWithoutTeams.Select(assignedUser => new FlowStepItemUserResponseDto
-                    {
-                        FlowStepItemId = assignedUser.FlowStepItemId,
-                        User = new Shared.DTOs.Responses.User.UserResponseDto
-                        {
-                            Id = assignedUser.UserId,
-                            Name = assignedUser.User.Name,
-                            Email = assignedUser.User.Email,
-                            Teams = assignedUser.User.Teams.Select(ut => new TeamResponseDto()
-                            {
-                                Id = ut.TeamId,
-                                Name = ut.Team.Name
-                            }).ToList(),
-                        }
-                    }).ToList();
-
-                    var usersWithTeams = flowStep.FlowStepItems[j].AssignedUsers
-                        .Where(assignedUser => assignedUser.User.Teams.Count > 0)
-                        .ToList();
-
-                    foreach (var assignedUser in usersWithTeams)
-                    {
-                        foreach (var userTeam in assignedUser.User.Teams)
-                        {
-                            var teamInResponse = response.FlowSteps[i].FlowStepItems[j].AssignedTeams
-                                .FirstOrDefault(t => t.Team.Id == userTeam.TeamId);
-
-                            if (teamInResponse != null)
-                            {
-                                var userExists = teamInResponse.Team.Users
-                                    .Any(u => u.Id == assignedUser.UserId);
-
-
-                                if (!userExists)
-                                {
-                                    teamInResponse.Team.Users.Add(new Shared.DTOs.Responses.User.UserResponseDto
-                                    {
-                                        Id = assignedUser.UserId,
-                                        Name = assignedUser.User.Name,
-                                        Email = assignedUser.User.Email,
-                                    });
-                                }
-                            }
-                            else
-                            {
-                                var newTeam = new FlowStepItemTeamResponseDto
-                                {
-                                    FlowStepItemId = Guid.NewGuid(),
-                                    Team = new TeamResponseDto
-                                    {
-                                        Id = userTeam.TeamId,
-                                        Name = userTeam.Team.Name,
-                                        Users = new List<Shared.DTOs.Responses.User.UserResponseDto>
-                                        {
-                                            new Shared.DTOs.Responses.User.UserResponseDto
-                                            {
-                                                Id = assignedUser.UserId,
-                                                Name = assignedUser.User.Name,
-                                                Email = assignedUser.User.Email,
-                                            }
-                                        }
-                                    }
-                                };
-
-                                response.FlowSteps[i].FlowStepItems[j].AssignedTeams.Add(newTeam);
-                            }
-                        }
-                    }
-                }
-            }
 
             return response;
         }

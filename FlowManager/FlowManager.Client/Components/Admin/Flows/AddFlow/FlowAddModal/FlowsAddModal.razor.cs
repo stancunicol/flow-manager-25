@@ -260,7 +260,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                         FlowStepItems = configuredStep.FlowStepItems.Select(fsi => new PostFlowStepItemRequestDto
                         {
                             StepId = fsi.StepId ?? Guid.Empty,
-                            FlowStepId = fsi.FlowStepId ?? Guid.Empty,
                             AssignedUsersIds = fsi.AssignedUsers?.Select(au => au.UserId ?? Guid.Empty).ToList() ?? new List<Guid>(),
                             AssignedTeams = fsi.AssignedTeams?.Select(at => new PostFlowTeamRequestDto
                             {

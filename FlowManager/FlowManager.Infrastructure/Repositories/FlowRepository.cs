@@ -118,22 +118,16 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.Flows
                 .Where(f => f.Id == flowId && f.DeletedAt == null)
-                .Where(f => f.FlowSteps.Any(fs => fs.DeletedAt == null && (
-                    fs.FlowStepItems.Any(fsi => fsi.AssignedUsers.Any(fsu => fsu.DeletedAt == null &&
-                        fsu.User.Roles.Any(ur => ur.RoleId == moderatorRoleId))) ||
-                    fs.FlowStepItems.Any(fsi => fsi.AssignedTeams.Any(fst => fst.DeletedAt == null &&
-                        fst.Team.Users.Any(ut => ut.DeletedAt == null &&
-                            ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId))))
-                )))
                 .Include(f => f.FlowSteps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.FlowStepItems)
-                        .ThenInclude(flowStepItems => flowStepItems.Step)
+                        .ThenInclude(fsi => fsi.Step)
                 .Include(f => f.FlowSteps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.FlowStepItems)
-                        .ThenInclude(flowStepItem => flowStepItem.AssignedUsers.Where(fsu => fsu.DeletedAt == null &&
+                        .ThenInclude(fsi => fsi.AssignedUsers.Where(fsu => fsu.DeletedAt == null &&
                             fsu.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
                             .ThenInclude(fsu => fsu.User)
-                                .ThenInclude(u => u.Roles)
+                                .ThenInclude(u => u.Roles) 
+                                    .ThenInclude(ur => ur.Role)  
                 .Include(f => f.FlowSteps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.FlowStepItems)
                         .ThenInclude(fsi => fsi.AssignedUsers.Where(fsu => fsu.DeletedAt == null &&
@@ -143,14 +137,20 @@ namespace FlowManager.Infrastructure.Repositories
                                     .ThenInclude(ut => ut.Team)
                 .Include(f => f.FlowSteps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.FlowStepItems)
-                        .ThenInclude(fsi => fsi.AssignedTeams.Where(fst => fst.DeletedAt == null &&
-                            fst.Team.Users.Any(ut => ut.DeletedAt == null &&
-                                ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId))))
+                        .ThenInclude(fsi => fsi.AssignedTeams.Where(fst => fst.DeletedAt == null))
                             .ThenInclude(fst => fst.Team)
                                 .ThenInclude(t => t.Users.Where(ut => ut.DeletedAt == null &&
                                     ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
                                     .ThenInclude(ut => ut.User)
-                                        .ThenInclude(u => u.Roles)
+                                        .ThenInclude(u => u.Roles)  
+                                            .ThenInclude(ur => ur.Role)
+                .Where(f => f.FlowSteps.Any(fs => fs.DeletedAt == null && (
+                    fs.FlowStepItems.Any(fsi => fsi.AssignedUsers.Any(fsu => fsu.DeletedAt == null &&
+                        fsu.User.Roles.Any(ur => ur.RoleId == moderatorRoleId))) ||
+                    fs.FlowStepItems.Any(fsi => fsi.AssignedTeams.Any(fst => fst.DeletedAt == null &&
+                        fst.Team.Users.Any(ut => ut.DeletedAt == null &&
+                            ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId))))
+                )))
                 .FirstOrDefaultAsync();
         }
 

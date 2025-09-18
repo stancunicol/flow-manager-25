@@ -99,7 +99,6 @@ using (var scope = app.Services.CreateScope())
 
     // BasicSeed.Populate(dbContext, passwordHasher);
     // MockDataSeed.Populate(dbContext, passwordHasher);
-
 }
 
 if (app.Environment.IsDevelopment())
