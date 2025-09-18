@@ -2,8 +2,8 @@
 .impersonation-indicator {
     position: fixed;
     top: 0;
-    left: 100px;
-    width: 89%;
+    left: 150px;
+    width: 85%;
     background: linear-gradient(90deg, #fbbf24, #f59e0b);
     color: #92400e;
     padding: 4px 12px;
