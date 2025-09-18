@@ -228,7 +228,6 @@ namespace FlowManager.Client.Pages
 
                 if (result.Success)
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", $"Successfully started impersonating {selectedUserForImpersonation.Name}. You will be redirected to their dashboard.");
 
                     // Redirect based on user role - dacă are rol de moderator -> alegere, altfel -> user
                     var hasModeratorRole = selectedUserForImpersonation.Roles?.Any(r => r.Equals("Moderator", StringComparison.OrdinalIgnoreCase)) ?? false;

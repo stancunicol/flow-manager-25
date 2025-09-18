@@ -1,0 +1,113 @@
+﻿@using FlowManager.Client.ViewModels
+
+<div class="component-selector-overlay @(_isVisible ? "visible" : "")">
+    <div class="component-selector-modal">
+        <div class="modal-header">
+            <h3>Select Components to Auto-Fill</h3>
+            <button class="close-btn" @onclick="CloseModal">×</button>
+        </div>
+
+        <div class="modal-content">
+            <p class="instruction-text">
+                @if (_selectedUser != null)
+                {
+                    <span>Click on the components you want to auto-fill with data from: <strong>@_selectedUser.Name</strong></span>
+                }
+                else
+                {
+                    <span>Click on the components you want to auto-fill with your data</span>
+                }
+            </p>
+
+            @if (_availableComponents?.Any() == true)
+            {
+                <div class="components-list">
+                    @foreach (var component in _availableComponents)
+                    {
+                        <div class="component-item @(_selectedComponents.Contains(component.Id) ? "selected" : "")"
+                             @onclick="() => ToggleComponent(component)">
+                            <div class="component-info">
+                                <span class="component-label">@component.Label</span>
+                                <span class="component-type">(@component.Type)</span>
+                                @if (component.Required == true)
+                                {
+                                    <span class="required-mark">*</span>
+                                }
+                            </div>
+                            @if (_selectedComponents.Contains(component.Id))
+                            {
+                                <div class="selected-indicator">✓</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="no-components">No components available for auto-fill</div>
+            }
+        </div>
+
+        <div class="modal-footer">
+            <button class="cancel-btn" @onclick="CloseModal">Cancel</button>
+            <button class="apply-btn" @onclick="ApplySelection" disabled="@(!_selectedComponents.Any())">
+                Auto-Fill Selected (@_selectedComponents.Count)
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public UserVM? SelectedUser { get; set; }
+    [Parameter] public List<ComponentVM>? AvailableComponents { get; set; }
+    [Parameter] public EventCallback<List<Guid>> OnComponentsSelected { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool _isVisible => IsVisible;
+    private UserVM? _selectedUser => SelectedUser;
+    private List<ComponentVM>? _availableComponents => AvailableComponents;
+    private HashSet<Guid> _selectedComponents = new();
+
+    protected override void OnParametersSet()
+    {
+        if (!IsVisible)
+        {
+            _selectedComponents.Clear();
+        }
+        else
+        {
+            // Debug info
+            Console.WriteLine($"[ComponentAutoFillSelector] Modal is visible: {IsVisible}");
+            Console.WriteLine($"[ComponentAutoFillSelector] Selected user: {SelectedUser?.Name ?? "None"}");
+            Console.WriteLine($"[ComponentAutoFillSelector] Available components: {AvailableComponents?.Count ?? 0}");
+        }
+    }
+
+    private void ToggleComponent(ComponentVM component)
+    {
+        if (_selectedComponents.Contains(component.Id))
+        {
+            _selectedComponents.Remove(component.Id);
+        }
+        else
+        {
+            _selectedComponents.Add(component.Id);
+        }
+        StateHasChanged();
+    }
+
+    private async Task ApplySelection()
+    {
+        Console.WriteLine($"[ComponentAutoFillSelector] Applying selection: {_selectedComponents.Count} components");
+        await OnComponentsSelected.InvokeAsync(_selectedComponents.ToList());
+        await CloseModal();
+    }
+
+    private async Task CloseModal()
+    {
+        Console.WriteLine("[ComponentAutoFillSelector] Closing modal");
+        _selectedComponents.Clear();
+        await OnClose.InvokeAsync();
+    }
+}

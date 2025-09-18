@@ -299,7 +299,6 @@ namespace FlowManager.Client.Pages
 
                 var response = await _formResponseService.SubmitFormResponseAsync(formResponseData);
 
-                await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully!");
                 Navigation.NavigateTo("/basic-user");
             }
             catch (Exception ex)
