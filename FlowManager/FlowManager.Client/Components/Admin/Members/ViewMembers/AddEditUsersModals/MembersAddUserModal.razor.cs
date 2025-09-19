@@ -96,7 +96,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
         private void SelectStep(StepVM step)
         {
-            _selectedStepId = step.Id;
+            _selectedStepId = step.Id ?? Guid.Empty;
             _selectedStepName = step.Name;
             _isDropdownOpen = false;
         }
@@ -123,8 +123,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers.AddEditUsersMo
 
             _availableSteps = response.Result.Data.Select(s => new StepVM
             {
-                Id = s.Id,
-                Name = s.Name
+                Id = s.StepId,
+                Name = s.StepName
             }).ToList();
         }
 

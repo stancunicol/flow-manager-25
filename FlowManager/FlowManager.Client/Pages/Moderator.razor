@@ -156,7 +156,9 @@
                                     </div>
                                     <div class="form-info">
                                         <h4>@form.FormTemplateName</h4>
-                                        <p class="form-meta">@form.StepName</p>
+                                        <p class="form-meta">
+                                            @string.Join("/", form.FlowStep.FlowStepItems.Select(item => item.Step!.StepName))
+                                        </p>
                                     </div>
                                 </div>
 
@@ -582,9 +584,6 @@
                             <strong>User:</strong> @selectedFormResponse.UserName (@selectedFormResponse.UserEmail)
                         </span>
                         <span class="metadata-item">
-                            <strong>Step:</strong> @selectedFormResponse.StepName
-                        </span>
-                        <span class="metadata-item">
                             <strong>Submitted:</strong> @selectedFormResponse.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                         </span>
                         @if (selectedFormResponse.UpdatedAt.HasValue)
@@ -779,13 +778,6 @@
 
             <!-- Modal Footer -->
             <div class="modal-footer">
-                <!-- Status Display -->
-                <div class="form-status">
-                    <span class="status-label">Status:</span>
-                    <span class="status-value" style="background: @GetStatusColor(GetFormStatus(selectedFormResponse)); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 12px; font-weight: 600; border: none;">
-                        @GetFormStatus(selectedFormResponse)
-                    </span>
-                </div>
 
                 <!-- Review Actions - doar pentru formulare cu status Pending -->
                 @if (ShouldShowReviewButtons(selectedFormResponse))

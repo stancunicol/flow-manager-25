@@ -44,8 +44,8 @@ namespace FlowManager.Application.Services
                         Email = ut.User.Email,
                         Step = new Shared.DTOs.Responses.Step.StepResponseDto
                         {
-                            Id = ut.User.StepId,
-                            Name = ut.User.Step.Name
+                            StepId = ut.User.StepId,
+                            StepName = ut.User.Step.Name
                         }
                     }).ToList(),
                     UsersCount = t.Users?.Count(u => u.DeletedAt == null) ?? 0,

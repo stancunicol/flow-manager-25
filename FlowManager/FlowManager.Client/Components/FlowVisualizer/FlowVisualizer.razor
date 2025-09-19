@@ -1,5 +1,6 @@
 ﻿@using FlowManager.Shared.DTOs.Responses.Step
 @using FlowManager.Shared.DTOs.Requests.FormResponse
+@using FlowManager.Shared.DTOs.Responses.FlowStep
 
 <div class="flow-visualizer">
     <div class="flow-header">
@@ -18,20 +19,23 @@
         <div class="flow-container">
             @for (int i = 0; i < FlowSteps.Count; i++)
             {
-                var step = FlowSteps[i];
-                var stepStatus = GetStepStatus(step, i);
+                var currentFlowStep = FlowSteps[i];
+                var stepStatus = GetStepStatus(currentFlowStep, i);
                 var isLastStep = i == FlowSteps.Count - 1;
+
+                string flowStepItemsNames = string.Join("/", currentFlowStep.FlowStepItems.Select(fsi => fsi.Step.StepName));
 
                 <div class="step-wrapper">
                     <!-- Step Circle -->
                     <div class="step-circle @GetStepStatusClass(stepStatus)"
-                         title="@step.Name - @GetStepStatusText(stepStatus)">
-                        <span class="step-initials">@GetStepInitials(step.Name)</span>
+                         title="Step @(i + 1)">
+                        <!-- DE SCHIMBAT-->
+                        <span class="step-initials">Step @(i + 1)</span>
                     </div>
 
                     <!-- Step Label -->
                     <div class="step-label">
-                        <span class="step-name">@step.Name</span>
+                        <span class="step-name">@flowStepItemsNames</span>
                         <span class="step-status">@GetStepStatusText(stepStatus)</span>
                     </div>
 
@@ -73,9 +77,11 @@
 </div>
 
 @code {
-    [Parameter] public List<StepResponseDto>? FlowSteps { get; set; }
+    [Parameter] public List<FlowStepResponseDto>? FlowSteps { get; set; }
     [Parameter] public FormResponseResponseDto? FormResponse { get; set; }
     [Parameter] public bool IsLoading { get; set; } = false;
+
+    private bool isPendingStepSet { get; set; } = false;
 
     public enum StepStatus
     {
@@ -85,55 +91,26 @@
         Rejected     // Roșu - step-ul a fost respins
     }
 
-    private StepStatus GetStepStatus(StepResponseDto step, int stepIndex)
+    private StepStatus GetStepStatus(FlowStepResponseDto flowStep, int flowStepIndex)
     {
         if (FormResponse == null || FlowSteps == null) return StepStatus.Inactive;
 
-        // Găsește indexul step-ului curent al formularului
-        var currentStepIndex = FlowSteps.FindIndex(s => s.Id == FormResponse.StepId);
-
-        if (currentStepIndex == -1) return StepStatus.Inactive;
-
-        // Verifică dacă formularul a fost respins la acest step
-        if (stepIndex == currentStepIndex && !string.IsNullOrEmpty(FormResponse.RejectReason))
+        if (flowStep.IsApproved.HasValue)
         {
-            return StepStatus.Rejected;
+            return flowStep.IsApproved.Value ? StepStatus.Completed : StepStatus.Rejected;
         }
 
-        // Verifică statusul general al formularului
-        if (FormResponse.Status == "Approved")
+        bool allPreviousCompleted = true;
+        for (int i = 0; i < flowStepIndex; i++)
         {
-            // Toate step-urile sunt completate dacă formularul e aprobat final
-            return StepStatus.Completed;
+            if (!FlowSteps[i].IsApproved.HasValue || !FlowSteps[i].IsApproved.Value)
+            {
+                allPreviousCompleted = false;
+                break;
+            }
         }
 
-        if (FormResponse.Status == "Rejected")
-        {
-            // Step-ul curent e rejected, restul inactive
-            if (stepIndex == currentStepIndex)
-                return StepStatus.Rejected;
-            else if (stepIndex < currentStepIndex)
-                return StepStatus.Completed;
-            else
-                return StepStatus.Inactive;
-        }
-
-        // Pentru formulare în progres (Pending)
-        if (stepIndex < currentStepIndex)
-        {
-            // Step-urile anterioare sunt completate
-            return StepStatus.Completed;
-        }
-        else if (stepIndex == currentStepIndex)
-        {
-            // Step-ul curent e în așteptare
-            return StepStatus.Pending;
-        }
-        else
-        {
-            // Step-urile următoare sunt inactive
-            return StepStatus.Inactive;
-        }
+        return allPreviousCompleted ? StepStatus.Pending : StepStatus.Inactive;
     }
 
     private string GetStepStatusClass(StepStatus status)

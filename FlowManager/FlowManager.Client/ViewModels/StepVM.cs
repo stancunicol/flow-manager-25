@@ -6,12 +6,13 @@ namespace FlowManager.Client.ViewModels
 {
     public class StepVM
     {
-        public Guid Id { get; set; }
-        public Guid? FlowStepId { get; set; }
+        public Guid? Id { get; set; }
         public string? Name { get; set; } = string.Empty;
 
         public List<UserVM>? Users { get; set; }
         public List<TeamVM>? Teams { get; set; }
+
+        public List<FlowStepVM>? FlowSteps { get; set; }
 
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

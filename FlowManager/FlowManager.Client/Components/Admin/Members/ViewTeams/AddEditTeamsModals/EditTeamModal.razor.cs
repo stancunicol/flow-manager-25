@@ -55,7 +55,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 PageSize = _pageSize
             };
 
-            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id, TeamToEdit.Id, payload);
+            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id ?? Guid.Empty, TeamToEdit.Id, payload);
 
             _selectedUsers = response.Result.AssignedToTeamUsers.Select(u => new UserVM
             {
@@ -108,7 +108,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 };
             }
 
-            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id, TeamToEdit.Id, payload);
+            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id ?? Guid.Empty, TeamToEdit.Id, payload);
 
             if (!response.Success)
             {

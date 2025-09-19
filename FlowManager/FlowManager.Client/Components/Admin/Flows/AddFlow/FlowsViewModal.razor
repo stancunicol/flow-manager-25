@@ -61,23 +61,29 @@
                             </div>
 
                             <!-- Flow Steps Preview -->
-                            @if (flow.Steps?.Any() == true)
+                            @if (flow.FlowSteps?.Any() == true)
                             {
                                 <div class="flow-steps">
                                     <div class="steps-label">Steps:</div>
                                     <div class="steps-list">
-                                        @foreach (var step in flow.Steps.Take(3))
+
+                                        @for (int i = 0; i < flow.FlowSteps.Take(3).Count(); i++)
                                         {
+                                            var flowStep = flow.FlowSteps[i];
+                                            int index = i;
+
                                             <div class="step-item">
                                                 <div class="step-avatar">
-                                                    @step.Name!.Substring(0, Math.Min(2, step.Name.Length)).ToUpper()
+                                                    @(index + 1)
                                                 </div>
-                                                <span class="step-name">@step.Name</span>
+                                                <span class="step-name">
+                                                    @string.Join("/", flowStep.FlowStepItems.Select(item => item.Step!.StepName))
+                                                </span>
                                             </div>
                                         }
-                                        @if (flow.Steps.Count > 3)
+                                        @if (flow.FlowSteps.Count > 3)
                                         {
-                                            <div class="more-steps">+@(flow.Steps.Count - 3) more</div>
+                                            <div class="more-steps">+@(flow.FlowSteps.Count - 3) more</div>
                                         }
                                     </div>
                                 </div>
@@ -175,5 +181,5 @@
 {
     <FlowManager.Client.Components.Admin.Flows.EditFlowModal.EditFlowModal Flow="_selectedFlow"
                                                                            OnClose="CloseEditModal"
-                                                                           OnFlowUpdated="OnFlowUpdated" />
+                                                                           OnFlowUpdated="OnFlowUpdated"/>
 }

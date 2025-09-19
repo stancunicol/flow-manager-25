@@ -24,8 +24,8 @@ namespace FlowManager.Domain.Entities
         public virtual FormTemplate FormTemplate { get; set; }
         public Guid FormTemplateId { get; set; }
 
-        public virtual Step Step { get; set; }
-        public Guid StepId { get; set; }
+        public virtual FlowStep FlowStep { get; set; } // active flowstep
+        public Guid FlowStepId { get; set; }
 
         public virtual User User { get; set; }
         public Guid UserId { get; set; }

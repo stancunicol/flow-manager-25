@@ -10,7 +10,7 @@ namespace FlowManager.Client.ViewModels
 
         public FormTemplateVM? FormTemplate { get; set; }
 
-        public List<FlowStepVM>? Steps { get; set; }
+        public List<FlowStepVM>? FlowSteps { get; set; }
 
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

@@ -15,7 +15,7 @@ namespace FlowManager.Domain.IRepositories
         Task<Flow?> GetFlowByIdAsync(Guid id);
         Task<Flow?> GetFlowIncludeDeletedStepsByIdAsync(Guid id);
         Task<Flow> CreateFlowAsync(Flow flow);
-        Task<Flow?> GetFlowByIdIncludeStepsAsync(Guid flowId,Guid moderatorId);
+        Task<Flow?> GetFlowByIdIncludeStepsAsync(Guid flowId,Guid moderatorRoleId);
         Task<Flow?> GetFlowByNameAsync(string flowName);
         Task<Flow?> GetFlowByFormTemplateIdAsync(Guid formTemplateId);
         Task SaveChangesAsync();

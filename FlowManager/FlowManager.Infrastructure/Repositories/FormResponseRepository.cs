@@ -1,5 +1,4 @@
-﻿// Infrastructure/Repositories/FormResponseRepository.cs
-using FlowManager.Domain.Dtos;
+﻿using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Infrastructure.Context;
@@ -18,19 +17,21 @@ namespace FlowManager.Infrastructure.Repositories
         }
 
         public async Task<(List<FormResponse> Data, int TotalCount)> GetAllFormResponsesQueriedAsync(
-    Guid? formTemplateId,
-    Guid? stepId,
-    Guid? userId,
-    string? searchTerm,
-    DateTime? createdFrom,
-    DateTime? createdTo,
-    bool includeDeleted,
-    QueryParams? parameters,
-    List<string>? statusFilters = null)
+            Guid? formTemplateId,
+            Guid? stepId,
+            Guid? userId,
+            string? searchTerm,
+            DateTime? createdFrom,
+            DateTime? createdTo,
+            bool includeDeleted,
+            QueryParams? parameters,
+            List<string>? statusFilters = null)
         {
             IQueryable<FormResponse> query = _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Include(fr => fr.CompletedByOtherUser)
                 .AsQueryable();
@@ -48,7 +49,7 @@ namespace FlowManager.Infrastructure.Repositories
 
             if (stepId.HasValue && stepId != Guid.Empty)
             {
-                query = query.Where(fr => fr.StepId == stepId.Value);
+                query = query.Where(fr => fr.FlowStep.FlowStepItems.Any(flowStepItem => flowStepItem.Step.Id == stepId.Value));
             }
 
             if (userId.HasValue)
@@ -71,12 +72,11 @@ namespace FlowManager.Infrastructure.Repositories
                 var search = searchTerm.ToUpper();
                 query = query.Where(fr =>
                     fr.FormTemplate.Name.ToUpper().Contains(search) ||
-                    fr.Step.Name.ToUpper().Contains(search) ||
+                    fr.FlowStep.FlowStepItems.Any(flowStepItem => flowStepItem.Step.Name.ToUpper().Contains(search)) ||
                     fr.User.Name.ToUpper().Contains(search) ||
                     (fr.RejectReason != null && fr.RejectReason.ToUpper().Contains(search)));
             }
 
-            // ADAUGĂ filtrarea după statusuri
             if (statusFilters != null && statusFilters.Any())
             {
                 query = query.Where(fr => statusFilters.Contains(fr.Status ?? "Pending"));
@@ -117,7 +117,9 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.DeletedAt == null)
                 .OrderByDescending(fr => fr.CreatedAt)
@@ -128,7 +130,11 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                    .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
+                        .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.DeletedAt == null)
                 .FirstOrDefaultAsync(fr => fr.Id == id);
@@ -138,20 +144,24 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.UserId == userId && fr.DeletedAt == null)
                 .OrderByDescending(fr => fr.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<List<FormResponse>> GetFormResponsesByStepAsync(Guid stepId)
+        public async Task<List<FormResponse>> GetFormResponsesByFlowStepAsync(Guid flowStepId)
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
-                .Where(fr => fr.StepId == stepId && fr.DeletedAt == null)
+                .Where(fr => fr.FlowStepId == flowStepId && fr.DeletedAt == null)
                 .OrderByDescending(fr => fr.CreatedAt)
                 .ToListAsync();
         }
@@ -160,7 +170,9 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.FormTemplateId == formTemplateId && fr.DeletedAt == null)
                 .OrderByDescending(fr => fr.CreatedAt)
@@ -177,28 +189,30 @@ namespace FlowManager.Infrastructure.Repositories
         {
             var responses = await _context.FormResponses
                 .Include(formResponse => formResponse.User)
-                .Include(formResponse => formResponse.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(formResponse => formResponse.FormTemplate)
                     .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
                         .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
-                            .ThenInclude(flow => flow.Steps)
-                                .ThenInclude(flowStep => flowStep.AssignedUsers)
+                            .ThenInclude(flow => flow.FlowSteps)
+                                .ThenInclude(flowStep => flowStep.FlowStepItems)
+                                    .ThenInclude(flowStepItem => flowStepItem.AssignedUsers)
                 .Include(fr => fr.FormTemplate)
                     .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
                         .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
-                            .ThenInclude(flow => flow.Steps)
-                                .ThenInclude(flowStep => flowStep.AssignedTeams)
-                                    .ThenInclude(flowStepTeam => flowStepTeam.Team)
-                                        .ThenInclude(flowStepTeam => flowStepTeam.Users)
+                            .ThenInclude(flow => flow.FlowSteps)
+                                .ThenInclude(flowStep => flowStep.FlowStepItems)
+                                    .ThenInclude(flowStepItem => flowStepItem.AssignedTeams)
+                                        .ThenInclude(flowStepTeam => flowStepTeam.Team)
+                                            .ThenInclude(flowStepTeam => flowStepTeam.Users)
                 .ToListAsync();
 
             responses = responses.Where(formResponse =>
                 (formResponse.Status == null || formResponse.Status == "Pending") &&
-                
-                (formResponse.FormTemplate.ActiveFlow?.Steps.Any(flowStep =>
-                    flowStep.StepId == formResponse.StepId &&
-                    (flowStep.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId) ||
-                    flowStep.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId)))
+                (formResponse.FormTemplate.ActiveFlow?.FlowSteps.Any(flowStep =>
+                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId && flowStepUser.FlowStepItem.FlowStepId == formResponse.FlowStepId)) ||
+                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId) && flowStepTeam.FlowStepItem.FlowStepId == formResponse.FlowStepId))
                 ) ?? false)
             ).ToList();
 
@@ -213,7 +227,7 @@ namespace FlowManager.Infrastructure.Repositories
             {
                 responses = responses.Where(fr =>
                     (fr.FormTemplate != null && fr.FormTemplate.Name.Contains(searchTerm)) ||
-                    (fr.Step != null && fr.Step.Name.Contains(searchTerm)) ||
+                    (fr.FlowStep != null && fr.FlowStep.FlowStepItems.Any(flowStepItem => flowStepItem.Step.Name.Contains(searchTerm))) ||
                     (fr.User != null && (!string.IsNullOrEmpty(fr.User.Name) && fr.User.Name.Contains(searchTerm) ||
                                         !string.IsNullOrEmpty(fr.User.Email) && fr.User.Email.Contains(searchTerm))) ||
                     (fr.RejectReason != null && fr.RejectReason.Contains(searchTerm))
@@ -250,37 +264,19 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.Steps
                 .Include(s => s.FlowSteps)
-                    .ThenInclude(fs => fs.Flow)
-                        .ThenInclude(f => f.Steps.Where(fs => fs.DeletedAt == null))
-                            .ThenInclude(fs => fs.Step)
+                    .ThenInclude(s => s.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.FlowStep)
+                            .ThenInclude(fs => fs.Flow)
                 .FirstOrDefaultAsync(s => s.Id == stepId && s.DeletedAt == null);
-        }
-
-        public async Task<bool> IsLastStepInFlowAsync(Guid stepId)
-        {
-            var step = await _context.Steps
-                .Include(s => s.FlowSteps)
-                    .ThenInclude(fs => fs.Flow)
-                        .ThenInclude(f => f.Steps.Where(fs => fs.DeletedAt == null))
-                            .ThenInclude(fs => fs.Step)
-                .FirstOrDefaultAsync(s => s.Id == stepId && s.DeletedAt == null);
-
-            if (step?.FlowSteps?.FirstOrDefault()?.Flow?.Steps == null)
-                return false;
-
-            var orderedSteps = step.FlowSteps.First().Flow.Steps
-                .OrderBy(fs => fs.CreatedAt)
-                .Select(fs => fs.Step)
-                .ToList();
-
-            return orderedSteps.LastOrDefault()?.Id == stepId;
         }
 
         public async Task<List<FormResponse>> GetFormResponsesByStatusAsync(string status)
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.Status == status && fr.DeletedAt == null)
                 .OrderByDescending(fr => fr.CreatedAt)
@@ -291,7 +287,9 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.DeletedAt == null && fr.RejectReason == null)
                 .OrderByDescending(fr => fr.CreatedAt)
@@ -302,7 +300,9 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.DeletedAt == null && fr.RejectReason != null)
                 .OrderByDescending(fr => fr.CreatedAt)
@@ -313,7 +313,9 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
                 .Where(fr => fr.DeletedAt == null &&
                             fr.CreatedAt >= startDate &&
@@ -327,7 +329,7 @@ namespace FlowManager.Infrastructure.Repositories
             return await _context.FormResponses
                 .AnyAsync(fr => fr.UserId == userId &&
                                fr.FormTemplateId == formTemplateId &&
-                               fr.StepId == stepId &&
+                               fr.FlowStep.FlowStepItems.Any(flowStepItem => flowStepItem.FlowStepId == stepId) &&
                                fr.DeletedAt == null);
         }
 
@@ -337,30 +339,16 @@ namespace FlowManager.Infrastructure.Repositories
 
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
-                .Include(fr => fr.Step)
+                .Include(fr => fr.FlowStep)
+                    .ThenInclude(flowStep => flowStep.FlowStepItems)
+                        .ThenInclude(flowStepItem => flowStepItem.Step)
                 .Include(fr => fr.User)
-                .Where(fr => fr.StepId == stepId &&
+                .Where(fr => fr.FlowStep.FlowStepItems.Any(flowStepItem => flowStepItem.FlowStepId == stepId) &&
                             fr.DeletedAt == null &&
                             fr.CreatedAt <= cutoffDate &&
                             fr.RejectReason == null)
                 .OrderBy(fr => fr.CreatedAt)
                 .ToListAsync();
-        }
-
-        public async Task<int> BulkMoveToNextStepAsync(List<Guid> formResponseIds, Guid nextStepId)
-        {
-            var formResponses = await _context.FormResponses
-                .Where(fr => formResponseIds.Contains(fr.Id) && fr.DeletedAt == null)
-                .ToListAsync();
-
-            foreach (var formResponse in formResponses)
-            {
-                formResponse.StepId = nextStepId;
-                formResponse.UpdatedAt = DateTime.UtcNow;
-            }
-
-            await _context.SaveChangesAsync();
-            return formResponses.Count;
         }
 
         public async Task SaveChangesAsync()

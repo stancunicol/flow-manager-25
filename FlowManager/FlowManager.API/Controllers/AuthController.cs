@@ -123,6 +123,7 @@ namespace FlowManager.API.Controllers
                 Name = foundUser.Name,
                 Email = foundUser.Email,
                 UserName = foundUser.UserName,
+                StepId = foundUser.StepId,
                 Roles = foundUser.Roles
                     .Where(ur => ur.DeletedAt == null && ur.Role.DeletedAt == null)
                     .Select(ur => ur.Role.Name)

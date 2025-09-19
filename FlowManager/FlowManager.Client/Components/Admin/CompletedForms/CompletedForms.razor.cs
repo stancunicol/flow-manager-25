@@ -4,6 +4,7 @@ using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
 using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
 using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
@@ -35,7 +36,7 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
         private bool showViewFormModal = false;
         private bool isLoadingFormDetails = false;
         private bool isLoadingFlowSteps = false;
-        private List<StepResponseDto>? flowSteps;
+        private List<FlowStepResponseDto>? flowSteps;
         private FormResponseResponseDto? selectedFormResponse;
         private FormTemplateResponseDto? selectedFormTemplate;
         private List<ComponentResponseDto>? formComponents;
@@ -219,7 +220,6 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
         private async Task ViewFormResponse(FormResponseResponseDto formResponse)
         {
             selectedFormResponse = formResponse;
-            showViewFormModal = true;
             isLoadingFormDetails = true;
             isLoadingFlowSteps = true;
             StateHasChanged();
@@ -234,6 +234,8 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
                     await LoadFormComponents();
                     await LoadFlowSteps();
                 }
+
+                showViewFormModal = true;
             }
             catch (Exception ex)
             {
@@ -252,7 +254,7 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
         {
             if (selectedFormResponse == null)
             {
-                flowSteps = new List<StepResponseDto>();
+                flowSteps = new List<FlowStepResponseDto>();
                 return;
             }
 
@@ -260,64 +262,25 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
             {
                 isLoadingFlowSteps = true;
 
-                var stepResponse = await Http.GetAsync($"api/steps/{selectedFormResponse.StepId}");
-                if (stepResponse.IsSuccessStatusCode)
+                if (selectedFormTemplate?.FlowId != null)
                 {
-                    var stepApiResponse = await stepResponse.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
-                    var step = stepApiResponse?.Result;
-
-                    if (step != null)
+                    var flowStepsResponse = await Http.GetAsync($"api/flows/{selectedFormTemplate.FlowId}/steps");
+                    if (flowStepsResponse.IsSuccessStatusCode)
                     {
-                        if (selectedFormTemplate?.FlowId != null)
-                        {
-                            var flowStepsResponse = await Http.GetAsync($"api/flows/{selectedFormTemplate.FlowId}/steps");
-                            if (flowStepsResponse.IsSuccessStatusCode)
-                            {
-                                var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<StepResponseDto>>>();
-                                flowSteps = flowStepsApiResponse?.Result ?? new List<StepResponseDto>();
-                                return;
-                            }
-                        }
-
-                        var flowsResponse = await Http.GetAsync("api/flows/queried?QueryParams.PageSize=100");
-                        if (flowsResponse.IsSuccessStatusCode)
-                        {
-                            var flowsApiResponse = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
-                            var flows = flowsApiResponse?.Result?.Data;
-
-                            if (flows?.Any() == true)
-                            {
-                                var matchingFlow = flows.FirstOrDefault(f => f.Steps?.Any(s => s.Id == selectedFormResponse.StepId) == true);
-                                if (matchingFlow != null)
-                                {
-                                    var flowStepsResponse = await Http.GetAsync($"api/flows/{matchingFlow.Id}/steps");
-                                    if (flowStepsResponse.IsSuccessStatusCode)
-                                    {
-                                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<StepResponseDto>>>();
-                                        flowSteps = flowStepsApiResponse?.Result ?? new List<StepResponseDto>();
-                                    }
-                                    else
-                                    {
-                                        flowSteps = matchingFlow.Steps ?? new List<StepResponseDto>();
-                                    }
-                                }
-                                else
-                                {
-                                    flowSteps = new List<StepResponseDto> { step };
-                                }
-                            }
-                        }
+                        var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
+                        flowSteps = flowStepsApiResponse?.Result;
+                        return;
                     }
                 }
                 else
                 {
-                    flowSteps = new List<StepResponseDto>();
+                    flowSteps = new List<FlowStepResponseDto>();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading flow steps: {ex.Message}");
-                flowSteps = new List<StepResponseDto>();
+                flowSteps = new List<FlowStepResponseDto>();
             }
             finally
             {
@@ -325,6 +288,7 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
                 StateHasChanged();
             }
         }
+
 
         private string GetFormStatus(FormResponseResponseDto form)
         {

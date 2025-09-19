@@ -15,11 +15,10 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
         public Dictionary<Guid, object>? ResponseFields { get; set; }
 
         public Guid? ReviewerId { get; set; }
+        public Guid? ReviewerStepId { get; set; }
 
         [MaxLength(100, ErrorMessage = "RejectReason cannot exceed 100 characters")]
         public string? RejectReason { get; set; }
         public string? Status { get; set; }
-
-        public Guid? StepId { get; set; }
     }
 }

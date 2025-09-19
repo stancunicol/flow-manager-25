@@ -95,8 +95,8 @@ namespace FlowManager.Infrastructure.Services
                     PhoneNumber = u.PhoneNumber,
                     Step = new Shared.DTOs.Responses.Step.StepResponseDto
                     {
-                        Id = u.StepId,
-                        Name = u.Step.Name
+                        StepId = u.StepId,
+                        StepName = u.Step.Name
                     },
                     Teams = u.Teams.Select(ut => new TeamResponseDto
                     {
@@ -456,8 +456,8 @@ namespace FlowManager.Infrastructure.Services
                     UserName = u.UserName,
                     Step = new Shared.DTOs.Responses.Step.StepResponseDto
                     {
-                        Id = u.StepId,
-                        Name = u.Step.Name
+                        StepId = u.StepId,
+                        StepName = u.Step.Name
                     },
                     Teams = u.Teams.Select(ut => new TeamResponseDto
                     {

@@ -62,8 +62,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
             _availableSteps = response.Result.Data.Select(s => new StepVM
             {
-                Id = s.Id,
-                Name = s.Name
+                Id = s.StepId,
+                Name = s.StepName
             }).ToList();
         }
 
@@ -223,8 +223,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         {
             if (_selectedStepId != step.Id)
             {
-                _selectedStepId = step.Id;
-                _selectedStepName = step.Name;
+                _selectedStepId = step.Id ?? Guid.Empty;
+                _selectedStepName = step.Name ?? string.Empty;
                 _selectedUsers.Clear();
                 await LoadUsersAsync(resetPageSize: true);
             }

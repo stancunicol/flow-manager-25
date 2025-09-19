@@ -123,15 +123,15 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                     for (int i = 0; i < pageDepartments.Count; i++)
                     {
-                        var departmentDetails = await stepService.GetStepAsync(pageDepartments[i].Id);
+                        var departmentDetails = await stepService.GetStepAsync(pageDepartments[i].StepId);
                         if (departmentDetails != null)
                             pageDepartments[i] = departmentDetails;
 
                         pageDepartments[i].Users ??= new List<UserResponseDto>();
                         pageDepartments[i].Teams ??= new List<TeamResponseDto>();
 
-                        if (!departmentColors.ContainsKey(pageDepartments[i].Id))
-                            departmentColors[pageDepartments[i].Id] = GetRandomGradient();
+                        if (!departmentColors.ContainsKey(pageDepartments[i].StepId))
+                            departmentColors[pageDepartments[i].StepId] = GetRandomGradient();
                     }
 
                     departmentsInUI.AddRange(pageDepartments);
@@ -148,11 +148,11 @@ namespace FlowManager.Client.Components.Admin.Steps
         private async Task OpenModal(StepResponseDto department)
         {
             isModalOpen = true;
-            var stepDetails = await stepService.GetStepAsync(department.Id);
+            var stepDetails = await stepService.GetStepAsync(department.StepId);
 
             if (stepDetails != null)
             {
-                Console.WriteLine($"Loaded step: {stepDetails.Name} ({stepDetails.Id})");
+                Console.WriteLine($"Loaded step: {stepDetails.StepName} ({stepDetails.StepId})");
                 selectedDepartment = stepDetails;
             }
             else
@@ -192,7 +192,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                 return;
             }
 
-            if (departments.Any(d => d.Name.Equals(newDepName.Trim(), StringComparison.OrdinalIgnoreCase)))
+            if (departments.Any(d => d.StepName.Equals(newDepName.Trim(), StringComparison.OrdinalIgnoreCase)))
             {
                 Console.WriteLine("A department with this name already exists!");
                 error = "This department name already exists. Try another.";
@@ -343,20 +343,20 @@ namespace FlowManager.Client.Components.Admin.Steps
             {
                 var payload = new CreateStepHistoryRequestDto
                 {
-                    StepId = selectedDepartment.Id,
-                    OldDepartmentName = selectedDepartment.Name,
+                    StepId = selectedDepartment.StepId,
+                    OldDepartmentName = selectedDepartment.StepName,
                     NewName = editDepName.Trim()
                 };
 
-                selectedDepartment.Name = editDepName.Trim();
+                selectedDepartment.StepName = editDepName.Trim();
 
                 var updatePayload = new PatchStepRequestDto
                 {
-                    Name = selectedDepartment.Name,
+                    Name = selectedDepartment.StepName,
                     UserIds = selectedDepartment.Users.Select(u => u.Id).ToList()
                 };
 
-                await stepService.UpdateStepAsync(selectedDepartment.Id, updatePayload);
+                await stepService.UpdateStepAsync(selectedDepartment.StepId, updatePayload);
 
                 await stepHistoryService.CreateStepHistoryForNameChangeAsync(payload);
 
@@ -442,7 +442,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                     TeamIds = selectedDepartment.Teams.Select(t => t.Id).ToList()
                 };
 
-                await stepService.UpdateStepAsync(selectedDepartment.Id, targetPayload);
+                await stepService.UpdateStepAsync(selectedDepartment.StepId, targetPayload);
 
                 var deletePayload = new PatchStepRequestDto
                 {
@@ -450,7 +450,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                     TeamIds = departmentToDelete.Teams?.Select(t => t.Id).ToList() ?? new List<Guid>()
                 };
 
-                await stepService.UpdateStepAsync(departmentToDelete.Id, deletePayload);
+                await stepService.UpdateStepAsync(departmentToDelete.StepId, deletePayload);
 
                 bool isEmpty = (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
                                && (departmentToDelete.Teams == null || !departmentToDelete.Teams.Any());
@@ -460,16 +460,29 @@ namespace FlowManager.Client.Components.Admin.Steps
                 {
                     var payload = new CreateStepHistoryRequestDto
                     {
-                        OldDepartmentName = departmentToDelete.Name,
-                        StepId = departmentToDelete.Id
+                        OldDepartmentName = departmentToDelete.StepName,
+                        StepId = departmentToDelete.StepId
                     };
 
-                    var result = await stepService.DeleteStepAsync(departmentToDelete.Id);
+                    if (movedUsers != null && movedUsers.Any())
+                    {
+                        var payloadForUsers = new CreateStepHistoryRequestDto
+                        {
+                            StepId = selectedDepartment.StepId,
+                            Users = movedUsers,
+                            FromDepartment = departmentToDelete.StepName,
+                            ToDepartment = selectedDepartment.StepName
+                        };
+
+                        await stepHistoryService.CreateStepHistoryForMoveUsersAsync(payloadForUsers);
+                    }
+
+                    var result = await stepService.DeleteStepAsync(departmentToDelete.StepId);
                     if (result != false)
                     {
                         await stepHistoryService.CreateStepHistoryForDeleteDepartmentAsync(payload);
-                        departmentsInUI.RemoveAll(d => d.Id == departmentToDelete.Id);
-                        departments.RemoveAll(d => d.Id == departmentToDelete.Id);
+                        departmentsInUI.RemoveAll(d => d.StepId == departmentToDelete.StepId);
+                        departments.RemoveAll(d => d.StepId == departmentToDelete.StepId);
                     }
 
                     await CloseMoveUsersModal();
@@ -481,7 +494,7 @@ namespace FlowManager.Client.Components.Admin.Steps
                     isDeleteModalOpen = true;
                     StateHasChanged();
 
-                    Console.WriteLine($"♻️ Department '{departmentToDelete.Name}' still has users/teams, reopening selection.");
+                    Console.WriteLine($"♻️ Department '{departmentToDelete.StepName}' still has users/teams, reopening selection.");
                 }
             }
             catch (Exception ex)
@@ -502,7 +515,7 @@ namespace FlowManager.Client.Components.Admin.Steps
         private void OpenChangeNameModal(StepResponseDto department)
         {
             selectedDepartment = department;
-            editDepName = department.Name;
+            editDepName = department.StepName;
             currentEditType = EditType.ChangeName;
             isEditModalOpen = true;
             StateHasChanged();
@@ -563,16 +576,16 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                 var sourcePayload = new PatchStepRequestDto
                 {
-                    Name = selectedDepartment.Name,
+                    Name = selectedDepartment.StepName,
                     UserIds = selectedDepartment.Users.Select(u => u.Id).ToList(),
                     TeamIds = selectedDepartment.Teams.Select(t => t.Id).ToList()
                 };
 
-                await stepService.UpdateStepAsync(selectedDepartment.Id, sourcePayload);
+                await stepService.UpdateStepAsync(selectedDepartment.StepId, sourcePayload);
 
                 var targetPayload = new PatchStepRequestDto
                 {
-                    Name = departmentToMove.Name,
+                    Name = departmentToMove.StepName,
                     UserIds = departmentToMove.Users.Select(u => u.Id).ToList(),
                     TeamIds = departmentToMove.Teams.Select(t => t.Id).ToList()
                 };
@@ -587,15 +600,15 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                 var payload = new CreateStepHistoryRequestDto
                 {
-                    StepId = selectedDepartment.Id,
+                    StepId = selectedDepartment.StepId,
                     Users = movedUsers,
-                    FromDepartment = selectedDepartment.Name,
-                    ToDepartment = departmentToMove.Name
+                    FromDepartment = selectedDepartment.StepName,
+                    ToDepartment = departmentToMove.StepName
                 };
 
                 Console.WriteLine($"History payload users: {string.Join(", ", payload.Users)}");
 
-                await stepService.UpdateStepAsync(departmentToMove.Id, targetPayload);
+                await stepService.UpdateStepAsync(departmentToMove.StepId, targetPayload);
 
                 Console.WriteLine($"Target payload: {targetPayload.UserIds.Count} users");
                 Console.WriteLine($"Source payload: {sourcePayload.UserIds.Count} users");
@@ -676,7 +689,7 @@ namespace FlowManager.Client.Components.Admin.Steps
             else
             {
                 departmentsInUI = departments
-                    .Where(d => d.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                    .Where(d => d.StepName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 

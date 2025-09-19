@@ -356,13 +356,14 @@ namespace FlowManager.Infrastructure.Seed
                 {
                     Id = Guid.NewGuid(),
                     FormTemplateId = template.Id,
-                    StepId = step.Id,
+                    FlowStepId = template.ActiveFlow.FlowSteps.First().Id,
                     UserId = user.Id,
                     ResponseFields = responseFields,
                     RejectReason = random.Next(10) == 0 ? "Sample rejection reason" : null,
                     CreatedAt = DateTime.UtcNow.AddDays(-random.Next(30)),
                     UpdatedAt = random.Next(5) == 0 ? DateTime.UtcNow.AddDays(-random.Next(10)) : null
                 };
+
 
                 sampleFormResponses.Add(formResponse);
             }

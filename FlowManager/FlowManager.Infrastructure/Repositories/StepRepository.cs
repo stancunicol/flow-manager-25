@@ -80,12 +80,14 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FlowSteps
                 .Where(fs => fs.FlowId == flowId)
-                .Include(fs => fs.AssignedUsers)
-                    .ThenInclude(fsu => fsu.User)
-                .Include(fs => fs.AssignedTeams)
-                    .ThenInclude(fst => fst.Team)
-                        .ThenInclude(t => t.Users)
-                .Select(fs => fs.Step)
+                .Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedUsers)
+                        .ThenInclude(fsu => fsu.User)
+                .Include(fs => fs.FlowStepItems)
+                    .ThenInclude(fs => fs.AssignedTeams)
+                        .ThenInclude(fst => fst.Team)
+                            .ThenInclude(t => t.Users)
+                .SelectMany(fs => fs.FlowStepItems.Select(flowStepItem => flowStepItem.Step))
                 .ToListAsync();
         }
 
@@ -192,9 +194,9 @@ namespace FlowManager.Infrastructure.Repositories
                 .ToListAsync();
 
             var users = await _context.Users
-    .Where(u => stepIds.Contains(u.StepId))
-    .Include(u => u.Teams).ThenInclude(ut => ut.Team)
-    .ToListAsync();
+                .Where(u => stepIds.Contains(u.StepId))
+                .Include(u => u.Teams).ThenInclude(ut => ut.Team)
+                .ToListAsync();
 
             var usersGrouped = users.GroupBy(u => u.StepId)
                                     .ToDictionary(g => g.Key, g => g.ToList());
