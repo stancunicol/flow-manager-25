@@ -8,7 +8,10 @@ using FlowManager.Infrastructure;
 using FlowManager.Infrastructure.Context;
 using FlowManager.Infrastructure.Middleware;
 using FlowManager.Infrastructure.Repositories;
+using FlowManager.Infrastructure.Seed;
+using FlowManager.Infrastructure.Utils;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +20,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.WithOrigins("https://localhost:7082", "http://localhost:5223", "https://localhost:7195") 
+        policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5223",
+            "https://localhost:5223") 
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); 
@@ -29,9 +33,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.Name = "FlowManagerAuth";
     options.LoginPath = "/api/auth/login";
     options.AccessDeniedPath = "/access-denied";
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.HttpOnly = false;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = 401;
@@ -84,8 +88,10 @@ using (var scope = app.Services.CreateScope())
     AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-    // BasicSeed.Populate(dbContext, passwordHasher);
-    // MockDataSeed.Populate(dbContext, passwordHasher);
+    dbContext.Database.Migrate();
+
+    //BasicSeed.Populate(dbContext, passwordHasher);
+    //MockDataSeed.Populate(dbContext, passwordHasher);
 
 }
 
@@ -96,7 +102,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 // Use CORS
 app.UseRouting();
