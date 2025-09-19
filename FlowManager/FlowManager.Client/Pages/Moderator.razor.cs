@@ -1,23 +1,17 @@
-﻿using BlazorBootstrap;
+﻿using FlowManager.Client.Deserialization;
 using FlowManager.Client.DTOs;
-using FlowManager.Client.Deserialization;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
-using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
-using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
 using FlowManager.Shared.DTOs.Responses.FormReview;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
-using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;
-using static FlowManager.Client.Pages.FillForm;
 
 namespace FlowManager.Client.Pages
 {
@@ -25,6 +19,7 @@ namespace FlowManager.Client.Pages
     {
         [Inject] private FormReviewService FormReviewService { get; set; } = default!;
         [Inject] private AuthService _authService { get; set; } = default!;
+        [Inject] private FlowService flowService { get; set; } = default!;
 
         private string _activeTab = "ASSIGNED";
         protected string? errorMessage;
@@ -39,6 +34,7 @@ namespace FlowManager.Client.Pages
         private bool hasMoreForms = false;
         private int totalFormsCount = 0;
         private Guid currentModeratorId = Guid.Empty;
+        private Guid currentModeratorStepId = Guid.Empty;
 
         // Pagination state for assigned forms
         private int _pageSize = 8;
@@ -129,7 +125,7 @@ namespace FlowManager.Client.Pages
                     if (userInfo != null && userInfo.Id != Guid.Empty)
                     {
                         currentModeratorId = userInfo.Id;
-                        Console.WriteLine($"[DEBUG] Current moderator ID: {currentModeratorId}");
+                        currentModeratorStepId = userInfo.StepId ?? Guid.Empty;
                     }
                 }
             }
@@ -494,54 +490,59 @@ namespace FlowManager.Client.Pages
         {
             if (selectedFormResponse == null || selectedFormTemplate == null) return;
 
-            try
+            if(selectedFormTemplate.FlowId == null)
             {
-                // Găsește flow-ul pentru acest form template
-                var flowsResponse = await Http.GetAsync($"api/flows/queried?QueryParams.PageSize=100");
-                if (flowsResponse.IsSuccessStatusCode)
+                nextStepInfo = new NextStepInfo
                 {
-                    var flowsData = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
-                    var flows = flowsData?.Result?.Data;
+                    HasNextStep = false,
+                    NextStepId = null,
+                    NextStepName = null
+                };
+                return;
+            }
 
-                    Console.WriteLine($"[DEBUG STEPS] Found {flows?.Count() ?? 0} flows total");
+            ApiResponse<List<FlowStepResponseDto>> orderedFlowStepsResult = await flowService.GetFlowStepsByFlowIdAsync((Guid)selectedFormTemplate.FlowId);
 
-                    if (flows != null)
-                    {
-                        var associatedFlow = flows.FirstOrDefault(f => f.FormTemplateId == selectedFormTemplate.Id);
-                        Console.WriteLine($"[DEBUG STEPS] Associated flow: {associatedFlow?.Name ?? "NOT FOUND"}");
-                        Console.WriteLine($"[DEBUG STEPS] Flow has {associatedFlow?.FlowSteps?.Count() ?? 0} steps");
+            if(!orderedFlowStepsResult.Success || orderedFlowStepsResult.Result == null)
+            {
+                nextStepInfo = new NextStepInfo
+                {
+                    HasNextStep = false,
+                    NextStepId = null,
+                    NextStepName = null
+                };
+                return;
+            }
 
-                        if (associatedFlow?.FlowSteps?.Any() == true)
-                        {
-                            var orderedSteps = associatedFlow.FlowSteps.ToList();
-                            Console.WriteLine($"[DEBUG STEPS] Steps in order:");
+            var orderedFlowSteps = orderedFlowStepsResult.Result.OrderBy(fs => fs.Order).ToList();  
 
-                            var currentStepIndex = orderedSteps.FindIndex(fs => fs.Id == selectedFormResponse.Id);
-                            Console.WriteLine($"[DEBUG STEPS] Current step index: {currentStepIndex}");
-
-                            if (currentStepIndex >= 0)
-                            {
-                                var hasNextStep = currentStepIndex < orderedSteps.Count - 1;
-                                Console.WriteLine($"[DEBUG STEPS] Has next step: {hasNextStep}");
-
-
-                                nextStepInfo = new NextStepInfo
-                                {
-                                    HasNextStep = hasNextStep,
-                                    NextStepName = hasNextStep ? orderedSteps[currentStepIndex + 1].FlowStepItems.First().Step.StepName : null,
-                                    NextStepId = hasNextStep ? orderedSteps[currentStepIndex + 1].FlowStepItems.First().Step.StepId : null
-                                };
-
-                                Console.WriteLine($"[DEBUG STEPS] NextStepInfo created: HasNext={nextStepInfo.HasNextStep}, NextName={nextStepInfo.NextStepName}, NextId={nextStepInfo.NextStepId}");
-                            }
-                        }
-                    }
+            foreach(var flowStep in orderedFlowSteps)
+            {
+                foreach(var step in flowStep.FlowStepItems)
+                {
+                    Console.WriteLine($"[DEBUG STEPS] FlowStep ID: {flowStep.Id}, Step Name: {step.Step.StepName}");
                 }
             }
-            catch (Exception ex)
+
+            Console.WriteLine($"[DEBUG STEPS] Current step ID: {selectedFormResponse.FlowStep?.Id}");
+            var currentStepIndex = orderedFlowSteps.FindIndex(fs => fs.Id == selectedFormResponse.FlowStep.Id);
+            Console.WriteLine($"[DEBUG STEPS] Current step index: {currentStepIndex}");
+
+            if (currentStepIndex >= 0)
             {
-                Console.WriteLine($"Error loading next step info: {ex.Message}");
+                var hasNextStep = currentStepIndex < orderedFlowSteps.Count - 1;
+                Console.WriteLine($"[DEBUG STEPS] Has next step: {hasNextStep}");
+
+                nextStepInfo = new NextStepInfo
+                {
+                    HasNextStep = hasNextStep,
+                    NextStepName = hasNextStep ? string.Join("/",orderedFlowSteps[currentStepIndex + 1].FlowStepItems.Select(fsi => fsi.Step.StepName)) : null,
+                    NextStepId = hasNextStep ? orderedFlowSteps[currentStepIndex + 1].Id : null
+                };
+
+                Console.WriteLine($"[DEBUG STEPS] NextStepInfo created: HasNext={nextStepInfo.HasNextStep}, NextName={nextStepInfo.NextStepName}, NextId={nextStepInfo.NextStepId}");
             }
+
         }
 
         private async Task ParseFormContent()
@@ -654,7 +655,8 @@ namespace FlowManager.Client.Pages
                 var payload = new PatchFormResponseRequestDto
                 {
                     Id = selectedFormResponse.Id,
-                    ReviewerId = currentModeratorId
+                    ReviewerId = currentModeratorId,
+                    ReviewerStepId = currentModeratorStepId,
                 };
 
                 Console.WriteLine($"[DEBUG APPROVE] Form template: {selectedFormResponse.FormTemplateName}");
@@ -740,7 +742,8 @@ namespace FlowManager.Client.Pages
                 {
                     Id = selectedFormResponse.Id,
                     RejectReason = rejectReason.Trim(),
-                    ReviewerId = currentModeratorId // ADAUGĂ ID-ul moderatorului
+                    ReviewerId = currentModeratorId,
+                    ReviewerStepId = currentModeratorStepId,
                 };
 
                 var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
@@ -751,7 +754,7 @@ namespace FlowManager.Client.Pages
                     CloseRejectModal();
                     CloseViewFormModal();
                     await LoadAssignedForms();
-                    // ACTUALIZEAZĂ și istoricul dacă e deschis
+
                     if (_activeTab == "HISTORY")
                     {
                         await LoadReviewHistory();

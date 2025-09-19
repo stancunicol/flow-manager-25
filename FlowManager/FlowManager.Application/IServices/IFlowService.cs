@@ -2,6 +2,7 @@ using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
 using FlowManager.Shared.DTOs.Responses.Step;
 
 namespace FlowManager.Application.Interfaces
@@ -13,7 +14,7 @@ namespace FlowManager.Application.Interfaces
         Task<FlowResponseDto> GetFlowByIdAsync(Guid id);
         Task<FlowResponseDto> CreateFlowAsync(PostFlowRequestDto payload);
         Task<FlowResponseDto> DeleteFlowAsync(Guid id);
-        Task<List<FlowResponseDto>> GetStepsForFlowAsync(Guid flowId);
+        Task<List<FlowStepResponseDto>> GetStepsForFlowAsync(Guid flowId);
         Task<FlowResponseDto> GetFlowByIdIncludeStepsAsync(Guid flowId);
         Task<bool> GetFlowNameUnicityAsync(string flowName);
     }

@@ -220,7 +220,6 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
         private async Task ViewFormResponse(FormResponseResponseDto formResponse)
         {
             selectedFormResponse = formResponse;
-            showViewFormModal = true;
             isLoadingFormDetails = true;
             isLoadingFlowSteps = true;
             StateHasChanged();
@@ -235,6 +234,8 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
                     await LoadFormComponents();
                     await LoadFlowSteps();
                 }
+
+                showViewFormModal = true;
             }
             catch (Exception ex)
             {
@@ -267,11 +268,7 @@ namespace FlowManager.Client.Components.Admin.CompletedForms
                     if (flowStepsResponse.IsSuccessStatusCode)
                     {
                         var flowStepsApiResponse = await flowStepsResponse.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>();
-                        flowSteps = flowStepsApiResponse?.Result.Select(flow => new FlowStepResponseDto
-                        {
-                            FlowId = flow.FlowId,
-                            FlowStepItems = flow.FlowStepItems,
-                        }).ToList() ?? new List<FlowStepResponseDto>();
+                        flowSteps = flowStepsApiResponse?.Result;
                         return;
                     }
                 }

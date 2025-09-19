@@ -88,7 +88,7 @@ namespace FlowManager.API.Controllers
         {
             _logger.LogInformation("Getting form responses with filters - UserId: {UserId}, StatusFilters: [{StatusFilters}], Search: {SearchTerm}",
                 payload.UserId,
-                payload.StatusFilters != null ? string.Join(", ", payload.StatusFilters) : "All",
+                payload.StatusFilters != null ? string.Join("/", payload.StatusFilters) : "All",
                 payload.SearchTerm);
 
             var result = await _formResponseService.GetAllFormResponsesQueriedAsync(payload);

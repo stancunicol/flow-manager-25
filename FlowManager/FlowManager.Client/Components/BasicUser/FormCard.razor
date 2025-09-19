@@ -17,7 +17,7 @@
         <div class="form-info">
             <h4>@FormResponse.FormTemplateName</h4>
             <p class="form-meta">
-                Step: @string.Join(", ", FormResponse.FlowStep.FlowStepItems.Select(item => item.Step!.StepName))
+                Step: @string.Join("/", FormResponse.FlowStep.FlowStepItems.Select(item => item.Step!.StepName))
             </p>
         </div>
     </div>

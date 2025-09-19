@@ -131,9 +131,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<Guid>("FlowStepId")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Order")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid>("StepId")
                         .HasColumnType("TEXT");
 

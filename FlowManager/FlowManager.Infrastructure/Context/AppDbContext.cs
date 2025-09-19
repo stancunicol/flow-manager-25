@@ -117,6 +117,7 @@ namespace FlowManager.Infrastructure.Context
                 entity.HasOne(fr => fr.Reviewer)
                     .WithMany()
                     .HasForeignKey(fr => fr.ReviewerId)
+                    .HasForeignKey(fr => fr.ReviewerId)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(fr => fr.Step)

@@ -4,6 +4,7 @@ using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
 using FlowManager.Shared.DTOs.Responses.User;
 using System.Net.Http.Json;
 using System.Security;
@@ -215,20 +216,20 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<List<Step>> GetFlowStepsAsync(Guid flowId)
+        public async Task<ApiResponse<List<FlowStepResponseDto>>> GetFlowStepsByFlowIdAsync(Guid flowId)
         {
             try
             {
                 var response = await _httpClient.GetAsync($"api/flows/{flowId}/steps");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<Step>>() ?? new List<Step>();
+                    return await response.Content.ReadFromJsonAsync<ApiResponse<List<FlowStepResponseDto>>>() ?? new ApiResponse<List<FlowStepResponseDto>>();
                 }
-                return new List<Step>();
+                return new ApiResponse<List<FlowStepResponseDto>>();
             }
             catch
             {
-                return new List<Step>();
+                return new ApiResponse<List<FlowStepResponseDto>>();
             }
         }
     }

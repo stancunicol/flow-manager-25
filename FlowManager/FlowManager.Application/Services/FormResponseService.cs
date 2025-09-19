@@ -235,7 +235,7 @@ namespace FlowManager.Application.Services
                         Step = new Shared.DTOs.Responses.Step.StepResponseDto
                         {
                             StepId = fsi.Step?.Id ?? Guid.Empty,
-                            StepName = fsi.Step?.Name
+                            StepName = fsi.Step.Name
                         },
                     }).ToList() ?? new List<FlowStepItemResponseDto>()
                 },
@@ -286,7 +286,7 @@ namespace FlowManager.Application.Services
             };
 
             // starting a flow from first flowStep
-            formResponse.FlowStep = (await _flowRepository.GetFlowByIdAsync((Guid)(await _formTemplateRepository.GetFormTemplateByIdAsync(payload.FormTemplateId))!.ActiveFlowId!))!.FlowSteps.First();
+            formResponse.FlowStep = (await _flowRepository.GetFlowByIdAsync((Guid)(await _formTemplateRepository.GetFormTemplateByIdAsync(payload.FormTemplateId))!.ActiveFlowId!))!.FlowSteps.OrderBy(fs => fs.Order).First();
 
             if (payload.CompletedByOtherUserId != null && payload.CompletedByOtherUserId != Guid.Empty)
             {
@@ -357,10 +357,6 @@ namespace FlowManager.Application.Services
 
         public async Task<FormResponseResponseDto> PatchFormResponseAsync(PatchFormResponseRequestDto payload)
         {
-            Console.WriteLine("🔥🔥🔥 PATCH FORM RESPONSE CALLED 🔥🔥🔥");
-            Console.WriteLine($"🔥 PatchFormResponseAsync called with ID: {payload.Id}");
-            _logger.LogInformation("Updating form response with ID: {Id}", payload.Id);
-
             var formResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
 
             if (formResponse == null)
@@ -368,25 +364,21 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException($"Form response with id {payload.Id} was not found.");
             }
 
-            // Salvează statusul anterior pentru logging
             var previousStatus = formResponse.Status;
 
-            // Actualizează ResponseFields dacă sunt furnizate
             if (payload.ResponseFields != null)
             {
                 formResponse.ResponseFields = payload.ResponseFields;
             }
 
-            // ÎNREGISTREAZĂ REVIEW-UL PENTRU ISTORIC
             FormReview? reviewToRecord = null;
 
-            // LOGICA PENTRU REJECT
             if (!string.IsNullOrEmpty(payload.RejectReason))
             {
                 formResponse.RejectReason = payload.RejectReason;
                 formResponse.Status = "Rejected";
+                formResponse.FlowStep.IsApproved = false;
 
-                // Înregistrează reject-ul în istoric
                 if (payload.ReviewerId.HasValue && payload.ReviewerStepId.HasValue)
                 {
                     reviewToRecord = new FormReview
@@ -402,55 +394,23 @@ namespace FlowManager.Application.Services
 
                 _logger.LogInformation("Form response {Id} rejected with reason: {RejectReason}", payload.Id, payload.RejectReason);
             }
-            // LOGICA PENTRU CLEAR REJECT (approve după reject anterior)
             else if (payload.RejectReason == null && !string.IsNullOrEmpty(formResponse.RejectReason))
             {
                 formResponse.RejectReason = null;
-                // Status-ul rămâne "Pending" - moderatorul trebuie să dea manual approve
                 formResponse.Status = "Pending";
                 _logger.LogInformation("Form response {Id} reject reason cleared, status set to: {Status}", payload.Id, formResponse.Status);
             }
 
-            // LOGICA PENTRU SCHIMBAREA STEP-ULUI (approve și move to next step)
             Guid ModeratorRoleId = (await _roleRepository.GetRoleByRolenameAsync("MODERATOR"))!.Id;
-            List<FlowStep> flowStepsForCurrentForm = (await _flowRepository.GetFlowByIdIncludeStepsAsync((Guid)formResponse.FormTemplate.ActiveFlowId!, ModeratorRoleId))!.FlowSteps.ToList();
+            List<FlowStep> flowStepsForCurrentForm = (await _flowRepository.GetFlowByIdIncludeStepsAsync((Guid)formResponse.FormTemplate.ActiveFlowId, ModeratorRoleId))!.FlowSteps.OrderBy(fs => fs.Order).ToList();
 
             FlowStep? nextFlowStep = flowStepsForCurrentForm.FindIndex(flowStep => flowStep.Id == formResponse.FlowStepId) is int currentIndex && currentIndex >= 0 && currentIndex < flowStepsForCurrentForm.Count - 1
                 ? flowStepsForCurrentForm[currentIndex + 1]
                 : null;
 
-            if (nextFlowStep != null) // aici de scos stepsids 
+            if (nextFlowStep != null)
             {
-                // Înregistrează approve-ul pentru step-ul curent ÎNAINTE de mutare
                 if (payload.ReviewerId.HasValue && payload.ReviewerStepId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
-                {
-                    reviewToRecord = new FormReview
-                    {
-                        FormResponseId = payload.Id,
-                        ReviewerId = payload.ReviewerId.Value,
-                        StepId = payload.ReviewerStepId.Value, // Step-ul curent (nu cel nou)
-                        Action = "Approved",
-                        ReviewedAt = DateTime.UtcNow
-                    };
-                }
-
-                formResponse.FlowStep = nextFlowStep;
-
-                // MODIFICAT: Setez statusul să rămână "Pending" pentru toate step-urile
-                // Moderatorul trebuie să dea manual approve/reject, chiar și la ultimul step
-                if (string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
-                {
-                    formResponse.Status = "Pending"; // Așteaptă review la noul step
-                }
-            }
-
-            // OVERRIDE EXPLICIT PENTRU STATUS (dacă e specificat explicit în payload)
-            if (!string.IsNullOrEmpty(payload.Status))
-            {
-                formResponse.Status = payload.Status;
-
-                // Dacă e approve explicit (fără schimbarea step-ului), înregistrează review-ul
-                if (payload.Status == "Approved" && payload.ReviewerId.HasValue && reviewToRecord == null)
                 {
                     reviewToRecord = new FormReview
                     {
@@ -462,10 +422,34 @@ namespace FlowManager.Application.Services
                     };
                 }
 
+                nextFlowStep.IsApproved = true;
+                formResponse.FlowStep = nextFlowStep;
+
+                if (string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
+                {
+                    formResponse.Status = "Pending";
+                }
+            }
+
+            if (!string.IsNullOrEmpty(payload.Status))
+            {
+                formResponse.Status = payload.Status;
+
+                if (payload.Status == "Approved" && payload.ReviewerId.HasValue && reviewToRecord == null)
+                {
+                    reviewToRecord = new FormReview
+                    {
+                        FormResponseId = payload.Id,
+                        ReviewerId = payload.ReviewerId.Value,
+                        StepId = payload.ReviewerStepId!.Value,
+                        Action = "Approved",
+                        ReviewedAt = DateTime.UtcNow
+                    };
+                }
+
                 _logger.LogInformation("Form response {Id} status explicitly set to: {Status}", payload.Id, payload.Status);
             }
 
-            // Check if admin is acting (either as themselves or impersonating) for email notifications
             var httpContext = _httpContextAccessor.HttpContext;
             bool isAdminActing = false;
             string? adminName = null;
@@ -476,37 +460,31 @@ namespace FlowManager.Application.Services
                 bool isImpersonating = impersonatingClaim == "true";
                 bool isAdmin = httpContext.User.HasClaim(c => c.Type == "OriginalAdminId");
 
-                isAdminActing = isAdmin; // Admin acting either as themselves or impersonating
+                isAdminActing = isAdmin; 
 
                 if (isImpersonating)
                 {
-                    // If impersonating, get the original admin name
                     adminName = httpContext.User.FindFirst("OriginalAdminName")?.Value;
                 }
                 else if (isAdmin)
                 {
-                    // If admin acting as themselves, get their name from Name claim
                     adminName = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
                 }
 
                 _logger.LogInformation("PatchFormResponse - IsAdmin: {IsAdmin}, IsImpersonating: '{IsImpersonating}', AdminName: '{AdminName}'",
                     isAdmin, impersonatingClaim, adminName);
 
-                // Track admin approval if admin is acting
                 if (isAdminActing && !string.IsNullOrEmpty(adminName))
                 {
-                    // Removed ApprovedByAdmin logic - FormReview handles approval tracking
                     _logger.LogInformation("Admin approval tracked for form {FormId} by admin {AdminName}",
                         formResponse.Id, adminName);
                 }
             }
 
-            // Actualizează timestamp
             formResponse.UpdatedAt = DateTime.UtcNow;
 
             await _formResponseRepository.UpdateAsync(formResponse);
 
-            // SALVEAZĂ REVIEW-UL ÎN ISTORIC
             if (reviewToRecord != null)
             {
                 // Set impersonation info if admin is impersonating
@@ -536,7 +514,6 @@ namespace FlowManager.Application.Services
             _logger.LogInformation("Form response {Id} updated. Previous status: {PreviousStatus}, New status: {NewStatus}",
                 payload.Id, previousStatus, formResponse.Status);
 
-            // Reîncarcă entitatea cu toate relațiile pentru response
             var updatedFormResponse = await _formResponseRepository.GetFormResponseByIdAsync(payload.Id);
 
             // Send email notification to impersonated user when admin takes action

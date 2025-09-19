@@ -130,6 +130,8 @@ namespace FlowManager.Infrastructure.Repositories
         {
             return await _context.FormResponses
                 .Include(fr => fr.FormTemplate)
+                    .ThenInclude(formTemplate => formTemplate.FormTemplateFlows)
+                        .ThenInclude(formTemplateFlow => formTemplateFlow.Flow)
                 .Include(fr => fr.FlowStep)
                     .ThenInclude(flowStep => flowStep.FlowStepItems)
                         .ThenInclude(flowStepItem => flowStepItem.Step)
@@ -209,8 +211,8 @@ namespace FlowManager.Infrastructure.Repositories
             responses = responses.Where(formResponse =>
                 (formResponse.Status == null || formResponse.Status == "Pending") &&
                 (formResponse.FormTemplate.ActiveFlow?.FlowSteps.Any(flowStep =>
-                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId)) ||
-                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId)))
+                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedUsers.Any(flowStepUser => flowStepUser.UserId == moderatorId && flowStepUser.FlowStepItem.FlowStepId == formResponse.FlowStepId)) ||
+                    flowStep.FlowStepItems.Any(flowStepItem => flowStepItem.AssignedTeams.Any(flowStepTeam => flowStepTeam.Team.Users.Any(teamUser => teamUser.UserId == moderatorId) && flowStepTeam.FlowStepItem.FlowStepId == formResponse.FlowStepId))
                 ) ?? false)
             ).ToList();
 

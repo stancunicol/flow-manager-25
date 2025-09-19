@@ -126,8 +126,8 @@ namespace FlowManager.Infrastructure.Repositories
                         .ThenInclude(fsi => fsi.AssignedUsers.Where(fsu => fsu.DeletedAt == null &&
                             fsu.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
                             .ThenInclude(fsu => fsu.User)
-                                .ThenInclude(u => u.Roles) 
-                                    .ThenInclude(ur => ur.Role)  
+                                .ThenInclude(u => u.Roles)
+                                    .ThenInclude(ur => ur.Role)
                 .Include(f => f.FlowSteps.Where(fs => fs.DeletedAt == null))
                     .ThenInclude(fs => fs.FlowStepItems)
                         .ThenInclude(fsi => fsi.AssignedUsers.Where(fsu => fsu.DeletedAt == null &&
@@ -142,7 +142,7 @@ namespace FlowManager.Infrastructure.Repositories
                                 .ThenInclude(t => t.Users.Where(ut => ut.DeletedAt == null &&
                                     ut.User.Roles.Any(ur => ur.RoleId == moderatorRoleId)))
                                     .ThenInclude(ut => ut.User)
-                                        .ThenInclude(u => u.Roles)  
+                                        .ThenInclude(u => u.Roles)
                                             .ThenInclude(ur => ur.Role)
                 .Where(f => f.FlowSteps.Any(fs => fs.DeletedAt == null && (
                     fs.FlowStepItems.Any(fsi => fsi.AssignedUsers.Any(fsu => fsu.DeletedAt == null &&
