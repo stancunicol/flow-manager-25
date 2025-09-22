@@ -125,12 +125,41 @@ Make sure you have [Docker](https://www.docker.com/get-started) installed.
    cd flow-manager-25
    ```
 
-2. **Build and run the container:**
+2. **Pull the docker images:**
    ```bash
-   docker build -t flow-manager-2025 .
-   docker run -p 8080:80 flow-manager-2025
+   docker pull stancunicol/flowmanager:api-latest
+   docker pull stancunicol/flowmanager:client-latest
    ```
-   Access the app at [http://localhost:8080](http://localhost:8080).
+
+3. **Create a docker-compose.yml in the project root:**
+   ```bash
+   services:
+   api:
+    image: stancunicol/flowmanager:api-latest
+    container_name: flowmanager-api
+    ports:
+      - "5000:8080"
+
+   client:
+    image: stancunicol/flowmanager:client-latest
+    container_name: flowmanager-client
+    ports:
+      - "3000:80"
+    environment:
+      - API_URL=http://api:80
+    depends_on:
+      - api
+   ```
+
+4. **Run the app:**
+   ```bash
+   docker compose up -d
+   ```
+
+   For the app to stop:
+   ```bash
+   docker compose down
+   ```
 
 ### Publish and update image to Docker Hub
 
