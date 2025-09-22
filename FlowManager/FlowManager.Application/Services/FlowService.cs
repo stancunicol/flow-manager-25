@@ -339,7 +339,6 @@ namespace FlowManager.Infrastructure.Services
             {
                 Id = flowStep.Id,
                 FlowId = flowStep.FlowId,
-                IsApproved = flowStep.IsApproved,
                 FlowStepItems = flowStep.FlowStepItems.Select(flowStepItem => new Shared.DTOs.Responses.FlowStepItem.FlowStepItemResponseDto
                 {
                     FlowStepId = flowStepItem.FlowStepId,

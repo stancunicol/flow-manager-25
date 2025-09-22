@@ -26,6 +26,7 @@ namespace FlowManager.Domain.Entities
 
         public virtual FlowStep FlowStep { get; set; } // active flowstep
         public Guid FlowStepId { get; set; }
+        public bool? IsApproved { get; set; }   
 
         public virtual User User { get; set; }
         public Guid UserId { get; set; }

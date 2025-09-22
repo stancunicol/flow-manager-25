@@ -18,6 +18,7 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
         public Guid FormTemplateId { get; set; }
         public string? FormTemplateName { get; set; }
         public FlowStepResponseDto FlowStep { get; set; } = new();
+        public bool? IsApproved { get; set; }   
         public Guid UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserEmail { get; set; }

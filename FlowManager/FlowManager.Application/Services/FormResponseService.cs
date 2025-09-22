@@ -72,11 +72,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
+                IsApproved = fr.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = fr.FlowStep?.Id ?? Guid.Empty,
                     FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = fr.FlowStep?.IsApproved ?? false,
                     FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -128,11 +128,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
+                IsApproved = fr.IsApproved,    
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 { 
                     Id = fr.FlowStep?.Id ?? Guid.Empty,
                     FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = fr.FlowStep?.IsApproved ?? false,
                     FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -172,11 +172,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = formResponse.ResponseFields,
                 FormTemplateId = formResponse.FormTemplateId,
                 FormTemplateName = formResponse.FormTemplate?.Name,
+                IsApproved = formResponse.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = formResponse.FlowStep?.Id ?? Guid.Empty,
                     FlowId = formResponse.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = formResponse.FlowStep?.IsApproved ?? false,
                     FlowStepItems = formResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -221,11 +221,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
+                IsApproved = fr.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = fr.FlowStep?.Id ?? Guid.Empty,
                     FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = fr.FlowStep?.IsApproved ?? false,
                     FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -275,6 +275,7 @@ namespace FlowManager.Application.Services
                 FormTemplateId = payload.FormTemplateId,
                 UserId = payload.UserId,
                 ResponseFields = payload.ResponseFields,
+                IsApproved = null, // pending for current flow step
                 Status = "Pending",
                 CreatedAt = DateTime.UtcNow,
                 CompletedByAdmin = isAdminCompletingForUser,
@@ -324,11 +325,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = createdFormResponse.ResponseFields,
                 FormTemplateId = createdFormResponse.FormTemplateId,
                 FormTemplateName = createdFormResponse.FormTemplate?.Name,
+                IsApproved = createdFormResponse.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = createdFormResponse.FlowStep?.Id ?? Guid.Empty,
                     FlowId = createdFormResponse.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = createdFormResponse.FlowStep?.IsApproved ?? false,
                     FlowStepItems = createdFormResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -371,7 +372,7 @@ namespace FlowManager.Application.Services
             {
                 formResponse.RejectReason = payload.RejectReason;
                 formResponse.Status = "Rejected";
-                formResponse.FlowStep.IsApproved = false;
+                formResponse.IsApproved = false;
 
                 if (payload.ReviewerId.HasValue && payload.ReviewerStepId.HasValue)
                 {
@@ -392,6 +393,8 @@ namespace FlowManager.Application.Services
             {
                 formResponse.RejectReason = null;
                 formResponse.Status = "Pending";
+                formResponse.IsApproved = false;
+
                 _logger.LogInformation("Form response {Id} reject reason cleared, status set to: {Status}", payload.Id, formResponse.Status);
             }
 
@@ -402,9 +405,9 @@ namespace FlowManager.Application.Services
                 ? flowStepsForCurrentForm[currentIndex + 1]
                 : null;
 
-            if (nextFlowStep != null)
+            if (nextFlowStep != null && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
             {
-                if (payload.ReviewerId.HasValue && payload.ReviewerStepId.HasValue && string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
+                if (payload.ReviewerId.HasValue && payload.ReviewerStepId.HasValue)
                 {
                     reviewToRecord = new FormReview
                     {
@@ -416,18 +419,15 @@ namespace FlowManager.Application.Services
                     };
                 }
 
-                nextFlowStep.IsApproved = true;
+                formResponse.IsApproved = null; // pending for next step
                 formResponse.FlowStep = nextFlowStep;
-
-                if (string.IsNullOrEmpty(payload.RejectReason) && string.IsNullOrEmpty(formResponse.RejectReason))
-                {
-                    formResponse.Status = "Pending";
-                }
+                formResponse.Status = "Pending";
             }
 
             if (!string.IsNullOrEmpty(payload.Status))
             {
                 formResponse.Status = payload.Status;
+                formResponse.IsApproved = true;
 
                 if (payload.Status == "Approved" && payload.ReviewerId.HasValue && reviewToRecord == null)
                 {
@@ -584,11 +584,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = updatedFormResponse.ResponseFields,
                 FormTemplateId = updatedFormResponse.FormTemplateId,
                 FormTemplateName = updatedFormResponse.FormTemplate?.Name,
+                IsApproved = updatedFormResponse.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = updatedFormResponse.FlowStep?.Id ?? Guid.Empty,
                     FlowId = updatedFormResponse.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = updatedFormResponse.FlowStep?.IsApproved ?? false,
                     FlowStepItems = updatedFormResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -633,11 +633,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
+                IsApproved = fr.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = fr.FlowStep?.Id ?? Guid.Empty,
                     FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = fr.FlowStep?.IsApproved ?? false,
                     FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -680,11 +680,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = formResponse.ResponseFields,
                 FormTemplateId = formResponse.FormTemplateId,
                 FormTemplateName = formResponse.FormTemplate?.Name,
+                IsApproved = formResponse.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = formResponse.FlowStep?.Id ?? Guid.Empty,
                     FlowId = formResponse.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = formResponse.FlowStep?.IsApproved ?? false,
                     FlowStepItems = formResponse.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -721,11 +721,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
+                IsApproved = fr.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = fr.FlowStep?.Id ?? Guid.Empty,
                     FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = fr.FlowStep?.IsApproved ?? false,
                     FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -761,11 +761,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
+                IsApproved = fr.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = fr.FlowStep?.Id ?? Guid.Empty,
                     FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = fr.FlowStep?.IsApproved ?? false,
                     FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,
@@ -801,11 +801,11 @@ namespace FlowManager.Application.Services
                 ResponseFields = fr.ResponseFields,
                 FormTemplateId = fr.FormTemplateId,
                 FormTemplateName = fr.FormTemplate?.Name,
+                IsApproved = fr.IsApproved,
                 FlowStep = new Shared.DTOs.Responses.FlowStep.FlowStepResponseDto
                 {
                     Id = fr.FlowStep?.Id ?? Guid.Empty,
                     FlowId = fr.FlowStep?.FlowId ?? Guid.Empty,
-                    IsApproved = fr.FlowStep?.IsApproved ?? false,
                     FlowStepItems = fr.FlowStep?.FlowStepItems.Select(fsi => new FlowStepItemResponseDto
                     {
                         Id = fsi.Id,

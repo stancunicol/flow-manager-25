@@ -95,9 +95,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<Guid>("FlowId")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool?>("IsApproved")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
@@ -221,6 +218,9 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.Property<Guid>("FormTemplateId")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsApproved")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("RejectReason")
                         .HasMaxLength(100)

@@ -315,6 +315,7 @@ namespace FlowManager.Client.Pages
 
         private string GetFormStatus(FormResponseResponseDto form)
         {
+            Console.WriteLine($"form response is approved : {form.IsApproved}");
             if (!string.IsNullOrEmpty(form.Status))
             {
                 return form.Status;

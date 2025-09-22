@@ -20,7 +20,7 @@
             @for (int i = 0; i < FlowSteps.Count; i++)
             {
                 var currentFlowStep = FlowSteps[i];
-                var stepStatus = GetStepStatus(currentFlowStep, i);
+                var stepStatus = GetStepStatus(i);
                 var isLastStep = i == FlowSteps.Count - 1;
 
                 string flowStepItemsNames = string.Join("/", currentFlowStep.FlowStepItems.Select(fsi => fsi.Step.StepName));
@@ -29,7 +29,6 @@
                     <!-- Step Circle -->
                     <div class="step-circle @GetStepStatusClass(stepStatus)"
                          title="Step @(i + 1)">
-                        <!-- DE SCHIMBAT-->
                         <span class="step-initials">Step @(i + 1)</span>
                     </div>
 
@@ -91,26 +90,35 @@
         Rejected     // Roșu - step-ul a fost respins
     }
 
-    private StepStatus GetStepStatus(FlowStepResponseDto flowStep, int flowStepIndex)
+    private StepStatus GetStepStatus(int flowStepIndex)
     {
         if (FormResponse == null || FlowSteps == null) return StepStatus.Inactive;
 
-        if (flowStep.IsApproved.HasValue)
+        var result = FlowSteps
+            .Select((flowStep, index) => new { flowStep, index })
+            .FirstOrDefault(x => x.flowStep.Id == FormResponse.FlowStep.Id);
+
+        FlowStepResponseDto? currentFlowStep = result?.flowStep;
+        int? currentFlowStepIndex = result?.index;
+
+        if (FormResponse.IsApproved.HasValue && currentFlowStepIndex == flowStepIndex)
         {
-            return flowStep.IsApproved.Value ? StepStatus.Completed : StepStatus.Rejected;
+            Console.WriteLine($"index {flowStepIndex} current index {currentFlowStepIndex}");
+            return FormResponse.IsApproved.Value ? StepStatus.Completed : StepStatus.Rejected;
         }
 
-        bool allPreviousCompleted = true;
-        for (int i = 0; i < flowStepIndex; i++)
+        if (flowStepIndex < currentFlowStepIndex)
         {
-            if (!FlowSteps[i].IsApproved.HasValue || !FlowSteps[i].IsApproved.Value)
-            {
-                allPreviousCompleted = false;
-                break;
-            }
+            return StepStatus.Completed;
         }
-
-        return allPreviousCompleted ? StepStatus.Pending : StepStatus.Inactive;
+        else if (currentFlowStepIndex == flowStepIndex)
+        {
+            return StepStatus.Pending;
+        }
+        else
+        {
+            return StepStatus.Inactive;
+        }
     }
 
     private string GetStepStatusClass(StepStatus status)
