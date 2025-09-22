@@ -23,6 +23,7 @@
             }
 
             <input @bind="templateName"
+                   @oninput="OnTemplateNameChanged"
                    placeholder="Enter template name..."
                    class="template-name-input" />
             <button class="save-button"
@@ -1251,5 +1252,11 @@
     public string GetFormTemplateName()
     {
         return templateName;
+    }
+
+    private void OnTemplateNameChanged(ChangeEventArgs e)
+    {
+        templateName = e.Value?.ToString() ?? "";
+        StateHasChanged();
     }
 }
