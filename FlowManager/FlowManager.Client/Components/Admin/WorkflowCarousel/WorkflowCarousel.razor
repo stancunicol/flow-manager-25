@@ -134,7 +134,8 @@
                             _savedFormTemplateId = savedTemplate.Value.Id;
                             _savedFormTemplateName = savedTemplate.Value.Name;
 
-                            await flowsAddModalRef.SetFlowSubmitMessageAsync("Form template and flow created successfully!", true);
+                            // Show success message and wait 1 second before navigation
+                            await ShowFlowSavedMessageAndNavigate("Form template and flow created successfully!");
 
                             // Clear the workflow configuration after successful save
                             flowsAddModalRef.ClearConfiguration();
@@ -146,12 +147,12 @@
 
                             _savedFormTemplateId = null;
                             _savedFormTemplateName = "";
-
-                            _currentPage = 2;
-                            StateHasChanged();
                         }
                         else
                         {
+                            // Show success message and wait 1 second before navigation
+                            await ShowFlowSavedMessageAndNavigate("Flow created successfully!");
+
                             // Clear the workflow configuration after successful save (flow only)
                             flowsAddModalRef.ClearConfiguration();
 
@@ -162,9 +163,6 @@
 
                             _savedFormTemplateId = null;
                             _savedFormTemplateName = "";
-
-                            _currentPage = 2;
-                            StateHasChanged();
                         }
                     }
                 }
@@ -320,13 +318,13 @@
     {
         try
         {
+            // Show success message and wait 1 second before navigation
+            await ShowFlowSavedMessageAndNavigate("Flow created successfully!");
+
             if (flowsViewModalRef != null)
             {
                 await flowsViewModalRef.RefreshFlows();
             }
-
-            _currentPage = 2;
-            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -342,5 +340,23 @@
 
         await CloseEditModal();
         StateHasChanged();
+    }
+
+    private async Task ShowFlowSavedMessageAndNavigate(string message)
+    {
+        if (flowsAddModalRef != null)
+        {
+            // Show the message directly without SetFlowSubmitMessageAsync delay
+            flowsAddModalRef.SetFlowSubmitMessage(message, true);
+            StateHasChanged();
+
+            // Wait 1 second to allow user to see the message
+            await Task.Delay(1000);
+
+            // Clear the message and navigate to ViewFlow page
+            flowsAddModalRef.ClearFlowSubmitMessage();
+            _currentPage = 2;
+            StateHasChanged();
+        }
     }
 }

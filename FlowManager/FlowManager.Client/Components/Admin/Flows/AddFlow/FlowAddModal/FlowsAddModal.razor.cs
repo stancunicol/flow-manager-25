@@ -381,5 +381,16 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 
             StateHasChanged();
         }
+
+        public void SetFlowSubmitMessage(string message, bool success)
+        {
+            _onSubmitMessage = message;
+            _onSubmitSuccess = success;
+        }
+
+        public void ClearFlowSubmitMessage()
+        {
+            _onSubmitMessage = string.Empty;
+        }
     }
 }

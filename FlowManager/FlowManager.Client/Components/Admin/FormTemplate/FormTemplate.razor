@@ -994,21 +994,30 @@
             {
                 await SaveToLocalStorage();
 
-                var tempId = Guid.NewGuid();
-                await OnTemplateSaved.InvokeAsync((tempId, templateName));
-                
                 _onSaveTemplateMessage = "Template saved to local storage successfully!";
                 _onSaveTemplateSuccess = true;
+                StateHasChanged();
 
+                // Wait 1 second to show the message before triggering navigation
                 await Task.Delay(1000);
+
+                var tempId = Guid.NewGuid();
+                await OnTemplateSaved.InvokeAsync((tempId, templateName));
+
+                _onSaveTemplateMessage = "";
+                StateHasChanged();
             }
         }
         catch (Exception ex)
         {
             _onSaveTemplateMessage = $"Error saving template: {ex.Message}";
             _onSaveTemplateSuccess = false;
+            StateHasChanged();
 
             await Task.Delay(1000);
+
+            _onSaveTemplateMessage = "";
+            StateHasChanged();
         }
         finally
         {
