@@ -2,6 +2,7 @@
 using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
+using FlowManager.Client.ViewModels.GraphView;
 using FlowManager.Client.ViewModels.Team;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Requests.FlowStep;
@@ -16,25 +17,6 @@ using System.Threading.Tasks;
 
 namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
 {
-    // Graph-related data structures
-    public class GraphNode
-    {
-        public double X { get; set; }
-        public double Y { get; set; }
-        public FlowStepItemVM FlowStepItem { get; set; } = default!;
-        public int LevelIndex { get; set; }
-        public int NodeIndex { get; set; }
-    }
-
-    public class GraphConnection
-    {
-        public string Id { get; set; } = default!;
-        public double FromX { get; set; }
-        public double FromY { get; set; }
-        public double ToX { get; set; }
-        public double ToY { get; set; }
-    }
-
     public partial class FlowsAddModal : ComponentBase
     {
         [Inject] private StepService _stepService { get; set; } = default!;
@@ -110,7 +92,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 }).ToList();
         }
 
-        // Graph layout calculation methods
         private async Task OnGraphViewToggleChanged(ChangeEventArgs e)
         {
             _isGraphView = (bool)e.Value!;
@@ -209,7 +190,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 { "Operations", "#607d8b" }
             };
 
-            // Check for partial matches
             foreach (var kvp in colors)
             {
                 if (stepName.ToLower().Contains(kvp.Key.ToLower()))
@@ -218,13 +198,11 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
                 }
             }
 
-            // Default color based on hash of the name for consistency
             var hash = stepName.GetHashCode();
             var colorOptions = new[] { "#e74c3c", "#3498db", "#2ecc71", "#f39c12", "#9b59b6", "#1abc9c", "#34495e", "#e67e22" };
             return colorOptions[Math.Abs(hash) % colorOptions.Length];
         }
 
-        // Form methods with graph recalculation
         private void AddFlowStep()
         {
             var newFlowStep = new FlowStepVM
@@ -234,7 +212,6 @@ namespace FlowManager.Client.Components.Admin.Flows.AddFlow.FlowAddModal
             };
             _configuredFlowSteps.Add(newFlowStep);
 
-            // Recalculate graph if in graph view
             if (_isGraphView)
             {
                 CalculateGraphLayout();

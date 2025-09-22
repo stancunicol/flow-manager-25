@@ -1,6 +1,7 @@
 ﻿using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
+using FlowManager.Client.ViewModels.GraphView;
 using FlowManager.Client.ViewModels.Team;
 using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Flow;
@@ -17,25 +18,6 @@ using Microsoft.JSInterop;
 
 namespace FlowManager.Client.Components.Admin.EditFlow
 {
-    // Graph-related data structures
-    public class GraphNode
-    {
-        public double X { get; set; }
-        public double Y { get; set; }
-        public FlowStepItemVM FlowStepItem { get; set; } = default!;
-        public int LevelIndex { get; set; }
-        public int NodeIndex { get; set; }
-    }
-
-    public class GraphConnection
-    {
-        public string Id { get; set; } = default!;
-        public double FromX { get; set; }
-        public double FromY { get; set; }
-        public double ToX { get; set; }
-        public double ToY { get; set; }
-    }
-
     public partial class EditFlow : ComponentBase
     {
         [Inject] private StepService _stepService { get; set; } = default!;

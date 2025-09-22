@@ -143,6 +143,12 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException($"Team with id {id} was not found.");
             }
 
+            var existingTeamWithName = await _teamRepository.GetTeamByNameAsync(payload.Name, includeDeleted: true);
+            if (existingTeamWithName != null && existingTeamWithName.Id != id)
+            {
+                throw new UniqueConstraintViolationException($"Team with name {payload.Name} already exists.");
+            }
+
             if (!string.IsNullOrEmpty(payload.Name))
             {
                 teamToUpdate.Name = payload.Name;
@@ -179,8 +185,15 @@ namespace FlowManager.Application.Services
                     }
                 }
             }
+            else if (payload.UserIds == null) 
+            {
+                foreach (UserTeam userTeam in teamToUpdate.Users)
+                {
+                    userTeam.DeletedAt = DateTime.UtcNow;
+                }
+            }
 
-            teamToUpdate.UpdatedAt = DateTime.UtcNow;
+                teamToUpdate.UpdatedAt = DateTime.UtcNow;
             await _teamRepository.SaveChangesAsync();
 
             return new TeamResponseDto
@@ -244,13 +257,6 @@ namespace FlowManager.Application.Services
             if (teamToRestore == null)
             {
                 throw new EntryNotFoundException($"Team with id {id} was not found.");
-            }
-
-            var users = await _userRepository.GetUsersByTeamIdAsync(id, includeDeleted: true);
-            foreach (var user in users)
-            {
-                UserTeam userTeamDeleted = user.Teams.First(ut => ut.TeamId == id);
-                userTeamDeleted.DeletedAt = null;
             }
 
             teamToRestore.DeletedAt = null;

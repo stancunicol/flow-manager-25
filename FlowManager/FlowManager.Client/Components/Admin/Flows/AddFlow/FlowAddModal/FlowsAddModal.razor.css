@@ -1,5 +1,4 @@
-﻿/* Graph View Toggle Styles */
-.graph-view-toggle {
+﻿.graph-view-toggle {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -23,7 +22,6 @@
     white-space: nowrap;
 }
 
-/* SVG Text Styles - Better Centering */
 .level-label {
     font-size: 14px;
     font-weight: 600;
@@ -50,7 +48,6 @@
     pointer-events: none;
 }
 
-/* Main container for the entire flow view */
 .flow-view-container {
     width: 100%;
     height: 100vh;
@@ -59,14 +56,12 @@
     flex-direction: column;
 }
 
-/* Content Area */
 .view-content {
     flex: 1;
     overflow: hidden;
     padding: 20px;
 }
 
-/* Flow Header - Always Visible */
 .flow-header {
     background: white;
     border-radius: 12px;
@@ -76,7 +71,6 @@
     border: 1px solid #e0e0e0;
 }
 
-/* Existing Form View Styles */
 .add-flow-container {
     width: 100%;
     height: 100%;
@@ -698,7 +692,6 @@
         transform: scale(1.1);
     }
 
-/* Graph View Styles */
 .graph-view-container {
     background: white;
     border-radius: 12px;
@@ -834,7 +827,6 @@
     }
 }
 
-/* Responsive adjustments */
 @media (max-width: 1200px) {
     .view-content {
         padding: 10px;

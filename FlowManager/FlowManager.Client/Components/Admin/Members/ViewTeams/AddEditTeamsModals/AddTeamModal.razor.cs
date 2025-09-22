@@ -146,14 +146,16 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 UserIds = _selectedUsers.Select(u => u.Id).ToList()
             };
 
-            _isSubmitting = false;
-
             ApiResponse<TeamResponseDto> result = await _teamService.PostTeamAsync(payload);
 
+            _isSubmitting = false;
+
+            Console.WriteLine($"message {result.Message}");
             _submitStatus = result.Success;
             _submitMessage = result.Message;
+            StateHasChanged();
 
-            if(_submitStatus)
+            if (_submitStatus)
             {
                 await TeamWasAdded.InvokeAsync();
             }
