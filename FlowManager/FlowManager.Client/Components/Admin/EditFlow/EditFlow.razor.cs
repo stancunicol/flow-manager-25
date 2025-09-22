@@ -17,6 +17,25 @@ using Microsoft.JSInterop;
 
 namespace FlowManager.Client.Components.Admin.EditFlow
 {
+    // Graph-related data structures
+    public class GraphNode
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+        public FlowStepItemVM FlowStepItem { get; set; } = default!;
+        public int LevelIndex { get; set; }
+        public int NodeIndex { get; set; }
+    }
+
+    public class GraphConnection
+    {
+        public string Id { get; set; } = default!;
+        public double FromX { get; set; }
+        public double FromY { get; set; }
+        public double ToX { get; set; }
+        public double ToY { get; set; }
+    }
+
     public partial class EditFlow : ComponentBase
     {
         [Inject] private StepService _stepService { get; set; } = default!;
@@ -31,7 +50,7 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         private List<FlowStepVM> _configuredSteps = new List<FlowStepVM>();
         private StepVM? _draggedStep = null;
         private bool _isDragOver = false;
-        private int _isDragOverFlowStep = -1; // -1 means no flow step is being dragged over
+        private int _isDragOverFlowStep = -1;
         private string _flowName = string.Empty;
         private string _initialFlowName = string.Empty;
 
@@ -42,6 +61,19 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
         private string _onSubmitMessage = string.Empty;
         private bool _onSubmitSuccess;
+
+        // Graph view fields
+        private bool _isGraphView = false;
+        private List<GraphNode> _graphNodes = new List<GraphNode>();
+        private List<GraphConnection> _graphConnections = new List<GraphConnection>();
+
+        // Graph layout constants
+        private const double _levelHeight = 120;
+        private const double _nodeRadius = 35;
+        private const double _levelStartY = 80;
+        private const double _minNodeSpacing = 100;
+        private const double _svgWidth = 800;
+        private double _svgHeight => _levelStartY + Math.Max(0, (_configuredSteps?.Count ?? 1) - 1) * _levelHeight + 100;
 
         protected override async Task OnInitializedAsync()
         {
@@ -141,6 +173,121 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 }).ToList();
         }
 
+        // Graph layout calculation methods
+        private async Task OnGraphViewToggleChanged(ChangeEventArgs e)
+        {
+            _isGraphView = (bool)e.Value!;
+
+            if (_isGraphView && _configuredSteps.Any())
+            {
+                CalculateGraphLayout();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+
+        private void CalculateGraphLayout()
+        {
+            _graphNodes.Clear();
+            _graphConnections.Clear();
+
+            if (!_configuredSteps.Any()) return;
+
+            CalculateNodePositions();
+            CalculateConnections();
+        }
+
+        private void CalculateNodePositions()
+        {
+            for (int levelIndex = 0; levelIndex < _configuredSteps.Count; levelIndex++)
+            {
+                var flowStep = _configuredSteps[levelIndex];
+                var y = _levelStartY + levelIndex * _levelHeight;
+                var nodesInLevel = flowStep.FlowStepItems?.Count ?? 0;
+
+                if (nodesInLevel == 0) continue;
+
+                var totalWidth = Math.Max(nodesInLevel * _minNodeSpacing, 400);
+                var startX = (_svgWidth - totalWidth) / 2;
+                var nodeSpacing = totalWidth / (nodesInLevel + 1);
+
+                for (int nodeIndex = 0; nodeIndex < flowStep.FlowStepItems.Count; nodeIndex++)
+                {
+                    var item = flowStep.FlowStepItems[nodeIndex];
+                    var x = startX + (nodeIndex + 1) * nodeSpacing;
+
+                    _graphNodes.Add(new GraphNode
+                    {
+                        X = x,
+                        Y = y,
+                        FlowStepItem = item,
+                        LevelIndex = levelIndex,
+                        NodeIndex = nodeIndex
+                    });
+                }
+            }
+        }
+
+        private void CalculateConnections()
+        {
+            for (int level = 0; level < _configuredSteps.Count - 1; level++)
+            {
+                var currentLevelNodes = _graphNodes.Where(n => n.LevelIndex == level).ToList();
+                var nextLevelNodes = _graphNodes.Where(n => n.LevelIndex == level + 1).ToList();
+
+                foreach (var currentNode in currentLevelNodes)
+                {
+                    foreach (var nextNode in nextLevelNodes)
+                    {
+                        _graphConnections.Add(new GraphConnection
+                        {
+                            Id = $"{currentNode.LevelIndex}-{currentNode.NodeIndex}-{nextNode.LevelIndex}-{nextNode.NodeIndex}",
+                            FromX = currentNode.X,
+                            FromY = currentNode.Y,
+                            ToX = nextNode.X,
+                            ToY = nextNode.Y
+                        });
+                    }
+                }
+            }
+        }
+
+        private string GetNodeColor(string? stepName)
+        {
+            if (string.IsNullOrEmpty(stepName)) return "#95a5a6";
+
+            var colors = new Dictionary<string, string>
+            {
+                { "HR", "#e74c3c" },
+                { "IT", "#3498db" },
+                { "Software", "#2ecc71" },
+                { "Hardware", "#f39c12" },
+                { "Finance", "#9b59b6" },
+                { "QA", "#1abc9c" },
+                { "Legal", "#34495e" },
+                { "Review", "#e67e22" },
+                { "Security", "#34495e" },
+                { "Design", "#e91e63" },
+                { "Marketing", "#ff9800" },
+                { "Operations", "#607d8b" }
+            };
+
+            // Check for partial matches
+            foreach (var kvp in colors)
+            {
+                if (stepName.ToLower().Contains(kvp.Key.ToLower()))
+                {
+                    return kvp.Value;
+                }
+            }
+
+            // Default color based on hash of the name for consistency
+            var hash = stepName.GetHashCode();
+            var colorOptions = new[] { "#e74c3c", "#3498db", "#2ecc71", "#f39c12", "#9b59b6", "#1abc9c", "#34495e", "#e67e22" };
+            return colorOptions[Math.Abs(hash) % colorOptions.Length];
+        }
+
+        // Form methods with graph recalculation
         private void AddFlowStep()
         {
             var newFlowStep = new FlowStepVM
@@ -149,6 +296,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 FlowStepItems = new List<FlowStepItemVM>()
             };
             _configuredSteps.Add(newFlowStep);
+
+            // Recalculate graph if in graph view
+            if (_isGraphView)
+            {
+                CalculateGraphLayout();
+            }
+
             StateHasChanged();
         }
 
@@ -191,7 +345,6 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         {
             _isDragOver = false;
             _isDragOverFlowStep = -1;
-
             _draggedStep = null;
             StateHasChanged();
         }
@@ -244,6 +397,12 @@ namespace FlowManager.Client.Components.Admin.EditFlow
 
                 flowStep.FlowStepItems.Add(newFlowStepItem);
 
+                // Recalculate graph if in graph view
+                if (_isGraphView)
+                {
+                    CalculateGraphLayout();
+                }
+
                 ShowAssingToStepModal(newFlowStepItem, flowStepIndex, flowStep.FlowStepItems.Count - 1);
             }
 
@@ -259,6 +418,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 if (flowStepItemIndex >= 0 && flowStepItemIndex < flowStep.FlowStepItems.Count)
                 {
                     flowStep.FlowStepItems.RemoveAt(flowStepItemIndex);
+
+                    // Recalculate graph if in graph view
+                    if (_isGraphView)
+                    {
+                        CalculateGraphLayout();
+                    }
+
                     StateHasChanged();
                 }
             }
@@ -267,6 +433,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         private void RemoveConfiguredStep(int index)
         {
             _configuredSteps.RemoveAt(index);
+
+            // Recalculate graph if in graph view
+            if (_isGraphView)
+            {
+                CalculateGraphLayout();
+            }
+
             StateHasChanged();
         }
 
@@ -288,6 +461,11 @@ namespace FlowManager.Client.Components.Admin.EditFlow
         {
             _configuredSteps.Clear();
             _flowName = string.Empty;
+
+            // Clear graph data
+            _graphNodes.Clear();
+            _graphConnections.Clear();
+
             StateHasChanged();
         }
 
@@ -345,6 +523,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 var step = _configuredSteps[index];
                 _configuredSteps.RemoveAt(index);
                 _configuredSteps.Insert(index - 1, step);
+
+                // Recalculate graph if in graph view
+                if (_isGraphView)
+                {
+                    CalculateGraphLayout();
+                }
+
                 StateHasChanged();
             }
         }
@@ -356,6 +541,13 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                 var step = _configuredSteps[index];
                 _configuredSteps.RemoveAt(index);
                 _configuredSteps.Insert(index + 1, step);
+
+                // Recalculate graph if in graph view
+                if (_isGraphView)
+                {
+                    CalculateGraphLayout();
+                }
+
                 StateHasChanged();
             }
         }
@@ -411,6 +603,12 @@ namespace FlowManager.Client.Components.Admin.EditFlow
                     flowStepItem.AssignedTeams = _flowStepItemToAssign.AssignedTeams ?? new List<FlowStepItemTeamVM>();
                     flowStepItem.Step = _flowStepItemToAssign.Step;
                     flowStepItem.StepId = _flowStepItemToAssign.StepId;
+                }
+
+                // Recalculate graph if in graph view
+                if (_isGraphView)
+                {
+                    CalculateGraphLayout();
                 }
 
                 StateHasChanged();

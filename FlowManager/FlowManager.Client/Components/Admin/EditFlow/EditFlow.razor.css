@@ -1,10 +1,91 @@
-﻿.add-flow-container {
+﻿/* Graph View Toggle Styles */
+.graph-view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+    .graph-view-toggle input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #20B486;
+    }
+
+.toggle-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+/* SVG Text Styles - Better Centering */
+.level-label {
+    font-size: 14px;
+    font-weight: 600;
+    fill: #333;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.node-text {
+    text-anchor: middle;
+    dominant-baseline: central;
+    fill: white;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    pointer-events: none;
+}
+
+.node-count {
+    text-anchor: middle;
+    dominant-baseline: central;
+    fill: white;
+    font-size: 9px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    pointer-events: none;
+}
+
+/* Main container for the entire flow view */
+.flow-view-container {
+    width: 100%;
+    height: 100vh;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Content Area */
+.view-content {
+    flex: 1;
+    overflow: hidden;
+    padding: 20px;
+}
+
+/* Flow Header - Always Visible */
+.flow-header {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+}
+
+/* Existing Form View Styles */
+.add-flow-container {
     width: 100%;
     height: 100%;
     background: white;
     display: flex;
     flex-direction: row;
     z-index: 1400;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
 .step-configuration {
@@ -617,6 +698,130 @@
         transform: scale(1.1);
     }
 
+/* Graph View Styles */
+.graph-view-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.graph-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow: auto;
+    padding: 20px 0;
+    min-height: 0;
+}
+
+.flow-graph-svg {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    max-width: 100%;
+    height: auto;
+}
+
+.node-group circle:hover {
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3)) brightness(1.1);
+}
+
+.graph-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+    text-align: center;
+}
+
+.empty-graph-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.graph-empty-state h3 {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.graph-empty-state p {
+    margin: 0;
+    font-size: 16px;
+    color: #666;
+}
+
+.graph-legend {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+    .graph-legend h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.form-template-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(32, 180, 134, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(32, 180, 134, 0.3);
+}
+
+.template-icon {
+    font-size: 16px;
+}
+
+.template-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #20B486;
+}
+
+.template-name {
+    font-size: 12px;
+    color: #333;
+    font-weight: 500;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -626,5 +831,54 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .view-content {
+        padding: 10px;
+    }
+
+    .add-flow-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .step-configuration {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+
+    .steps-navbar {
+        flex: none;
+        max-height: 300px;
+    }
+
+    .flow-graph-svg {
+        width: 100%;
+        height: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-title h2 {
+        font-size: 20px;
+        text-align: center;
+    }
+
+    .flow-name-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .flow-name-input-group {
+        width: 100%;
+    }
+
+    .graph-view-toggle {
+        margin-left: 0;
+        justify-content: center;
     }
 }
