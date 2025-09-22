@@ -136,6 +136,9 @@
 
                             await flowsAddModalRef.SetFlowSubmitMessageAsync("Form template and flow created successfully!", true);
 
+                            // Clear the workflow configuration after successful save
+                            flowsAddModalRef.ClearConfiguration();
+
                             if (flowsViewModalRef != null)
                             {
                                 await flowsViewModalRef.RefreshFlows();
@@ -149,6 +152,9 @@
                         }
                         else
                         {
+                            // Clear the workflow configuration after successful save (flow only)
+                            flowsAddModalRef.ClearConfiguration();
+
                             if (flowsViewModalRef != null)
                             {
                                 await flowsViewModalRef.RefreshFlows();
