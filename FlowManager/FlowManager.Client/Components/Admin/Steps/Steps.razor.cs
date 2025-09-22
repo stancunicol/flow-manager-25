@@ -455,6 +455,13 @@ namespace FlowManager.Client.Components.Admin.Steps
                 bool isEmpty = (departmentToDelete.Users == null || !departmentToDelete.Users.Any())
                                && (departmentToDelete.Teams == null || !departmentToDelete.Teams.Any());
 
+                var movedUsers = departmentToDelete.Users
+                ?.Where(u => selectedDepartment.Users.Any(su => su.Id == u.Id) ||
+                             selectedDepartment.Teams.SelectMany(t => t.Users).Any(su => su.Id == u.Id))
+                .Select(u => u.Name)
+                .Distinct()
+                .ToList() ?? new List<string>();
+
 
                 if (isEmpty)
                 {
