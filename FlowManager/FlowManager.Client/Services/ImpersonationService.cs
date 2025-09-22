@@ -37,7 +37,6 @@ namespace FlowManager.Client.Services
 
                     if (result?.Success == true)
                     {
-                        // No need to store anything in localStorage - server handles authentication context
                         return new ApiResponse<bool> { Success = true, Result = true, Message = result.Message };
                     }
                 }
@@ -97,7 +96,6 @@ namespace FlowManager.Client.Services
         {
             try
             {
-                // Check with server to see if current user context is impersonating
                 var response = await _httpClient.GetAsync("api/admin/impersonation/status");
                 if (response.IsSuccessStatusCode)
                 {

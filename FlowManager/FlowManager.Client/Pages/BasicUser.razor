@@ -21,9 +21,7 @@
 </div>
 
 <div class="basic-user-container">
-    <!-- Left sidebar -->
     <nav class="sidebar">
-        <!-- Navigation items -->
         <div class="nav-main">
             <!-- MY FORMS -->
             <button class="nav-item @(_activeTab == "MYFORMS" ? "active" : "")"
@@ -87,7 +85,6 @@
     </main>
 </div>
 
-<!-- Form Selection Modal cu search și lazy loading -->
 @if (showFormSelectionModal)
 {
     <div class="modal-overlay" @onclick="CloseFormSelectionModal">
@@ -102,7 +99,7 @@
             </div>
 
             <div class="modal-body">
-                <!-- Search Bar pentru template selection -->
+                <!-- Search Bar -->
                 <div class="search-container">
                     <div class="search-input-wrapper">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
@@ -289,14 +286,12 @@
                         <div class="form-element-readonly" style="left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
                                         @if (element.IsTextElement)
                                         {
-                                            <!-- Static text elements -->
                                             <div class="static-text-readonly">
                                                 @element.TextContent
                                             </div>
                                         }
                                         else if (element.ComponentId.HasValue)
                                         {
-                                            <!-- Form components with values -->
                                             var component = formComponents?.FirstOrDefault(c => c.Id == element.ComponentId);
                                             if (component != null)
                                             {

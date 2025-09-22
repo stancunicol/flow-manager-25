@@ -576,7 +576,6 @@
         color: #6c757d;
     }
 
-/* Indicator vizual pentru câmpurile auto-completate */
 .readonly-field::before {
     content: '';
     position: absolute;
@@ -590,7 +589,6 @@
     pointer-events: none;
 }
 
-/* Radio field styling - with distinct background */
 .radio-field {
     display: flex;
     flex-direction: column;

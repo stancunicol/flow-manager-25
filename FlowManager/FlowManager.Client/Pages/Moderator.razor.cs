@@ -66,13 +66,12 @@ namespace FlowManager.Client.Pages
         private int _historyTotalCount = 0;
         private string historySearchTerm = "";
 
-        // Status filter state for history (like BasicUser)
+        // Status filter state for history
         private HashSet<string> selectedHistoryActions = new HashSet<string> { "Approved", "Rejected" };
         private const int _historyMaxVisiblePages = 5;
 
         private UserVM _currentUser = new();
 
-        // Property pentru reject reason cu StateHasChanged
         private string rejectReason
         {
             get => _rejectReason;
@@ -81,7 +80,7 @@ namespace FlowManager.Client.Pages
                 if (_rejectReason != value)
                 {
                     _rejectReason = value;
-                    StateHasChanged(); // Forțează re-render când se schimbă valoarea
+                    StateHasChanged(); 
                 }
             }
         }
@@ -207,7 +206,6 @@ namespace FlowManager.Client.Pages
             var newSearchTerm = e.Value?.ToString() ?? "";
             historySearchTerm = newSearchTerm;
 
-            // Debounce search
             searchDebounceTimer?.Dispose();
             searchDebounceTimer = new Timer(async _ =>
             {
@@ -219,7 +217,6 @@ namespace FlowManager.Client.Pages
             }, null, 500, Timeout.Infinite);
         }
 
-        // History status filter methods (like BasicUser)
         private async Task FilterHistoryByAction(string action)
         {
             selectedHistoryActions = new HashSet<string> { action };
@@ -284,13 +281,11 @@ namespace FlowManager.Client.Pages
             await LoadReviewHistory();
         }
 
-        // History pagination helper methods (like BasicUser)
         private IEnumerable<int> GetHistoryPageNumbers()
         {
             var startPage = Math.Max(1, _historyCurrentPage - _historyMaxVisiblePages / 2);
             var endPage = Math.Min(_historyTotalPages, startPage + _historyMaxVisiblePages - 1);
 
-            // Adjust start if we're near the end
             if (endPage - startPage < _historyMaxVisiblePages - 1)
             {
                 startPage = Math.Max(1, endPage - _historyMaxVisiblePages + 1);
@@ -385,14 +380,13 @@ namespace FlowManager.Client.Pages
         {
             var newSearchTerm = e.Value?.ToString() ?? "";
 
-            // Debounce search to avoid too many API calls
             searchDebounceTimer?.Dispose();
             searchDebounceTimer = new Timer(async _ =>
             {
                 await InvokeAsync(async () =>
                 {
                     searchTerm = newSearchTerm;
-                    _currentPage = 1; // Reset la prima pagină la search nou
+                    _currentPage = 1;
                     await LoadAssignedForms();
                 });
             }, null, 500, Timeout.Infinite); // 500ms debounce
@@ -705,7 +699,6 @@ namespace FlowManager.Client.Pages
                         Console.WriteLine("[Success] Form approved successfully!");
                         CloseViewFormModal();
                         await LoadAssignedForms();
-                        // ACTUALIZEAZĂ și istoricul dacă e deschis
                         if (_activeTab == "HISTORY")
                         {
                             await LoadReviewHistory();
@@ -778,13 +771,11 @@ namespace FlowManager.Client.Pages
 
         private string GetFormStatus(FormResponseResponseDto form)
         {
-            // Folosește statusul din baza de date direct
             if (!string.IsNullOrEmpty(form.Status))
             {
                 return form.Status;
             }
 
-            // Fallback pentru compatibilitate
             if (!string.IsNullOrEmpty(form.RejectReason))
             {
                 return "Rejected";
@@ -807,13 +798,11 @@ namespace FlowManager.Client.Pages
         private bool CanReviewForm(FormResponseResponseDto form)
         {
             var status = GetFormStatus(form);
-            // Permite review doar pentru formularele Pending
             return status == "Pending";
         }
 
         private bool ShouldShowReviewButtons(FormResponseResponseDto form)
         {
-            // Arată butoanele doar pentru formularele care pot fi reviewed
             return CanReviewForm(form);
         }
 
@@ -846,17 +835,14 @@ namespace FlowManager.Client.Pages
         {
             try
             {
-                // Try to find the form in the currently loaded assigned forms first
                 var formResponse = assignedForms?.FirstOrDefault(f => f.Id == review.FormResponseId);
                 
                 if (formResponse != null)
                 {
-                    // Form is still assigned - use the existing ViewFormResponse method
                     await ViewFormResponse(formResponse);
                 }
                 else
                 {
-                    // Form is no longer assigned - create a FormResponseResponseDto from review info
                     var reviewFormResponse = new FormResponseResponseDto
                     {
                         Id = review.FormResponseId,
@@ -896,7 +882,6 @@ namespace FlowManager.Client.Pages
             };
         }
 
-        // Metodă pentru a obține opțiunile radio button-ului din component
         private List<string> GetRadioOptions(ComponentResponseDto component)
         {
             if (component.Properties != null && component.Properties.ContainsKey("Options"))

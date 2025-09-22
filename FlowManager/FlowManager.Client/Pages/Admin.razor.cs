@@ -92,7 +92,6 @@ namespace FlowManager.Client.Pages
             };
         }
 
-        // Impersonation methods
         private async Task ShowImpersonationModal()
         {
             showImpersonationModal = true;
@@ -127,7 +126,7 @@ namespace FlowManager.Client.Pages
 
                 var queryParams = new Dictionary<string, string>
                 {
-                    ["pageSize"] = "50", // Limit pentru performanță
+                    ["pageSize"] = "50", 
                     ["page"] = "1"
                 };
 
@@ -175,17 +174,16 @@ namespace FlowManager.Client.Pages
         {
             var newSearchTerm = e.Value?.ToString() ?? "";
 
-            // Debounce search
             impersonationSearchTimer?.Dispose();
             impersonationSearchTimer = new Timer(async _ =>
             {
                 await InvokeAsync(async () =>
                 {
                     impersonationSearchTerm = newSearchTerm;
-                    selectedUserForImpersonation = null; // Clear selection on new search
+                    selectedUserForImpersonation = null; 
                     await LoadUsersForImpersonation();
                 });
-            }, null, 300, Timeout.Infinite); // 300ms debounce
+            }, null, 300, Timeout.Infinite); 
         }
 
         private async Task ClearImpersonationSearch()
@@ -198,7 +196,7 @@ namespace FlowManager.Client.Pages
         private void SelectUserForImpersonation(UserProfileDto user)
         {
             selectedUserForImpersonation = user;
-            impersonationReason = ""; // Reset reason
+            impersonationReason = ""; 
             StateHasChanged();
         }
 
@@ -229,18 +227,15 @@ namespace FlowManager.Client.Pages
                 if (result.Success)
                 {
 
-                    // Redirect based on user role - dacă are rol de moderator -> alegere, altfel -> user
                     var hasModeratorRole = selectedUserForImpersonation.Roles?.Any(r => r.Equals("Moderator", StringComparison.OrdinalIgnoreCase)) ?? false;
                     
                     string redirectUrl;
                     if (hasModeratorRole)
                     {
-                        // Dacă are rol de Moderator -> pagina de alegere (indiferent de alte roluri)
                         redirectUrl = "/home";
                     }
                     else
                     {
-                        // Utilizatori fără rol de moderator -> direct la user
                         redirectUrl = "/basic-user";
                     }
 

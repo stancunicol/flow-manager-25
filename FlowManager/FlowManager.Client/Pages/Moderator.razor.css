@@ -62,9 +62,9 @@ body {
 
 .welcome-label {
     position: absolute;
-    top: 50%; /* centru pe verticală */
-    right: 1.5rem; /* padding dreapta consistent cu page-description */
-    transform: translateY(-50%); /* ajustează centrul exact */
+    top: 50%; 
+    right: 1.5rem; 
+    transform: translateY(-50%); 
 }
 
     .welcome-label label {
@@ -468,7 +468,6 @@ body {
     word-break: break-word;
 }
 
-/* Enhanced detail items for reject reasons */
 .detail-item.reject-reason {
     background: #fef2f2;
     padding: 0.5rem;
@@ -1305,46 +1304,45 @@ body {
     border: 2px solid #e5e7eb;
     border-radius: 4px;
     font-size: 14px;
-    background: #f9fafb; /* SCHIMBAT - fundal cenușiu deschis */
-    color: #6b7280; /* SCHIMBAT - text cenușiu */
+    background: #f9fafb; 
+    color: #6b7280;
     display: flex;
     align-items: center;
-    box-shadow: none; /* ELIMINAT - fără shadow pentru aspect plat */
+    box-shadow: none;
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    cursor: not-allowed; /* ADAUGAT - cursor care arată că nu e editabil */
-    opacity: 0.8; /* ADAUGAT - ușor transparent */
-    user-select: none; /* ADAUGAT - nu se poate selecta textul */
+    cursor: not-allowed;
+    opacity: 0.8;
+    user-select: none; 
 }
 
 .text-input-readonly,
 .email-input-readonly,
 .number-input-readonly {
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    border-left: 4px solid #9ca3af;
+    background: #f3f4f6;
 }
 
 .textarea-readonly {
     height: 72px;
     align-items: flex-start;
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
+    border-left: 4px solid #9ca3af;
     line-height: 1.4;
     padding-top: 8px;
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    background: #f3f4f6;
 }
 
 .datetime-input-readonly {
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    border-left: 4px solid #9ca3af;
+    background: #f3f4f6;
 }
 
 .select-input-readonly,
 .radio-input-readonly {
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    border-left: 4px solid #9ca3af; 
+    background: #f3f4f6; 
 }
 
-/* Radio options display styles - matching FormTemplate design */
 .radio-options-display {
     display: flex;
     flex-direction: column;
@@ -1407,8 +1405,8 @@ body {
 }
 
 .default-input-readonly {
-    border-left: 4px solid #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-    background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+    border-left: 4px solid #9ca3af; 
+    background: #f3f4f6; 
 }
 
 .checkbox-field-readonly {
@@ -1418,13 +1416,13 @@ body {
     width: 180px;
     height: 36px;
     padding: 8px 12px;
-    background: #f9fafb; /* SCHIMBAT - fundal cenușiu deschis */
+    background: #f9fafb; 
     border-radius: 4px;
-    box-shadow: none; /* ELIMINAT - fără shadow */
+    box-shadow: none; 
     box-sizing: border-box;
-    border: 2px solid #e5e7eb; /* ADAUGAT - border consistent */
-    cursor: not-allowed; /* ADAUGAT - cursor disabled */
-    opacity: 0.8; /* ADAUGAT - ușor transparent */
+    border: 2px solid #e5e7eb;
+    cursor: not-allowed;
+    opacity: 0.8; 
 }
 
 .checkbox-display {
@@ -1436,25 +1434,25 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    cursor: not-allowed; /* ADAUGAT - cursor disabled */
+    cursor: not-allowed; 
 }
 
     .checkbox-display.checked {
-        background: #9ca3af; /* SCHIMBAT - culoare mai cenușie */
-        border-color: #9ca3af; /* SCHIMBAT - culoare mai cenușie */
+        background: #9ca3af; 
+        border-color: #9ca3af;
         color: white;
     }
 
     .checkbox-display.unchecked {
-        background: #f3f4f6; /* SCHIMBAT - fundal mai cenușiu */
+        background: #f3f4f6;
         border-color: #d1d5db;
     }
 
 .checkbox-label-readonly {
     font-size: 14px;
-    color: #6b7280; /* SCHIMBAT - text cenușiu */
+    color: #6b7280;
     font-weight: normal;
-    cursor: not-allowed; /* ADAUGAT - cursor disabled */
+    cursor: not-allowed; 
 }
 
 .no-form-data {
@@ -1463,7 +1461,6 @@ body {
     color: #6b7280;
 }
 
-/* Modal Footer cu review actions */
 .modal-footer {
     padding: 1rem 1.5rem;
     background: #f9fafb;
@@ -1487,7 +1484,6 @@ body {
     font-weight: 500;
 }
 
-/* Review Actions în footer */
 .review-actions {
     display: flex;
     gap: 0.75rem;
@@ -1551,7 +1547,6 @@ body {
     height: 16px;
 }
 
-/* Responsive adjustments pentru view modal */
 @media (max-width: 1200px) {
     .view-form-modal-content {
         width: 98%;
@@ -1613,7 +1608,6 @@ body {
     }
 }
 
-/* Override pentru stilurile existente care ar putea intra în conflict */
 .view-form-modal-content .modal-body {
     flex: 1;
     overflow-y: auto;
@@ -1626,7 +1620,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    background: white; /* schimbat de la gradient la alb ca la BasicUser */
+    background: white;
 }
 
     .view-form-modal-content .modal-header h3 {
@@ -1649,7 +1643,6 @@ body {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Review Status Info Messages */
 .review-status-info {
     display: flex;
     align-items: center;
@@ -1686,7 +1679,6 @@ body {
         flex-shrink: 0;
     }
 
-/* Enhanced modal footer layout */
 .modal-footer {
     padding: 1rem 1.5rem;
     background: #f9fafb;
@@ -1722,7 +1714,6 @@ body {
     border: none !important;
 }
 
-/* Enhanced footer pentru diferite stări */
 .modal-footer.review-available {
     justify-content: space-between;
 }
@@ -1732,7 +1723,6 @@ body {
     text-align: center;
 }
 
-/* Responsive pentru modal footer cu status */
 @media (max-width: 768px) {
     .modal-footer {
         flex-direction: column;
@@ -1761,7 +1751,6 @@ body {
     }
 }
 
-/* Enhanced view indicator pentru status */
 .view-indicator {
     display: flex;
     align-items: center;
@@ -1788,7 +1777,6 @@ body {
     color: #ef4444;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .moderator-container {
         flex-direction: column;
@@ -1926,7 +1914,6 @@ body {
     }
 }
 
-/* Pagination Styles */
 .pagination-container {
     display: flex;
     justify-content: flex-start;
@@ -2032,7 +2019,6 @@ body {
     font-weight: 500;
 }
 
-/* Responsive pentru paginare */
 @media (max-width: 768px) {
     .pagination-container {
         flex-direction: column;
@@ -2060,7 +2046,6 @@ body {
     }
 }
 
-/* History Card Styles */
 .history-card {
     border-left: 4px solid transparent;
     cursor: pointer;
@@ -2119,7 +2104,6 @@ body {
     background: linear-gradient(135deg, #fef2f2, #fef3f3);
 }
 
-/* Filter Select Styling */
 .search-container select {
     background: white;
     cursor: pointer;
@@ -2131,7 +2115,6 @@ body {
         box-shadow: 0 0 0 3px rgba(44, 142, 144, 0.1);
     }
 
-/* Status Filter Styling - same as BasicUser */
 .status-filter-container {
     margin-bottom: 1.5rem;
 }
@@ -2256,7 +2239,6 @@ body {
         font-weight: 500;
     }
 
-/* Responsive adjustments for history */
 @media (max-width: 768px) {
     .history-card {
         border-left-width: 3px;
@@ -2267,7 +2249,6 @@ body {
         padding: 0.2rem 0.5rem;
     }
 
-    /* Status filter responsive */
     .status-filter-buttons {
         gap: 0.5rem;
     }
@@ -2279,7 +2260,6 @@ body {
     }
 }
 
-/* Impersonation Indicator Styles */
 .detail-item.impersonation-info {
     background: linear-gradient(135deg, #fef3c7, #fde68a);
     border: 1px solid #f59e0b;
@@ -2321,7 +2301,6 @@ body {
     box-shadow: 0 1px 2px rgba(146, 64, 14, 0.1);
 }
 
-/* Responsive adjustments for impersonation info */
 @media (max-width: 768px) {
     .impersonated-reviewer {
         flex-direction: column;

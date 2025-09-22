@@ -20,7 +20,7 @@ body {
     top: 55px;
     left: 0;
     right: 0;
-    height: 90px; /* înălțimea navbar */
+    height: 90px;
     background: linear-gradient(180deg, #2c8e90 0%, #003d5c 100%);
     z-index: 1200;
     padding-left: 1.5rem;
@@ -63,9 +63,9 @@ body {
 
 .welcome-label {
     position: absolute;
-    top: 50%; /* centru pe verticală */
-    right: 1.5rem; /* padding dreapta consistent cu page-description */
-    transform: translateY(-50%); /* ajustează centrul exact */
+    top: 50%; 
+    right: 1.5rem; 
+    transform: translateY(-50%); 
 }
 
     .welcome-label label {
@@ -74,30 +74,28 @@ body {
         color: white;
     }
 
-/* Sidebar fix jos */
 .sidebar {
     position: fixed;
-    top: 140px; /* start imediat sub header */
+    top: 140px; 
     left: 0;
-    bottom: 0; /* lipit de partea de jos */
+    bottom: 0; 
     width: 200px;
     background-color: white;
     border-right: 1px solid #E5E5E5;
     padding: 1rem 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* conținut lipit de jos */
+    justify-content: flex-end; 
     z-index: 1000;
-    overflow-y: auto; /* scroll dacă meniul e mai mare decât spațiul disponibil */
+    overflow-y: auto; 
 }
 
-/* Main content */
 .main-content {
-    margin-left: 200px; /* lățimea sidebar */
-    margin-top: 140px; /* înălțimea header-ului, nu 80px */
+    margin-left: 200px; 
+    margin-top: 140px; 
     padding: 1rem;
     background-color: #f8fafc;
-    min-height: calc(100vh - 140px); /* scade înălțimea header-ului */
+    min-height: calc(100vh - 140px); 
     overflow-y: auto;
     flex: 1;
 }
@@ -166,7 +164,6 @@ body {
     color: #991b1b;
     border-left-color: #dc2626;
 }
-/* Impersonation Button Styles */
 .impersonation-btn {
     color: #3b82f6;
 }
@@ -177,7 +174,6 @@ body {
         border-left-color: #3b82f6;
     }
 
-/* Modal Styles */
 .modal-overlay {
     position: fixed;
     top: 0;

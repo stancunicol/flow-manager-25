@@ -398,7 +398,7 @@
     }
 }
 
-/* Radio field styling - with distinct background */
+/* Radio field styling */
 .radio-field {
     display: flex;
     flex-direction: column;
