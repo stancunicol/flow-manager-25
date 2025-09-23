@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowManager.Infrastructure"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowManager.Shared", "FlowManager.Shared\FlowManager.Shared.csproj", "{249ECB1D-B653-4C3A-88F6-1DA954829F30}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowManager.Tests", "FlowManager.Tests\FlowManager.Tests.csproj", "{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,18 @@ Global
 		{249ECB1D-B653-4C3A-88F6-1DA954829F30}.Release|x64.Build.0 = Release|Any CPU
 		{249ECB1D-B653-4C3A-88F6-1DA954829F30}.Release|x86.ActiveCfg = Release|Any CPU
 		{249ECB1D-B653-4C3A-88F6-1DA954829F30}.Release|x86.Build.0 = Release|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Debug|x86.Build.0 = Debug|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Release|x64.Build.0 = Release|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Release|x86.ActiveCfg = Release|Any CPU
+		{C32E26CD-CCD5-4855-B20B-B07AEF2972F2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
