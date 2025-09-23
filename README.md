@@ -134,21 +134,21 @@ Make sure you have [Docker](https://www.docker.com/get-started) installed.
 3. **Create a docker-compose.yml in the project root:**
    ```bash
    services:
-   api:
-    image: stancunicol/flowmanager:api-latest
-    container_name: flowmanager-api
-    ports:
-      - "5000:8080"
-
-   client:
-    image: stancunicol/flowmanager:client-latest
-    container_name: flowmanager-client
-    ports:
-      - "3000:80"
-    environment:
-      - API_URL=http://api:80
-    depends_on:
-      - api
+     api:
+      image: stancunicol/flowmanager:api-latest
+      container_name: flowmanager-api
+      ports:
+        - "5000:8080"
+  
+     client:
+      image: stancunicol/flowmanager:client-latest
+      container_name: flowmanager-client
+      ports:
+        - "3000:80"
+      environment:
+        - API_URL=http://api:80
+      depends_on:
+        - api
    ```
 
 4. **Run the app:**
