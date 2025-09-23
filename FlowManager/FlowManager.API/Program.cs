@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,10 +31,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.WithOrigins("https://localhost:7082", "http://localhost:5223", "https://localhost:7195") 
+        policy.WithOrigins("https://localhost:7082", "http://localhost:5223", "https://localhost:7195", "http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); 
+              .AllowCredentials();
+
     });
 });
 
@@ -95,11 +97,13 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    Console.WriteLine($"[DB] Using connection: {dbContext.Database.GetDbConnection().ConnectionString}");
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-    // BasicSeed.Populate(dbContext, passwordHasher);
-    // MockDataSeed.Populate(dbContext, passwordHasher);
+    dbContext.Database.Migrate();
 
+    //BasicSeed.Populate(dbContext, passwordHasher);
+    //MockDataSeed.Populate(dbContext, passwordHasher);
 }
 
 if (app.Environment.IsDevelopment())

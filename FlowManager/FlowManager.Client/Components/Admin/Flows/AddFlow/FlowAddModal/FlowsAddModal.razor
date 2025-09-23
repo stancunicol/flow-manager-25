@@ -34,14 +34,13 @@
                     }
                     <div class="graph-view-toggle">
                         <input type="checkbox" id="graphViewToggle" checked="@_isGraphView" @onchange="OnGraphViewToggleChanged" />
-                        <label for="graphViewToggle" class="toggle-label">📊 Graph View</label>
+                        <label for="graphViewToggle" class="toggle-label">Graph View</label>
                     </div>
                 </div>
             </div>
             @if (!string.IsNullOrEmpty(SavedFormTemplateName) && !_isGraphView)
             {
                 <div class="form-template-info">
-                    <span class="template-icon">📋</span>
                     <span class="template-label">Form Template:</span>
                     <span class="template-name">@SavedFormTemplateName</span>
                 </div>
