@@ -81,6 +81,9 @@ flow-manager-25/
 │
 ├── Shared/                   # Shared resources
 │   └── Dtos/                 # Data Transfer Objects shared across the application
+|
+├── Tests/                    # Unit and integration tests
+│   └── Services/             # Tests for services
 │
 ├── docker/                   # Docker files for containerization
 │   └── Dockerfile            # Build instructions for Docker image
@@ -115,7 +118,7 @@ flow-manager-25/
 
 ## 🐳 Docker Usage
 
-Make sure you have [Docker](https://www.docker.com/get-started) installed.
+Make sure you have [Docker](https://www.docker.com/get-started) installed and running while doing this process.
 
 ### Run the application locally with Docker
 
@@ -151,10 +154,17 @@ Make sure you have [Docker](https://www.docker.com/get-started) installed.
         - api
    ```
 
-4. **Run the app:**
+4. **Go to app folder:**
+   ```bash
+   cd FlowManager
+   ```   
+
+5. **Run the app:**
    ```bash
    docker compose up -d
    ```
+
+   If you go to http://localhost:3000, the app is running.
 
    For the app to stop:
    ```bash
