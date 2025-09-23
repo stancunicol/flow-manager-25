@@ -6,12 +6,9 @@ using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
-using System.Linq;
 using FlowManager.Application.Utils;
 using FlowManager.Shared.DTOs.Responses.User;
 using FlowManager.Shared.DTOs.Responses.Team;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowManager.Application.Services
 {
@@ -42,8 +39,8 @@ namespace FlowManager.Application.Services
 
             return steps.Select(s => new StepResponseDto
             {
-                Id = s.Id,
-                Name = s.Name,
+                StepId = s.Id,
+                StepName = s.Name,
                 Users = s.Users.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
@@ -75,38 +72,34 @@ namespace FlowManager.Application.Services
 
             return new StepResponseDto
             {
-                Id = step.Id,
-                Name = step.Name,
-
+                StepId = step.Id,
+                StepName = step.Name,
                 Users = step.Users
-        .Where(u => u.Teams == null || !u.Teams.Any())
-        .Select(u => new UserResponseDto
-        {
-            Id = u.Id,
-            Name = u.Name,
-            Email = u.Email,
-        })
-        .ToList(),
+                    .Where(u => u.Teams == null || !u.Teams.Any())
+                    .Select(u => new UserResponseDto
+                    {
+                        Id = u.Id,
+                        Name = u.Name,
+                        Email = u.Email,
+                    })
+                    .ToList(),
 
                 Teams = step.Users
-        .SelectMany(u => u.Teams)
-        .Select(ut => ut.Team)
-        .Where(t => t != null)
-        .GroupBy(t => t!.Id)
-        .Select(g => new TeamResponseDto
-        {
-            Id = g.Key,
-            Name = g.First()!.Name,
-            Users = g.SelectMany(t => t!.Users.Select(ut => new UserResponseDto
-            {
-                Id = ut.User.Id,
-                Name = ut.User.Name,
-                Email = ut.User.Email
-            })).DistinctBy(u => u.Id).ToList()
-        })
-        .ToList(),
-
-                DeletedAt = step.DeletedAt
+                    .SelectMany(u => u.Teams)
+                    .Select(ut => ut.Team)
+                    .Where(t => t != null)
+                    .GroupBy(t => t!.Id)
+                    .Select(g => new TeamResponseDto
+                    {
+                        Id = g.Key,
+                        Name = g.First()!.Name,
+                        Users = g.SelectMany(t => t!.Users.Select(ut => new UserResponseDto
+                        {
+                            Id = ut.User.Id,
+                            Name = ut.User.Name,
+                            Email = ut.User.Email
+                        })).DistinctBy(u => u.Id).ToList()
+                    }).ToList()
             };
         }
 
@@ -139,11 +132,19 @@ namespace FlowManager.Application.Services
                 }
                 else
                 {
-                    stepToPost.FlowSteps.Add(new FlowStep
+
+                    FlowStep flowStep = new FlowStep
                     {
                         FlowId = flowId,
+                    };
+
+                    FlowStepItem item = new FlowStepItem
+                    {
+                        FlowStepId = flowId,
                         StepId = stepToPost.Id
-                    });
+                    };
+
+                    stepToPost.FlowSteps.Add(flowStep);
                 }
             }
 
@@ -151,8 +152,8 @@ namespace FlowManager.Application.Services
 
             return new StepResponseDto
             {
-                Id = stepToPost.Id,
-                Name = stepToPost.Name,
+                StepId = stepToPost.Id,
+                StepName = stepToPost.Name,
                 Users = stepToPost.Users.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
@@ -225,7 +226,6 @@ namespace FlowManager.Application.Services
 
             await _stepRepository.SaveChangesAsync();
 
-            // Create user DTOs with their teams
             var userDtos = stepToPatch.Users.Select(u => new UserResponseDto
             {
                 Id = u.Id,
@@ -268,8 +268,8 @@ namespace FlowManager.Application.Services
 
             return new StepResponseDto
             {
-                Id = stepToPatch.Id,
-                Name = stepToPatch.Name,
+                StepId = stepToPatch.Id,
+                StepName = stepToPatch.Name,
                 Users = userDtos,
                 Teams = teamDtos
             };
@@ -288,8 +288,8 @@ namespace FlowManager.Application.Services
 
             return new StepResponseDto
             {
-                Id = stepToDelete.Id,
-                Name = stepToDelete.Name,
+                StepId = stepToDelete.Id,
+                StepName = stepToDelete.Name,
                 Users = stepToDelete.Users.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
@@ -297,16 +297,16 @@ namespace FlowManager.Application.Services
                     Email = u.Email,
                 }).ToList(),
                 Teams = stepToDelete.Users
-            .SelectMany(u => u.Teams)
-            .Select(ut => ut.Team)
-            .Where(t => t != null)
-            .GroupBy(t => t!.Id)
-            .Select(g => new TeamResponseDto
-            {
-                Id = g.Key,
-                Name = g.First()!.Name
-            })
-            .ToList()
+                    .SelectMany(u => u.Teams)
+                    .Select(ut => ut.Team)
+                    .Where(t => t != null)
+                    .GroupBy(t => t!.Id)
+                    .Select(g => new TeamResponseDto
+                    {
+                        Id = g.Key,
+                        Name = g.First()!.Name
+                    })
+                    .ToList()
             };
         }
 
@@ -341,8 +341,8 @@ namespace FlowManager.Application.Services
 
             return new StepResponseDto
             {
-                Id = step.Id,
-                Name = step.Name,
+                StepId = step.Id,
+                StepName = step.Name,
                 Users = step.Users.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
@@ -383,8 +383,8 @@ namespace FlowManager.Application.Services
 
             return new StepResponseDto
             {
-                Id = step.Id,
-                Name = step.Name,
+                StepId = step.Id,
+                StepName = step.Name,
                 Users = step.Users.Select(u => new UserResponseDto
                 {
                     Id = u.Id,
@@ -454,8 +454,8 @@ namespace FlowManager.Application.Services
 
                 return new StepResponseDto
                 {
-                    Id = step.Id,
-                    Name = step.Name,
+                    StepId = step.Id,
+                    StepName = step.Name,
                     Users = userDtos,
                     Teams = teamDtos
                 };
@@ -487,8 +487,8 @@ namespace FlowManager.Application.Services
             {
                 Data = data.Select(step => new StepResponseDto
                 {
-                    Id = step.Id,
-                    Name = step.Name,
+                    StepId = step.Id,
+                    StepName = step.Name,
                     Users = step.Users.Select(u => new UserResponseDto
                     {
                         Id = u.Id,
@@ -496,21 +496,19 @@ namespace FlowManager.Application.Services
                         Email = u.Email,
                     }).ToList(),
                     Teams = step.Users
-            .SelectMany(u => u.Teams)
-            .Select(ut => ut.Team)
-            .Where(t => t != null)
-            .GroupBy(t => t!.Id)
-            .Select(g => new TeamResponseDto
-            {
-                Id = g.Key,
-                Name = g.First()!.Name
-            })
-            .ToList()
-                }),
-                TotalCount = totalCount,
-                Page = parameters?.Page ?? 1,
-                PageSize = parameters?.PageSize ?? totalCount,
-            };
+                        .SelectMany(u => u.Teams)
+                        .Select(ut => ut.Team)
+                        .Where(t => t != null)
+                        .GroupBy(t => t!.Id)
+                        .Select(g => new TeamResponseDto
+                        {
+                            Id = g.Key,
+                            Name = g.First()!.Name
+                        }).ToList()}),
+                    TotalCount = totalCount,
+                    Page = parameters?.Page ?? 1,
+                    PageSize = parameters?.PageSize ?? totalCount,
+                };
         }
     }
 }

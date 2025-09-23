@@ -31,9 +31,9 @@
     {
         @foreach (var department in departmentsInUI)
         {
-            <div class="department-card" style="background:@GetDepartmentColor(department.Id)" @onclick="() => OpenModal(department)">
+            <div class="department-card" style="background:@GetDepartmentColor(department.StepId)" @onclick="() => OpenModal(department)">
                 <span class="department-name">
-                    @department.Name
+                    @department.StepName
                     </span>
             </div>
         }
@@ -50,7 +50,7 @@
     <div class="modal-backdrop" @onclick="CloseModal">
         <div class="modal-content" @onclick:stopPropagation="true">
             <div class="modal-header">
-                <h3>@selectedDepartment.Name</h3>
+                <h3>@selectedDepartment.StepName</h3>
                 <button class="close-icon" @onclick="CloseModal">✕</button>
             </div>
 
@@ -92,7 +92,7 @@
                         <li @onclick="() => OpenChangeUsersModal(selectedDepartment)">Change Users</li>
                     </ul>
                 </div>
-                <button class="action-btn delete-btn" @onclick="async () => await OpenSelectDepartmentModal(selectedDepartment.Id)">🗑 Delete</button>
+                <button class="action-btn delete-btn" @onclick="async () => await OpenSelectDepartmentModal(selectedDepartment.StepId)">🗑 Delete</button>
             </div>
         </div>
     </div>
@@ -151,7 +151,7 @@
     <div class="delete-modal-backdrop" @onclick="() => isDeleteModalOpen = false">
         <div class="delete-modal-content" @onclick:stopPropagation="true">
             <div class="delete-modal-header">
-                <h3>Reassign employees from: @departmentToDelete.Name</h3>
+                <h3>Reassign employees from: @departmentToDelete.StepName</h3>
                 <button class="close-icon" @onclick="() => isDeleteModalOpen = false">✕</button>
             </div>
 
@@ -159,9 +159,9 @@
 
             <select @bind="selectedReassignDepartmentId">
                 <option value="">-- Select department --</option>
-                @foreach (var dep in departments.Where(d => d.Id != departmentToDelete.Id))
+                @foreach (var dep in departments.Where(d => d.StepId != departmentToDelete.StepId))
                 {
-                    <option value="@dep.Id">@dep.Name</option>
+                    <option value="@dep.StepId">@dep.StepName</option>
                 }
             </select>
 
@@ -183,7 +183,7 @@
 
             <div class="select-move-users-container">
                 <div class="users-column">
-                    <h4>@departmentToDelete.Name - Individual Users</h4>
+                    <h4>@departmentToDelete.StepName - Individual Users</h4>
                     <ul>
                         @{
                             var individualUsersToDelete = GetIndividualUsers(departmentToDelete);
@@ -206,7 +206,7 @@
                 </div>
 
                 <div class="users-column">
-                    <h4>@selectedDepartment.Name - Individual Users</h4>
+                    <h4>@selectedDepartment.StepName - Individual Users</h4>
                     <ul>
                         @{
                             var individualUsersTarget = GetIndividualUsers(selectedDepartment);
@@ -230,7 +230,7 @@
 
             <div class="select-move-teams-container">
                 <div class="teams-column">
-                    <h4>@departmentToDelete.Name - Teams</h4>
+                    <h4>@departmentToDelete.StepName - Teams</h4>
                     <ul>
                         @if (departmentToDelete.Teams != null && departmentToDelete.Teams.Any())
                         {
@@ -250,7 +250,7 @@
                 </div>
 
                 <div class="teams-column">
-                    <h4>@selectedDepartment.Name - Teams</h4>
+                    <h4>@selectedDepartment.StepName - Teams</h4>
                     <ul>
                         @if (selectedDepartment.Teams != null && selectedDepartment.Teams.Any())
                         {
@@ -282,7 +282,7 @@
     <div class="delete-modal-backdrop" @onclick="() => isChangeUsersModalOpen = false">
         <div class="delete-modal-content" @onclick:stopPropagation="true">
             <div class="delete-modal-header">
-                <h3>Move users from @selectedDepartment.Name</h3>
+                <h3>Move users from @selectedDepartment.StepName</h3>
                 <button class="close-icon" @onclick="() => isChangeUsersModalOpen = false">✕</button>
             </div>
 
@@ -290,9 +290,9 @@
 
             <select @bind="selectedReassignDepartmentId">
                 <option value="">-- Select department --</option>
-                @foreach (var dep in departments.Where(d => d.Id != selectedDepartment.Id))
+                @foreach (var dep in departments.Where(d => d.StepId != selectedDepartment.StepId))
                 {
-                    <option value="@dep.Id">@dep.Name</option>
+                    <option value="@dep.StepId">@dep.StepName</option>
                 }
             </select>
 
@@ -309,13 +309,13 @@
     <div class="select-modal-backdrop" @onclick="() => isMoveModalOpen = false">
         <div class="select-modal-content wide" @onclick:stopPropagation="true">
             <div class="select-modal-header">
-                <h3>Move Users from @selectedDepartment.Name to @departmentToMove.Name</h3>
+                <h3>Move Users from @selectedDepartment.StepName to @departmentToMove.StepName</h3>
                 <button class="close-icon" @onclick="() => isMoveModalOpen = false">✕</button>
             </div>
 
             <div class="select-move-users-container">
                 <div class="users-column">
-                    <h4>@selectedDepartment.Name - Individual Users</h4>
+                    <h4>@selectedDepartment.StepName - Individual Users</h4>
                     <ul>
                         @{
                             var individualUsersSource = GetIndividualUsers(selectedDepartment);
@@ -339,7 +339,7 @@
                 </div>
 
                 <div class="users-column">
-                    <h4>@departmentToMove.Name - Individual Users</h4>
+                    <h4>@departmentToMove.StepName - Individual Users</h4>
                     <ul>
                         @{
                             var individualUsersDestination = GetIndividualUsers(departmentToMove);
@@ -361,7 +361,7 @@
 
             <div class="select-move-teams-container">
                 <div class="teams-column">
-                    <h4>@selectedDepartment.Name - Teams</h4>
+                    <h4>@selectedDepartment.StepName - Teams</h4>
                     <ul>
                         @if (selectedDepartment.Teams != null && selectedDepartment.Teams.Any())
                         {
@@ -381,7 +381,7 @@
                 </div>
 
                 <div class="teams-column">
-                    <h4>@departmentToMove.Name - Teams</h4>
+                    <h4>@departmentToMove.StepName - Teams</h4>
                     <ul>
                         @if (departmentToMove.Teams != null && departmentToMove.Teams.Any())
                         {

@@ -1,6 +1,7 @@
 ﻿@using FlowManager.Client.Services;
 @using FlowManager.Client.ViewModels;
 @using FlowManager.Shared.DTOs;
+@using System.Reflection;
 
 @inject NavigationManager Navigation;
 
@@ -9,11 +10,12 @@
 <div class="siemens-navbar">
     <nav>
         <div class="siemens-img">
-            <h1 class="logo-title" link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap" rel="stylesheet">FTD</h1>
+            <h1 class="logo-title">
+                FTD<span class="app-version"> v @simpleVersion</span>
+            </h1>
         </div>
 
         <div class="nav-actions">
-
             <div class="home-btn">
                 <button @onclick="NavigateToHome">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -27,6 +29,16 @@
 </div>
 
 @code {
+
+    protected string? version;
+    protected string? simpleVersion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+        simpleVersion = version?.Split(new char[] { '+', '-' })[0];
+    }
 
     private void NavigateToHome()
     {

@@ -1,20 +1,15 @@
 using FlowManager.Application.Interfaces;
-using FlowManager.Application.IServices;
 using FlowManager.Application.Utils;
 using FlowManager.Domain.Dtos;
 using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
-using FlowManager.Infrastructure.Utils;
 using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Role;
 using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace FlowManager.Infrastructure.Services
 {
@@ -100,8 +95,8 @@ namespace FlowManager.Infrastructure.Services
                     PhoneNumber = u.PhoneNumber,
                     Step = new Shared.DTOs.Responses.Step.StepResponseDto
                     {
-                        Id = u.StepId,
-                        Name = u.Step.Name
+                        StepId = u.StepId,
+                        StepName = u.Step.Name
                     },
                     Teams = u.Teams.Select(ut => new TeamResponseDto
                     {
@@ -215,7 +210,6 @@ namespace FlowManager.Infrastructure.Services
 
             userToAdd.Roles.Add(basicRole);
 
-            // Send welcome email
             try
             {
                 Console.WriteLine($"Attempting to send welcome email to: {userToAdd.Email}");
@@ -462,8 +456,8 @@ namespace FlowManager.Infrastructure.Services
                     UserName = u.UserName,
                     Step = new Shared.DTOs.Responses.Step.StepResponseDto
                     {
-                        Id = u.StepId,
-                        Name = u.Step.Name
+                        StepId = u.StepId,
+                        StepName = u.Step.Name
                     },
                     Teams = u.Teams.Select(ut => new TeamResponseDto
                     {

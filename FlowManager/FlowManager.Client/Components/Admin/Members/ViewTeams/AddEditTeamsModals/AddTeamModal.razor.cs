@@ -62,8 +62,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
 
             _availableSteps = response.Result.Data.Select(s => new StepVM
             {
-                Id = s.Id,
-                Name = s.Name
+                Id = s.StepId,
+                Name = s.StepName
             }).ToList();
         }
 
@@ -146,14 +146,16 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 UserIds = _selectedUsers.Select(u => u.Id).ToList()
             };
 
-            _isSubmitting = false;
-
             ApiResponse<TeamResponseDto> result = await _teamService.PostTeamAsync(payload);
 
+            _isSubmitting = false;
+
+            Console.WriteLine($"message {result.Message}");
             _submitStatus = result.Success;
             _submitMessage = result.Message;
+            StateHasChanged();
 
-            if(_submitStatus)
+            if (_submitStatus)
             {
                 await TeamWasAdded.InvokeAsync();
             }
@@ -223,8 +225,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
         {
             if (_selectedStepId != step.Id)
             {
-                _selectedStepId = step.Id;
-                _selectedStepName = step.Name;
+                _selectedStepId = step.Id ?? Guid.Empty;
+                _selectedStepName = step.Name ?? string.Empty;
                 _selectedUsers.Clear();
                 await LoadUsersAsync(resetPageSize: true);
             }

@@ -30,6 +30,7 @@
 }
 
 .auth-left {
+    position: relative;
     flex: 1.2;
     background: linear-gradient(160deg, #2C8E90, #1f5d60);
     color: white;
@@ -39,6 +40,15 @@
     align-items: flex-start;
     padding: 40px 50px;
     text-align: left;
+}
+
+.app-version {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    font-size: 0.8rem;
+    color: #ffffff;
+    text-shadow: 0 0 4px rgba(0,0,0,0.5);
 }
 
 .siemens-logo {

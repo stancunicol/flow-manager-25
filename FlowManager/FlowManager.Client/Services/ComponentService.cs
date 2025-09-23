@@ -7,7 +7,6 @@ using System.Web;
 
 namespace FlowManager.Client.Services
 {
-    // Wrapper pentru răspunsurile API-ului
     public class ApiResponseWrapper<T>
     {
         public T Result { get; set; }

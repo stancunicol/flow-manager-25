@@ -52,7 +52,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    gap: 0;
+    gap: 2rem;
     overflow-x: auto;
     padding: 2rem 1rem;
     min-height: 140px;
@@ -63,7 +63,7 @@
     flex-direction: column;
     align-items: center;
     position: relative;
-    min-width: 100px;
+    min-width: 120px;
     flex-shrink: 0;
 }
 
@@ -91,7 +91,6 @@
     font-family: 'Arial', sans-serif;
 }
 
-/* Status Colors pentru cercuri */
 .step-circle.inactive {
     background: #9ca3af;
     border-color: #d1d5db;
@@ -115,7 +114,6 @@
     animation: pulse-red 2s infinite;
 }
 
-/* Pulse animations */
 @keyframes pulse-yellow {
     0%, 100% {
         box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(245, 158, 11, 0.7);
@@ -141,7 +139,7 @@
     font-weight: 600;
     color: #374151;
     line-height: 1.2;
-    max-width: 90px;
+    max-width: 110px; 
     word-wrap: break-word;
     hyphens: auto;
     margin-bottom: 0.25rem;
@@ -154,12 +152,11 @@
     font-weight: 500;
 }
 
-/* Flow Connectors - liniile dintre cercuri */
 .flow-connector {
     position: absolute;
-    top: 30px; /* Centrat pe cercuri (60px / 2) */
-    left: 60px; /* Începe de la marginea cercului */
-    width: 40px; /* Lungimea liniei */
+    top: 30px; 
+    left: 60px;
+    width: 120px;
     height: 4px;
     z-index: 1;
     transition: all 0.3s ease;
@@ -175,7 +172,6 @@
         background: #d1d5db;
     }
 
-/* Flow Legend */
 .flow-legend {
     display: flex;
     justify-content: center;
@@ -234,7 +230,6 @@
     font-style: italic;
 }
 
-/* Hover Effects */
 .step-circle:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -256,15 +251,14 @@
     box-shadow: 0 6px 12px rgba(156, 163, 175, 0.3);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .flow-container {
-        gap: 0;
+        gap: 1.5rem;
         padding: 1.5rem 0.5rem;
     }
 
     .step-wrapper {
-        min-width: 80px;
+        min-width: 100px;
     }
 
     .step-circle {
@@ -276,13 +270,13 @@
     .flow-connector {
         top: 25px;
         left: 50px;
-        width: 30px;
+        width: 100px; 
         height: 3px;
     }
 
     .step-name {
         font-size: 12px;
-        max-width: 75px;
+        max-width: 95px;
     }
 
     .step-status {
@@ -306,11 +300,12 @@
 
 @media (max-width: 480px) {
     .flow-container {
+        gap: 1rem;
         padding: 1rem 0.25rem;
     }
 
     .step-wrapper {
-        min-width: 70px;
+        min-width: 80px;
     }
 
     .step-circle {
@@ -322,13 +317,13 @@
     .flow-connector {
         top: 22px;
         left: 45px;
-        width: 25px;
+        width: 75px;
         height: 2px;
     }
 
     .step-name {
         font-size: 11px;
-        max-width: 65px;
+        max-width: 75px;
     }
 
     .flow-legend {

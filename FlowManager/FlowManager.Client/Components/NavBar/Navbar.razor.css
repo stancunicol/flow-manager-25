@@ -24,25 +24,18 @@
         height: 60px;
     }
 
-.siemens-img img {
-    height: 40px;
-    width: auto;
+.app-version {
+    font-size: 0.4em;
+    font-weight: 400;
+    margin-left: 0.3rem;
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(0,0,0,0.5);
 }
 
 .nav-actions {
     display: flex;
     align-items: center;
     gap: 1rem;
-}
-
-.welcome-label {
-    color: white;
-    background-color: transparent;
-    padding: 8px 16px;
-    font-size: 16px;
-    font-weight: 450;
-    align-items: center;
-    gap: 0.5rem;
 }
 
 .home-btn button {
@@ -77,24 +70,6 @@
         height: 18px;
     }
 
-.logout-btn button {
-    background-color: transparent;
-    color: white;
-    border: 2px solid white;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 400;
-    transition: all 0.3s ease;
-}
-
-    .logout-btn button:hover {
-        background-color: white;
-        color: var(--siemens-blue);
-    }
-
-/* Responsive design */
 @media (max-width: 768px) {
     .siemens-navbar {
         padding: 0 15px;
@@ -113,7 +88,7 @@
 
 @media (max-width: 480px) {
     .home-btn button span {
-        display: none; /* Ascunde textul pe ecrane foarte mici */
+        display: none;
     }
 
     .home-btn button {

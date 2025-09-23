@@ -1,12 +1,6 @@
-﻿using FlowManager.Shared.DTOs.Requests;
-using FlowManager.Shared.DTOs.Requests.Team;
+﻿using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Team;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FlowManager.Application.IServices
 {

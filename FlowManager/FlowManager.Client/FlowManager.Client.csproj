@@ -7,15 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Pages\ResetPassword.razor.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Remove="Components\Admin\Members\TeamsViewTeamsModal.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Pages\ResetPassword.razor.cs" />
   </ItemGroup>
 
   <ItemGroup>

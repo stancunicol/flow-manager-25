@@ -363,7 +363,6 @@
     background: #9ca3af;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .workflow-info {
         padding: 1rem;
@@ -385,7 +384,6 @@
     }
 }
 
-/* Responsive adjustments */
 @media (max-width: 1200px) {
     .fill-form-content {
         padding: 1rem;
@@ -398,7 +396,6 @@
     }
 }
 
-/* Radio field styling - with distinct background */
 .radio-field {
     display: flex;
     flex-direction: column;
@@ -475,5 +472,133 @@
 
     .field-input, .textarea-input, .checkbox-field, .radio-field {
         width: 160px;
+    }
+}
+
+.auto-fill-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+}
+
+.auto-fill-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+    .auto-fill-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .auto-fill-btn.primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+        .auto-fill-btn.primary:hover {
+            background: #00c494;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+    .auto-fill-btn.secondary {
+        background: #6366f1;
+        color: white;
+    }
+
+        .auto-fill-btn.secondary:hover {
+            background: #5855eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+.auto-filled {
+    background: linear-gradient(45deg, #f0fdfa 25%, transparent 25%), linear-gradient(-45deg, #f0fdfa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0fdfa 75%), linear-gradient(-45deg, transparent 75%, #f0fdfa 75%);
+    background-size: 4px 4px;
+    background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+    border-color: var(--primary-color) !important;
+    position: relative;
+}
+
+.auto-filled-indicator {
+    color: var(--primary-color);
+    font-weight: bold;
+    margin-left: 4px;
+    font-size: 12px;
+}
+
+.user-selection-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+}
+
+.user-selection-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+    .user-selection-modal h3 {
+        margin: 0 0 1.5rem 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        text-align: center;
+    }
+
+.cancel-user-selection {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 10px;
+    background: #f3f4f6;
+    color: #374151;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+    .cancel-user-selection:hover {
+        background: #e5e7eb;
+    }
+
+@media (max-width: 768px) {
+    .auto-fill-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .auto-fill-btn {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
+
+    .user-selection-modal {
+        width: 95%;
+        padding: 1.5rem;
     }
 }

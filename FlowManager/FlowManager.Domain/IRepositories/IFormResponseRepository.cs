@@ -19,7 +19,7 @@ namespace FlowManager.Domain.IRepositories
         Task<List<FormResponse>> GetAllFormResponsesAsync();
         Task<FormResponse?> GetFormResponseByIdAsync(Guid id);
         Task<List<FormResponse>> GetFormResponsesByUserAsync(Guid userId);
-        Task<List<FormResponse>> GetFormResponsesByStepAsync(Guid stepId);
+        Task<List<FormResponse>> GetFormResponsesByFlowStepAsync(Guid stepId);
         Task<List<FormResponse>> GetFormResponsesByTemplateAsync(Guid formTemplateId);
         Task<(List<FormResponse> data, int totalCount)> GetFormResponsesAssignedToModeratorAsync(
             Guid moderatorId,
@@ -34,12 +34,10 @@ namespace FlowManager.Domain.IRepositories
         Task<bool> HasUserSubmittedResponseAsync(Guid userId, Guid formTemplateId, Guid stepId);
         Task<List<FormResponse>> GetStuckFormResponsesAsync(Guid stepId, int daysStuck = 7);
         Task<Step?> GetStepWithFlowInfoAsync(Guid stepId);
-        Task<bool> IsLastStepInFlowAsync(Guid stepId);
         Task<List<FormResponse>> GetFormResponsesByStatusAsync(string status);
         Task SaveChangesAsync();
         Task AddAsync(FormResponse formResponse);
         Task UpdateAsync(FormResponse formResponse);
         Task DeleteAsync(Guid id); // Soft delete
-        Task<int> BulkMoveToNextStepAsync(List<Guid> formResponseIds, Guid nextStepId);
     }
 }

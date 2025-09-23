@@ -1,0 +1,218 @@
+﻿.component-selector-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+    .component-selector-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+.component-selector-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.component-selector-overlay.visible .component-selector-modal {
+    transform: scale(1);
+}
+
+.modal-header {
+    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+    .close-btn:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+.modal-content {
+    padding: 1rem 2rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.instruction-text {
+    margin: 0 0 1.5rem 0;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.components-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.component-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+    .component-item:hover {
+        border-color: var(--primary-color);
+        background: #f0fdfa;
+    }
+
+    .component-item.selected {
+        border-color: var(--primary-color);
+        background: #f0fdfa;
+        box-shadow: 0 0 0 1px var(--primary-color);
+    }
+
+.component-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.component-label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+}
+
+.component-type {
+    color: #6b7280;
+    font-size: 12px;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.required-mark {
+    color: #dc2626;
+    font-weight: bold;
+}
+
+.selected-indicator {
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.no-components {
+    padding: 12px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.modal-footer {
+    padding: 1rem 2rem 1.5rem 2rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.cancel-btn, .apply-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+    .cancel-btn:hover {
+        background: #e5e7eb;
+    }
+
+.apply-btn {
+    background: var(--primary-color);
+    color: white;
+}
+
+    .apply-btn:hover:not(:disabled) {
+        background: #00c494;
+    }
+
+    .apply-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #9ca3af;
+    }
+
+@media (max-width: 768px) {
+    .component-selector-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .modal-header, .modal-content, .modal-footer {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .component-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .selected-indicator {
+        align-self: flex-end;
+    }
+}

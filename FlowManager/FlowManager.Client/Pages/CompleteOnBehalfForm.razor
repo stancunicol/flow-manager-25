@@ -59,10 +59,15 @@
                     </div>
                     <div class="workflow-details">
                         <h4>Workflow: @_associatedFlow.Name</h4>
-                        <p>This form will start at step: <strong>@_firstStep.Name</strong></p>
-                        @if (_associatedFlow.Steps?.Count > 1)
+                        <p>This form will start at step: 
+                            @foreach(var flowStepItem in _firstStep.FlowStepItems)
+                            {
+                                <strong>@flowStepItem.Step!.Name</strong>
+                            }
+                        </p>
+                        @if (_associatedFlow.FlowSteps?.Count > 1)
                         {
-                            <p class="workflow-steps-info">Total workflow steps: @_associatedFlow.Steps.Count</p>
+                            <p class="workflow-steps-info">Total workflow steps: @_associatedFlow.FlowSteps.Count</p>
                         }
                     </div>
                 </div>

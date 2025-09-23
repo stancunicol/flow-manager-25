@@ -1,23 +1,17 @@
-﻿using BlazorBootstrap;
+﻿using FlowManager.Client.Deserialization;
 using FlowManager.Client.DTOs;
-using FlowManager.Client.Deserialization;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
-using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Component;
-using FlowManager.Shared.DTOs.Responses.Flow;
+using FlowManager.Shared.DTOs.Responses.FlowStep;
 using FlowManager.Shared.DTOs.Responses.FormReview;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
-using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;
-using static FlowManager.Client.Pages.FillForm;
 
 namespace FlowManager.Client.Pages
 {
@@ -25,6 +19,7 @@ namespace FlowManager.Client.Pages
     {
         [Inject] private FormReviewService FormReviewService { get; set; } = default!;
         [Inject] private AuthService _authService { get; set; } = default!;
+        [Inject] private FlowService flowService { get; set; } = default!;
 
         private string _activeTab = "ASSIGNED";
         protected string? errorMessage;
@@ -39,6 +34,7 @@ namespace FlowManager.Client.Pages
         private bool hasMoreForms = false;
         private int totalFormsCount = 0;
         private Guid currentModeratorId = Guid.Empty;
+        private Guid currentModeratorStepId = Guid.Empty;
 
         // Pagination state for assigned forms
         private int _pageSize = 8;
@@ -70,13 +66,12 @@ namespace FlowManager.Client.Pages
         private int _historyTotalCount = 0;
         private string historySearchTerm = "";
 
-        // Status filter state for history (like BasicUser)
+        // Status filter state for history
         private HashSet<string> selectedHistoryActions = new HashSet<string> { "Approved", "Rejected" };
         private const int _historyMaxVisiblePages = 5;
 
         private UserVM _currentUser = new();
 
-        // Property pentru reject reason cu StateHasChanged
         private string rejectReason
         {
             get => _rejectReason;
@@ -85,7 +80,7 @@ namespace FlowManager.Client.Pages
                 if (_rejectReason != value)
                 {
                     _rejectReason = value;
-                    StateHasChanged(); // Forțează re-render când se schimbă valoarea
+                    StateHasChanged(); 
                 }
             }
         }
@@ -129,7 +124,7 @@ namespace FlowManager.Client.Pages
                     if (userInfo != null && userInfo.Id != Guid.Empty)
                     {
                         currentModeratorId = userInfo.Id;
-                        Console.WriteLine($"[DEBUG] Current moderator ID: {currentModeratorId}");
+                        currentModeratorStepId = userInfo.StepId ?? Guid.Empty;
                     }
                 }
             }
@@ -211,7 +206,6 @@ namespace FlowManager.Client.Pages
             var newSearchTerm = e.Value?.ToString() ?? "";
             historySearchTerm = newSearchTerm;
 
-            // Debounce search
             searchDebounceTimer?.Dispose();
             searchDebounceTimer = new Timer(async _ =>
             {
@@ -223,7 +217,6 @@ namespace FlowManager.Client.Pages
             }, null, 500, Timeout.Infinite);
         }
 
-        // History status filter methods (like BasicUser)
         private async Task FilterHistoryByAction(string action)
         {
             selectedHistoryActions = new HashSet<string> { action };
@@ -288,13 +281,11 @@ namespace FlowManager.Client.Pages
             await LoadReviewHistory();
         }
 
-        // History pagination helper methods (like BasicUser)
         private IEnumerable<int> GetHistoryPageNumbers()
         {
             var startPage = Math.Max(1, _historyCurrentPage - _historyMaxVisiblePages / 2);
             var endPage = Math.Min(_historyTotalPages, startPage + _historyMaxVisiblePages - 1);
 
-            // Adjust start if we're near the end
             if (endPage - startPage < _historyMaxVisiblePages - 1)
             {
                 startPage = Math.Max(1, endPage - _historyMaxVisiblePages + 1);
@@ -302,8 +293,6 @@ namespace FlowManager.Client.Pages
 
             return Enumerable.Range(startPage, endPage - startPage + 1);
         }
-
-
 
         private async Task LoadAssignedForms(bool append = false)
         {
@@ -389,14 +378,13 @@ namespace FlowManager.Client.Pages
         {
             var newSearchTerm = e.Value?.ToString() ?? "";
 
-            // Debounce search to avoid too many API calls
             searchDebounceTimer?.Dispose();
             searchDebounceTimer = new Timer(async _ =>
             {
                 await InvokeAsync(async () =>
                 {
                     searchTerm = newSearchTerm;
-                    _currentPage = 1; // Reset la prima pagină la search nou
+                    _currentPage = 1;
                     await LoadAssignedForms();
                 });
             }, null, 500, Timeout.Infinite); // 500ms debounce
@@ -494,65 +482,59 @@ namespace FlowManager.Client.Pages
         {
             if (selectedFormResponse == null || selectedFormTemplate == null) return;
 
-            try
+            if(selectedFormTemplate.FlowId == null)
             {
-                Console.WriteLine($"[DEBUG STEPS] Loading step info for form: {selectedFormTemplate.Name}");
-                Console.WriteLine($"[DEBUG STEPS] Current step ID: {selectedFormResponse.StepId}");
-
-                // Găsește flow-ul pentru acest form template
-                var flowsResponse = await Http.GetAsync($"api/flows/queried?QueryParams.PageSize=100");
-                if (flowsResponse.IsSuccessStatusCode)
+                nextStepInfo = new NextStepInfo
                 {
-                    var flowsData = await flowsResponse.Content.ReadFromJsonAsync<ApiResponse<PagedResponseDto<FlowResponseDto>>>();
-                    var flows = flowsData?.Result?.Data;
+                    HasNextStep = false,
+                    NextStepId = null,
+                    NextStepName = null
+                };
+                return;
+            }
 
-                    Console.WriteLine($"[DEBUG STEPS] Found {flows?.Count() ?? 0} flows total");
+            ApiResponse<List<FlowStepResponseDto>> orderedFlowStepsResult = await flowService.GetFlowStepsByFlowIdAsync((Guid)selectedFormTemplate.FlowId);
 
-                    if (flows != null)
-                    {
-                        var associatedFlow = flows.FirstOrDefault(f => f.FormTemplateId == selectedFormTemplate.Id);
-                        Console.WriteLine($"[DEBUG STEPS] Associated flow: {associatedFlow?.Name ?? "NOT FOUND"}");
-                        Console.WriteLine($"[DEBUG STEPS] Flow has {associatedFlow?.Steps?.Count() ?? 0} steps");
+            if(!orderedFlowStepsResult.Success || orderedFlowStepsResult.Result == null)
+            {
+                nextStepInfo = new NextStepInfo
+                {
+                    HasNextStep = false,
+                    NextStepId = null,
+                    NextStepName = null
+                };
+                return;
+            }
 
-                        if (associatedFlow?.Steps?.Any() == true)
-                        {
-                            var orderedSteps = associatedFlow.Steps.ToList();
-                            Console.WriteLine($"[DEBUG STEPS] Steps in order:");
-                            for (int i = 0; i < orderedSteps.Count; i++)
-                            {
-                                Console.WriteLine($"[DEBUG STEPS]   Step {i}: {orderedSteps[i].Name} (ID: {orderedSteps[i].Id})");
-                            }
+            var orderedFlowSteps = orderedFlowStepsResult.Result.OrderBy(fs => fs.Order).ToList();  
 
-                            var currentStepIndex = orderedSteps.FindIndex(s => s.Id == selectedFormResponse.StepId);
-                            Console.WriteLine($"[DEBUG STEPS] Current step index: {currentStepIndex}");
-
-                            if (currentStepIndex >= 0)
-                            {
-                                var hasNextStep = currentStepIndex < orderedSteps.Count - 1;
-                                Console.WriteLine($"[DEBUG STEPS] Has next step: {hasNextStep}");
-
-                                if (hasNextStep)
-                                {
-                                    Console.WriteLine($"[DEBUG STEPS] Next step: {orderedSteps[currentStepIndex + 1].Name} (ID: {orderedSteps[currentStepIndex + 1].Id})");
-                                }
-
-                                nextStepInfo = new NextStepInfo
-                                {
-                                    HasNextStep = hasNextStep,
-                                    NextStepName = hasNextStep ? orderedSteps[currentStepIndex + 1].Name : null,
-                                    NextStepId = hasNextStep ? orderedSteps[currentStepIndex + 1].Id : null
-                                };
-
-                                Console.WriteLine($"[DEBUG STEPS] NextStepInfo created: HasNext={nextStepInfo.HasNextStep}, NextName={nextStepInfo.NextStepName}, NextId={nextStepInfo.NextStepId}");
-                            }
-                        }
-                    }
+            foreach(var flowStep in orderedFlowSteps)
+            {
+                foreach(var step in flowStep.FlowStepItems)
+                {
+                    Console.WriteLine($"[DEBUG STEPS] FlowStep ID: {flowStep.Id}, Step Name: {step.Step.StepName}");
                 }
             }
-            catch (Exception ex)
+
+            Console.WriteLine($"[DEBUG STEPS] Current step ID: {selectedFormResponse.FlowStep?.Id}");
+            var currentStepIndex = orderedFlowSteps.FindIndex(fs => fs.Id == selectedFormResponse.FlowStep.Id);
+            Console.WriteLine($"[DEBUG STEPS] Current step index: {currentStepIndex}");
+
+            if (currentStepIndex >= 0)
             {
-                Console.WriteLine($"Error loading next step info: {ex.Message}");
+                var hasNextStep = currentStepIndex < orderedFlowSteps.Count - 1;
+                Console.WriteLine($"[DEBUG STEPS] Has next step: {hasNextStep}");
+
+                nextStepInfo = new NextStepInfo
+                {
+                    HasNextStep = hasNextStep,
+                    NextStepName = hasNextStep ? string.Join("/",orderedFlowSteps[currentStepIndex + 1].FlowStepItems.Select(fsi => fsi.Step.StepName)) : null,
+                    NextStepId = hasNextStep ? orderedFlowSteps[currentStepIndex + 1].Id : null
+                };
+
+                Console.WriteLine($"[DEBUG STEPS] NextStepInfo created: HasNext={nextStepInfo.HasNextStep}, NextName={nextStepInfo.NextStepName}, NextId={nextStepInfo.NextStepId}");
             }
+
         }
 
         private async Task ParseFormContent()
@@ -665,10 +647,10 @@ namespace FlowManager.Client.Pages
                 var payload = new PatchFormResponseRequestDto
                 {
                     Id = selectedFormResponse.Id,
-                    ReviewerId = currentModeratorId
+                    ReviewerId = currentModeratorId,
+                    ReviewerStepId = currentModeratorStepId,
                 };
 
-                Console.WriteLine($"[DEBUG APPROVE] Current step: {selectedFormResponse.StepId}");
                 Console.WriteLine($"[DEBUG APPROVE] Form template: {selectedFormResponse.FormTemplateName}");
                 Console.WriteLine($"[DEBUG APPROVE] Next step exists: {nextStepInfo?.HasNextStep}");
                 Console.WriteLine($"[DEBUG APPROVE] Next step ID: {nextStepInfo?.NextStepId}");
@@ -676,9 +658,7 @@ namespace FlowManager.Client.Pages
 
                 if (nextStepInfo?.HasNextStep == true && nextStepInfo.NextStepId != Guid.Empty)
                 {
-                    payload.StepId = nextStepInfo.NextStepId.Value;
                     Console.WriteLine($"[DEBUG APPROVE] MOVING TO NEXT STEP: {nextStepInfo.NextStepId.Value}");
-                    Console.WriteLine($"[DEBUG APPROVE] Payload: StepId={payload.StepId}, Status={payload.Status ?? "NULL"}, ReviewerId={payload.ReviewerId}");
 
                     var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 
@@ -705,7 +685,6 @@ namespace FlowManager.Client.Pages
                 {
                     payload.Status = "Approved";
                     Console.WriteLine($"[DEBUG APPROVE] FINAL APPROVAL - setting Status to Approved");
-                    Console.WriteLine($"[DEBUG APPROVE] Payload: StepId={payload.StepId?.ToString() ?? "NULL"}, Status={payload.Status}, ReviewerId={payload.ReviewerId}");
 
                     var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
 
@@ -718,7 +697,6 @@ namespace FlowManager.Client.Pages
                         Console.WriteLine("[Success] Form approved successfully!");
                         CloseViewFormModal();
                         await LoadAssignedForms();
-                        // ACTUALIZEAZĂ și istoricul dacă e deschis
                         if (_activeTab == "HISTORY")
                         {
                             await LoadReviewHistory();
@@ -755,7 +733,8 @@ namespace FlowManager.Client.Pages
                 {
                     Id = selectedFormResponse.Id,
                     RejectReason = rejectReason.Trim(),
-                    ReviewerId = currentModeratorId // ADAUGĂ ID-ul moderatorului
+                    ReviewerId = currentModeratorId,
+                    ReviewerStepId = currentModeratorStepId,
                 };
 
                 var response = await Http.PatchAsJsonAsync($"api/formresponses/{selectedFormResponse.Id}", payload);
@@ -766,7 +745,7 @@ namespace FlowManager.Client.Pages
                     CloseRejectModal();
                     CloseViewFormModal();
                     await LoadAssignedForms();
-                    // ACTUALIZEAZĂ și istoricul dacă e deschis
+
                     if (_activeTab == "HISTORY")
                     {
                         await LoadReviewHistory();
@@ -790,13 +769,11 @@ namespace FlowManager.Client.Pages
 
         private string GetFormStatus(FormResponseResponseDto form)
         {
-            // Folosește statusul din baza de date direct
             if (!string.IsNullOrEmpty(form.Status))
             {
                 return form.Status;
             }
 
-            // Fallback pentru compatibilitate
             if (!string.IsNullOrEmpty(form.RejectReason))
             {
                 return "Rejected";
@@ -819,13 +796,11 @@ namespace FlowManager.Client.Pages
         private bool CanReviewForm(FormResponseResponseDto form)
         {
             var status = GetFormStatus(form);
-            // Permite review doar pentru formularele Pending
             return status == "Pending";
         }
 
         private bool ShouldShowReviewButtons(FormResponseResponseDto form)
         {
-            // Arată butoanele doar pentru formularele care pot fi reviewed
             return CanReviewForm(form);
         }
 
@@ -858,17 +833,14 @@ namespace FlowManager.Client.Pages
         {
             try
             {
-                // Try to find the form in the currently loaded assigned forms first
                 var formResponse = assignedForms?.FirstOrDefault(f => f.Id == review.FormResponseId);
                 
                 if (formResponse != null)
                 {
-                    // Form is still assigned - use the existing ViewFormResponse method
                     await ViewFormResponse(formResponse);
                 }
                 else
                 {
-                    // Form is no longer assigned - create a FormResponseResponseDto from review info
                     var reviewFormResponse = new FormResponseResponseDto
                     {
                         Id = review.FormResponseId,
@@ -908,7 +880,6 @@ namespace FlowManager.Client.Pages
             };
         }
 
-        // Metodă pentru a obține opțiunile radio button-ului din component
         private List<string> GetRadioOptions(ComponentResponseDto component)
         {
             if (component.Properties != null && component.Properties.ContainsKey("Options"))

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
-using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Step;
 using FlowManager.Shared.DTOs.Responses.Step;
 

@@ -1,12 +1,9 @@
-﻿using FlowManager.Client.Services;
-using FlowManager.Infrastructure.Services;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading.Tasks;
 using FlowManager.Shared.DTOs.Requests.Auth;
+using System.Reflection;
 
 namespace FlowManager.Client.Pages
 {
@@ -15,7 +12,9 @@ namespace FlowManager.Client.Pages
         protected string email = string.Empty;
         protected string password = string.Empty;
         protected string? errorMessage;
-        
+        protected string? version;
+        protected string? simpleVersion;
+
         private bool animateLeft = false;
         private bool animateRight = false;
 
@@ -38,6 +37,10 @@ namespace FlowManager.Client.Pages
             {
                 await InvokeAsync(() => Navigation.NavigateTo("/"));
             }
+
+            version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+            simpleVersion = version?.Split(new char[] { '+', '-' })[0];
         }
 
         protected async Task HandleLogin()

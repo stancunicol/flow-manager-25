@@ -11,7 +11,6 @@
 
 <FlowManager.Client.Components.NavBar.Navbar/>
 
-<!-- Page description -->
 <div class="page-description">
     <h2>Admin dashboard</h2>
     <p>Manage system users, flows, forms and steps</p>
@@ -22,9 +21,7 @@
 </div>
 
 <div class="admin-container">
-    <!-- Left sidebar -->
     <nav class="sidebar">
-        <!-- Navigation items -->
         <div class="nav-main">
             <!-- USERS -->
             <button class="nav-item @(_activeTab == "USERS" ? "active" : "")"
@@ -151,7 +148,6 @@
         </div>
     </nav>
 
-    <!-- Main content area -->
     <main class="main-content">
         @if (_activeTab == "USERS")
         {

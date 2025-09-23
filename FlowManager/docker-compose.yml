@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - DOTNET_ENVIRONMENT=Production 
+    volumes:
+      - sqlite_data:/app/data
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  sqlite_data:
+    driver: local

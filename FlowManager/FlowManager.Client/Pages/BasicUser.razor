@@ -10,7 +10,6 @@
 
 <FlowManager.Client.Components.NavBar.Navbar />
 
-<!-- Page description -->
 <div class="page-description">
     <h2>User dashboard</h2>
     <p>Manage your forms and personal details</p>
@@ -21,9 +20,7 @@
 </div>
 
 <div class="basic-user-container">
-    <!-- Left sidebar -->
     <nav class="sidebar">
-        <!-- Navigation items -->
         <div class="nav-main">
             <!-- MY FORMS -->
             <button class="nav-item @(_activeTab == "MYFORMS" ? "active" : "")"
@@ -87,7 +84,6 @@
     </main>
 </div>
 
-<!-- Form Selection Modal cu search și lazy loading -->
 @if (showFormSelectionModal)
 {
     <div class="modal-overlay" @onclick="CloseFormSelectionModal">
@@ -102,7 +98,7 @@
             </div>
 
             <div class="modal-body">
-                <!-- Search Bar pentru template selection -->
+                <!-- Search Bar -->
                 <div class="search-container">
                     <div class="search-input-wrapper">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
@@ -225,7 +221,7 @@
                     <h3>@(selectedFormTemplate?.Name ?? "Form Response")</h3>
                     <div class="form-metadata">
                         <span class="metadata-item">
-                            <strong>Step:</strong> @(selectedFormResponse.StepName ?? "Unknown")
+                            <strong>Step:</strong> @(string.Join("/", selectedFormResponse.FlowStep.FlowStepItems.Select(item => item.Step!.StepName)) ?? "Unknown")
                         </span>
                         <span class="metadata-item">
                             <strong>Submitted:</strong> @selectedFormResponse.CreatedAt.ToString("dd/MM/yyyy HH:mm")
@@ -289,14 +285,12 @@
                         <div class="form-element-readonly" style="left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
                                         @if (element.IsTextElement)
                                         {
-                                            <!-- Static text elements -->
                                             <div class="static-text-readonly">
                                                 @element.TextContent
                                             </div>
                                         }
                                         else if (element.ComponentId.HasValue)
                                         {
-                                            <!-- Form components with values -->
                                             var component = formComponents?.FirstOrDefault(c => c.Id == element.ComponentId);
                                             if (component != null)
                                             {
@@ -419,9 +413,9 @@
                 }
 
                 <FlowManager.Client.Components.FlowVisualizer.FlowVisualizer 
-        FlowSteps="flowSteps" 
-        FormResponse="selectedFormResponse" 
-        IsLoading="isLoadingFlowSteps" />
+                    FlowSteps="flowSteps" 
+                    FormResponse="selectedFormResponse" 
+                    IsLoading="isLoadingFlowSteps" />
             </div>
 
             <div class="modal-footer">

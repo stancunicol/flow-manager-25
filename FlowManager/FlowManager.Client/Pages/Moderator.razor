@@ -21,7 +21,6 @@
 
 <FlowManager.Client.Components.NavBar.Navbar />
 
-<!-- Page description -->
 <div class="page-description">
     <h2>Moderator dashboard</h2>
     <p>Review and manage assigned form submissions</p>
@@ -32,9 +31,7 @@
 </div>
 
 <div class="moderator-container">
-    <!-- Left sidebar -->
     <nav class="sidebar">
-        <!-- Navigation items -->
         <div class="nav-main">
             <!-- ASSIGNED FORMS -->
             <button class="nav-item @(_activeTab == "ASSIGNED" ? "active" : "")"
@@ -50,6 +47,7 @@
                 </svg>
                 Assigned Forms
             </button>
+            <!-- REVIEW HISTORY -->
             <button class="nav-item @(_activeTab == "HISTORY" ? "active" : "")"
                     @onclick="@(() => SetActiveTab("HISTORY"))">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -156,7 +154,9 @@
                                     </div>
                                     <div class="form-info">
                                         <h4>@form.FormTemplateName</h4>
-                                        <p class="form-meta">@form.StepName</p>
+                                        <p class="form-meta">
+                                            @string.Join("/", form.FlowStep.FlowStepItems.Select(item => item.Step!.StepName))
+                                        </p>
                                     </div>
                                 </div>
 
@@ -212,12 +212,11 @@
                         }
                     </div>
 
-                    <!-- ADAUGĂ PAGINAREA AICI -->
+                    <!-- Pagination Controls -->
                     @if (_totalPages > 1)
                     {
                         <div class="pagination-container">
                             <nav>
-                                <!-- First page btn-->
                                 <button @onclick="GoToFirstPage"
                                         disabled="@(_currentPage == 1)"
                                         class="pagination-btn pagination-btn-first pagination-btn-nav">
@@ -230,7 +229,6 @@
                                               clip-rule="evenodd" />
                                     </svg>
                                 </button>
-                                <!-- Previous page btn -->
                                 <button @onclick="GoToPreviousPage"
                                         disabled="@(_currentPage == 1)"
                                         class="pagination-btn pagination-btn-nav">
@@ -243,7 +241,6 @@
                                               clip-rule="evenodd" />
                                     </svg>
                                 </button>
-                                <!-- Paged Numbers - go to page x -->
                                 @foreach (int pageNumber in GetPageNumbers())
                                 {
                                     <button @onclick="() => GoToPage(pageNumber)"
@@ -251,14 +248,12 @@
                                         @pageNumber
                                     </button>
                                 }
-                                <!-- Ellipsis if are more pages available -->
                                 @if (_totalPages > _maxVisiblePages && _currentPage < _totalPages - 2)
                                 {
                                     <span class="pagination-ellipsis">
                                         ...
                                     </span>
                                 }
-                                <!-- Next page button -->
                                 <button @onclick="GoToNextPage"
                                         disabled="@(_currentPage == _totalPages)"
                                         class="pagination-btn pagination-btn-nav">
@@ -271,7 +266,6 @@
                                               clip-rule="evenodd" />
                                     </svg>
                                 </button>
-                                <!-- Last page button -->
                                 <button @onclick="GoToLastPage"
                                         disabled="@(_currentPage == _totalPages)"
                                         class="pagination-btn pagination-btn-last pagination-btn-nav">
@@ -322,7 +316,6 @@
         @if (_activeTab == "HISTORY")
         {
             <div class="assigned-content">
-                <!-- Header -->
                 <div class="assigned-header">
                     <h3>Review History</h3>
                     <div class="header-actions">
@@ -335,9 +328,7 @@
                     </div>
                 </div>
 
-                <!-- Search and Filter Bar -->
                 <div class="user-forms-search-container">
-                    <!-- Action Filter Buttons (like BasicUser status filters) -->
                     <div class="status-filter-container">
                         <div class="status-filter-header">
                             <span class="filter-label">Filter by action:</span>
@@ -463,12 +454,10 @@
                         }
                     </div>
 
-                    <!-- PAGINATION (same style as BasicUser) -->
                     @if (_historyTotalPages > 1)
                     {
                         <div class="pagination-container">
                             <nav>
-                                <!-- First page btn-->
                                 <button @onclick="GoToHistoryFirstPage"
                                         disabled="@(_historyCurrentPage == 1)"
                                         class="pagination-btn pagination-btn-first pagination-btn-nav">
@@ -481,7 +470,6 @@
                                               clip-rule="evenodd" />
                                     </svg>
                                 </button>
-                                <!-- Previous page btn -->
                                 <button @onclick="GoToHistoryPreviousPage"
                                         disabled="@(_historyCurrentPage == 1)"
                                         class="pagination-btn pagination-btn-nav">
@@ -494,7 +482,6 @@
                                               clip-rule="evenodd" />
                                     </svg>
                                 </button>
-                                <!-- Paged Numbers - go to page x -->
                                 @foreach (int pageNumber in GetHistoryPageNumbers())
                                 {
                                     <button @onclick="() => GoToHistoryPage(pageNumber)"
@@ -502,14 +489,12 @@
                                         @pageNumber
                                     </button>
                                 }
-                                <!-- Ellipsis if are more pages available -->
                                 @if (_historyTotalPages > _historyMaxVisiblePages && _historyCurrentPage < _historyTotalPages - 2)
                                 {
                                     <span class="pagination-ellipsis">
                                         ...
                                     </span>
                                 }
-                                <!-- Next page button -->
                                 <button @onclick="GoToHistoryNextPage"
                                         disabled="@(_historyCurrentPage == _historyTotalPages)"
                                         class="pagination-btn pagination-btn-nav">
@@ -522,7 +507,6 @@
                                               clip-rule="evenodd" />
                                     </svg>
                                 </button>
-                                <!-- Last page button -->
                                 <button @onclick="GoToHistoryLastPage"
                                         disabled="@(_historyCurrentPage == _historyTotalPages)"
                                         class="pagination-btn pagination-btn-last pagination-btn-nav">
@@ -582,9 +566,6 @@
                             <strong>User:</strong> @selectedFormResponse.UserName (@selectedFormResponse.UserEmail)
                         </span>
                         <span class="metadata-item">
-                            <strong>Step:</strong> @selectedFormResponse.StepName
-                        </span>
-                        <span class="metadata-item">
                             <strong>Submitted:</strong> @selectedFormResponse.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                         </span>
                         @if (selectedFormResponse.UpdatedAt.HasValue)
@@ -625,7 +606,7 @@
                 }
                 else if (formElements?.Any() == true)
                 {
-                    <!-- Form Canvas View - exact ca la BasicUser -->
+                    <!-- Form Canvas View -->
                     <div class="form-canvas-container">
                         <div class="form-canvas-header">
                             <h4>Form Preview</h4>
@@ -641,20 +622,17 @@
                             }
                             else
                             {
-                                <!-- Render all form elements positioned exactly as they were created -->
                                 @foreach (var element in formElements.OrderBy(e => e.ZIndex))
                                 {
                                     <div class="form-element-readonly" style="position: absolute; left: @(element.X)px; top: @(element.Y)px; z-index: @element.ZIndex;">
                                         @if (element.IsTextElement)
                                         {
-                                            <!-- Static text elements -->
                                             <div class="static-text-readonly">
                                                 @element.TextContent
                                             </div>
                                         }
                                         else if (element.ComponentId.HasValue)
                                         {
-                                            <!-- Form components with values -->
                                             var component = formComponents?.FirstOrDefault(c => c.Id == element.ComponentId);
                                             if (component != null)
                                             {
@@ -777,17 +755,8 @@
                 }
             </div>
 
-            <!-- Modal Footer -->
             <div class="modal-footer">
-                <!-- Status Display -->
-                <div class="form-status">
-                    <span class="status-label">Status:</span>
-                    <span class="status-value" style="background: @GetStatusColor(GetFormStatus(selectedFormResponse)); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 12px; font-weight: 600; border: none;">
-                        @GetFormStatus(selectedFormResponse)
-                    </span>
-                </div>
 
-                <!-- Review Actions - doar pentru formulare cu status Pending -->
                 @if (ShouldShowReviewButtons(selectedFormResponse))
                 {
                     <div class="review-actions">
@@ -818,7 +787,6 @@
                 }
                 else
                 {
-                    <!-- Mesaj informativ pentru formulare finalizate -->
                     <div class="review-status-info">
                         @{
                             var status = GetFormStatus(selectedFormResponse);

@@ -1,4 +1,6 @@
-﻿using FlowManager.Shared.DTOs.Responses.User;
+﻿using FlowManager.Shared.DTOs.Responses.FlowStep;
+using FlowManager.Shared.DTOs.Responses.Step;
+using FlowManager.Shared.DTOs.Responses.User;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,18 +17,15 @@ namespace FlowManager.Shared.DTOs.Requests.FormResponse
         public Dictionary<Guid, object> ResponseFields { get; set; } = new();
         public Guid FormTemplateId { get; set; }
         public string? FormTemplateName { get; set; }
-        public Guid StepId { get; set; }
-        public string? StepName { get; set; }
+        public FlowStepResponseDto FlowStep { get; set; } = new();
+        public bool? IsApproved { get; set; }   
         public Guid UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserEmail { get; set; }
         
-        // Admin completion tracking
         public bool CompletedByAdmin { get; set; } = false;
         public string? CompletedByAdminName { get; set; }
-        
-        // Admin approval tracking removed - use FormReview for complete audit trail
-        
+                
         public Guid? CompletedByOtherUserId { get; set; }
         public UserResponseDto? CompletedByOtherUser { get; set; }
         public DateTime CreatedAt { get; set; }

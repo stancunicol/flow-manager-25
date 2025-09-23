@@ -3,7 +3,6 @@ using FlowManager.Domain.Entities;
 using FlowManager.Shared.DTOs.Requests.Step;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Step;
-using FlowManager.Shared.DTOs.Responses.User;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Web;

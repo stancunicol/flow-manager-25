@@ -1,21 +1,12 @@
-﻿using FlowManager.Application.Interfaces;
-using FlowManager.Domain.Entities;
+﻿using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
-using FlowManager.Infrastructure.Utils;
 using FlowManager.Application.Utils;
 using FlowManager.Shared.DTOs.Requests.Team;
 using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.Team;
 using FlowManager.Shared.DTOs.Responses.User;
-using FlowManager.Shared.DTOs.Responses.Role;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FlowManager.Application.IServices;
-using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Domain.Dtos;
 
 namespace FlowManager.Application.Services
@@ -53,8 +44,8 @@ namespace FlowManager.Application.Services
                         Email = ut.User.Email,
                         Step = new Shared.DTOs.Responses.Step.StepResponseDto
                         {
-                            Id = ut.User.StepId,
-                            Name = ut.User.Step.Name
+                            StepId = ut.User.StepId,
+                            StepName = ut.User.Step.Name
                         }
                     }).ToList(),
                     UsersCount = t.Users?.Count(u => u.DeletedAt == null) ?? 0,
@@ -152,6 +143,12 @@ namespace FlowManager.Application.Services
                 throw new EntryNotFoundException($"Team with id {id} was not found.");
             }
 
+            var existingTeamWithName = await _teamRepository.GetTeamByNameAsync(payload.Name, includeDeleted: true);
+            if (existingTeamWithName != null && existingTeamWithName.Id != id)
+            {
+                throw new UniqueConstraintViolationException($"Team with name {payload.Name} already exists.");
+            }
+
             if (!string.IsNullOrEmpty(payload.Name))
             {
                 teamToUpdate.Name = payload.Name;
@@ -188,8 +185,15 @@ namespace FlowManager.Application.Services
                     }
                 }
             }
+            else if (payload.UserIds == null) 
+            {
+                foreach (UserTeam userTeam in teamToUpdate.Users)
+                {
+                    userTeam.DeletedAt = DateTime.UtcNow;
+                }
+            }
 
-            teamToUpdate.UpdatedAt = DateTime.UtcNow;
+                teamToUpdate.UpdatedAt = DateTime.UtcNow;
             await _teamRepository.SaveChangesAsync();
 
             return new TeamResponseDto
@@ -253,13 +257,6 @@ namespace FlowManager.Application.Services
             if (teamToRestore == null)
             {
                 throw new EntryNotFoundException($"Team with id {id} was not found.");
-            }
-
-            var users = await _userRepository.GetUsersByTeamIdAsync(id, includeDeleted: true);
-            foreach (var user in users)
-            {
-                UserTeam userTeamDeleted = user.Teams.First(ut => ut.TeamId == id);
-                userTeamDeleted.DeletedAt = null;
             }
 
             teamToRestore.DeletedAt = null;

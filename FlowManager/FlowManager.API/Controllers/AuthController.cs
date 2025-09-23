@@ -123,6 +123,7 @@ namespace FlowManager.API.Controllers
                 Name = foundUser.Name,
                 Email = foundUser.Email,
                 UserName = foundUser.UserName,
+                StepId = foundUser.StepId,
                 Roles = foundUser.Roles
                     .Where(ur => ur.DeletedAt == null && ur.Role.DeletedAt == null)
                     .Select(ur => ur.Role.Name)
@@ -142,14 +143,12 @@ namespace FlowManager.API.Controllers
                 return BadRequest("Name, email, and password are required");
             }
 
-            // Check if user already exists
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
             {
                 return BadRequest("User with this email already exists");
             }
 
-            // Create the user
             var user = new User
             {
                 UserName = request.Email,
@@ -167,7 +166,6 @@ namespace FlowManager.API.Controllers
                 return BadRequest($"User creation failed: {errors}");
             }
 
-            // Ensure the role exists and add user to role
             var normalizedRole = request.Role.ToUpperInvariant();
             var roleEntity = await _roleManager.FindByNameAsync(normalizedRole);
 
@@ -183,7 +181,6 @@ namespace FlowManager.API.Controllers
                 Console.WriteLine($"[DEBUG] Created new role: {normalizedRole}");
             }
 
-            // Add user to role using ASP.NET Core Identity
             var roleResult = await _userManager.AddToRoleAsync(user, normalizedRole);
             if (!roleResult.Succeeded)
             {

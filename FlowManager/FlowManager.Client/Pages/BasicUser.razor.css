@@ -110,8 +110,6 @@ body {
     min-height: calc(100vh - 145px); 
 }
 
-
-/* Add Form Button */
 .adminButtons {
     display: flex;
     justify-content: flex-end;
@@ -217,7 +215,6 @@ body {
         line-height: 1.5;
     }
 
-/* Forms Grid for My Forms Section */
 .forms-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -425,7 +422,6 @@ body {
         border-left-color: #dc2626;
     }
 
-/* Modal Styles */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -588,7 +584,6 @@ body {
         font-size: 16px;
     }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .basic-user-container {
         flex-direction: column;
@@ -649,7 +644,6 @@ body {
     }
 }
 
-/* View Form Modal Styles */
 .view-form-modal-content {
     background: white;
     border-radius: 12px;
@@ -712,7 +706,6 @@ body {
         color: #991b1b;
     }
 
-/* Form Canvas Styles */
 .form-canvas-container {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
@@ -844,7 +837,6 @@ body {
     background: #f3f4f6;
 }
 
-/* Radio options display styles*/
 .radio-options-display {
     display: flex;
     flex-direction: column;
@@ -1000,7 +992,6 @@ body {
     border: 1px solid #bbf7d0;
 }
 
-/* Form card cursor and hover improvements */
 .form-card {
     cursor: pointer;
     position: relative;
@@ -1033,7 +1024,6 @@ body {
     align-items: center;
 }
 
-/* User Forms Search Container Styles */
 .user-forms-search-container {
     margin-bottom: 1.5rem;
     padding: 1rem 0;
@@ -1108,7 +1098,6 @@ body {
         text-align: center;
     }
 
-/* Search Container Styles pentru modal */
 .search-container {
     margin-bottom: 1.5rem;
 }
@@ -1181,7 +1170,6 @@ body {
     text-align: center;
 }
 
-/* Load More Styles */
 .load-more-container {
     display: flex;
     flex-direction: column;
@@ -1259,7 +1247,6 @@ body {
         background: #00c494;
     }
 
-/* Enhanced Template Items */
 .template-item {
     display: flex;
     align-items: center;
@@ -1278,7 +1265,6 @@ body {
         box-shadow: 0 4px 12px rgba(0, 215, 160, 0.15);
     }
 
-/* Status Badge Styles */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -1294,7 +1280,6 @@ body {
     min-width: 70px;
 }
 
-    /* Culori pentru status-uri */
     .status-badge.pending {
         background: #f59e0b;
         color: white;
@@ -1315,7 +1300,6 @@ body {
         color: white;
     }
 
-/* Enhanced detail items for status */
 .detail-item.status-item {
     align-items: center;
 }
@@ -1325,9 +1309,6 @@ body {
         align-items: center;
     }
 
-
-
-/* Modal footer status improvements */
 .modal-footer .form-status {
     display: flex;
     align-items: center;
@@ -1339,12 +1320,11 @@ body {
     border: none !important;
 }
 
-/* Responsive Search */
 @media (max-width: 768px) {
     .search-input,
     .user-forms-search-container .search-input {
         padding: 10px 14px 10px 36px;
-        font-size: 16px; /* Prevent zoom on iOS */
+        font-size: 16px; 
     }
 
     .load-more-btn {
@@ -1357,7 +1337,6 @@ body {
     }
 }
 
-/* Responsive adjustments for view modal */
 @media (max-width: 1200px) {
     .view-form-modal-content {
         width: 100%;
@@ -1515,7 +1494,6 @@ body {
     font-weight: 500;
 }
 
-/* Responsive pentru paginare */
 @media (max-width: 768px) {
     .pagination-container {
         flex-direction: column;
@@ -1543,7 +1521,6 @@ body {
     }
 }
 
-/* Status Filter Styles */
 .status-filter-container {
     margin-bottom: 1.5rem;
     padding: 1rem;
@@ -1672,7 +1649,6 @@ body {
         font-weight: 500;
     }
 
-/* Responsive pentru filtere */
 @media (max-width: 768px) {
     .status-filter-buttons {
         gap: 0.5rem;

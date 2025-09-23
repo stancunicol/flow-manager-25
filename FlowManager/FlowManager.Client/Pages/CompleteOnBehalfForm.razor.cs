@@ -2,18 +2,13 @@
 using FlowManager.Client.DTOs;
 using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
-using FlowManager.Shared.DTOs;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Shared.DTOs.Requests.User;
 using FlowManager.Shared.DTOs.Responses;
-using FlowManager.Shared.DTOs.Responses.Component;
 using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.FormTemplate;
-using FlowManager.Shared.DTOs.Responses.Step;
 using FlowManager.Shared.DTOs.Responses.User;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.JSInterop;
 using System.Text.Json;
 using static System.Net.WebRequestMethods;
@@ -53,7 +48,7 @@ namespace FlowManager.Client.Pages
         private System.Threading.Timer? _debounceTimer;
 
         private FlowVM? _associatedFlow;
-        private StepVM? _firstStep;
+        private FlowStepVM? _firstStep;
         private bool _isLoadingFlow = false;
 
         protected override async Task OnInitializedAsync()
@@ -145,20 +140,16 @@ namespace FlowManager.Client.Pages
             {
                 Id = flowResponse.Result.Id,
                 Name = flowResponse.Result.Name,
-                Steps = flowResponse.Result.FlowSteps.Select(fs => new FlowStepVM
+                FlowSteps = flowResponse.Result.FlowSteps.Select(fs => new FlowStepVM
                 {
                     Id = fs.Id,
-                    Step = new StepVM
-                    {
-                        Id = fs.StepId ?? Guid.Empty,
-                        Name = fs.StepName,
-                    }
                 }).ToList()
             };
 
-            if(_associatedFlow.Steps.Count > 0) 
+            if(_associatedFlow.FlowSteps.Count > 0) 
             {
-                _firstStep = _associatedFlow.Steps.First().Step;
+                _firstStep = new FlowStepVM();
+                _firstStep.FlowStepItems = new List<FlowStepItemVM>(_associatedFlow.FlowSteps.First().FlowStepItems);
             }
             else
             {
@@ -214,8 +205,8 @@ namespace FlowManager.Client.Pages
                         PhoneNumber = u.PhoneNumber,
                         Step = u.Step != null ? new StepVM
                         {
-                            Id = u.Step.Id,
-                            Name = u.Step.Name
+                            Id = u.Step.StepId,
+                            Name = u.Step.StepName
                         } : null,
                     }).ToList();
 
@@ -291,7 +282,7 @@ namespace FlowManager.Client.Pages
                 var formResponseData = new PostFormResponseRequestDto
                 {
                     FormTemplateId = TemplateId,
-                    StepId = _firstStep.Id,
+                    StepsIds = _firstStep!.FlowStepItems.Select(flowStepItem => flowStepItem?.StepId ?? Guid.Empty).ToList(),
                     UserId = _selectedUserToComplete.Id,
                     CompletedByOtherUserId = (await _authService.GetCurrentUserAsync())!.Id,
                     ResponseFields = _responses
@@ -299,7 +290,6 @@ namespace FlowManager.Client.Pages
 
                 var response = await _formResponseService.SubmitFormResponseAsync(formResponseData);
 
-                await JSRuntime.InvokeVoidAsync("alert", $"Form submitted successfully!");
                 Navigation.NavigateTo("/basic-user");
             }
             catch (Exception ex)

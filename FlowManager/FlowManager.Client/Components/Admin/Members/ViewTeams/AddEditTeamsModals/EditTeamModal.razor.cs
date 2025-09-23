@@ -55,7 +55,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 PageSize = _pageSize
             };
 
-            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id, TeamToEdit.Id, payload);
+            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id ?? Guid.Empty, TeamToEdit.Id, payload);
 
             _selectedUsers = response.Result.AssignedToTeamUsers.Select(u => new UserVM
             {
@@ -108,7 +108,7 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 };
             }
 
-            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id, TeamToEdit.Id, payload);
+            ApiResponse<SplitUsersByTeamIdResponseDto> response = await _teamService.GetSplitUsersByTeamIdAsync(TeamStep.Id ?? Guid.Empty, TeamToEdit.Id, payload);
 
             if (!response.Success)
             {
@@ -167,14 +167,15 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
                 payload.UserIds = _selectedUsers.Select(u => u.Id).ToList();
             }
 
-            _isSubmitting = false;
-
             ApiResponse<TeamResponseDto> result = await _teamService.PatchTeamAsync(TeamToEdit.Id, payload);
+
+            _isSubmitting = false;
 
             _submitStatus = result.Success;
             _submitMessage = result.Message;
+            StateHasChanged();
 
-            if(_submitStatus)
+            if (_submitStatus)
             {
                 await TeamWasEdited.InvokeAsync();
             }

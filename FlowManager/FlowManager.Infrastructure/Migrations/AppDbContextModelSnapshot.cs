@@ -95,13 +95,10 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<Guid>("FlowId")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool?>("IsApproved")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("StepId")
+                    b.Property<Guid?>("StepId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -116,7 +113,7 @@ namespace FlowManager.Infrastructure.Migrations
                     b.ToTable("FlowSteps");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepTeam", b =>
+            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -129,27 +126,53 @@ namespace FlowManager.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("FlowStepId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("StepId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlowStepId");
+
+                    b.HasIndex("StepId");
+
+                    b.ToTable("FlowStepItems");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepItemTeam", b =>
+                {
+                    b.Property<Guid>("FlowStepItemId")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("FlowStepId");
+                    b.HasKey("FlowStepItemId", "TeamId");
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("FlowStepTeams");
+                    b.ToTable("FlowStepItemTeams");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepUser", b =>
+            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepItemUser", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("FlowStepItemId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -158,22 +181,14 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("FlowStepId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FlowStepId");
+                    b.HasKey("FlowStepItemId", "UserId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FlowStepUsers");
+                    b.ToTable("FlowStepItemUsers");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FormResponse", b =>
@@ -198,8 +213,14 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("FlowStepId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("FormTemplateId")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsApproved")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("RejectReason")
                         .HasMaxLength(100)
@@ -212,9 +233,6 @@ namespace FlowManager.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("StepId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -225,9 +243,9 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.HasIndex("CompletedByOtherUserId");
 
-                    b.HasIndex("FormTemplateId");
+                    b.HasIndex("FlowStepId");
 
-                    b.HasIndex("StepId");
+                    b.HasIndex("FormTemplateId");
 
                     b.HasIndex("UserId");
 
@@ -725,27 +743,42 @@ namespace FlowManager.Infrastructure.Migrations
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStep", b =>
                 {
                     b.HasOne("FlowManager.Domain.Entities.Flow", "Flow")
-                        .WithMany("Steps")
+                        .WithMany("FlowSteps")
                         .HasForeignKey("FlowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.Step", "Step")
+                    b.HasOne("FlowManager.Domain.Entities.Step", null)
                         .WithMany("FlowSteps")
+                        .HasForeignKey("StepId");
+
+                    b.Navigation("Flow");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepItem", b =>
+                {
+                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
+                        .WithMany("FlowStepItems")
+                        .HasForeignKey("FlowStepId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FlowManager.Domain.Entities.Step", "Step")
+                        .WithMany()
                         .HasForeignKey("StepId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Flow");
+                    b.Navigation("FlowStep");
 
                     b.Navigation("Step");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepTeam", b =>
+            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepItemTeam", b =>
                 {
-                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
+                    b.HasOne("FlowManager.Domain.Entities.FlowStepItem", "FlowStepItem")
                         .WithMany("AssignedTeams")
-                        .HasForeignKey("FlowStepId")
+                        .HasForeignKey("FlowStepItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -755,16 +788,16 @@ namespace FlowManager.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("FlowStep");
+                    b.Navigation("FlowStepItem");
 
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepUser", b =>
+            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepItemUser", b =>
                 {
-                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
+                    b.HasOne("FlowManager.Domain.Entities.FlowStepItem", "FlowStepItem")
                         .WithMany("AssignedUsers")
-                        .HasForeignKey("FlowStepId")
+                        .HasForeignKey("FlowStepItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -774,7 +807,7 @@ namespace FlowManager.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("FlowStep");
+                    b.Navigation("FlowStepItem");
 
                     b.Navigation("User");
                 });
@@ -785,15 +818,15 @@ namespace FlowManager.Infrastructure.Migrations
                         .WithMany("FormResponseCompletedOnBehalf")
                         .HasForeignKey("CompletedByOtherUserId");
 
-                    b.HasOne("FlowManager.Domain.Entities.FormTemplate", "FormTemplate")
+                    b.HasOne("FlowManager.Domain.Entities.FlowStep", "FlowStep")
                         .WithMany()
-                        .HasForeignKey("FormTemplateId")
+                        .HasForeignKey("FlowStepId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowManager.Domain.Entities.Step", "Step")
+                    b.HasOne("FlowManager.Domain.Entities.FormTemplate", "FormTemplate")
                         .WithMany()
-                        .HasForeignKey("StepId")
+                        .HasForeignKey("FormTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -805,9 +838,9 @@ namespace FlowManager.Infrastructure.Migrations
 
                     b.Navigation("CompletedByOtherUser");
 
-                    b.Navigation("FormTemplate");
+                    b.Navigation("FlowStep");
 
-                    b.Navigation("Step");
+                    b.Navigation("FormTemplate");
 
                     b.Navigation("User");
                 });
@@ -980,12 +1013,17 @@ namespace FlowManager.Infrastructure.Migrations
 
             modelBuilder.Entity("FlowManager.Domain.Entities.Flow", b =>
                 {
-                    b.Navigation("FormTemplateFlows");
+                    b.Navigation("FlowSteps");
 
-                    b.Navigation("Steps");
+                    b.Navigation("FormTemplateFlows");
                 });
 
             modelBuilder.Entity("FlowManager.Domain.Entities.FlowStep", b =>
+                {
+                    b.Navigation("FlowStepItems");
+                });
+
+            modelBuilder.Entity("FlowManager.Domain.Entities.FlowStepItem", b =>
                 {
                     b.Navigation("AssignedTeams");
 

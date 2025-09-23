@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using FlowManager.Application.Interfaces;
-using FlowManager.Domain.Entities;
-using Microsoft.AspNetCore.Authorization;
 using FlowManager.Shared.DTOs.Requests.Flow;
 using FlowManager.Shared.DTOs.Responses.Flow;
 using FlowManager.Shared.DTOs.Responses.Step;
@@ -84,7 +82,6 @@ namespace FlowManager.API.Controllers
             });
         }
 
-        //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -99,24 +96,6 @@ namespace FlowManager.API.Controllers
                 Result = result,
                 Success = true,
                 Message = "Flow created succesfully.",
-                Timestamp = DateTime.UtcNow
-            });
-        }
-
-        [HttpPatch("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PatchFlowAsync(Guid id, [FromBody] PatchFlowRequestDto payload)
-        {
-            var result = await _flowService.UpdateFlowAsync(id, payload);
-
-            return Ok(new
-            {
-                Result = result,
-                Success = true,
-                Message = "Flow updated succesfully.",
                 Timestamp = DateTime.UtcNow
             });
         }

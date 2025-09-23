@@ -107,8 +107,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
                         Email = u.Email!,
                         Step = new StepVM
                         {
-                            Id = u.Step!.Id,
-                            Name = u.Step!.Name
+                            Id = u.Step!.StepId,
+                            Name = u.Step!.StepName
                         }
                     }).ToList(),
                     IsActive = t.DeletedAt == null

@@ -237,7 +237,6 @@ body {
     color: #7c3aed;
 }
 
-/* Loading și Error States */
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -353,7 +352,6 @@ body {
     line-height: 1.5;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .home-container {
         padding: 2rem 1rem;

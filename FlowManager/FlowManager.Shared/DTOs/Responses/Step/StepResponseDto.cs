@@ -10,8 +10,8 @@ namespace FlowManager.Shared.DTOs.Responses.Step
 {
     public class StepResponseDto
     {
-        public Guid Id { get; set; }
-        public string? Name { get; set; }
+        public Guid StepId { get; set; }
+        public string StepName { get; set; }
 
         public List<UserResponseDto>? Users { get;set; }
         public List<TeamResponseDto>? Teams{ get; set; }

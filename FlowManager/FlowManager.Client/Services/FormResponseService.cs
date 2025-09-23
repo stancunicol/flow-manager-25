@@ -1,6 +1,5 @@
 ﻿using FlowManager.Shared.DTOs.Requests.FormResponse;
 using FlowManager.Client.DTOs;
-using FlowManager.Shared.DTOs.Requests;
 using FlowManager.Shared.DTOs.Responses;
 using System.Net.Http.Json;
 using System.Web;
@@ -173,7 +172,6 @@ namespace FlowManager.Client.Services
 
                 var query = HttpUtility.ParseQueryString(string.Empty);
 
-                // Parametrii pentru paginare
                 query["QueryParams.Page"] = page.ToString();
                 query["QueryParams.PageSize"] = pageSize.ToString();
                 query["QueryParams.SortBy"] = "CreatedAt";

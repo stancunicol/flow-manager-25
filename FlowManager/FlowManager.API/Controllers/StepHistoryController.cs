@@ -3,9 +3,6 @@ using FlowManager.Shared.DTOs.Responses;
 using Microsoft.AspNetCore.Mvc;
 using FlowManager.Shared.DTOs.Requests.StepHistory;
 using FlowManager.Shared.DTOs.Responses.StepHistory;
-using FlowManager.Domain.Entities;
-using FlowManager.Application.Services;
-using FlowManager.Application.IServices;
 
 namespace FlowManager.API.Controllers
 {

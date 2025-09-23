@@ -88,7 +88,7 @@ namespace FlowManager.API.Controllers
         {
             _logger.LogInformation("Getting form responses with filters - UserId: {UserId}, StatusFilters: [{StatusFilters}], Search: {SearchTerm}",
                 payload.UserId,
-                payload.StatusFilters != null ? string.Join(", ", payload.StatusFilters) : "All",
+                payload.StatusFilters != null ? string.Join("/", payload.StatusFilters) : "All",
                 payload.SearchTerm);
 
             var result = await _formResponseService.GetAllFormResponsesQueriedAsync(payload);
@@ -181,8 +181,6 @@ namespace FlowManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PatchFormResponseAsync(Guid id, [FromBody] PatchFormResponseRequestDto payload)
         {
-            payload.Id = id;
-
             var result = await _formResponseService.PatchFormResponseAsync(payload);
 
             return Ok(new

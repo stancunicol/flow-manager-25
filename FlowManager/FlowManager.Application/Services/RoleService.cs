@@ -3,12 +3,6 @@ using FlowManager.Domain.Entities;
 using FlowManager.Domain.Exceptions;
 using FlowManager.Domain.IRepositories;
 using FlowManager.Shared.DTOs.Responses.Role;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FlowManager.Infrastructure.Services
 {

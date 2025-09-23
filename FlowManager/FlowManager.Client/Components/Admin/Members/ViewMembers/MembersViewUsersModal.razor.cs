@@ -99,8 +99,8 @@ namespace FlowManager.Client.Components.Admin.Members.ViewMembers
                 }).ToList(),
                 Step = new StepVM
                 {
-                    Id = u.Step?.Id ?? Guid.Empty,
-                    Name = u.Step?.Name ?? string.Empty
+                    Id = u.Step?.StepId ?? Guid.Empty,
+                    Name = u.Step?.StepName ?? string.Empty
                 }
             }).ToList();
 

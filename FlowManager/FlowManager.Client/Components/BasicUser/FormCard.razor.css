@@ -1,4 +1,3 @@
-/* Form Card Component Styles */
 .form-card {
     background: white;
     border: 1px solid #e5e7eb;
@@ -126,7 +125,6 @@
     color: var(--primary-color);
 }
 
-/* Status Badge Styles */
 .status-badge {
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
@@ -156,12 +154,10 @@
         border: 1px solid #6ee7b7;
     }
 
-/* Enhanced detail items for status */
 .detail-item.status-item {
     align-items: center;
 }
 
-/* Admin completion indicator */
 .detail-item.admin-completed {
     align-items: center;
 }
