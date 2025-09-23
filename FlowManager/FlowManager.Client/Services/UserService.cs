@@ -5,7 +5,6 @@ using FlowManager.Shared.DTOs.Responses;
 using FlowManager.Shared.DTOs.Responses.User;
 using System.Net.Http.Json;
 using System.Web;
-using static System.Net.WebRequestMethods;
 
 namespace FlowManager.Client.Services
 {

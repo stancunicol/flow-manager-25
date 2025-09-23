@@ -1,5 +1,4 @@
 ﻿using FlowManager.Client.ViewModels.Team;
-using FlowManager.Domain.Entities;
 
 namespace FlowManager.Client.ViewModels
 {

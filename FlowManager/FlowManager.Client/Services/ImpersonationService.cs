@@ -1,10 +1,8 @@
 ﻿using FlowManager.Client.DTOs;
-using FlowManager.Shared.DTOs;
 using FlowManager.Shared.DTOs.Requests.Impersonation;
 using FlowManager.Shared.DTOs.Responses.Impersonation;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace FlowManager.Client.Services
 {
@@ -154,8 +152,4 @@ namespace FlowManager.Client.Services
         public string OriginalAdminName { get; set; } = "";
         public string SessionId { get; set; } = "";
     }
-
-    
-
-   
 }

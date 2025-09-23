@@ -1,20 +1,8 @@
-﻿using FlowManager.Client.DTOs;
-using FlowManager.Client.Services;
-using FlowManager.Client.ViewModels;
-using FlowManager.Shared.DTOs;
+﻿using FlowManager.Client.Services;
 using FlowManager.Shared.DTOs.Requests.FormResponse;
-using FlowManager.Shared.DTOs.Responses;
-using FlowManager.Shared.DTOs.Responses.Component;
-using FlowManager.Shared.DTOs.Responses.Flow;
-using FlowManager.Shared.DTOs.Responses.FormTemplate;
-using FlowManager.Shared.DTOs.Responses.Step;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Microsoft.JSInterop;
-using System.Net.Http.Json;
-using System.Security.Claims;
-using System.Text.Json;
 
 namespace FlowManager.Client.Components.BasicUser
 {
