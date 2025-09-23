@@ -363,7 +363,6 @@
     background: #9ca3af;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .workflow-info {
         padding: 1rem;
@@ -385,7 +384,6 @@
     }
 }
 
-/* Responsive adjustments */
 @media (max-width: 1200px) {
     .fill-form-content {
         padding: 1rem;
@@ -398,7 +396,6 @@
     }
 }
 
-/* Radio field styling */
 .radio-field {
     display: flex;
     flex-direction: column;
@@ -478,7 +475,6 @@
     }
 }
 
-/* Auto-fill controls */
 .auto-fill-controls {
     display: flex;
     gap: 12px;
@@ -527,7 +523,6 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
-/* Auto-filled field styling */
 .auto-filled {
     background: linear-gradient(45deg, #f0fdfa 25%, transparent 25%), linear-gradient(-45deg, #f0fdfa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0fdfa 75%), linear-gradient(-45deg, transparent 75%, #f0fdfa 75%);
     background-size: 4px 4px;
@@ -543,7 +538,6 @@
     font-size: 12px;
 }
 
-/* User selection overlay for other user auto-fill */
 .user-selection-overlay {
     position: fixed;
     top: 0;
@@ -591,7 +585,6 @@
         background: #e5e7eb;
     }
 
-/* Responsive adjustments for auto-fill controls */
 @media (max-width: 768px) {
     .auto-fill-controls {
         flex-direction: column;

@@ -3,12 +3,9 @@ using FlowManager.Client.Services;
 using FlowManager.Client.ViewModels;
 using FlowManager.Shared.DTOs;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
-using static System.Net.WebRequestMethods;
 
 namespace FlowManager.Client.Pages
 {

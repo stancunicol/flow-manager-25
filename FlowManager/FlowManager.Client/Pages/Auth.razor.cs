@@ -1,13 +1,8 @@
-﻿using FlowManager.Client.Services;
-using FlowManager.Infrastructure.Services;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading.Tasks;
 using FlowManager.Shared.DTOs.Requests.Auth;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace FlowManager.Client.Pages

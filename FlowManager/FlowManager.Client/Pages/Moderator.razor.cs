@@ -294,8 +294,6 @@ namespace FlowManager.Client.Pages
             return Enumerable.Range(startPage, endPage - startPage + 1);
         }
 
-
-
         private async Task LoadAssignedForms(bool append = false)
         {
             isLoading = true;

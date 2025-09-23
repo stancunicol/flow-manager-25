@@ -26,13 +26,12 @@
                 string flowStepItemsNames = string.Join("/", currentFlowStep.FlowStepItems.Select(fsi => fsi.Step.StepName));
 
                 <div class="step-wrapper">
-                    <!-- Step Circle -->
+
                     <div class="step-circle @GetStepStatusClass(stepStatus)"
                          title="Step @(i + 1)">
                         <span class="step-initials">Step @(i + 1)</span>
                     </div>
 
-                    <!-- Step Label -->
                     <div class="step-label">
                         <span class="step-name">@flowStepItemsNames</span>
                         <span class="step-status">@GetStepStatusText(stepStatus)</span>
@@ -47,7 +46,6 @@
             }
         </div>
 
-        <!-- Status Legend -->
         <div class="flow-legend">
             <div class="legend-item">
                 <div class="legend-circle pending"></div>
@@ -158,17 +156,14 @@
 
         stepName = stepName.Trim();
 
-        // Împarte în cuvinte
         var words = stepName.Split(new char[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
 
         if (words.Length == 1)
         {
-            // Un singur cuvânt - ia primele 2 litere
             return stepName.Length >= 2 ? stepName.Substring(0, 2).ToUpper() : stepName.ToUpper();
         }
         else
         {
-            // Mai multe cuvinte - ia prima literă din fiecare cuvânt (max 3)
             var initials = string.Join("", words.Take(3).Select(w => w.Length > 0 ? w[0].ToString() : ""));
             return initials.ToUpper();
         }
