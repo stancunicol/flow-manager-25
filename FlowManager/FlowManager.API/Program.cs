@@ -19,7 +19,6 @@ using FlowManager.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -52,7 +51,7 @@ builder.Services.ConfigureApplicationCookie(options =>
         context.Response.StatusCode = 401;
         return Task.CompletedTask;
     };
-    options.Events.OnRedirectToAccessDenied = context =>
+    options.Events.OnRedirectToAccessDenied = context =>    
     {
         context.Response.StatusCode = 403;
         return Task.CompletedTask;
@@ -103,7 +102,7 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 
     //BasicSeed.Populate(dbContext, passwordHasher);
-   // MockDataSeed.Populate(dbContext, passwordHasher);
+    //  MockDataSeed.Populate(dbContext, passwordHasher);
 }
 
 if (app.Environment.IsDevelopment())
