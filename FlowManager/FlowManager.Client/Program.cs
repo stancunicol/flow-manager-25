@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using FlowManager.Client;
 using FlowManager.Client.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
@@ -25,7 +28,6 @@ builder.Services.AddScoped(sp =>
         BaseAddress = new Uri("http://localhost:5000/")
     };
     
-    // Ensure credentials (cookies) are sent with requests
     httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
     
     return httpClient;

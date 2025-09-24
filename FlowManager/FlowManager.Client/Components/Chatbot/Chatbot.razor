@@ -1,0 +1,188 @@
+@using FlowManager.Client.DTOs.Chat
+@using FlowManager.Client.Services
+
+<div class="chatbot-container @(IsOpen ? "open" : "")">
+    <!-- Chatbot Toggle Button -->
+    <div class="chatbot-toggle" @onclick="ToggleChatbot">
+        @if (IsOpen)
+        {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="close-icon">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        }
+        else
+        {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="chat-icon">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        }
+
+        @if (UnreadCount > 0 && !IsOpen)
+        {
+            <div class="notification-badge">@UnreadCount</div>
+        }
+    </div>
+
+    <!-- Chatbot Window -->
+    <div class="chatbot-window">
+        <!-- Header -->
+        <div class="chatbot-header">
+            <div class="chatbot-avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="5"></circle>
+                    <path d="M20 21a8 8 0 1 0-16 0"></path>
+                </svg>
+            </div>
+            <div class="chatbot-info">
+                <h4>FlowManager Assistant 🤖</h4>
+                <p class="status @(IsTyping ? "typing" : "online")">
+                    @if (IsTyping)
+                    {
+                        <span>Assistant is typing...</span>
+                    }
+                    else
+                    {
+                        <span>@(IsAIEnabled ? "AI-Powered" : "Online")</span>
+                    }
+                </p>
+            </div>
+            <button class="minimize-btn" @onclick="ToggleChatbot">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Messages Container -->
+        <div class="chatbot-messages" @ref="messagesContainer">
+            @if (!Messages.Any())
+            {
+                <div class="welcome-message">
+                    <div class="message bot-message">
+                        <div class="message-avatar">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="message-content">
+                            <p>👋 Salut! Sunt asistentul tău FlowManager și sunt aici să te ajut cu orice ai nevoie!</p>
+                            <p>Pot să:</p>
+                            <ul>
+                                <li>🧭 Te ghidez prin aplicație</li>
+                                <li>📝 Te ajut să completezi formulare</li>
+                                <li>🔍 Caut informații pentru tine</li>
+                                <li>⚡ Execut diverse acțiuni când îmi ceri</li>
+                            </ul>
+                            <p>Cu ce te pot ajuta astăzi? Poți să îmi spui orice ai nevoie! 😊</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @foreach (var message in Messages)
+            {
+                <div class="message @(message.IsFromUser ? "user-message" : "bot-message")">
+                    @if (!message.IsFromUser)
+                    {
+                        <div class="message-avatar">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                    }
+                    <div class="message-content">
+                        @if (message.IsMarkdown)
+                        {
+                            @((MarkupString)ConvertMarkdownToHtml(message.Content))
+                        }
+                        else
+                        {
+                            <p>@message.Content</p>
+                        }
+                        <div class="message-time">@message.Timestamp.ToString("HH:mm")</div>
+                    </div>
+                    @if (message.IsFromUser)
+                    {
+                        <div class="message-avatar user-avatar">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="8" r="5"></circle>
+                                <path d="M20 21a8 8 0 1 0-16 0"></path>
+                            </svg>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (IsTyping)
+            {
+                <div class="message bot-message typing-indicator">
+                    <div class="message-avatar">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="message-content">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Input Area -->
+        <div class="chatbot-input-area">
+            <div class="input-container">
+                <input type="text" class="chat-input" placeholder="Type your message..." 
+                    value="@CurrentMessage"
+                    @oninput="@HandleInputChange"
+                    @onkeypress="@HandleKeyPress" 
+                    @ref="inputElement" 
+                    disabled="@IsTyping" />
+
+                <button class="send-btn @(string.IsNullOrWhiteSpace(CurrentMessage) || IsTyping ? "disabled" : "")"
+                    @onclick="SendMessage" disabled="@(string.IsNullOrWhiteSpace(CurrentMessage) || IsTyping)">
+                    @if (IsTyping)
+                    {
+                        <div class="spinner-small"></div>
+                    }
+                    else
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                        </svg>
+                    }
+                </button>
+            </div>
+
+            <!-- Quick Actions when no messages -->
+            @if (!Messages.Any())
+            {
+                <div class="input-suggestions">
+                    <span class="suggestion-label">Try asking:</span>
+                    <div class="suggestions">
+                        <button class="suggestion-chip"
+                            @onclick="@(() => SetMessage("How do I create a form template?"))">Form Templates</button>
+                        <button class="suggestion-chip"
+                            @onclick="@(() => SetMessage("Explain the approval process"))">Approval Process</button>
+                        <button class="suggestion-chip"
+                            @onclick="@(() => SetMessage("What are the different user roles?"))">User Roles</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

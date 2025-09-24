@@ -250,5 +250,38 @@ namespace FlowManager.Client.Services
                 return null;
             }
         }
+
+        public async Task<FormResponseResponseDto?> GetFormResponseByIdAsync(Guid formResponseId)
+        {
+            try
+            {
+                Console.WriteLine($"[FormResponseService] Getting form response by ID: {formResponseId}");
+
+                var response = await _httpClient.GetAsync($"api/formresponses/{formResponseId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponse<FormResponseResponseDto>>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    Console.WriteLine($"[FormResponseService] Form response loaded successfully. Status: {apiResponse?.Result?.Status}");
+                    return apiResponse?.Result;
+                }
+                else
+                {
+                    Console.WriteLine($"[FormResponseService] Failed to get form response: {response.StatusCode}");
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FormResponseService] Error getting form response by ID: {ex.Message}");
+                return null;
+            }
+        }
     }
 }

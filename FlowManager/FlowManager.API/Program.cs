@@ -76,6 +76,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 
 builder.Services.AddIdentityCore<User>()
     .AddRoles<Role>()

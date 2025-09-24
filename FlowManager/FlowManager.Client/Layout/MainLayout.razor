@@ -1,8 +1,10 @@
 ﻿@inherits LayoutComponentBase
+@using FlowManager.Client.Components.Chatbot
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <div class="page">
-    
-    
+
     <div class="main-layout">
 
         <main>
@@ -20,11 +22,17 @@
             @* <div class="footer"> *@
             @*     <p>© Siemens 1996 – 2025</p> *@
             @* </div> *@
-            
+
         </main>
     </div>
-    
-    
+
+    <!-- Chatbot Component - doar pentru utilizatori autentificați -->
+    <AuthorizeView>
+        <Authorized>
+            <Chatbot />
+        </Authorized>
+    </AuthorizeView>
+
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
