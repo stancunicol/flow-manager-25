@@ -68,6 +68,7 @@
                             <button class="action-button delete-button"
                                     type="button"
                                     @onclick="@(() => DeleteTeam(_teams[index].Id))"
+                                    @onclick:preventDefault="true"
                                     @onclick:stopPropagation="true">
                                 <svg xmlns="http://www.w3.org/2000/svg"
                                      viewBox="0 0 24 24"
@@ -87,6 +88,7 @@
                         <button class="action-button restore-button"
                                 type="button"
                                 @onclick="@(() => RestoreTeam(_teams[index].Id))"
+                                @onclick:preventDefault="true"
                                 @onclick:stopPropagation="true">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  viewBox="0 0 24 24"

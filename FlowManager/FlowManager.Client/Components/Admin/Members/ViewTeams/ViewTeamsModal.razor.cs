@@ -125,6 +125,9 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
                 _teams.Clear();
                 _dropdownTeamMembersState = new BitArray(0);
             }
+
+            _teamToEdit = null;
+            _showEditTeamModal = false;
         }
 
         private void ChangeVisibilityTeamMembersDropdown(int i)

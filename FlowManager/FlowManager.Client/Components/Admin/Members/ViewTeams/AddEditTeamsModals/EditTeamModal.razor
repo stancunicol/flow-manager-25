@@ -2,7 +2,7 @@
 
 @if (ShowEditTeamModal)
 {
-    <div class="popup-backdrop" @onclick="() => ShowEditTeamModal = false">
+    <div class="popup-backdrop" @onclick="() => CloseModal()">
         <div class="popup-container" @onclick:stopPropagation="true">
             <form @onsubmit="OnSubmit" @onsubmit:preventDefault="true">
              <div class="popup-header">
