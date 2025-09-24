@@ -10,42 +10,40 @@
                @bind="_searchTerm"
                @oninput="@((e) => OnSearchTermChanged(e.Value?.ToString() ?? string.Empty))"
                @onkeypress="OnEnterPressed" />
-
         <button class="search-teams-button" @onclick="LoadTeamsAsync">
             Search
         </button>
-
         <button class="add-team-button" @onclick="() => OpenAddTeamModal()">
-            + Add Team 
+            + Add Team
         </button>
     </div>
-    
+
     <div class="teams-container">
         @for (int i = 0; i < _teams.Count(); i++)
         {
             int index = i;
-
             <!-- Team details -->
             <div class="team-details">
                 <!-- Dropdown team members button -->
-                @if (_teams[i].Users != null && _teams[i].Users?.Count() > 0)
+                @if (_teams[i].Users != null && _teams[i].Users?.Where(u => u.DeletedAt == null).Count() > 0)
                 {
                     <button class="dropdown-team-members-button" @onclick="() => ChangeVisibilityTeamMembersDropdown(index)">
                         ˅
                     </button>
                 }
                 <label class="team-name">@_teams[i].Name</label>
-                <span class="team-users-count">@(_teams[i].Users?.Count ?? 0) users</span>
-                @if (_dropdownTeamMembersState[i] && _teams[i].Users != null && _teams[i].Users?.Count() > 0)
+                <span class="team-users-count">@(_teams[i].Users?.Where(u => u.DeletedAt == null).ToList().Count ?? 0) users</span>
+
+                @if (_dropdownTeamMembersState[i] && _teams[i].Users != null && _teams[i].Users?.Where(u => u.DeletedAt == null).Count() > 0)
                 {
                     <!-- Team members container-->
                     <div class="team-members-container">
-                        @for (int j = 0; j < _teams[i].Users!.Count; j++)
+                        @foreach (var user in _teams[i].Users?.Where(u => u.DeletedAt == null)?.ToList())
                         {
                             <!-- Team members details -->
                             <div class="team-members-details">
-                                <span class="team-member-name">@_teams[i].Users![j].Name</span>
-                                <span class="team-member-email">(@_teams[i].Users![j].Email)</span>
+                                <span class="team-member-name">@user.Name</span>
+                                <span class="team-member-email">@user.Email</span>
                             </div>
                         }
                     </div>
@@ -55,7 +53,9 @@
                 {
                     <div class="actions-container">
                         <button class="action-button edit-button"
-                                @onclick="() => OpenEditTeamModal(_teams[index])">
+                                type="button"
+                                @onclick="@(() => OpenEditTeamModal(_teams[index]))"
+                                @onclick:stopPropagation="true">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  viewBox="0 0 24 24"
                                  fill="currentColor"
@@ -63,11 +63,12 @@
                                 <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z" />
                             </svg>
                         </button>
-
-                        @if (_teams[index].Users?.Count == 0)
+                        @if (_teams[index].Users?.Where(u => u.DeletedAt == null).ToList().Count == 0)
                         {
                             <button class="action-button delete-button"
-                            @onclick="() => DeleteTeam(_teams[index].Id)">
+                                    type="button"
+                                    @onclick="@(() => DeleteTeam(_teams[index].Id))"
+                                    @onclick:stopPropagation="true">
                                 <svg xmlns="http://www.w3.org/2000/svg"
                                      viewBox="0 0 24 24"
                                      fill="currentColor"
@@ -84,7 +85,9 @@
                 {
                     <div class="actions-container">
                         <button class="action-button restore-button"
-                                @onclick="() => RestoreTeam(_teams[index].Id)">
+                                type="button"
+                                @onclick="@(() => RestoreTeam(_teams[index].Id))"
+                                @onclick:stopPropagation="true">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  viewBox="0 0 24 24"
                                  fill="currentColor"
@@ -173,7 +176,6 @@
                         </svg>
                     </button>
                 </nav>
-
                 <!-- Pagination info -->
                 <div class="pagination-info">
                     <span class="pagination-info-text">
@@ -183,26 +185,23 @@
             </div>
         }
     </div>
-    
 
-    @if(_teams == null || _teams.Count == 0)
+    @if (_teams == null || _teams.Count == 0)
     {
         <p>No teams found.</p>
     }
 </div>
 
-@if(_showAddTeamModal)
+@if (_showAddTeamModal)
 {
-    <FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals.AddTeamModal
-        @bind-ShowAddTeamModal="@_showAddTeamModal"
-        TeamWasAdded="() => LoadTeamsAsync()"/>
+    <FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals.AddTeamModal @bind-ShowAddTeamModal="@_showAddTeamModal"
+                                                                                           TeamWasAdded="() => LoadTeamsAsync()" />
 }
 
-@if(_showEditTeamModal)
+@if (_showEditTeamModal)
 {
-    <FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals.EditTeamModal
-        @bind-ShowEditTeamModal="@_showEditTeamModal"
-        TeamToEdit="@_teamToEdit"
+    <FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModals.EditTeamModal @bind-ShowEditTeamModal="@_showEditTeamModal"
+                                                                                            TeamToEdit="@_teamToEdit"
                                                                                             TeamWasEdited="() => LoadTeamsAsync()"
-        TeamStep="@_teamToEdit.Users![0].Step"/>
+                                                                                            TeamStep="@_teamToEdit.Users[0].Step" />
 }

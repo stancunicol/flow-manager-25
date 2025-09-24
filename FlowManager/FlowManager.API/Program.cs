@@ -102,8 +102,8 @@ using (var scope = app.Services.CreateScope())
 
     dbContext.Database.Migrate();
 
-    //BasicSeed.Populate(dbContext, passwordHasher);
-    //  MockDataSeed.Populate(dbContext, passwordHasher);
+    // BasicSeed.Populate(dbContext, passwordHasher);
+    // MockDataSeed.Populate(dbContext, passwordHasher);
 }
 
 if (app.Environment.IsDevelopment())

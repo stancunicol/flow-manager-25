@@ -97,9 +97,13 @@
     {
         try
         {
+            Console.WriteLine($"Is flows add modal {flowsAddModalRef == null}");
+
             if (flowsAddModalRef != null)
             {
                 bool isFlowValid = await _flowService.GetFlowNameUnicityAsync(flowsAddModalRef.GetFlowName());
+
+                Console.WriteLine($"Is form template ref nuull {formTemplateRef == null}");
 
                 if (formTemplateRef == null)
                     return;

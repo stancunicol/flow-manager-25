@@ -108,8 +108,9 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
                         Step = new StepVM
                         {
                             Id = u.Step!.StepId,
-                            Name = u.Step!.StepName
-                        }
+                            Name = u.Step!.StepName,
+                        },
+                        DeletedAt = u.DeletedAt
                     }).ToList(),
                     IsActive = t.DeletedAt == null
                 }).ToList();

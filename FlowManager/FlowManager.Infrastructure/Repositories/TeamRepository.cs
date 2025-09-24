@@ -33,7 +33,7 @@ namespace FlowManager.Infrastructure.Repositories
         public async Task<(List<Team>, int)> GetAllTeamsQueriedAsync(string? globalSearchTerm, QueryParams? queryParams, bool includeDeleted = false)
         {
             var query = _context.Teams
-                .Include(t => t.Users.Where(u => u.DeletedAt == null))
+                .Include(t => t.Users.Where(ut => ut.User.DeletedAt == null))
                     .ThenInclude(ut => ut.User)
                         .ThenInclude(u => u.Step)
                 .AsQueryable();
@@ -45,7 +45,7 @@ namespace FlowManager.Infrastructure.Repositories
             {
                 query = query.Where(t =>
                     t.Name.ToUpper().Contains(globalSearchTerm.ToUpper()) ||
-                    t.Users.Any(ut => ut.User.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()) || ut.User.Name.ToUpper().Contains(globalSearchTerm.ToUpper())));
+                    t.Users.Any(ut => ut.DeletedAt == null && (ut.User.NormalizedEmail!.Contains(globalSearchTerm.ToUpper()) || ut.User.Name.ToUpper().Contains(globalSearchTerm.ToUpper()))));
             }
 
             int totalCount = await query.CountAsync();
