@@ -24,6 +24,7 @@ using FlowManager.Shared.DTOs.Requests;
 using MudBlazor;
 using QueryParams = FlowManager.Shared.DTOs.Requests.QueryParamsDto;
 using Azure;
+using BlazorBootstrap;
 
 namespace FlowManager.Client.Components.Admin.Steps
 {
@@ -211,13 +212,14 @@ namespace FlowManager.Client.Components.Admin.Steps
 
                 var result = await stepService.CreateStepAsync(step);
 
+                Console.WriteLine($"{result?.StepName} created with ID: {result?.StepId}");
 
                 if (result != null)
                 {
                     var payload = new CreateStepHistoryRequestDto
                     {
                         NewDepartmentName = newDepName,
-                        StepId = result.Id
+                        StepId = result.StepId
                     };
 
                     await stepHistoryService.CreateStepHistoryForCreateDepartmentAsync(payload);
@@ -302,12 +304,37 @@ namespace FlowManager.Client.Components.Admin.Steps
             if (step != null)
             {
                 departmentToDelete = step;
-            }
+
+                bool hasUsers = departmentToDelete.Users != null && departmentToDelete.Users.Any();
+                bool hasTeams = departmentToDelete.Teams != null && departmentToDelete.Teams.Any();
+
+                if (!hasUsers && !hasTeams)
+                {
+                    var payload = new CreateStepHistoryRequestDto
+                    {
+                        OldDepartmentName = departmentToDelete.StepName,
+                        StepId = departmentToDelete.StepId
+                    };
+
+                    var result = await stepService.DeleteStepAsync(departmentToDelete.StepId);
+                    if (result != false)
+                    {
+                        await stepHistoryService.CreateStepHistoryForDeleteDepartmentAsync(payload);
+                        departmentsInUI.RemoveAll(d => d.StepId == departmentToDelete.StepId);
+                        departments.RemoveAll(d => d.StepId == departmentToDelete.StepId);
+                        await RefreshAllData();
+                    }
+                    isModalOpen = false;
+                    StateHasChanged();
+                    return;
+                }
 
                 isDeleteModalOpen = true;
-                CloseModal();
-                CloseEditModal();
-                StateHasChanged();
+            }
+
+            CloseModal();
+            CloseEditModal();
+            StateHasChanged();
         }
 
 

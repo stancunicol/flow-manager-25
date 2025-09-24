@@ -166,14 +166,14 @@ namespace FlowManager.Client.Services
             }
         }
 
-        public async Task<Step?> CreateStepAsync(Step step)
+        public async Task<StepResponseDto?> CreateStepAsync(Step step)
         {
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("api/steps", step);
                 if (response.IsSuccessStatusCode)
                 {
-                    var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<Step>>();
+                    var wrapper = await response.Content.ReadFromJsonAsync<ApiResponse<StepResponseDto>>();
                     return wrapper?.Result;
                 }
                 return null;
