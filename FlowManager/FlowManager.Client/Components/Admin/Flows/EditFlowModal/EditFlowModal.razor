@@ -63,9 +63,6 @@
 
     private async Task OnTemplateSaved()
     {
-        // Called when form template is saved
-        await JSRuntime.InvokeVoidAsync("alert", "Form template updated successfully!");
-
         // Notify parent that flow was updated
         if (Flow != null && OnFlowUpdated.HasDelegate)
         {

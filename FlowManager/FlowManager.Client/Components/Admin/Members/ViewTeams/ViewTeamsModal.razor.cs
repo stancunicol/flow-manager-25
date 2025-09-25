@@ -108,8 +108,9 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
                         Step = new StepVM
                         {
                             Id = u.Step!.StepId,
-                            Name = u.Step!.StepName
-                        }
+                            Name = u.Step!.StepName,
+                        },
+                        DeletedAt = u.DeletedAt
                     }).ToList(),
                     IsActive = t.DeletedAt == null
                 }).ToList();
@@ -124,6 +125,9 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams
                 _teams.Clear();
                 _dropdownTeamMembersState = new BitArray(0);
             }
+
+            _teamToEdit = null;
+            _showEditTeamModal = false;
         }
 
         private void ChangeVisibilityTeamMembersDropdown(int i)

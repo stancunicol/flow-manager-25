@@ -66,6 +66,27 @@ namespace FlowManager.Client.Pages
                             Email = userInfo.Email,
                             PhoneNumber = userInfo.PhoneNumber
                         };
+
+                        if (userInfo.StepId.HasValue)
+                        {
+                            try
+                            {
+                                var stepResponse = await StepService.GetStepAsync(userInfo.StepId.Value);
+                                if (stepResponse != null)
+                                {
+                                    currentUser.Step = new StepVM
+                                    {
+                                        Id = stepResponse.StepId,
+                                        Name = stepResponse.StepName
+                                    };
+                                }
+                            }
+                            catch (Exception stepEx)
+                            {
+                                Console.WriteLine($"[ERROR] Failed to load current user's step: {stepEx.Message}");
+                            }
+                        }
+
                         Console.WriteLine($"[DEBUG] Current user ID: {currentUserId}");
                     }
                 }
@@ -115,7 +136,7 @@ namespace FlowManager.Client.Pages
                     if (flows != null)
                     {
                         associatedFlow = flows.FirstOrDefault(f => f.FormTemplateId == formTemplate.Id);
-                        
+
                         if (associatedFlow?.FlowSteps?.Any() == true)
                         {
                             firstStep = associatedFlow.FlowSteps.First().FlowStepItems.FirstOrDefault()?.Step;
@@ -183,7 +204,7 @@ namespace FlowManager.Client.Pages
                         {
                             componentVMs.Add(new ComponentVM
                             {
-                                Id = Guid.Parse(element.Id), 
+                                Id = Guid.Parse(element.Id),
                                 Type = component.Type,
                                 Label = component.Label,
                                 Required = component.Required,
@@ -209,8 +230,8 @@ namespace FlowManager.Client.Pages
             Console.WriteLine($"[DEBUG] ComponentVMs count: {componentVMs?.Count ?? 0}");
 
             _selectedUserForAutoFill = currentUser;
-            _showUserSelector = false; 
-            _showComponentSelector = true; 
+            _showUserSelector = false;
+            _showComponentSelector = true;
 
             Console.WriteLine($"[DEBUG] ShowComponentSelector: {_showComponentSelector}, SelectedUser: {_selectedUserForAutoFill?.Name}");
             StateHasChanged();
@@ -222,8 +243,8 @@ namespace FlowManager.Client.Pages
             Console.WriteLine($"[DEBUG] ComponentVMs count: {componentVMs?.Count ?? 0}");
 
             _selectedUserForAutoFill = null;
-            _showUserSelector = true; 
-            _showComponentSelector = false; 
+            _showUserSelector = true;
+            _showComponentSelector = false;
 
             Console.WriteLine($"[DEBUG] ShowUserSelector: {_showUserSelector}, ShowComponentSelector: {_showComponentSelector}");
             StateHasChanged();
@@ -234,8 +255,8 @@ namespace FlowManager.Client.Pages
             Console.WriteLine($"[DEBUG] OnUserSelectedForAutoFill called with: {user?.Name ?? "NULL"}");
 
             _selectedUserForAutoFill = user;
-            _showUserSelector = false; 
-            _showComponentSelector = true; 
+            _showUserSelector = false;
+            _showComponentSelector = true;
 
             Console.WriteLine($"[DEBUG] User selected, now showing component selector");
             StateHasChanged();
@@ -262,8 +283,8 @@ namespace FlowManager.Client.Pages
                         var fieldValue = GetUserDataMapping(component, _selectedUserForAutoFill);
                         if (fieldValue != null)
                         {
-                            responses[componentId] = fieldValue; 
-                            _autoFilledFields[componentId] = true; 
+                            responses[componentId] = fieldValue;
+                            _autoFilledFields[componentId] = true;
                             Console.WriteLine($"[DEBUG] Auto-filled component {component.Label} with value: {fieldValue}");
                         }
                     }
@@ -298,9 +319,17 @@ namespace FlowManager.Client.Pages
                 var l when l.Contains("email") || l.Contains("e-mail") || l.Contains("mail") => user.Email,
                 var l when l.Contains("phone") || l.Contains("telefon") || l.Contains("mobil") => user.PhoneNumber,
                 var l when l.Contains("name") || l.Contains("nume") || l.Contains("prenume") => user.Name,
-                var l when l.Contains("department") || l.Contains("step") => user.Step?.Name ?? null,
+                var l when l.Contains("department") || l.Contains("departament") || l.Contains("step") => user.Step?.Name ?? null,
                 _ => null
             };
+        }
+
+        private bool IsPhoneComponent(ComponentResponseDto component)
+        {
+            var label = component.Label?.ToLower() ?? string.Empty;
+            var type = component.Type?.ToLower() ?? string.Empty;
+
+            return label.Contains("phone") || label.Contains("telefon") || label.Contains("mobil") || type.Contains("phone");
         }
 
         private bool IsFieldAutoFilled(Guid componentId)
@@ -317,7 +346,7 @@ namespace FlowManager.Client.Pages
             return string.Empty;
         }
 
-        private void UpdateResponse(Guid componentId, string? value, string componentType)
+        private void UpdateResponse(Guid componentId, string? value, ComponentResponseDto component)
         {
             if (_autoFilledFields.ContainsKey(componentId))
             {
@@ -330,7 +359,15 @@ namespace FlowManager.Client.Pages
                 return;
             }
 
-            object convertedValue = componentType.ToLower() switch
+            if (IsPhoneComponent(component))
+            {
+                responses[componentId] = value;
+                return;
+            }
+
+            var componentType = component.Type?.ToLower() ?? string.Empty;
+
+            object convertedValue = componentType switch
             {
                 "number" => int.TryParse(value, out var intVal) ? intVal : value,
                 "checkbox" => bool.TryParse(value, out var boolVal) ? boolVal : value,
@@ -381,10 +418,10 @@ namespace FlowManager.Client.Pages
                 {
                     FormTemplateId = TemplateId,
                     UserId = currentUserId,
-                    ResponseFields = componentResponses 
+                    ResponseFields = componentResponses
                 };
 
-                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, FirstStep={firstStep.StepId} ({firstStep.StepName}), User={currentUserId}");
+                Console.WriteLine($"[DEBUG] Submitting form: Template={TemplateId}, FirstStep={firstStep?.StepId} ({firstStep?.StepName}), User={currentUserId}");
                 Console.WriteLine($"[DEBUG] Response fields count: {responses.Count}");
 
                 var response = await Http.PostAsJsonAsync("api/formresponses", formResponseData);

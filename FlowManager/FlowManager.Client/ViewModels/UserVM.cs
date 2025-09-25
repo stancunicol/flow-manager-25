@@ -9,6 +9,7 @@
         public bool? IsActive { get; set; }
         public List<RoleVM>? Roles { get; set; } = new List<RoleVM>();
         public StepVM? Step { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         public override bool Equals(object obj)
         {

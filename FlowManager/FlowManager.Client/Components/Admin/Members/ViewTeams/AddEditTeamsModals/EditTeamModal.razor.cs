@@ -217,5 +217,15 @@ namespace FlowManager.Client.Components.Admin.Members.ViewTeams.AddEditTeamsModa
             _pageSize += 10;
             await LoadUsersAsync();
         }
+
+        private async Task CloseModal()
+        {
+            _searchTerm = string.Empty;
+            _teamName = string.Empty;
+            _selectedUsers.Clear();
+            _users.Clear();
+
+            await ShowEditTeamModalChanged.InvokeAsync(false);
+        }
     }
 }

@@ -345,12 +345,15 @@ namespace FlowManager.Client.Pages
         {
             string label = component.Label?.ToLower() ?? "";
 
+            Console.Write(label);
+
             return label switch
             {
                 var l when l.Contains("email") || l.Contains("e-mail") || l.Contains("mail") => user.Email,
                 var l when l.Contains("phone") || l.Contains("telefon") || l.Contains("mobil") => user.PhoneNumber,
                 var l when l.Contains("name") || l.Contains("nume") || l.Contains("prenume") => user.Name,
                 var l when l.Contains("department") || l.Contains("step") => user.Step?.Name ?? null,
+                var l when l.Contains("phone") || l.Contains("Phone Number") => user.PhoneNumber,
                 _ => null
             };
         }
@@ -384,13 +387,31 @@ namespace FlowManager.Client.Pages
 
             object convertedValue = componentType.ToLower() switch
             {
-                "number" => int.TryParse(value, out var intVal) ? intVal : value,
+                "number" => value.ToString(),
                 "checkbox" => bool.TryParse(value, out var boolVal) ? boolVal : value,
                 "datetime" => DateTime.TryParse(value, out var dateVal) ? dateVal : value,
                 _ => value
             };
 
             _responses[componentId] = convertedValue;
+        }
+
+        private object TryParseAsNumber(string value)
+        {
+            // First try to parse as int
+            if (int.TryParse(value, out var intVal))
+                return intVal;
+
+            // If it fails, try as long for larger numbers
+            if (long.TryParse(value, out var longVal))
+                return longVal;
+
+            // If it still fails, try as double for decimal numbers
+            if (double.TryParse(value, out var doubleVal))
+                return doubleVal;
+
+            // If all parsing fails, keep it as string
+            return value;
         }
 
         private bool AllRequiredFieldsFilled()

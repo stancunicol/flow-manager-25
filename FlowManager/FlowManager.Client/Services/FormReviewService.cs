@@ -3,6 +3,7 @@ using FlowManager.Shared.DTOs.Responses.FormReview;
 using FlowManager.Client.DTOs;
 using System.Text.Json;
 using System.Web;
+using System.Net.Http.Json;
 
 namespace FlowManager.Client.Services
 {
@@ -83,6 +84,72 @@ namespace FlowManager.Client.Services
             {
                 Console.WriteLine($"Error getting review history: {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task<bool> ApproveFormAsync(Guid formResponseId, Guid moderatorId)
+        {
+            try
+            {
+                Console.WriteLine($"[FormReviewService] Approving form {formResponseId} by moderator {moderatorId}");
+
+                var response = await _httpClient.PostAsJsonAsync($"api/formreviews/approve", new
+                {
+                    FormResponseId = formResponseId,
+                    ModeratorId = moderatorId,
+                    Action = "Approved",
+                    Comments = ""
+                });
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"[FormReviewService] Form approved successfully");
+                    return true;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[FormReviewService] Failed to approve form: {response.StatusCode} - {errorContent}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FormReviewService] Error approving form: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> RejectFormAsync(Guid formResponseId, Guid moderatorId, string? comments = null)
+        {
+            try
+            {
+                Console.WriteLine($"[FormReviewService] Rejecting form {formResponseId} by moderator {moderatorId}");
+
+                var response = await _httpClient.PostAsJsonAsync($"api/formreviews/reject", new
+                {
+                    FormResponseId = formResponseId,
+                    ModeratorId = moderatorId,
+                    Action = "Rejected",
+                    Comments = comments ?? ""
+                });
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"[FormReviewService] Form rejected successfully");
+                    return true;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[FormReviewService] Failed to reject form: {response.StatusCode} - {errorContent}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FormReviewService] Error rejecting form: {ex.Message}");
+                return false;
             }
         }
     }

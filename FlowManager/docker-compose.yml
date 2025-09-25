@@ -1,25 +1,16 @@
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+    image: stancunicol/flowmanager:api-latest
+    container_name: flowmanager-api
     ports:
       - "5000:8080"
-    environment:
-      - ASPNETCORE_URLS=http://+:8080
-      - DOTNET_ENVIRONMENT=Production 
-    volumes:
-      - sqlite_data:/app/data
 
   client:
-    build:
-      context: .
-      dockerfile: Dockerfile.client
+    image: stancunicol/flowmanager:client-latest
+    container_name: flowmanager-client
     ports:
       - "3000:80"
+    environment:
+      - API_URL=http://api:80
     depends_on:
       - api
-
-volumes:
-  sqlite_data:
-    driver: local

@@ -143,7 +143,7 @@
                                                    @onchange="@(e => UpdateResponse(component.Id, e.Value?.ToString(), component.Type))" />
                                             break;
                                         case "number":
-                                            <input type="number"
+                                            <input type="text"
                                                    class="field-input @(IsFieldReadonly(component.Id) ? "readonly-field" : "")"
                                                    value="@GetFieldValue(component.Id)"
                                                    readonly="@IsFieldReadonly(component.Id)"

@@ -46,7 +46,8 @@ namespace FlowManager.Application.Services
                         {
                             StepId = ut.User.StepId,
                             StepName = ut.User.Step.Name
-                        }
+                        },
+                        DeletedAt = ut.DeletedAt
                     }).ToList(),
                     UsersCount = t.Users?.Count(u => u.DeletedAt == null) ?? 0,
                     CreatedAt = t.CreatedAt,
