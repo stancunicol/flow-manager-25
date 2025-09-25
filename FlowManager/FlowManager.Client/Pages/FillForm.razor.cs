@@ -66,6 +66,27 @@ namespace FlowManager.Client.Pages
                             Email = userInfo.Email,
                             PhoneNumber = userInfo.PhoneNumber
                         };
+
+                        if (userInfo.StepId.HasValue)
+                        {
+                            try
+                            {
+                                var stepResponse = await StepService.GetStepAsync(userInfo.StepId.Value);
+                                if (stepResponse != null)
+                                {
+                                    currentUser.Step = new StepVM
+                                    {
+                                        Id = stepResponse.StepId,
+                                        Name = stepResponse.StepName
+                                    };
+                                }
+                            }
+                            catch (Exception stepEx)
+                            {
+                                Console.WriteLine($"[ERROR] Failed to load current user's step: {stepEx.Message}");
+                            }
+                        }
+
                         Console.WriteLine($"[DEBUG] Current user ID: {currentUserId}");
                     }
                 }
@@ -298,7 +319,7 @@ namespace FlowManager.Client.Pages
                 var l when l.Contains("email") || l.Contains("e-mail") || l.Contains("mail") => user.Email,
                 var l when l.Contains("phone") || l.Contains("telefon") || l.Contains("mobil") => user.PhoneNumber,
                 var l when l.Contains("name") || l.Contains("nume") || l.Contains("prenume") => user.Name,
-                var l when l.Contains("department") || l.Contains("step") => user.Step?.Name ?? null,
+                var l when l.Contains("department") || l.Contains("departament") || l.Contains("step") => user.Step?.Name ?? null,
                 _ => null
             };
         }
