@@ -100,7 +100,7 @@ using (var scope = app.Services.CreateScope())
     Console.WriteLine($"[DB] Using connection: {dbContext.Database.GetDbConnection().ConnectionString}");
     IPasswordHasher<User> passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-    dbContext.Database.Migrate();
+    // dbContext.Database.Migrate();
 
     // BasicSeed.Populate(dbContext, passwordHasher);
     // MockDataSeed.Populate(dbContext, passwordHasher);
