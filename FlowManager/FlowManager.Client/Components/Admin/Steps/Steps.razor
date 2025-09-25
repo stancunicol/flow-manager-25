@@ -237,7 +237,7 @@
                             @foreach (var team in departmentToDelete.Teams)
                             {
                                 <li class="team-item">
-                                    <span>@team.Name (@(team.Users?.Count ?? 0) users)</span>
+                                    <span>@team.Name</span>
                                     <button class="move-btn" @onclick="() => MoveTeamToTarget(team)">➡</button>
                                 </li>
                             }
@@ -257,7 +257,7 @@
                             @foreach (var team in selectedDepartment.Teams)
                             {
                                 <li class="team-item">
-                                    <span>@team.Name (@(team.Users?.Count ?? 0) users)</span>
+                                    <span>@team.Name </span>
                                 </li>
                             }
                         }
@@ -368,7 +368,7 @@
                             @foreach (var team in selectedDepartment.Teams)
                             {
                                 <li class="team-item">
-                                    <span>@team.Name (@(team.Users?.Count ?? 0) users)</span>
+                                    <span>@team.Name </span>
                                     <button class="move-btn" @onclick="() => MoveEditTeamToTargetAsync(team)">➡</button>
                                 </li>
                             }

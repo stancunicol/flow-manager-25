@@ -139,10 +139,10 @@
                             var component = components?.FirstOrDefault(c => c.Id == element.ComponentId);
                             if (component != null)
                             {
-                                var elementId = Guid.Parse(element.Id); 
-                                                                        <div class="form-field">
-                                                                            <label class="field-label">
-                                                                                @component.Label
+                                var elementId = Guid.Parse(element.Id);
+                                <div class="form-field">
+                                    <label class="field-label">
+                                        @component.Label
                                         @if (component.Required == true)
                                         {
                                             <span class="required-mark">*</span>
@@ -157,27 +157,36 @@
                                         case "textinput":
                                             <input type="text" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
                                                 value="@GetFieldValue(elementId)"
-                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "text"))" />
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))" />
                                             break;
                                         case "number":
-                                            <input type="number" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
-                                                value="@GetFieldValue(elementId)"
-                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "number"))" />
+                                            if (IsPhoneComponent(component))
+                                            {
+                                                <input type="text" inputmode="tel" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
+                                                    value="@GetFieldValue(elementId)"
+                                                    @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))" />
+                                            }
+                                            else
+                                            {
+                                                <input type="text" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
+                                                    value="@GetFieldValue(elementId)"
+                                                    @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))" />
+                                            }
                                             break;
                                         case "date":
                                             <input type="date" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
                                                 value="@GetFieldValue(elementId)"
-                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "date"))" />
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))" />
                                             break;
                                         case "textarea":
                                             <textarea class="textarea-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
-                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "textarea"))">@GetFieldValue(elementId)</textarea>
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))">@GetFieldValue(elementId)</textarea>
                                             break;
                                         case "checkbox":
                                             <div class="checkbox-field">
                                                 <input type="checkbox"
                                                     checked="@(bool.TryParse(GetFieldValue(elementId), out bool isChecked) && isChecked)"
-                                                    @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "checkbox"))" />
+                                                    @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))" />
                                                 <span class="checkbox-label">@component.Label</span>
                                             </div>
                                             break;
@@ -189,7 +198,7 @@
                                                 {
                                                     <label class="radio-option">
                                                         <input type="radio" name="radio_@elementId" value="@option"
-                                                            @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "radio"))" />
+                                                            @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))" />
                                                         <span class="radio-option-text">@option</span>
                                                     </label>
                                                 }
@@ -198,7 +207,7 @@
                                         default:
                                             <input type="text" class="field-input @(IsFieldAutoFilled(elementId) ? "auto-filled" : "")"
                                                 value="@GetFieldValue(elementId)"
-                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component.Type ?? "text"))" />
+                                                @onchange="@(e => UpdateResponse(elementId, e.Value?.ToString(), component))" />
                                             break;
                                     }
                                 </div>

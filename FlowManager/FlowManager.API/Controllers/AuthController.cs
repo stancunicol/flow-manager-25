@@ -120,14 +120,15 @@ namespace FlowManager.API.Controllers
             var dto = new UserProfileDto
             {
                 Id = foundUser.Id,
-                Name = foundUser.Name,
-                Email = foundUser.Email,
+                Name = foundUser.Name ?? string.Empty,
+                Email = foundUser.Email ?? string.Empty,
                 UserName = foundUser.UserName,
+                PhoneNumber = foundUser.PhoneNumber,
                 StepId = foundUser.StepId,
-                Roles = foundUser.Roles
+                Roles = foundUser.Roles?
                     .Where(ur => ur.DeletedAt == null && ur.Role.DeletedAt == null)
-                    .Select(ur => ur.Role.Name)
-                    .ToList()
+                    .Select(ur => ur.Role.Name ?? string.Empty)
+                    .ToList() ?? new List<string>()
             };
 
             return Ok(dto);
